@@ -1,0 +1,170 @@
+.floating-tasks {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  width: 350px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(31, 41, 55, 0.18);
+  overflow: hidden;
+  z-index: 1100;
+  transition: width 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-tasks.collapsed {
+  width: 210px;
+}
+
+.floating-task-header {
+  height: 48px;
+  padding: 0 12px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.floating-task-title {
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.floating-task-progress {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.floating-task-toggle {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: #66727f;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.floating-task-toggle:hover {
+  background: #f5f8fa;
+}
+
+.floating-task-body {
+  padding: 14px 16px 10px;
+  max-height: 310px;
+  overflow-y: auto;
+  transition: opacity 0.15s ease;
+}
+
+.floating-tasks.collapsed .floating-task-body {
+  display: none;
+}
+
+.floating-task-summary {
+  margin-bottom: 10px;
+}
+
+.floating-task-summary-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.floating-task-summary-text strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.floating-task-progress-bar {
+  height: 6px;
+  background: #edf1f4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.floating-task-progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+
+.floating-task-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  user-select: none;
+}
+
+.floating-task-check {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  border: 1.5px solid #cbd3db;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 11px;
+}
+
+.floating-task-item.done .floating-task-check {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.floating-task-item.done .floating-task-check::after {
+  content: "✓";
+}
+
+.floating-task-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.floating-task-item.done .floating-task-name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.floating-task-tag {
+  font-size: 10px;
+  color: var(--muted);
+  background: #f2f5f7;
+  padding: 4px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.floating-task-item:not(.done) .floating-task-tag {
+  color: var(--primary-dark);
+  background: #eaf8fd;
+}
+
+@media (max-width: 560px) {
+  .floating-tasks {
+    right: 12px;
+    bottom: 84px;
+    width: calc(100vw - 24px);
+  }
+
+  .floating-tasks.collapsed {
+    width: 190px;
+  }
+}

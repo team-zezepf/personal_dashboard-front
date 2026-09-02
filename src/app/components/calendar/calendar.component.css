@@ -1,0 +1,576 @@
+:host {
+  display: contents;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 14px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.content {
+  padding: 0 22px 22px;
+}
+
+/* カレンダー表示切替 */
+.calendar-view-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f6f8fa;
+}
+
+.calendar-view-button {
+  height: 29px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.calendar-view-button.active {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 1px 4px rgba(31, 41, 55, 0.10);
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 14px;
+}
+
+.month {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.nav {
+  display: flex;
+  gap: 5px;
+}
+
+.nav button {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  color: #66727f;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.weekdays, .days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.weekday {
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+  padding: 4px 0 7px;
+}
+
+.day {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 11px;
+  position: relative;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.day:hover {
+  background: #f5f8fa;
+}
+
+.day.muted {
+  color: #c4cbd2;
+}
+
+.day.today {
+  background: #eaf8fd;
+  border-color: #bce7f5;
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.day.selected {
+  background: #eaf8fd;
+  border-color: #9ddcf0;
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.dot {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.dot.green {
+  background: var(--green);
+}
+
+/* 選択日の予定カード */
+.calendar-details-card {
+  min-width: 0;
+  display: none;
+}
+
+.calendar-details-card.active {
+  display: block;
+}
+
+.calendar-details-card .content {
+  min-height: 260px;
+}
+
+.calendar-details-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.calendar-details-date {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+
+.calendar-event {
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fafbfc;
+  margin-bottom: 8px;
+}
+
+.calendar-event-time {
+  color: var(--primary-dark);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.calendar-event-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.calendar-event-note {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.calendar-event-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.calendar-event-action {
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: #66727f;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-event-action:hover {
+  background: #f5f8fa;
+}
+
+.calendar-event-action.delete {
+  color: #d05a5a;
+}
+
+.calendar-event-action.delete:hover {
+  background: #fff4f4;
+  border-color: #f0c5c5;
+}
+
+.calendar-details-empty {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 12px 0;
+}
+
+.calendar-details-register {
+  width: 100%;
+  height: 38px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.calendar-details-register:hover {
+  background: var(--primary-dark);
+}
+
+.calendar-details-register:active {
+  transform: translateY(1px);
+}
+
+/* 予定登録・編集モーダル */
+.schedule-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 55, 0.35);
+  z-index: 2000;
+  padding: 20px;
+}
+
+.schedule-modal.open {
+  display: flex;
+}
+
+.schedule-modal-card {
+  width: min(500px, 100%);
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
+  overflow: hidden;
+}
+
+.schedule-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.schedule-modal-header strong {
+  font-size: 15px;
+}
+
+.schedule-modal-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: #66727f;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.schedule-modal-body {
+  padding: 18px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.schedule-form-group {
+  margin-bottom: 14px;
+}
+
+.schedule-form-group label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.schedule-form-group input,
+.schedule-form-group textarea,
+.schedule-form-group select {
+  width: 100%;
+  border: 1px solid #dce3e8;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  background: white;
+}
+
+.schedule-form-group input:focus,
+.schedule-form-group textarea:focus,
+.schedule-form-group select:focus {
+  border-color: #8ed6ec;
+  box-shadow: 0 0 0 3px rgba(19, 169, 223, 0.08);
+}
+
+.schedule-form-group textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.schedule-type {
+  display: flex;
+  gap: 10px;
+}
+
+.schedule-type-option {
+  flex: 1;
+  position: relative;
+  cursor: pointer;
+}
+
+.schedule-type-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.schedule-type-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.schedule-type-option input:checked + span {
+  color: var(--primary-dark);
+  border-color: #8ed6ec;
+  background: #eaf8fd;
+  font-weight: 700;
+}
+
+.schedule-datetime-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 8px;
+}
+
+.schedule-datetime-row {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 8px;
+  align-items: center;
+}
+
+.schedule-datetime-label {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* 繰り返し */
+.repeat-box {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 12px;
+  background: #fafbfc;
+}
+
+.repeat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.repeat-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.repeat-settings {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.repeat-frequency {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.repeat-frequency label {
+  position: relative;
+  cursor: pointer;
+}
+
+.repeat-frequency input {
+  position: absolute;
+  opacity: 0;
+}
+
+.repeat-frequency span {
+  display: block;
+  text-align: center;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.repeat-frequency input:checked + span {
+  color: var(--primary-dark);
+  border-color: #8ed6ec;
+  background: #eaf8fd;
+  font-weight: 700;
+}
+
+.repeat-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 11px;
+}
+
+.repeat-option-row select,
+.repeat-option-row input {
+  height: 34px;
+  border: 1px solid #dce3e8;
+  border-radius: 7px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 11px;
+  background: #fff;
+}
+
+.repeat-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin: 8px 0 12px;
+}
+
+.repeat-weekdays label {
+  position: relative;
+  cursor: pointer;
+}
+
+.repeat-weekdays input {
+  position: absolute;
+  opacity: 0;
+}
+
+.repeat-weekdays span {
+  display: grid;
+  place-items: center;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.repeat-weekdays input:checked + span {
+  color: var(--primary-dark);
+  border-color: #8ed6ec;
+  background: #eaf8fd;
+  font-weight: 700;
+}
+
+.repeat-end {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.repeat-end-title {
+  color: var(--muted);
+  font-size: 10px;
+  margin-bottom: 7px;
+}
+
+.repeat-end-options {
+  display: grid;
+  gap: 7px;
+}
+
+.repeat-end-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.schedule-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 18px;
+}
+
+.schedule-modal-footer button {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.schedule-cancel {
+  border: 1px solid var(--line);
+  background: white;
+  color: #66727f;
+}
+
+.schedule-register {
+  border: 0;
+  background: var(--primary);
+  color: white;
+}

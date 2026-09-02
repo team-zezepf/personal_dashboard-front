@@ -1,0 +1,22 @@
+<article class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">株価確認</h2>
+    </div>
+  </div>
+  <div class="stock">
+    <div class="stock-main">
+      <div class="stock-price">{{ stock().price }}</div>
+      <div class="stock-change">{{ stock().changeRate }}</div>
+    </div>
+    <div class="mini-chart">
+      <svg viewBox="0 0 500 72" preserveAspectRatio="none">
+        <polyline
+          [attr.points]="stock().points"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5" />
+      </svg>
+    </div>
+  </div>
+</article>

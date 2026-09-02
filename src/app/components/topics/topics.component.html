@@ -1,0 +1,16 @@
+<article class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">その他トピック</h2>
+    </div>
+  </div>
+  <div class="topics">
+    @for (topic of topics(); track topic.id) {
+      <div class="topic">
+        <div class="topic-person">{{ topic.author }}</div>
+        <div class="topic-text">{{ topic.title }}</div>
+        <div class="topic-arrow">›</div>
+      </div>
+    }
+  </div>
+</article>

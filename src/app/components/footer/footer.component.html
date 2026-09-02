@@ -1,0 +1,23 @@
+<footer class="save-footer">
+  <div class="footer-content">
+    @if (saveStatus() !== 'idle') {
+      <div
+        class="save-toast"
+        [class.success]="saveStatus() === 'success'"
+        [class.error]="saveStatus() === 'error'"
+        [class.saving]="saveStatus() === 'saving'">
+        @if (saveStatus() === 'saving') {
+          <span class="spinner"></span>
+        }
+        {{ saveMessage() }}
+      </div>
+    }
+    <button
+      class="save-button"
+      [disabled]="isSaving()"
+      type="button"
+      (click)="onSave()">
+      {{ isSaving() ? '保存中...' : 'セーブ' }}
+    </button>
+  </div>
+</footer>

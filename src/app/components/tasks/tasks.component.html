@@ -1,0 +1,37 @@
+<aside class="floating-tasks" [class.collapsed]="isCollapsed()">
+  <div class="floating-task-header">
+    <div class="floating-task-title">本日のタスク</div>
+    <div class="floating-task-progress">{{ completedCount() }} / {{ totalCount() }}</div>
+    <button
+      class="floating-task-toggle"
+      type="button"
+      (click)="toggleCollapse()"
+      [attr.aria-label]="isCollapsed() ? 'タスクウィンドウを展開' : 'タスクウィンドウを縮小'"
+      [attr.aria-expanded]="!isCollapsed()">
+      {{ isCollapsed() ? '+' : '−' }}
+    </button>
+  </div>
+  <div class="floating-task-body">
+    <div class="floating-task-summary">
+      <div class="floating-task-summary-text">
+        <strong>{{ completedCount() }} / {{ totalCount() }} タスク完了</strong>
+        <span>{{ progressRate() }}%</span>
+      </div>
+      <div class="floating-task-progress-bar">
+        <span [style.width.%]="progressRate()"></span>
+      </div>
+    </div>
+    @for (task of tasks(); track task.id) {
+      <div
+        class="floating-task-item"
+        [class.done]="task.status === 'DONE'"
+        (click)="toggleTask(task)">
+        <div class="floating-task-check"></div>
+        <div class="floating-task-name">{{ task.title }}</div>
+        <div class="floating-task-tag">
+          {{ task.status === 'DONE' ? '完了' : (task.description ? task.description : '未完了') }}
+        </div>
+      </div>
+    }
+  </div>
+</aside>

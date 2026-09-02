@@ -1,0 +1,65 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  overflow: hidden;
+  height: 100%;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 14px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stock {
+  padding: 0 22px 22px;
+}
+
+.stock-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 8px 0 18px;
+}
+
+.stock-price {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.stock-change {
+  color: var(--green);
+  font-size: 13px;
+  padding-bottom: 5px;
+}
+
+.mini-chart {
+  height: 72px;
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  background: linear-gradient(to bottom, transparent 49%, #f0f3f5 50%, transparent 51%);
+}
+
+.mini-chart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (max-width: 560px) {
+  .card-header, .stock {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

@@ -1,0 +1,275 @@
+<!-- カレンダーカード -->
+<article class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">カレンダー</h2>
+    </div>
+    <div class="calendar-view-switch" role="group" aria-label="表示切替">
+      <button
+        class="calendar-view-button"
+        [class.active]="viewMode() === 'month'"
+        (click)="setViewMode('month')"
+        type="button">月表示</button>
+      <button
+        class="calendar-view-button"
+        [class.active]="viewMode() === 'week'"
+        (click)="setViewMode('week')"
+        type="button">週表示</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="calendar-head">
+      <div class="month">{{ currentMonthLabel() }}</div>
+      <div class="nav">
+        <button type="button" (click)="prevMonth()">‹</button>
+        <button type="button" (click)="nextMonth()">›</button>
+      </div>
+    </div>
+
+    <div class="weekdays">
+      @for (w of weekdays; track $index) {
+        <div class="weekday">{{ w }}</div>
+      }
+    </div>
+
+    <div class="days">
+      @for (day of calendarDays(); track day.dateString) {
+        <div
+          class="day"
+          [class.muted]="!day.isCurrentMonth"
+          [class.today]="day.isToday"
+          [class.selected]="selectedDate() === day.dateString"
+          (click)="onDayClick(day)"
+          [attr.data-date]="day.dateString">
+          {{ day.dayNumber }}
+          @if (day.hasEvents) {
+            <div class="dot" [class.green]="day.isGreenDot"></div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</article>
+
+<!-- 選択日の予定カード -->
+<article class="card calendar-details-card" [class.active]="selectedDate() !== null">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">選択日の予定</h2>
+    </div>
+  </div>
+  <div class="content">
+    @if (selectedDate()) {
+      <h3 class="calendar-details-title">{{ selectedDateTitle() }}</h3>
+      <div class="calendar-details-date">{{ selectedDateSubTitle() }}</div>
+
+      <div class="calendar-details-list">
+        @if (selectedDateEvents().length === 0) {
+          <div class="calendar-details-empty">
+            この日の予定はありません。
+          </div>
+        } @else {
+          @for (event of selectedDateEvents(); track event.id) {
+            <div class="calendar-event">
+              <div class="calendar-event-time">{{ event.startTime.substring(0, 5) }} - {{ event.endTime.substring(0, 5) }}</div>
+              <div class="calendar-event-name">{{ event.title }}</div>
+              @if (event.description) {
+                <div class="calendar-event-note">{{ event.description }}</div>
+              }
+              <div class="calendar-event-actions">
+                <button class="calendar-event-action" type="button" (click)="openEditModal(event)">編集</button>
+                <button class="calendar-event-action delete" type="button" (click)="deleteSchedule(event)">削除</button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <button class="calendar-details-register" type="button" (click)="openRegisterModal()">
+        ＋ 予定を登録
+      </button>
+    }
+  </div>
+</article>
+
+<!-- 予定登録・編集モーダル -->
+<div class="schedule-modal" [class.open]="isModalOpen()" [attr.aria-hidden]="!isModalOpen()">
+  <div class="schedule-modal-card" role="dialog" aria-modal="true">
+    <div class="schedule-modal-header">
+      <strong>{{ isEditing() ? '予定を編集' : 'タスク・予定を登録' }}</strong>
+      <button class="schedule-modal-close" type="button" (click)="closeModal()" aria-label="閉じる">×</button>
+    </div>
+    <div class="schedule-modal-body">
+      <div class="schedule-form-group">
+        <label for="scheduleTitle">タイトル</label>
+        <input id="scheduleTitle" type="text" [(ngModel)]="modalTitle" placeholder="例：資料作成">
+      </div>
+
+      <div class="schedule-form-group">
+        <label>種別</label>
+        <div class="schedule-type">
+          <label class="schedule-type-option">
+            <input type="radio" name="scheduleType" value="task" [(ngModel)]="modalScheduleType">
+            <span>タスク</span>
+          </label>
+          <label class="schedule-type-option">
+            <input type="radio" name="scheduleType" value="schedule" [(ngModel)]="modalScheduleType">
+            <span>予定</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- タスク期限 -->
+      @if (modalScheduleType === 'task') {
+        <div class="schedule-form-group">
+          <label>期限</label>
+          <div class="schedule-datetime-grid">
+            <input type="date" [(ngModel)]="modalDueDate">
+            <input type="time" [(ngModel)]="modalDueTime">
+          </div>
+        </div>
+      }
+
+      <!-- 予定日時 -->
+      @if (modalScheduleType === 'schedule') {
+        <div class="schedule-form-group">
+          <label>予定日時</label>
+          <div class="schedule-datetime-row">
+            <div class="schedule-datetime-label">開始</div>
+            <input type="date" [(ngModel)]="modalStartDate">
+            <input type="time" [(ngModel)]="modalStartTime">
+            <div class="schedule-datetime-label">終了</div>
+            <input type="date" [(ngModel)]="modalEndDate">
+            <input type="time" [(ngModel)]="modalEndTime">
+          </div>
+        </div>
+      }
+
+      <!-- 繰り返し設定 -->
+      <div class="schedule-form-group">
+        <div class="repeat-box">
+          <label class="repeat-toggle">
+            <input type="checkbox" [(ngModel)]="modalRepeatEnabled">
+            <span>繰り返し</span>
+          </label>
+
+          @if (modalRepeatEnabled) {
+            <div class="repeat-settings">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:7px">繰り返し頻度</div>
+              <div class="repeat-frequency">
+                <label>
+                  <input type="radio" name="repeatFrequency" value="daily" [(ngModel)]="modalRepeatFrequency">
+                  <span>毎日</span>
+                </label>
+                <label>
+                  <input type="radio" name="repeatFrequency" value="weekly" [(ngModel)]="modalRepeatFrequency">
+                  <span>毎週</span>
+                </label>
+                <label>
+                  <input type="radio" name="repeatFrequency" value="monthly" [(ngModel)]="modalRepeatFrequency">
+                  <span>毎月</span>
+                </label>
+              </div>
+
+              @if (modalRepeatFrequency === 'daily') {
+                <div>
+                  <div class="repeat-option-row">
+                    <span>毎日</span>
+                    <input type="time" [(ngModel)]="modalDailyTime">
+                  </div>
+                </div>
+              }
+
+              @if (modalRepeatFrequency === 'weekly') {
+                <div>
+                  <div style="font-size:10px;color:var(--muted)">曜日</div>
+                  <div class="repeat-weekdays">
+                    <label><input type="radio" name="repeatWeekday" value="0" [(ngModel)]="modalRepeatWeekday"><span>日</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="1" [(ngModel)]="modalRepeatWeekday"><span>月</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="2" [(ngModel)]="modalRepeatWeekday"><span>火</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="3" [(ngModel)]="modalRepeatWeekday"><span>水</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="4" [(ngModel)]="modalRepeatWeekday"><span>木</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="5" [(ngModel)]="modalRepeatWeekday"><span>金</span></label>
+                    <label><input type="radio" name="repeatWeekday" value="6" [(ngModel)]="modalRepeatWeekday"><span>土</span></label>
+                  </div>
+                  <div class="repeat-option-row">
+                    <span>毎週</span>
+                    <input type="time" [(ngModel)]="modalWeeklyTime">
+                  </div>
+                </div>
+              }
+
+              @if (modalRepeatFrequency === 'monthly') {
+                <div>
+                  <div class="repeat-option-row">
+                    <span>指定方法</span>
+                    <select [(ngModel)]="modalRepeatMonthlyMode">
+                      <option value="date">日付で指定</option>
+                      <option value="weekday">曜日で指定</option>
+                    </select>
+                  </div>
+                  @if (modalRepeatMonthlyMode === 'date') {
+                    <div>
+                      <div class="repeat-option-row">
+                        <span>毎月</span>
+                        <input type="number" min="1" max="31" [(ngModel)]="modalRepeatMonthlyDate" placeholder="10">
+                        <span>日</span>
+                        <input type="time" [(ngModel)]="modalRepeatMonthlyDateTime">
+                      </div>
+                    </div>
+                  }
+                  @if (modalRepeatMonthlyMode === 'weekday') {
+                    <div>
+                      <div class="repeat-option-row">
+                        <span>毎月</span>
+                        <select [(ngModel)]="modalRepeatMonthlyNth">
+                          <option value="1">第1</option><option value="2">第2</option><option value="3">第3</option><option value="4">第4</option><option value="5">第5</option>
+                        </select>
+                        <select [(ngModel)]="modalRepeatMonthlyWeekday">
+                          <option value="0">日曜日</option><option value="1">月曜日</option><option value="2">火曜日</option><option value="3">水曜日</option><option value="4">木曜日</option><option value="5">金曜日</option><option value="6">土曜日</option>
+                        </select>
+                        <input type="time" [(ngModel)]="modalRepeatMonthlyWeekdayTime">
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="repeat-end">
+                <div class="repeat-end-title">終了</div>
+                <div class="repeat-end-options">
+                  <label class="repeat-end-option">
+                    <input type="radio" name="repeatEndType" value="never" [(ngModel)]="modalRepeatEndType">
+                    <span>無期限</span>
+                  </label>
+                  <label class="repeat-end-option">
+                    <input type="radio" name="repeatEndType" value="date" [(ngModel)]="modalRepeatEndType">
+                    <span>指定日まで</span>
+                    <input type="date" [(ngModel)]="modalRepeatEndDate">
+                  </label>
+                  <label class="repeat-end-option">
+                    <input type="radio" name="repeatEndType" value="count" [(ngModel)]="modalRepeatEndType">
+                    <span>回数指定</span>
+                    <input type="number" min="1" [(ngModel)]="modalRepeatEndCount">
+                    <span>回</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="schedule-form-group">
+        <label for="scheduleNote">メモ</label>
+        <textarea id="scheduleNote" [(ngModel)]="modalNote" placeholder="メモを入力"></textarea>
+      </div>
+    </div>
+    <div class="schedule-modal-footer">
+      <button class="schedule-cancel" type="button" (click)="closeModal()">キャンセル</button>
+      <button class="schedule-register" type="button" (click)="saveModalSchedule()">
+        {{ isEditing() ? '保存する' : '登録する' }}
+      </button>
+    </div>
+  </div>
+</div>
