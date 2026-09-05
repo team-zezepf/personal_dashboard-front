@@ -26,6 +26,9 @@
 
 .schedule {
   position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0 14px;
   padding-bottom: 6px;
 }
 
@@ -37,14 +40,6 @@
   bottom: 8px;
   width: 1px;
   background: var(--line);
-}
-
-.slot {
-  display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 14px;
-  min-height: 70px;
-  position: relative;
 }
 
 .time {

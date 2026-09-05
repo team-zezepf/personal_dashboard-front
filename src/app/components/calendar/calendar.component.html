@@ -1,5 +1,5 @@
 <!-- カレンダーカード -->
-<article class="card">
+<article class="card calendar-card" [class.week-view-active]="viewMode() === 'week'">
   <div class="card-header">
     <div>
       <h2 class="card-title">カレンダー</h2>
@@ -18,36 +18,78 @@
     </div>
   </div>
   <div class="content">
-    <div class="calendar-head">
-      <div class="month">{{ currentMonthLabel() }}</div>
-      <div class="nav">
-        <button type="button" (click)="prevMonth()">‹</button>
-        <button type="button" (click)="nextMonth()">›</button>
-      </div>
-    </div>
-
-    <div class="weekdays">
-      @for (w of weekdays; track $index) {
-        <div class="weekday">{{ w }}</div>
-      }
-    </div>
-
-    <div class="days">
-      @for (day of calendarDays(); track day.dateString) {
-        <div
-          class="day"
-          [class.muted]="!day.isCurrentMonth"
-          [class.today]="day.isToday"
-          [class.selected]="selectedDate() === day.dateString"
-          (click)="onDayClick(day)"
-          [attr.data-date]="day.dateString">
-          {{ day.dayNumber }}
-          @if (day.hasEvents) {
-            <div class="dot" [class.green]="day.isGreenDot"></div>
-          }
+    @if (viewMode() === 'month') {
+      <div class="calendar-head">
+        <div class="month">{{ currentMonthLabel() }}</div>
+        <div class="nav">
+          <button type="button" (click)="prevMonth()">‹</button>
+          <button type="button" (click)="nextMonth()">›</button>
         </div>
-      }
-    </div>
+      </div>
+
+      <div class="weekdays">
+        @for (w of weekdays; track $index) {
+          <div class="weekday">{{ w }}</div>
+        }
+      </div>
+
+      <div class="days">
+        @for (day of calendarDays(); track day.dateString) {
+          <div
+            class="day"
+            [class.muted]="!day.isCurrentMonth"
+            [class.today]="day.isToday"
+            [class.selected]="selectedDate() === day.dateString"
+            (click)="onDayClick(day)"
+            [attr.data-date]="day.dateString">
+            {{ day.dayNumber }}
+            @if (day.hasEvents) {
+              <div class="dot" [class.green]="day.isGreenDot"></div>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="calendar-head">
+        <div class="month">{{ weekRangeLabel() }}</div>
+        <div class="nav">
+          <button type="button" (click)="prevWeek()">‹</button>
+          <button type="button" (click)="nextWeek()">›</button>
+        </div>
+      </div>
+
+      <div
+        class="week-grid"
+        [style.grid-template-rows]="'auto repeat(' + (weekTimes.length * weekSubRowsPerHour) + ', ' + weekSubRowHeightPx + 'px)'">
+        <div [style.grid-row]="1" [style.grid-column]="1"></div>
+        @for (day of weekDays(); track day.dateString; let dayIndex = $index) {
+          <div class="week-day-header" [class.today]="day.isToday" [style.grid-row]="1" [style.grid-column]="dayIndex + 2">
+            {{ day.weekdayLabel }}
+            <strong>{{ day.dayNumber }}</strong>
+          </div>
+        }
+        @for (time of weekTimes; track time; let rowIndex = $index) {
+          <div class="week-time" [style.grid-row]="(rowIndex * weekSubRowsPerHour + 2) + ' / span ' + weekSubRowsPerHour" [style.grid-column]="1">{{ time }}</div>
+          @for (day of weekDays(); track day.dateString; let dayIndex = $index) {
+            <div
+              class="week-cell"
+              [style.grid-row]="(rowIndex * weekSubRowsPerHour + 2) + ' / span ' + weekSubRowsPerHour"
+              [style.grid-column]="dayIndex + 2"
+              (click)="onWeekCellClick(day.dateString, time)"></div>
+          }
+        }
+        @for (block of weekEventBlocks(); track block.id) {
+          <button
+            class="week-event"
+            type="button"
+            [style.grid-column]="block.column"
+            [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan"
+            (click)="onWeekEventClick(block.schedule)">
+            {{ block.schedule.title }}
+          </button>
+        }
+      </div>
+    }
   </div>
 </article>
 
@@ -266,6 +308,9 @@
       </div>
     </div>
     <div class="schedule-modal-footer">
+      @if (isEditing()) {
+        <button class="schedule-delete" type="button" (click)="deleteCurrentSchedule()">削除</button>
+      }
       <button class="schedule-cancel" type="button" (click)="closeModal()">キャンセル</button>
       <button class="schedule-register" type="button" (click)="saveModalSchedule()">
         {{ isEditing() ? '保存する' : '登録する' }}
