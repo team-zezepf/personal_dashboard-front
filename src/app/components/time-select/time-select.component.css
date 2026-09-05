@@ -1,0 +1,31 @@
+:host {
+  display: contents;
+}
+
+.time-select {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-select select {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #dce3e8;
+  border-radius: 8px;
+  padding: 9px 6px;
+  font: inherit;
+  font-size: 12px;
+  background: white;
+  outline: none;
+}
+
+.time-select select:focus {
+  border-color: #8ed6ec;
+  box-shadow: 0 0 0 3px rgba(19, 169, 223, 0.08);
+}
+
+.time-select-colon {
+  color: var(--muted);
+  font-weight: 700;
+}
