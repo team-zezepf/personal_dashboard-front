@@ -125,7 +125,7 @@
           <label>期限</label>
           <div class="schedule-datetime-grid">
             <input type="date" [(ngModel)]="modalDueDate">
-            <input type="time" [(ngModel)]="modalDueTime">
+            <app-time-select [(ngModel)]="modalDueTime"></app-time-select>
           </div>
         </div>
       }
@@ -137,10 +137,10 @@
           <div class="schedule-datetime-row">
             <div class="schedule-datetime-label">開始</div>
             <input type="date" [(ngModel)]="modalStartDate">
-            <input type="time" [(ngModel)]="modalStartTime">
+            <app-time-select [(ngModel)]="modalStartTime"></app-time-select>
             <div class="schedule-datetime-label">終了</div>
             <input type="date" [(ngModel)]="modalEndDate">
-            <input type="time" [(ngModel)]="modalEndTime">
+            <app-time-select [(ngModel)]="modalEndTime"></app-time-select>
           </div>
         </div>
       }
@@ -175,7 +175,7 @@
                 <div>
                   <div class="repeat-option-row">
                     <span>毎日</span>
-                    <input type="time" [(ngModel)]="modalDailyTime">
+                    <app-time-select [(ngModel)]="modalDailyTime"></app-time-select>
                   </div>
                 </div>
               }
@@ -194,7 +194,7 @@
                   </div>
                   <div class="repeat-option-row">
                     <span>毎週</span>
-                    <input type="time" [(ngModel)]="modalWeeklyTime">
+                    <app-time-select [(ngModel)]="modalWeeklyTime"></app-time-select>
                   </div>
                 </div>
               }
@@ -214,7 +214,7 @@
                         <span>毎月</span>
                         <input type="number" min="1" max="31" [(ngModel)]="modalRepeatMonthlyDate" placeholder="10">
                         <span>日</span>
-                        <input type="time" [(ngModel)]="modalRepeatMonthlyDateTime">
+                        <app-time-select [(ngModel)]="modalRepeatMonthlyDateTime"></app-time-select>
                       </div>
                     </div>
                   }
@@ -228,7 +228,7 @@
                         <select [(ngModel)]="modalRepeatMonthlyWeekday">
                           <option value="0">日曜日</option><option value="1">月曜日</option><option value="2">火曜日</option><option value="3">水曜日</option><option value="4">木曜日</option><option value="5">金曜日</option><option value="6">土曜日</option>
                         </select>
-                        <input type="time" [(ngModel)]="modalRepeatMonthlyWeekdayTime">
+                        <app-time-select [(ngModel)]="modalRepeatMonthlyWeekdayTime"></app-time-select>
                       </div>
                     </div>
                   }

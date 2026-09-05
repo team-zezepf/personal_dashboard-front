@@ -1,0 +1,13 @@
+<div class="time-select">
+  <select [value]="hour" [disabled]="disabled" (change)="onHourChange($event)" aria-label="時">
+    @for (h of hours; track h) {
+      <option [value]="h">{{ h }}</option>
+    }
+  </select>
+  <span class="time-select-colon">:</span>
+  <select [value]="minute" [disabled]="disabled" (change)="onMinuteChange($event)" aria-label="分">
+    @for (m of minutes; track m) {
+      <option [value]="m">{{ m }}</option>
+    }
+  </select>
+</div>

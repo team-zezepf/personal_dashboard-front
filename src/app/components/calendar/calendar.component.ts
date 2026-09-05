@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
 import { Schedule } from '../../models/dashboard.models';
+import { TimeSelectComponent } from '../time-select/time-select.component';
 
 interface CalendarDay {
   dateString: string;
@@ -16,7 +17,7 @@ interface CalendarDay {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimeSelectComponent],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
 })
@@ -227,20 +228,38 @@ export class CalendarComponent {
 
   openRegisterModal() {
     const targetDate = this.selectedDate() || this.dashboardService.currentDate();
+    const defaultTime = this.getDefaultTime(targetDate);
     this.isEditing.set(false);
     this.editingScheduleId.set(null);
     this.modalTitle = '';
     this.modalNote = '';
     this.modalScheduleType = 'task';
     this.modalDueDate = targetDate;
-    this.modalDueTime = '';
+    this.modalDueTime = defaultTime;
     this.modalStartDate = targetDate;
-    this.modalStartTime = '10:00';
+    this.modalStartTime = defaultTime;
     this.modalEndDate = targetDate;
-    this.modalEndTime = '11:00';
+    this.modalEndTime = this.addOneHour(defaultTime);
     this.modalRepeatEnabled = false;
     this.modalRepeatFrequency = 'daily';
     this.isModalOpen.set(true);
+  }
+
+  // 選択日が当日なら現在時刻(5分単位切り捨て・時刻選択の範囲内にクランプ)、当日以外は10:00
+  private getDefaultTime(targetDate: string): string {
+    if (targetDate !== this.dashboardService.currentDate()) {
+      return '10:00';
+    }
+    const now = new Date();
+    const hour = Math.min(Math.max(now.getHours(), 6), 23);
+    const minute = Math.floor(now.getMinutes() / 5) * 5;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  }
+
+  private addOneHour(time: string): string {
+    const [hour, minute] = time.split(':').map(Number);
+    const newHour = Math.min(hour + 1, 23);
+    return `${newHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
   openEditModal(schedule: Schedule) {
