@@ -5,18 +5,17 @@
     </div>
   </div>
   <div class="content">
-    <div class="schedule">
-      @for (slot of timelineSlots(); track $index) {
-        <div class="slot">
-          <div class="time">{{ slot.timeLabel }}</div>
-          @if (slot.schedule) {
-            <div class="event" [class.active]="slot.isActive">
-              <div class="event-title">{{ slot.schedule.title }}</div>
-              <div class="event-meta">{{ slot.schedule.startTime.substring(0, 5) }} - {{ slot.schedule.endTime.substring(0, 5) }}</div>
-            </div>
-          } @else {
-            <div class="empty"></div>
-          }
+    <div class="schedule" [style.grid-template-rows]="'repeat(' + (timelineHours().length * 12) + ', ' + subRowHeightPx + 'px)'">
+      @for (row of timelineHours(); track row.hour) {
+        <div class="time" [style.grid-row]="(row.rowIndex * 12 + 1) + ' / span 12'">{{ row.timeLabel }}</div>
+        @if (!row.hasEvent) {
+          <div class="empty" [style.grid-row]="(row.rowIndex * 12 + 1) + ' / span 12'"></div>
+        }
+      }
+      @for (block of timelineEventBlocks(); track block.id) {
+        <div class="event" [class.active]="block.isActive" [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan">
+          <div class="event-title">{{ block.schedule.title }}</div>
+          <div class="event-meta">{{ block.schedule.startTime.substring(0, 5) }} - {{ block.schedule.endTime.substring(0, 5) }}</div>
         </div>
       }
     </div>

@@ -145,6 +145,75 @@
   background: var(--green);
 }
 
+/* 週表示 */
+.calendar-card.week-view-active {
+  grid-column: span 2;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 45px repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.week-grid > div {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.week-day-header {
+  padding: 7px 2px;
+  text-align: center;
+  font-size: 10px;
+  background: #fafbfc;
+}
+
+.week-day-header strong {
+  display: block;
+  font-size: 13px;
+}
+
+.week-day-header.today {
+  background: #eaf8fd;
+  color: var(--primary-dark);
+}
+
+.week-time {
+  min-height: 26px;
+  padding: 4px 3px;
+  text-align: right;
+  line-height: 14px;
+  color: var(--muted);
+  font-size: 10px;
+  background: #fafbfc;
+}
+
+.week-cell {
+  min-height: 26px;
+  padding: 2px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.week-cell:hover {
+  background: #f5f8fa;
+}
+
+.week-event {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  border: 1px solid #bce7f5;
+  border-radius: 6px;
+  background: #eaf8fd;
+  color: var(--primary-dark);
+  font-size: 10px;
+  line-height: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
 /* 選択日の予定カード */
 .calendar-details-card {
   min-width: 0;
@@ -561,6 +630,18 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.schedule-delete {
+  margin-right: auto;
+  border: 1px solid var(--line);
+  background: white;
+  color: #d05a5a;
+}
+
+.schedule-delete:hover {
+  background: #fff4f4;
+  border-color: #f0c5c5;
 }
 
 .schedule-cancel {
