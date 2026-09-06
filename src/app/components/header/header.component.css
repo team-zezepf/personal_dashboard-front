@@ -36,16 +36,6 @@
   letter-spacing: 0.04em;
 }
 
-.page-title-caret {
-  font-size: 11px;
-  opacity: 0.85;
-  transition: transform 0.15s ease;
-}
-
-.page-title-caret.open {
-  transform: rotate(180deg);
-}
-
 .title-menu {
   position: absolute;
   top: calc(100% + 10px);

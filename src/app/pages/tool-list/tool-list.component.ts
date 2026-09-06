@@ -35,7 +35,7 @@ export class ToolListPageComponent {
   readonly allRoles: Role[] = ['GENERAL', 'ADMIN', 'DEVELOPER'];
 
   readonly tools: ToolRow[] = [
-    { name: 'ダッシュボード', path: '/', roles: new Set(['GENERAL', 'ADMIN', 'DEVELOPER']) },
+    { name: 'Dashboard', path: '/', roles: new Set(['GENERAL', 'ADMIN', 'DEVELOPER']) },
     { name: 'ユーザー管理', path: '/users', roles: new Set(['ADMIN', 'DEVELOPER']) },
     { name: 'ユーザー登録', path: '/register', roles: new Set(['GENERAL', 'ADMIN', 'DEVELOPER']) }
   ];

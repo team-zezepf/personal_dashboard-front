@@ -8,7 +8,6 @@
       aria-haspopup="true"
     >
       <span class="page-title-text">{{ pageTitle }}</span>
-      <span class="page-title-caret" [class.open]="isTitleMenuOpen()">▾</span>
     </button>
 
     @if (isTitleMenuOpen()) {
@@ -20,7 +19,7 @@
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           (click)="closeTitleMenu()"
-        >ダッシュボード</a>
+        >Dashboard</a>
         <a class="title-menu-item" role="menuitem" routerLink="/users" routerLinkActive="active" (click)="closeTitleMenu()">ユーザー管理</a>
         <a class="title-menu-item" role="menuitem" routerLink="/tools" routerLinkActive="active" (click)="closeTitleMenu()">ツール一覧</a>
       </div>
