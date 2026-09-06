@@ -1,0 +1,398 @@
+.page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.page-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.add-button {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  opacity: 0.92;
+}
+
+/* Search */
+.search-card {
+  margin-bottom: 16px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.search-form {
+  display: flex;
+  gap: 12px;
+}
+
+.search-input {
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input:focus,
+.role-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(19, 169, 223, 0.12);
+}
+
+.role-select {
+  width: 150px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.search-button {
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background: #e5e9ee;
+}
+
+/* User table */
+.user-card {
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.result-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.state-message {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.state-message.error {
+  color: var(--red);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  height: 62px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 13px;
+}
+
+th {
+  height: 46px;
+  background: #fafbfc;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.username {
+  font-weight: 600;
+}
+
+.email {
+  color: var(--muted);
+}
+
+/* Role badge */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-general {
+  background: #eef2f6;
+  color: #596575;
+}
+
+.role-admin {
+  background: #fff4df;
+  color: #c27a00;
+}
+
+.role-developer {
+  background: #e5f7ef;
+  color: #16875a;
+}
+
+.date {
+  color: var(--muted);
+}
+
+/* Actions */
+.action-button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  background: #f5fbfe;
+  border-color: var(--primary);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px;
+}
+
+.page-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.page-button:hover {
+  border-color: var(--primary);
+}
+
+.page-button.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Role edit modal */
+.role-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 55, 0.35);
+  z-index: 2000;
+  padding: 20px;
+}
+
+.role-modal-card {
+  width: min(380px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
+  overflow: hidden;
+}
+
+.role-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.role-modal-header strong {
+  font-size: 15px;
+}
+
+.role-modal-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: #66727f;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.role-modal-body {
+  padding: 18px;
+}
+
+.role-modal-user {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.role-modal-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-modal-body .role-select {
+  width: 100%;
+}
+
+.form-error {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(239, 91, 91, 0.1);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 18px;
+}
+
+.role-modal-footer button {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancel-button {
+  border: 1px solid var(--line);
+  background: white;
+  color: #66727f;
+}
+
+.role-modal-footer .save-button {
+  border: 0;
+  background: var(--primary);
+  color: white;
+}
+
+.role-modal-footer .save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .search-form {
+    flex-direction: column;
+  }
+
+  .role-select {
+    width: 100%;
+  }
+
+  .search-button {
+    width: 100%;
+  }
+
+  .user-card {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .add-button {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+}

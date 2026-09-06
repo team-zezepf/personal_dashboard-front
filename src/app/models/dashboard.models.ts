@@ -71,3 +71,14 @@ export interface SaveResult {
   message?: string;
   gitCommitted: boolean;
 }
+
+export type UserRole = 'GENERAL' | 'ADMIN' | 'DEVELOPER' | string;
+
+export interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}

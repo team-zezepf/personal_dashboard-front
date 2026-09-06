@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
-const LOGIN_ENDPOINT_PATH = '/api/auth/login';
+const AUTH_ENDPOINT_PATH = '/api/auth/';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -15,8 +15,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorizedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      const isLoginRequest = req.url.includes(LOGIN_ENDPOINT_PATH);
-      if (!isLoginRequest && (error.status === 401 || error.status === 403)) {
+      const isAuthRequest = req.url.includes(AUTH_ENDPOINT_PATH);
+      if (!isAuthRequest && (error.status === 401 || error.status === 403)) {
         authService.logout();
       }
       return throwError(() => error);

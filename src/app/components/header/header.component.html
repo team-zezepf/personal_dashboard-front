@@ -1,5 +1,9 @@
 <header class="topbar">
   <div class="brand">MY DASHBOARD</div>
+  <nav class="nav-links">
+    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">ダッシュボード</a>
+    <a class="nav-link" routerLink="/users" routerLinkActive="active">ユーザー管理</a>
+  </nav>
   <div class="date">{{ formattedDate() }}</div>
   <button class="logout-button" type="button" (click)="onLogout()">ログアウト</button>
 </header>

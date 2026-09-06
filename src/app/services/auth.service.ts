@@ -23,12 +23,23 @@ const USER_KEY = 'auth_user';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private endpoint = 'http://localhost:8080/api/auth/login';
+  private authBase = 'http://localhost:8080/api/auth';
 
   readonly currentUser = signal<AuthUser | null>(this.readStoredUser());
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(this.endpoint, { email, password }).pipe(
+    return this.http.post<LoginResponse>(`${this.authBase}/login`, { email, password }).pipe(
+      tap(res => this.storeSession(res))
+    );
+  }
+
+  register(email: string, name: string, password: string, passwordConfirm: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.authBase}/register`, {
+      email,
+      name,
+      password,
+      passwordConfirm
+    }).pipe(
       tap(res => this.storeSession(res))
     );
   }

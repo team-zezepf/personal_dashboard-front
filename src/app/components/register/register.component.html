@@ -1,9 +1,9 @@
-<main class="login-page">
-  <section class="login-card">
+<main class="register-page">
+  <section class="register-card">
 
     <div class="brand">
       <h1 class="brand-name">MY DASHBOARD</h1>
-      <p class="brand-subtitle">ログインしてください</p>
+      <p class="brand-subtitle">アカウントを新規登録</p>
     </div>
 
     <form (ngSubmit)="onSubmit()">
@@ -29,6 +29,22 @@
       </div>
 
       <div class="form-group">
+        <label class="form-label" for="username">
+          ユーザー名
+        </label>
+        <input
+          class="form-input"
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="username"
+          placeholder="ユーザー名を入力"
+          autocomplete="username"
+          required
+        >
+      </div>
+
+      <div class="form-group">
         <label class="form-label" for="password">
           パスワード
         </label>
@@ -39,25 +55,41 @@
           name="password"
           [(ngModel)]="password"
           placeholder="パスワードを入力"
-          autocomplete="current-password"
+          autocomplete="new-password"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password-confirm">
+          パスワード（確認）
+        </label>
+        <input
+          class="form-input"
+          type="password"
+          id="password-confirm"
+          name="passwordConfirm"
+          [(ngModel)]="passwordConfirm"
+          placeholder="パスワードを再入力"
+          autocomplete="new-password"
           required
         >
       </div>
 
       <button
-        class="login-button"
+        class="register-button"
         type="submit"
         [disabled]="isSubmitting()"
       >
-        {{ isSubmitting() ? 'ログイン中...' : 'ログイン' }}
+        {{ isSubmitting() ? '登録中...' : 'アカウントを登録' }}
       </button>
 
       <button
-        class="register-button"
+        class="back-button"
         type="button"
-        (click)="goToRegister()"
+        (click)="goToLogin()"
       >
-        アカウント新規登録
+        ログイン画面に戻る
       </button>
 
     </form>

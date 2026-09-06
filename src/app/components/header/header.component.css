@@ -14,6 +14,32 @@
   letter-spacing: 0.04em;
 }
 
+.nav-links {
+  display: flex;
+  gap: 4px;
+  margin-left: 32px;
+}
+
+.nav-link {
+  padding: 6px 12px;
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 .date {
   margin-left: auto;
   font-size: 13px;
@@ -38,8 +64,23 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
+@media (max-width: 700px) {
+  .date {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .topbar {
     padding: 0 18px;
+  }
+
+  .nav-links {
+    margin-left: 16px;
+  }
+
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 12px;
   }
 }
