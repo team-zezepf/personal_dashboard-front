@@ -1,6 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -11,6 +12,7 @@ import { DashboardService } from '../../services/dashboard.service';
 })
 export class HeaderComponent {
   private dashboardService = inject(DashboardService);
+  private authService = inject(AuthService);
 
   readonly formattedDate = computed(() => {
     const dateStr = this.dashboardService.currentDate();
@@ -18,4 +20,8 @@ export class HeaderComponent {
     const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${weekdays[date.getDay()]}）`;
   });
+
+  onLogout(): void {
+    this.authService.logout();
+  }
 }

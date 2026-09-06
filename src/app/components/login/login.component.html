@@ -1,0 +1,62 @@
+<main class="login-page">
+  <section class="login-card">
+
+    <div class="brand">
+      <h1 class="brand-name">MY DASHBOARD</h1>
+      <p class="brand-subtitle">ログインしてください</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+
+      @if (errorMessage()) {
+        <div class="form-error">{{ errorMessage() }}</div>
+      }
+
+      <div class="form-group">
+        <label class="form-label" for="email">
+          メールアドレス
+        </label>
+        <input
+          class="form-input"
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="example@example.com"
+          autocomplete="email"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">
+          パスワード
+        </label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="パスワードを入力"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button
+        class="login-button"
+        type="submit"
+        [disabled]="isSubmitting()"
+      >
+        {{ isSubmitting() ? 'ログイン中...' : 'ログイン' }}
+      </button>
+
+    </form>
+
+    <div class="footer">
+      © 2026 MY DASHBOARD
+    </div>
+
+  </section>
+</main>
