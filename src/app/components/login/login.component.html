@@ -44,6 +44,10 @@
         >
       </div>
 
+      <a class="forgot-password-link" routerLink="/forgot-password">
+        パスワードを忘れた場合
+      </a>
+
       <button
         class="login-button"
         type="submit"
@@ -51,10 +55,6 @@
       >
         {{ isSubmitting() ? 'ログイン中...' : 'ログイン' }}
       </button>
-
-      <a class="forgot-password-link" routerLink="/forgot-password">
-        パスワードを忘れた場合
-      </a>
 
       <button
         class="register-button"

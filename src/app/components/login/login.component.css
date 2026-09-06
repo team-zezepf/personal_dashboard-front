@@ -113,10 +113,10 @@
 
 .forgot-password-link {
   display: block;
-  margin-top: 14px;
+  margin: -8px 0 16px;
   color: var(--primary-dark);
   font-size: 12px;
-  text-align: center;
+  text-align: right;
   text-decoration: none;
 }
 
