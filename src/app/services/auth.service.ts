@@ -62,6 +62,18 @@ export class AuthService {
     this.router.navigateByUrl('/login');
   }
 
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.authBase}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string, newPasswordConfirm: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.authBase}/reset-password`, {
+      token,
+      newPassword,
+      newPasswordConfirm
+    });
+  }
+
   // アカウント情報編集など、ログイン以外の経路でユーザー情報が更新された際に
   // 保持しているスナップショット(localStorage/シグナル)を追従させる
   updateStoredUser(partial: Partial<AuthUser>): void {
