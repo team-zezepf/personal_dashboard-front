@@ -12,16 +12,21 @@
 
     @if (isTitleMenuOpen()) {
       <div class="title-menu" role="menu">
-        <a
-          class="title-menu-item"
-          role="menuitem"
-          routerLink="/"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          (click)="closeTitleMenu()"
-        >Dashboard</a>
-        <a class="title-menu-item" role="menuitem" routerLink="/users" routerLinkActive="active" (click)="closeTitleMenu()">ユーザー管理</a>
-        <a class="title-menu-item" role="menuitem" routerLink="/tools" routerLinkActive="active" (click)="closeTitleMenu()">ツール一覧</a>
+        @for (item of visibleTitleMenuItems(); track item.path) {
+          <a
+            class="title-menu-item"
+            role="menuitem"
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: !!item.exact }"
+            (click)="closeTitleMenu()"
+          >
+            <span>{{ item.label }}</span>
+            @if (item.elevatedOnly) {
+              <span class="title-menu-item-icon" title="管理者・開発者向け">🔧</span>
+            }
+          </a>
+        }
       </div>
     }
   </div>

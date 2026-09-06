@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string | number;
   name: string;
   email: string;
+  role: string;
   avatarFilename?: string | null;
 }
 

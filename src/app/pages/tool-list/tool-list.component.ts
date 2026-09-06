@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
-
-type Role = 'GENERAL' | 'ADMIN' | 'DEVELOPER';
+import { Role, TOOL_ACCESS } from '../../config/tool-access';
 
 interface ToolRow {
   name: string;
@@ -35,9 +34,9 @@ export class ToolListPageComponent {
   readonly allRoles: Role[] = ['GENERAL', 'ADMIN', 'DEVELOPER'];
 
   readonly tools: ToolRow[] = [
-    { name: 'Dashboard', path: '/', roles: new Set(['GENERAL', 'ADMIN', 'DEVELOPER']) },
-    { name: 'ユーザー管理', path: '/users', roles: new Set(['ADMIN', 'DEVELOPER']) },
-    { name: 'ユーザー登録', path: '/register', roles: new Set(['GENERAL', 'ADMIN', 'DEVELOPER']) }
+    { name: 'Dashboard', path: '/', roles: TOOL_ACCESS['/'] },
+    { name: 'ユーザー管理', path: '/users', roles: TOOL_ACCESS['/users'] },
+    { name: 'ユーザー登録', path: '/register', roles: TOOL_ACCESS['/register'] }
   ];
 
   isAllowed(tool: ToolRow, role: Role): boolean {

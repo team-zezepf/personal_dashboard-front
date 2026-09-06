@@ -50,7 +50,10 @@
 }
 
 .title-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
   padding: 10px 12px;
   border: none;
@@ -67,6 +70,11 @@
 
 .title-menu-item:hover {
   background: #f2f6f9;
+}
+
+.title-menu-item-icon {
+  font-size: 13px;
+  line-height: 1;
 }
 
 .title-menu-item.active {

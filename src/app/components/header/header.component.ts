@@ -4,6 +4,20 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../services/auth.service';
 import { avatarUrl } from '../../utils/avatar';
+import { TOOL_ACCESS, isElevatedOnly, isRoleAllowed } from '../../config/tool-access';
+
+interface TitleMenuItem {
+  label: string;
+  path: string;
+  exact?: boolean;
+  elevatedOnly: boolean;
+}
+
+const TITLE_MENU_ITEMS: TitleMenuItem[] = [
+  { label: 'Dashboard', path: '/', exact: true, elevatedOnly: isElevatedOnly(TOOL_ACCESS['/']) },
+  { label: 'ユーザー管理', path: '/users', elevatedOnly: isElevatedOnly(TOOL_ACCESS['/users']) },
+  { label: 'ツール一覧', path: '/tools', elevatedOnly: isElevatedOnly(TOOL_ACCESS['/tools']) }
+];
 
 @Component({
   selector: 'app-header',
@@ -31,6 +45,12 @@ export class HeaderComponent {
   });
 
   readonly avatarSrc = computed(() => avatarUrl(this.currentUser()?.avatarFilename));
+
+  // ログイン中ユーザーのロールでアクセスできない項目はメニューから除外する
+  readonly visibleTitleMenuItems = computed(() => {
+    const role = this.currentUser()?.role;
+    return TITLE_MENU_ITEMS.filter(item => isRoleAllowed(role, TOOL_ACCESS[item.path]));
+  });
 
   toggleTitleMenu(): void {
     this.isTitleMenuOpen.update(v => !v);
