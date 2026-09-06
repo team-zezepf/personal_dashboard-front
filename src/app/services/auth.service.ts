@@ -33,13 +33,25 @@ export class AuthService {
     );
   }
 
-  register(email: string, name: string, password: string, passwordConfirm: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.authBase}/register`, {
-      email,
-      name,
-      password,
-      passwordConfirm
-    }).pipe(
+  register(
+    email: string,
+    name: string,
+    password: string,
+    passwordConfirm: string,
+    avatar?: File | null
+  ): Observable<LoginResponse> {
+    // 画像(任意)を同時に送るためmultipart/form-dataで送信する。
+    // Content-Typeは付与しない(ブラウザがboundary付きで自動設定するため)。
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('name', name);
+    formData.append('password', password);
+    formData.append('passwordConfirm', passwordConfirm);
+    if (avatar) {
+      formData.append('avatar', avatar, avatar.name);
+    }
+
+    return this.http.post<LoginResponse>(`${this.authBase}/register`, formData).pipe(
       tap(res => this.storeSession(res))
     );
   }

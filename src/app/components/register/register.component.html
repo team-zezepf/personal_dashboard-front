@@ -45,6 +45,23 @@
       </div>
 
       <div class="form-group">
+        <label class="form-label" for="avatar">
+          プロフィール画像（任意）
+        </label>
+        <input
+          class="form-input file-input"
+          type="file"
+          id="avatar"
+          name="avatar"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          (change)="onAvatarSelected($event)"
+        >
+        @if (avatarPreviewUrl(); as previewUrl) {
+          <img class="avatar-preview" [src]="previewUrl" alt="選択した画像のプレビュー">
+        }
+      </div>
+
+      <div class="form-group">
         <label class="form-label" for="password">
           パスワード
         </label>

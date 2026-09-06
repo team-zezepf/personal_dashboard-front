@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -20,8 +22,34 @@ export class RegisterComponent {
   password = '';
   passwordConfirm = '';
 
+  avatarFile: File | null = null;
+  readonly avatarPreviewUrl = signal<string | null>(null);
+
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal('');
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    if (file && file.size > MAX_AVATAR_SIZE_BYTES) {
+      this.errorMessage.set('画像ファイルは5MB以下にしてください');
+      input.value = '';
+      this.setAvatarFile(null);
+      return;
+    }
+
+    this.setAvatarFile(file);
+  }
+
+  private setAvatarFile(file: File | null): void {
+    const previous = this.avatarPreviewUrl();
+    if (previous) {
+      URL.revokeObjectURL(previous);
+    }
+    this.avatarFile = file;
+    this.avatarPreviewUrl.set(file ? URL.createObjectURL(file) : null);
+  }
 
   onSubmit(): void {
     const email = this.email.trim();
@@ -45,7 +73,7 @@ export class RegisterComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    this.authService.register(email, name, password, passwordConfirm).subscribe({
+    this.authService.register(email, name, password, passwordConfirm, this.avatarFile).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.router.navigateByUrl('/');
