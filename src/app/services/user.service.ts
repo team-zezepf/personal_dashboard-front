@@ -21,6 +21,7 @@ export class UserService {
           name
           email
           role
+          avatarFilename
           createdAt
           updatedAt
         }
@@ -50,6 +51,7 @@ export class UserService {
           name
           email
           role
+          avatarFilename
           createdAt
           updatedAt
         }

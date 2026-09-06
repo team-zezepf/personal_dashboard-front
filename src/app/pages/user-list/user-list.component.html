@@ -56,6 +56,7 @@
       <table>
         <thead>
           <tr>
+            <th class="avatar-col"></th>
             <th>ユーザー名</th>
             <th>メールアドレス</th>
             <th>ロール</th>
@@ -67,6 +68,9 @@
         <tbody>
           @for (user of pagedUsers(); track user.id) {
             <tr>
+              <td class="avatar-col">
+                <img class="user-avatar" [src]="avatarSrc(user)" alt="{{ user.name }}のアイコン">
+              </td>
               <td>
                 <span class="username">{{ user.name }}</span>
               </td>
@@ -89,7 +93,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="state-message">該当するユーザーがいません。</td>
+              <td colspan="6" class="state-message">該当するユーザーがいません。</td>
             </tr>
           }
         </tbody>

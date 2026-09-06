@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string | number;
   name: string;
   email: string;
+  avatarFilename?: string | null;
 }
 
 interface LoginResponse {

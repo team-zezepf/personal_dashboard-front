@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { UserService } from '../../services/user.service';
 import { User, UserRole } from '../../models/dashboard.models';
+import { avatarUrl } from '../../utils/avatar';
 
 const PAGE_SIZE = 10;
 
@@ -89,6 +90,10 @@ export class UserListPageComponent implements OnInit {
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
+  }
+
+  avatarSrc(user: User): string {
+    return avatarUrl(user.avatarFilename);
   }
 
   roleLabel(role: string): string {

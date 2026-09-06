@@ -79,6 +79,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  avatarFilename?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
