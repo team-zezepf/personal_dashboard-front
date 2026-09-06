@@ -1,0 +1,106 @@
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+.page-title {
+  margin: 0 0 20px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.05);
+  overflow: hidden;
+}
+
+.tool-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tool-table th,
+.tool-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 14px;
+}
+
+.tool-table th {
+  background: #fafbfc;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tool-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tool-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.tool-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tool-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.role-general {
+  background: #eef2f6;
+  color: #52606d;
+}
+
+.role-admin {
+  background: #fff3d6;
+  color: #9a6700;
+}
+
+.role-developer {
+  background: #e6f6ed;
+  color: #18794e;
+}
+
+footer {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .container {
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+
+  .tool-table th,
+  .tool-table td {
+    padding: 13px 14px;
+  }
+
+  .tool-table th:last-child,
+  .tool-table td:last-child {
+    min-width: 180px;
+  }
+}
