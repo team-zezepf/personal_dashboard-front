@@ -62,6 +62,16 @@ export class AuthService {
     this.router.navigateByUrl('/login');
   }
 
+  // アカウント情報編集など、ログイン以外の経路でユーザー情報が更新された際に
+  // 保持しているスナップショット(localStorage/シグナル)を追従させる
+  updateStoredUser(partial: Partial<AuthUser>): void {
+    const current = this.currentUser();
+    if (!current) return;
+    const updated: AuthUser = { ...current, ...partial };
+    this.safeStorageSet(USER_KEY, JSON.stringify(updated));
+    this.currentUser.set(updated);
+  }
+
   getToken(): string | null {
     return this.safeStorageGet(TOKEN_KEY);
   }

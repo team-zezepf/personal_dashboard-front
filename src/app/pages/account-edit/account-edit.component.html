@@ -1,0 +1,112 @@
+<app-header></app-header>
+
+<main class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">アカウント情報編集</h1>
+      <p class="page-description">
+        ユーザー名・プロフィール画像・パスワードを変更できます。
+      </p>
+    </div>
+  </div>
+
+  <section class="account-card">
+    <form (ngSubmit)="onSubmit()">
+
+      @if (errorMessage()) {
+        <div class="form-error">{{ errorMessage() }}</div>
+      }
+      @if (successMessage()) {
+        <div class="form-success">{{ successMessage() }}</div>
+      }
+
+      <div class="form-group">
+        <label class="form-label" for="name">
+          ユーザー名
+        </label>
+        <input
+          class="form-input"
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="name"
+          placeholder="ユーザー名を入力"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="avatar">
+          プロフィール画像
+        </label>
+        <img class="avatar-preview" [src]="avatarPreviewUrl() ?? existingAvatarSrc()" alt="現在のプロフィール画像">
+        <input
+          class="form-input file-input"
+          type="file"
+          id="avatar"
+          name="avatar"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          (change)="onAvatarSelected($event)"
+        >
+      </div>
+
+      <div class="password-section">
+        <div class="password-section-title">パスワードの変更（変更する場合のみ入力）</div>
+
+        <div class="form-group">
+          <label class="form-label" for="currentPassword">
+            現在のパスワード
+          </label>
+          <input
+            class="form-input"
+            type="password"
+            id="currentPassword"
+            name="currentPassword"
+            [(ngModel)]="currentPassword"
+            placeholder="現在のパスワードを入力"
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newPassword">
+            新しいパスワード
+          </label>
+          <input
+            class="form-input"
+            type="password"
+            id="newPassword"
+            name="newPassword"
+            [(ngModel)]="newPassword"
+            placeholder="新しいパスワードを入力"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newPasswordConfirm">
+            新しいパスワード（確認）
+          </label>
+          <input
+            class="form-input"
+            type="password"
+            id="newPasswordConfirm"
+            name="newPasswordConfirm"
+            [(ngModel)]="newPasswordConfirm"
+            placeholder="新しいパスワードを再入力"
+            autocomplete="new-password"
+          >
+        </div>
+      </div>
+
+      <button
+        class="save-button"
+        type="submit"
+        [disabled]="isSubmitting()"
+      >
+        {{ isSubmitting() ? '保存中...' : '保存する' }}
+      </button>
+
+    </form>
+  </section>
+</main>
