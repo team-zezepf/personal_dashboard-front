@@ -1,0 +1,151 @@
+<app-header></app-header>
+
+<main class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">ユーザー管理</h1>
+      <p class="page-description">
+        登録されているユーザーを確認・管理できます。
+      </p>
+    </div>
+
+    <button class="add-button" type="button" (click)="goToRegister()">
+      ＋ ユーザーを追加
+    </button>
+  </div>
+
+  <section class="search-card">
+    <form class="search-form" (ngSubmit)="onSearch()">
+
+      <input
+        class="search-input"
+        type="text"
+        name="keyword"
+        [(ngModel)]="keyword"
+        placeholder="ユーザー名・メールアドレスで検索"
+      >
+
+      <select class="role-select" name="role" [(ngModel)]="roleFilter">
+        <option value="">すべてのロール</option>
+        <option value="GENERAL">一般</option>
+        <option value="ADMIN">管理者</option>
+        <option value="DEVELOPER">開発者</option>
+      </select>
+
+      <button class="search-button" type="submit">
+        検索
+      </button>
+
+    </form>
+  </section>
+
+  <section class="user-card">
+
+    <div class="table-header">
+      <span class="result-count">
+        {{ filteredUsers().length }}件のユーザー
+      </span>
+    </div>
+
+    @if (loadError()) {
+      <div class="state-message error">{{ loadError() }}</div>
+    } @else if (isLoading()) {
+      <div class="state-message">読み込み中...</div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="avatar-col"></th>
+            <th>ユーザー名</th>
+            <th>メールアドレス</th>
+            <th>ロール</th>
+            <th>登録日</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (user of pagedUsers(); track user.id) {
+            <tr>
+              <td class="avatar-col">
+                <img class="user-avatar" [src]="avatarSrc(user)" alt="{{ user.name }}のアイコン">
+              </td>
+              <td>
+                <span class="username">{{ user.name }}</span>
+              </td>
+              <td>
+                <span class="email">{{ user.email }}</span>
+              </td>
+              <td>
+                <span class="role-badge" [class]="roleBadgeClass(user.role)">
+                  {{ roleLabel(user.role) }}
+                </span>
+              </td>
+              <td>
+                <span class="date">{{ formatDate(user.createdAt) }}</span>
+              </td>
+              <td>
+                <button class="action-button" type="button" (click)="openEditModal(user)">
+                  編集
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="state-message">該当するユーザーがいません。</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="page-button" type="button" (click)="goToPage(currentPage() - 1)">‹</button>
+          @for (page of pageNumbers(); track page) {
+            <button
+              class="page-button"
+              [class.active]="page === currentPage()"
+              type="button"
+              (click)="goToPage(page)"
+            >{{ page }}</button>
+          }
+          <button class="page-button" type="button" (click)="goToPage(currentPage() + 1)">›</button>
+        </div>
+      }
+    }
+
+  </section>
+
+</main>
+
+@if (isModalOpen()) {
+  <div class="role-modal">
+    <div class="role-modal-card">
+      <div class="role-modal-header">
+        <strong>ロールを変更</strong>
+        <button class="role-modal-close" type="button" (click)="closeModal()" aria-label="閉じる">×</button>
+      </div>
+      <div class="role-modal-body">
+        @if (editingUser(); as user) {
+          <p class="role-modal-user">{{ user.name }}（{{ user.email }}）</p>
+        }
+        @if (saveError()) {
+          <div class="form-error">{{ saveError() }}</div>
+        }
+        <label class="role-modal-label" for="modalRole">ロール</label>
+        <select id="modalRole" class="role-select" [(ngModel)]="modalRole">
+          <option value="GENERAL">一般</option>
+          <option value="ADMIN">管理者</option>
+          <option value="DEVELOPER">開発者</option>
+        </select>
+      </div>
+      <div class="role-modal-footer">
+        <button class="cancel-button" type="button" (click)="closeModal()">キャンセル</button>
+        <button class="save-button" type="button" [disabled]="isSaving()" (click)="saveRole()">
+          {{ isSaving() ? '保存中...' : '保存する' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

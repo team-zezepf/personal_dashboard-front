@@ -1,0 +1,42 @@
+<app-header></app-header>
+
+<main class="container">
+  <h1 class="page-title">ツール一覧</h1>
+
+  <div class="card">
+    <table class="tool-table">
+      <thead>
+        <tr>
+          <th>ツール名</th>
+          <th>利用可能ロール</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (tool of tools; track tool.path) {
+          <tr>
+            <td>
+              <a [routerLink]="tool.path" class="tool-link">
+                {{ tool.name }}
+              </a>
+            </td>
+            <td>
+              <div class="role-badges">
+                @for (role of allRoles; track role) {
+                  <span
+                    class="role-badge"
+                    [class]="isAllowed(tool, role) ? roleBadgeClass(role) : 'role-disabled'"
+                  >{{ roleLabel(role) }}</span>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    © 2026 MY DASHBOARD
+  </footer>
+</main>

@@ -1,4 +1,30 @@
 <header class="topbar">
   <div class="brand">MY DASHBOARD</div>
+  <nav class="nav-links">
+    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">ダッシュボード</a>
+    <a class="nav-link" routerLink="/users" routerLinkActive="active">ユーザー管理</a>
+    <a class="nav-link" routerLink="/tools" routerLinkActive="active">ツール一覧</a>
+  </nav>
   <div class="date">{{ formattedDate() }}</div>
+
+  <div class="avatar-menu-wrapper">
+    <button
+      class="avatar-button"
+      type="button"
+      (click)="toggleAvatarMenu()"
+      [attr.aria-expanded]="isAvatarMenuOpen()"
+      aria-haspopup="true"
+      aria-label="ユーザーメニュー"
+    >
+      <img class="user-avatar" [src]="avatarSrc()" alt="ユーザーアイコン">
+    </button>
+
+    @if (isAvatarMenuOpen()) {
+      <div class="avatar-menu" role="menu">
+        <a class="avatar-menu-item" role="menuitem" routerLink="/tools" (click)="closeAvatarMenu()">ツール一覧</a>
+        <a class="avatar-menu-item" role="menuitem" routerLink="/account" (click)="closeAvatarMenu()">アカウント情報編集</a>
+        <button class="avatar-menu-item" role="menuitem" type="button" (click)="onLogout()">ログアウト</button>
+      </div>
+    }
+  </div>
 </header>
