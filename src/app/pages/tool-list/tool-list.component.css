@@ -57,13 +57,19 @@
   text-decoration: underline;
 }
 
+.role-badges {
+  display: flex;
+  gap: 6px;
+}
+
 .role-badge {
   display: inline-block;
-  margin-right: 6px;
-  padding: 4px 9px;
+  width: 64px;
+  padding: 4px 0;
   border-radius: 999px;
   font-size: 12px;
   line-height: 1.2;
+  text-align: center;
 }
 
 .role-general {
@@ -79,6 +85,12 @@
 .role-developer {
   background: #e6f6ed;
   color: #18794e;
+}
+
+.role-disabled {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: #c4cbd2;
 }
 
 footer {

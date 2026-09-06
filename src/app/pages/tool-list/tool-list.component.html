@@ -21,9 +21,14 @@
               </a>
             </td>
             <td>
-              @for (role of tool.roles; track role) {
-                <span class="role-badge" [class]="roleBadgeClass(role)">{{ roleLabel(role) }}</span>
-              }
+              <div class="role-badges">
+                @for (role of allRoles; track role) {
+                  <span
+                    class="role-badge"
+                    [class]="isAllowed(tool, role) ? roleBadgeClass(role) : 'role-disabled'"
+                  >{{ roleLabel(role) }}</span>
+                }
+              </div>
             </td>
           </tr>
         }
