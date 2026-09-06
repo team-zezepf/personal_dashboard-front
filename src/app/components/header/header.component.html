@@ -1,10 +1,32 @@
 <header class="topbar">
-  <div class="brand">MY DASHBOARD</div>
-  <nav class="nav-links">
-    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">ダッシュボード</a>
-    <a class="nav-link" routerLink="/users" routerLinkActive="active">ユーザー管理</a>
-    <a class="nav-link" routerLink="/tools" routerLinkActive="active">ツール一覧</a>
-  </nav>
+  <div class="title-menu-wrapper">
+    <button
+      class="page-title-button"
+      type="button"
+      (click)="toggleTitleMenu()"
+      [attr.aria-expanded]="isTitleMenuOpen()"
+      aria-haspopup="true"
+    >
+      <span class="page-title-text">{{ pageTitle }}</span>
+      <span class="page-title-caret" [class.open]="isTitleMenuOpen()">▾</span>
+    </button>
+
+    @if (isTitleMenuOpen()) {
+      <div class="title-menu" role="menu">
+        <a
+          class="title-menu-item"
+          role="menuitem"
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="closeTitleMenu()"
+        >ダッシュボード</a>
+        <a class="title-menu-item" role="menuitem" routerLink="/users" routerLinkActive="active" (click)="closeTitleMenu()">ユーザー管理</a>
+        <a class="title-menu-item" role="menuitem" routerLink="/tools" routerLinkActive="active" (click)="closeTitleMenu()">ツール一覧</a>
+      </div>
+    }
+  </div>
+
   <div class="date">{{ formattedDate() }}</div>
 
   <div class="avatar-menu-wrapper">

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, computed, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
@@ -13,11 +13,14 @@ import { avatarUrl } from '../../utils/avatar';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
+  @Input() pageTitle = '';
+
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private elementRef = inject(ElementRef<HTMLElement>);
 
   readonly currentUser = this.authService.currentUser;
+  readonly isTitleMenuOpen = signal(false);
   readonly isAvatarMenuOpen = signal(false);
 
   readonly formattedDate = computed(() => {
@@ -29,8 +32,18 @@ export class HeaderComponent {
 
   readonly avatarSrc = computed(() => avatarUrl(this.currentUser()?.avatarFilename));
 
+  toggleTitleMenu(): void {
+    this.isTitleMenuOpen.update(v => !v);
+    this.isAvatarMenuOpen.set(false);
+  }
+
+  closeTitleMenu(): void {
+    this.isTitleMenuOpen.set(false);
+  }
+
   toggleAvatarMenu(): void {
     this.isAvatarMenuOpen.update(v => !v);
+    this.isTitleMenuOpen.set(false);
   }
 
   closeAvatarMenu(): void {
@@ -39,8 +52,9 @@ export class HeaderComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.isAvatarMenuOpen()) return;
+    if (!this.isTitleMenuOpen() && !this.isAvatarMenuOpen()) return;
     if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+      this.closeTitleMenu();
       this.closeAvatarMenu();
     }
   }
