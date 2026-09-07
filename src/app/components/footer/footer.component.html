@@ -14,7 +14,7 @@
     }
     <button
       class="save-button"
-      [disabled]="isSaving()"
+      [disabled]="isSaving() || !hasChanges()"
       type="button"
       (click)="onSave()">
       {{ isSaving() ? '保存中...' : 'セーブ' }}

@@ -30,6 +30,8 @@ export class DashboardService {
   readonly isSaving = signal<boolean>(false);
   readonly saveMessage = signal<string>('');
   readonly saveStatus = signal<'idle' | 'saving' | 'success' | 'error'>('idle');
+  // タスク・予定に未保存の変更があるかどうか(セーブボタンの活性/非活性に使う)
+  readonly hasChanges = signal<boolean>(false);
 
   // Computed properties
   readonly todayTasks = computed(() => {
@@ -142,6 +144,7 @@ export class DashboardService {
       if (data.topics) this.topics.set(data.topics);
       this.dirtyTaskIds.clear();
       this.dirtyScheduleIds.clear();
+      this.hasChanges.set(false);
     });
   }
 
@@ -160,19 +163,22 @@ export class DashboardService {
       }
       return task;
     }));
+    this.hasChanges.set(true);
   }
 
   addSchedule(schedule: Omit<Schedule, 'id'>) {
-    const currentList = this.schedules();
-    const maxId = currentList.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0);
-    const newId = maxId + 1;
+    // 実IDと衝突しないよう負の値を仮IDとして使う(サーバー側の「id指定=既存データの更新」という
+    // 判定と競合し、新規追加が「他人のデータの不正な更新」とみなされて保存されない不具合があったため)。
+    // saveChanges()送信時にこの仮IDはnullへ変換し、サーバー側で正式なIDを採番させる。
+    const tempId = -Date.now();
     const newSchedule: Schedule = {
       ...schedule,
-      id: newId,
+      id: tempId,
       _dirty: true
     };
-    this.dirtyScheduleIds.add(newId);
+    this.dirtyScheduleIds.add(tempId);
     this.schedules.update(list => [...list, newSchedule]);
+    this.hasChanges.set(true);
   }
 
   updateSchedule(schedule: Schedule) {
@@ -183,11 +189,18 @@ export class DashboardService {
       }
       return s;
     }));
+    this.hasChanges.set(true);
   }
 
   deleteSchedule(scheduleId: string | number) {
-    this.dirtyScheduleIds.add(scheduleId);
+    this.dirtyScheduleIds.delete(scheduleId);
     this.schedules.update(list => list.filter(s => s.id !== scheduleId));
+    this.hasChanges.set(this.dirtyTaskIds.size > 0 || this.dirtyScheduleIds.size > 0);
+
+    // まだ保存されていない(仮IDのままの)予定はサーバーに存在しないため、削除APIを呼ばずに終える
+    if (Number(scheduleId) < 0) {
+      return;
+    }
 
     // Also call deleteSchedule mutation directly or mark for batch save
     const mutation = `
@@ -217,7 +230,8 @@ export class DashboardService {
     }));
 
     const dirtySchedules = this.schedules().filter(s => this.dirtyScheduleIds.has(s.id)).map(s => ({
-      id: s.id,
+      // 仮ID(負の値)はサーバーに存在しないため、新規作成として扱われるようnullで送る
+      id: Number(s.id) < 0 ? null : s.id,
       userId: s.userId || 1,
       taskId: s.taskId,
       title: s.title,
@@ -272,6 +286,9 @@ export class DashboardService {
         this.saveMessage.set('保存完了' + (result.gitCommitted ? '（Gitコミット済）' : ''));
         this.dirtyTaskIds.clear();
         this.dirtyScheduleIds.clear();
+        this.hasChanges.set(false);
+        // 新規追加分の仮IDをサーバーが採番した正式なIDに置き換えるため再取得する
+        this.loadDashboardData();
       } else {
         this.saveStatus.set('error');
         this.saveMessage.set(result.message || '保存に失敗しました');
