@@ -205,17 +205,96 @@
 }
 
 .week-event {
+  position: relative;
   width: 100%;
   height: 100%;
-  padding: 4px;
   border: 1px solid #bce7f5;
+  border-right: 1px solid #bce7f5;
+  border-bottom: 1px solid #bce7f5;
   border-radius: 6px;
   background: #eaf8fd;
   color: var(--primary-dark);
   font-size: 10px;
   line-height: 14px;
-  cursor: pointer;
+  z-index: 1;
+}
+
+.week-event.ghost {
+  z-index: 0;
+  opacity: 0.6;
+  border-style: dashed;
+  pointer-events: none;
+}
+
+.week-event-body {
+  height: 100%;
+  padding: 4px;
+  overflow: hidden;
+  cursor: grab;
   text-align: left;
+}
+
+.week-event-body:active {
+  cursor: grabbing;
+}
+
+.week-event.locked .week-event-body {
+  cursor: pointer;
+}
+
+.week-event-handle {
+  position: absolute;
+  opacity: 0;
+  background: var(--primary);
+  transition: opacity 0.12s ease;
+}
+
+.week-event:hover .week-event-handle {
+  opacity: 0.3;
+}
+
+.week-event-handle:hover {
+  opacity: 0.85 !important;
+}
+
+.week-event-handle.top,
+.week-event-handle.bottom {
+  left: 2px;
+  right: 2px;
+  height: 4px;
+  cursor: ns-resize;
+  border-radius: 2px;
+}
+
+.week-event-handle.top {
+  top: 0;
+}
+
+.week-event-handle.bottom {
+  bottom: 0;
+}
+
+.week-event-handle.left,
+.week-event-handle.right {
+  top: 2px;
+  bottom: 2px;
+  width: 5px;
+  cursor: ew-resize;
+  border-radius: 2px;
+}
+
+.week-event-handle.left {
+  left: 0;
+}
+
+.week-event-handle.right {
+  right: 0;
+}
+
+.week-event-repeat-icon,
+.calendar-event-repeat-icon {
+  opacity: 0.7;
+  margin-right: 2px;
 }
 
 /* 選択日の予定カード */
@@ -658,4 +737,76 @@
   border: 0;
   background: var(--primary);
   color: white;
+}
+
+/* 繰り返し予定の削除確認モーダル */
+.delete-confirm-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 55, 0.35);
+  z-index: 2100;
+  padding: 20px;
+}
+
+.delete-confirm-modal.open {
+  display: flex;
+}
+
+.delete-confirm-card {
+  width: min(360px, 100%);
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
+  padding: 20px;
+}
+
+.delete-confirm-message {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.delete-confirm-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.delete-confirm-actions button {
+  height: 40px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-confirm-option {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--text);
+}
+
+.delete-confirm-option:hover {
+  background: #f5f8fa;
+}
+
+.delete-confirm-option.all {
+  border-color: #f0c5c5;
+  color: #d05a5a;
+}
+
+.delete-confirm-option.all:hover {
+  background: #fff4f4;
+}
+
+.delete-confirm-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.delete-confirm-cancel:hover {
+  color: var(--text);
 }

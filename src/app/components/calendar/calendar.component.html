@@ -79,14 +79,38 @@
           }
         }
         @for (block of weekEventBlocks(); track block.id) {
-          <button
+          <div
             class="week-event"
-            type="button"
-            [style.grid-column]="block.column"
-            [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan"
-            (click)="onWeekEventClick(block.schedule)">
-            {{ block.schedule.title }}
-          </button>
+            [class.locked]="isDragLocked(block.schedule)"
+            [style.grid-column]="blockColumn(block)"
+            [style.grid-row]="blockRowStyle(block)">
+            <div
+              class="week-event-body"
+              tabindex="0"
+              role="button"
+              (mousedown)="onEventBodyMouseDown($event, block)"
+              (click)="onWeekEventClick(block.schedule)"
+              (keydown.enter)="onWeekEventClick(block.schedule)">
+              @if (block.schedule.repeat?.enabled) {
+                <span class="week-event-repeat-icon" title="繰り返し予定">↻</span>
+              }
+              {{ block.schedule.title }}
+            </div>
+            @if (!isDragLocked(block.schedule)) {
+              <div class="week-event-handle top" (mousedown)="onResizeMouseDown($event, block, 'top')"></div>
+              <div class="week-event-handle bottom" (mousedown)="onResizeMouseDown($event, block, 'bottom')"></div>
+              <div class="week-event-handle left" (mousedown)="onDuplicateMouseDown($event, block, 'left')"></div>
+              <div class="week-event-handle right" (mousedown)="onDuplicateMouseDown($event, block, 'right')"></div>
+            }
+          </div>
+        }
+        @for (ghost of duplicateGhostBlocks(); track ghost.id) {
+          <div
+            class="week-event ghost"
+            [style.grid-column]="ghost.column"
+            [style.grid-row]="ghost.rowStart + ' / span ' + ghost.rowSpan">
+            <div class="week-event-body">{{ ghost.schedule.title }}(コピー)</div>
+          </div>
         }
       </div>
     }
@@ -114,7 +138,12 @@
           @for (event of selectedDateEvents(); track event.id) {
             <div class="calendar-event">
               <div class="calendar-event-time">{{ event.startTime.substring(0, 5) }} - {{ event.endTime.substring(0, 5) }}</div>
-              <div class="calendar-event-name">{{ event.title }}</div>
+              <div class="calendar-event-name">
+                @if (event.repeat?.enabled) {
+                  <span class="calendar-event-repeat-icon" title="繰り返し予定">↻</span>
+                }
+                {{ event.title }}
+              </div>
               @if (event.description) {
                 <div class="calendar-event-note">{{ event.description }}</div>
               }
@@ -315,6 +344,21 @@
       <button class="schedule-register" type="button" (click)="saveModalSchedule()">
         {{ isEditing() ? '保存する' : '登録する' }}
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- 繰り返し予定の削除確認モーダル -->
+<div class="delete-confirm-modal" [class.open]="deleteConfirmTarget() !== null" [attr.aria-hidden]="deleteConfirmTarget() === null">
+  <div class="delete-confirm-card" role="dialog" aria-modal="true">
+    <p class="delete-confirm-message">
+      「{{ deleteConfirmTarget()?.master?.title }}」は繰り返し予定です。<br>
+      どの範囲を削除しますか？
+    </p>
+    <div class="delete-confirm-actions">
+      <button class="delete-confirm-option" type="button" (click)="confirmDeleteOccurrenceOnly()">この回だけ削除</button>
+      <button class="delete-confirm-option all" type="button" (click)="confirmDeleteAllOccurrences()">すべて削除</button>
+      <button class="delete-confirm-cancel" type="button" (click)="cancelDeleteConfirm()">キャンセル</button>
     </div>
   </div>
 </div>

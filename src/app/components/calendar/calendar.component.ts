@@ -29,6 +29,27 @@ interface WeekEventBlock {
   rowSpan: number;
 }
 
+interface DragState {
+  scheduleId: string | number;
+  mode: 'move' | 'resize-top' | 'resize-bottom';
+  startX: number;
+  startY: number;
+  origDayIndex: number;
+  origRowStart: number;
+  origRowSpan: number;
+  colWidth: number;
+}
+
+interface DuplicateState {
+  scheduleId: string | number;
+  edge: 'left' | 'right';
+  startX: number;
+  origDayIndex: number;
+  colWidth: number;
+  rowStart: number;
+  rowSpan: number;
+}
+
 @Component({
   selector: 'app-calendar',
   standalone: true,
@@ -39,7 +60,8 @@ interface WeekEventBlock {
 export class CalendarComponent {
   private dashboardService = inject(DashboardService);
 
-  readonly schedules = this.dashboardService.schedules;
+  // 表示用(繰り返し予定を実日付に展開したもの)。編集・削除は常に元の予定(マスター)に対して行う
+  readonly schedules = this.dashboardService.scheduleOccurrences;
   readonly viewMode = signal<'month' | 'week'>('month');
 
   // Currently viewed year and month (0-indexed)
@@ -56,6 +78,20 @@ export class CalendarComponent {
   readonly isModalOpen = signal<boolean>(false);
   readonly isEditing = signal<boolean>(false);
   readonly editingScheduleId = signal<string | number | null>(null);
+  // 編集モーダルを開いた際に実際にクリックされた回の日付(繰り返し予定の場合、masterの日付とは限らない)
+  private editingOccurrenceDate: string | null = null;
+
+  // 繰り返し予定の削除確認(「この回だけ」/「すべて」の選択待ち)
+  readonly deleteConfirmTarget = signal<{ master: Schedule; occurrenceDate: string } | null>(null);
+
+  // 週表示：予定ブロックのドラッグ操作(移動・時間変更)
+  private dragState: DragState | null = null;
+  private dragMoved = false;
+  readonly dragPreview = signal<{ id: string | number; column: number; rowStart: number; rowSpan: number } | null>(null);
+
+  // 週表示：予定ブロックの複製操作(左右ハンドル)
+  private duplicateState: DuplicateState | null = null;
+  readonly duplicatePreview = signal<{ id: string | number; dayIndexes: number[]; rowStart: number; rowSpan: number } | null>(null);
 
   // Modal form model
   modalTitle = '';
@@ -190,9 +226,13 @@ export class CalendarComponent {
     return `${first.getFullYear()}年${first.getMonth() + 1}月${first.getDate()}日〜${last.getMonth() + 1}月${last.getDate()}日`;
   });
 
-  // 週表示グリッドの1時間あたりの分割数(5分単位)・高さ
+  // 週表示グリッドの1時間あたりの分割数(5分単位)・高さ(既存予定の描画に使う精度)
   readonly weekSubRowsPerHour = 12;
   readonly weekSubRowHeightPx = 2.5;
+
+  // ドラッグ操作(移動・時間変更)で時刻をスナップする単位(分)。
+  // 表示グリッドと同じ5分刻みだと細かすぎて意図しない時刻になりやすいため30分単位にする
+  readonly dragSnapMinutes = 30;
 
   // 週表示のグリッド上に予定を1つの連結した要素として配置する
   // (grid-row/grid-columnで直接位置指定し、5分単位で始端・終端がマス目の途中になっても実際の時刻通りに描画する)
@@ -246,6 +286,270 @@ export class CalendarComponent {
     return Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
   }
 
+  // 複製ドラッグ中に表示するゴースト(仮)ブロック
+  readonly duplicateGhostBlocks = computed<WeekEventBlock[]>(() => {
+    const preview = this.duplicatePreview();
+    if (!preview) return [];
+    const source = this.weekEventBlocks().find(b => b.id === preview.id);
+    if (!source) return [];
+    return preview.dayIndexes.map(dayIndex => ({
+      id: `ghost-${dayIndex}`,
+      schedule: source.schedule,
+      column: dayIndex + 2,
+      rowStart: preview.rowStart,
+      rowSpan: preview.rowSpan
+    }));
+  });
+
+  // ドラッグ中のブロックは live プレビュー位置を、それ以外は通常の位置を返す
+  blockColumn(block: WeekEventBlock): number {
+    const preview = this.dragPreview();
+    return preview && preview.id === block.schedule.id ? preview.column : block.column;
+  }
+
+  blockRowStyle(block: WeekEventBlock): string {
+    const preview = this.dragPreview();
+    if (preview && preview.id === block.schedule.id) {
+      return `${preview.rowStart} / span ${preview.rowSpan}`;
+    }
+    return `${block.rowStart} / span ${block.rowSpan}`;
+  }
+
+  // 繰り返し予定はドラッグ操作(移動・時間変更・複製)の対象外とする
+  // (個々の回だけを動かす「例外」の概念がまだないため、シリーズ全体への意図しない影響を避ける)
+  isDragLocked(schedule: Schedule): boolean {
+    return Boolean(schedule.isRepeatOccurrence || schedule.repeat?.enabled);
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  private getColumnWidth(target: EventTarget | null): number {
+    const gridEl = (target as HTMLElement)?.closest?.('.week-grid') as HTMLElement | null;
+    const header = gridEl?.querySelector('.week-day-header') as HTMLElement | null;
+    return header ? header.getBoundingClientRect().width : 80;
+  }
+
+  private minutesToTimeString(totalMinutes: number): string {
+    const clamped = this.clamp(totalMinutes, 0, 23 * 60 + 59);
+    const h = Math.floor(clamped / 60).toString().padStart(2, '0');
+    const m = (clamped % 60).toString().padStart(2, '0');
+    return `${h}:${m}:00`;
+  }
+
+  // ---- 移動・時間変更(上下ハンドル)のドラッグ ----
+
+  onEventBodyMouseDown(event: MouseEvent, block: WeekEventBlock) {
+    if (this.isDragLocked(block.schedule)) return;
+    event.preventDefault();
+    this.dragState = {
+      scheduleId: block.schedule.id,
+      mode: 'move',
+      startX: event.clientX,
+      startY: event.clientY,
+      origDayIndex: block.column - 2,
+      origRowStart: block.rowStart,
+      origRowSpan: block.rowSpan,
+      colWidth: this.getColumnWidth(event.currentTarget)
+    };
+    this.dragMoved = false;
+    this.attachDragListeners();
+  }
+
+  onResizeMouseDown(event: MouseEvent, block: WeekEventBlock, edge: 'top' | 'bottom') {
+    if (this.isDragLocked(block.schedule)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragState = {
+      scheduleId: block.schedule.id,
+      mode: edge === 'top' ? 'resize-top' : 'resize-bottom',
+      startX: event.clientX,
+      startY: event.clientY,
+      origDayIndex: block.column - 2,
+      origRowStart: block.rowStart,
+      origRowSpan: block.rowSpan,
+      colWidth: this.getColumnWidth(event.currentTarget)
+    };
+    this.dragMoved = false;
+    this.attachDragListeners();
+  }
+
+  private attachDragListeners() {
+    const onMove = (e: MouseEvent) => this.handleDragMouseMove(e);
+    const onUp = () => {
+      this.handleDragMouseUp();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
+  private handleDragMouseMove(event: MouseEvent) {
+    const state = this.dragState;
+    if (!state) return;
+
+    const dx = event.clientX - state.startX;
+    const dy = event.clientY - state.startY;
+    if (!this.dragMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      this.dragMoved = true;
+    }
+    if (!this.dragMoved) return;
+
+    const subRowMinutes = 60 / this.weekSubRowsPerHour;
+    const dyMinutes = (dy / this.weekSubRowHeightPx) * subRowMinutes;
+    const dayDelta = Math.round(dx / state.colWidth);
+
+    const displayStartMinutes = Number(this.weekTimes[0].substring(0, 2)) * 60;
+    const displayEndMinutes = displayStartMinutes + this.weekTimes.length * 60;
+    const snap = this.dragSnapMinutes;
+
+    const origStartMinutes = displayStartMinutes + (state.origRowStart - 2) * subRowMinutes;
+    const origSpanMinutes = state.origRowSpan * subRowMinutes;
+    const origEndMinutes = origStartMinutes + origSpanMinutes;
+
+    let column: number;
+    let startMinutes: number;
+    let spanMinutes: number;
+
+    if (state.mode === 'move') {
+      const newDayIndex = this.clamp(state.origDayIndex + dayDelta, 0, 6);
+      column = newDayIndex + 2;
+      spanMinutes = origSpanMinutes;
+      const rawStart = origStartMinutes + dyMinutes;
+      startMinutes = this.clamp(
+        Math.round(rawStart / snap) * snap,
+        displayStartMinutes,
+        displayEndMinutes - spanMinutes
+      );
+    } else if (state.mode === 'resize-top') {
+      column = state.origDayIndex + 2;
+      const rawStart = origStartMinutes + dyMinutes;
+      const maxStart = origEndMinutes - snap;
+      startMinutes = this.clamp(Math.round(rawStart / snap) * snap, displayStartMinutes, maxStart);
+      spanMinutes = origEndMinutes - startMinutes;
+    } else {
+      column = state.origDayIndex + 2;
+      startMinutes = origStartMinutes;
+      const rawEnd = origEndMinutes + dyMinutes;
+      const minEnd = origStartMinutes + snap;
+      const endMinutes = this.clamp(Math.round(rawEnd / snap) * snap, minEnd, displayEndMinutes);
+      spanMinutes = endMinutes - startMinutes;
+    }
+
+    const rowStart = Math.round((startMinutes - displayStartMinutes) / subRowMinutes) + 2;
+    const rowSpan = Math.round(spanMinutes / subRowMinutes);
+
+    this.dragPreview.set({ id: state.scheduleId, column, rowStart, rowSpan });
+  }
+
+  private handleDragMouseUp() {
+    const state = this.dragState;
+    this.dragState = null;
+    if (!state) return;
+
+    if (!this.dragMoved) {
+      // 実質的な移動がなければ単なるクリックとして扱う(編集モーダルはonWeekEventClickに任せる)
+      this.dragPreview.set(null);
+      return;
+    }
+
+    const preview = this.dragPreview();
+    this.dragPreview.set(null);
+    if (!preview) return;
+
+    const master = this.dashboardService.schedules().find(s => s.id === state.scheduleId);
+    if (!master) return;
+
+    const dayIndex = preview.column - 2;
+    const newDate = this.weekDays()[dayIndex]?.dateString;
+    if (!newDate) return;
+
+    const subRowMinutes = 60 / this.weekSubRowsPerHour;
+    const displayStartMinutes = Number(this.weekTimes[0].substring(0, 2)) * 60;
+    const newStartMinutes = displayStartMinutes + (preview.rowStart - 2) * subRowMinutes;
+    const newEndMinutes = newStartMinutes + preview.rowSpan * subRowMinutes;
+
+    this.dashboardService.updateSchedule({
+      ...master,
+      scheduleDate: newDate,
+      startTime: this.minutesToTimeString(newStartMinutes),
+      endTime: this.minutesToTimeString(newEndMinutes)
+    });
+  }
+
+  // ---- 複製(左右ハンドル)のドラッグ ----
+
+  onDuplicateMouseDown(event: MouseEvent, block: WeekEventBlock, edge: 'left' | 'right') {
+    if (this.isDragLocked(block.schedule)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.duplicateState = {
+      scheduleId: block.schedule.id,
+      edge,
+      startX: event.clientX,
+      origDayIndex: block.column - 2,
+      colWidth: this.getColumnWidth(event.currentTarget),
+      rowStart: block.rowStart,
+      rowSpan: block.rowSpan
+    };
+
+    const onMove = (e: MouseEvent) => this.handleDuplicateMouseMove(e);
+    const onUp = () => {
+      this.handleDuplicateMouseUp();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
+  private handleDuplicateMouseMove(event: MouseEvent) {
+    const state = this.duplicateState;
+    if (!state) return;
+
+    const dx = event.clientX - state.startX;
+    const delta = Math.round(dx / state.colWidth);
+    const reach = state.edge === 'left'
+      ? this.clamp(-delta, 0, state.origDayIndex)
+      : this.clamp(delta, 0, 6 - state.origDayIndex);
+
+    if (reach === 0) {
+      this.duplicatePreview.set(null);
+      return;
+    }
+
+    const dayIndexes: number[] = [];
+    for (let i = 1; i <= reach; i++) {
+      dayIndexes.push(state.edge === 'left' ? state.origDayIndex - i : state.origDayIndex + i);
+    }
+    this.duplicatePreview.set({ id: state.scheduleId, dayIndexes, rowStart: state.rowStart, rowSpan: state.rowSpan });
+  }
+
+  private handleDuplicateMouseUp() {
+    const state = this.duplicateState;
+    this.duplicateState = null;
+    const preview = this.duplicatePreview();
+    this.duplicatePreview.set(null);
+    if (!state || !preview || preview.dayIndexes.length === 0) return;
+
+    const master = this.dashboardService.schedules().find(s => s.id === state.scheduleId);
+    if (!master) return;
+
+    const days = this.weekDays();
+    for (const dayIndex of preview.dayIndexes) {
+      const dateString = days[dayIndex]?.dateString;
+      if (!dateString) continue;
+      const { id, createdAt, updatedAt, _dirty, isRepeatOccurrence, repeatMasterId, ...rest } = master;
+      this.dashboardService.addSchedule({
+        ...rest,
+        title: `${master.title}(コピー)`,
+        scheduleDate: dateString
+      });
+    }
+  }
+
   // Selected date events
   readonly selectedDateEvents = computed<Schedule[]>(() => {
     const selDate = this.selectedDate();
@@ -292,6 +596,11 @@ export class CalendarComponent {
   }
 
   onWeekEventClick(schedule: Schedule) {
+    if (this.dragMoved) {
+      // ドラッグ操作の一環として発火したclickは無視する(実際の移動/リサイズはmouseupで処理済み)
+      this.dragMoved = false;
+      return;
+    }
     this.selectedDate.set(schedule.scheduleDate);
     this.openEditModal(schedule);
   }
@@ -377,7 +686,19 @@ export class CalendarComponent {
     return `${newHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
-  openEditModal(schedule: Schedule) {
+  // 繰り返し予定の展開分(仮想的な1回分)がクリックされた場合、編集・削除の対象は
+  // 常に元の予定(マスター)にする(展開分は保存対象として存在しないため)
+  private resolveToMasterSchedule(schedule: Schedule): Schedule {
+    if (schedule.isRepeatOccurrence && schedule.repeatMasterId != null) {
+      const master = this.dashboardService.schedules().find(s => s.id === schedule.repeatMasterId);
+      if (master) return master;
+    }
+    return schedule;
+  }
+
+  openEditModal(scheduleOrOccurrence: Schedule) {
+    const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    this.editingOccurrenceDate = scheduleOrOccurrence.scheduleDate;
     this.isEditing.set(true);
     this.editingScheduleId.set(schedule.id);
     this.modalTitle = schedule.title;
@@ -400,6 +721,19 @@ export class CalendarComponent {
   deleteCurrentSchedule() {
     const id = this.editingScheduleId();
     if (id === null) return;
+
+    if (this.modalRepeatEnabled) {
+      const master = this.dashboardService.schedules().find(s => s.id === id);
+      if (master) {
+        this.deleteConfirmTarget.set({
+          master,
+          occurrenceDate: this.editingOccurrenceDate || master.scheduleDate
+        });
+        this.closeModal();
+        return;
+      }
+    }
+
     if (window.confirm(`「${this.modalTitle || 'この予定'}」を削除しますか？`)) {
       this.dashboardService.deleteSchedule(id);
       this.closeModal();
@@ -409,6 +743,13 @@ export class CalendarComponent {
   saveModalSchedule() {
     const targetDate = this.selectedDate() || this.dashboardService.currentDate();
     const isTask = this.modalScheduleType === 'task';
+
+    // 編集時、既存の除外日(個別削除された回)はモーダルのフォームで扱っていないため、
+    // 上書きしないようここで引き継ぐ
+    const existingMaster = this.isEditing() && this.editingScheduleId() !== null
+      ? this.dashboardService.schedules().find(s => s.id === this.editingScheduleId())
+      : null;
+    const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
 
     const scheduleData: Omit<Schedule, 'id'> = {
       userId: 1,
@@ -424,7 +765,8 @@ export class CalendarComponent {
         frequency: this.modalRepeatFrequency,
         endType: this.modalRepeatEndType,
         endDate: this.modalRepeatEndDate || null,
-        endCount: this.modalRepeatEndCount || null
+        endCount: this.modalRepeatEndCount || null,
+        excludedDates: existingExcludedDates
       } : null
     };
 
@@ -440,9 +782,42 @@ export class CalendarComponent {
     this.closeModal();
   }
 
-  deleteSchedule(schedule: Schedule) {
-    if (window.confirm(`「${schedule.title}」を削除しますか？`)) {
-      this.dashboardService.deleteSchedule(schedule.id);
+  deleteSchedule(scheduleOrOccurrence: Schedule) {
+    const master = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    if (master.repeat?.enabled) {
+      this.deleteConfirmTarget.set({
+        master,
+        occurrenceDate: scheduleOrOccurrence.scheduleDate
+      });
+      return;
     }
+    if (window.confirm(`「${master.title}」を削除しますか？`)) {
+      this.dashboardService.deleteSchedule(master.id);
+    }
+  }
+
+  // 繰り返し予定の削除確認：この回だけ除外日に加えて残りは維持する
+  confirmDeleteOccurrenceOnly() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    const { master, occurrenceDate } = target;
+    const excludedDates = [...(master.repeat?.excludedDates || []), occurrenceDate];
+    this.dashboardService.updateSchedule({
+      ...master,
+      repeat: { ...master.repeat!, excludedDates }
+    });
+    this.deleteConfirmTarget.set(null);
+  }
+
+  // 繰り返し予定の削除確認：シリーズ全体(マスター)を削除する
+  confirmDeleteAllOccurrences() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    this.dashboardService.deleteSchedule(target.master.id);
+    this.deleteConfirmTarget.set(null);
+  }
+
+  cancelDeleteConfirm() {
+    this.deleteConfirmTarget.set(null);
   }
 }
