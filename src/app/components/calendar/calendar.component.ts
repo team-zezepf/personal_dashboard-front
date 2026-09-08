@@ -57,6 +57,11 @@ export class CalendarComponent {
   readonly isModalOpen = signal<boolean>(false);
   readonly isEditing = signal<boolean>(false);
   readonly editingScheduleId = signal<string | number | null>(null);
+  // 編集モーダルを開いた際に実際にクリックされた回の日付(繰り返し予定の場合、masterの日付とは限らない)
+  private editingOccurrenceDate: string | null = null;
+
+  // 繰り返し予定の削除確認(「この回だけ」/「すべて」の選択待ち)
+  readonly deleteConfirmTarget = signal<{ master: Schedule; occurrenceDate: string } | null>(null);
 
   // Modal form model
   modalTitle = '';
@@ -390,6 +395,7 @@ export class CalendarComponent {
 
   openEditModal(scheduleOrOccurrence: Schedule) {
     const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    this.editingOccurrenceDate = scheduleOrOccurrence.scheduleDate;
     this.isEditing.set(true);
     this.editingScheduleId.set(schedule.id);
     this.modalTitle = schedule.title;
@@ -412,10 +418,20 @@ export class CalendarComponent {
   deleteCurrentSchedule() {
     const id = this.editingScheduleId();
     if (id === null) return;
-    const confirmMessage = this.modalRepeatEnabled
-      ? `「${this.modalTitle || 'この予定'}」を削除しますか？(繰り返し予定のため、すべての回が削除されます)`
-      : `「${this.modalTitle || 'この予定'}」を削除しますか？`;
-    if (window.confirm(confirmMessage)) {
+
+    if (this.modalRepeatEnabled) {
+      const master = this.dashboardService.schedules().find(s => s.id === id);
+      if (master) {
+        this.deleteConfirmTarget.set({
+          master,
+          occurrenceDate: this.editingOccurrenceDate || master.scheduleDate
+        });
+        this.closeModal();
+        return;
+      }
+    }
+
+    if (window.confirm(`「${this.modalTitle || 'この予定'}」を削除しますか？`)) {
       this.dashboardService.deleteSchedule(id);
       this.closeModal();
     }
@@ -424,6 +440,13 @@ export class CalendarComponent {
   saveModalSchedule() {
     const targetDate = this.selectedDate() || this.dashboardService.currentDate();
     const isTask = this.modalScheduleType === 'task';
+
+    // 編集時、既存の除外日(個別削除された回)はモーダルのフォームで扱っていないため、
+    // 上書きしないようここで引き継ぐ
+    const existingMaster = this.isEditing() && this.editingScheduleId() !== null
+      ? this.dashboardService.schedules().find(s => s.id === this.editingScheduleId())
+      : null;
+    const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
 
     const scheduleData: Omit<Schedule, 'id'> = {
       userId: 1,
@@ -439,7 +462,8 @@ export class CalendarComponent {
         frequency: this.modalRepeatFrequency,
         endType: this.modalRepeatEndType,
         endDate: this.modalRepeatEndDate || null,
-        endCount: this.modalRepeatEndCount || null
+        endCount: this.modalRepeatEndCount || null,
+        excludedDates: existingExcludedDates
       } : null
     };
 
@@ -456,12 +480,41 @@ export class CalendarComponent {
   }
 
   deleteSchedule(scheduleOrOccurrence: Schedule) {
-    const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
-    const confirmMessage = schedule.repeat?.enabled
-      ? `「${schedule.title}」を削除しますか？(繰り返し予定のため、すべての回が削除されます)`
-      : `「${schedule.title}」を削除しますか？`;
-    if (window.confirm(confirmMessage)) {
-      this.dashboardService.deleteSchedule(schedule.id);
+    const master = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    if (master.repeat?.enabled) {
+      this.deleteConfirmTarget.set({
+        master,
+        occurrenceDate: scheduleOrOccurrence.scheduleDate
+      });
+      return;
     }
+    if (window.confirm(`「${master.title}」を削除しますか？`)) {
+      this.dashboardService.deleteSchedule(master.id);
+    }
+  }
+
+  // 繰り返し予定の削除確認：この回だけ除外日に加えて残りは維持する
+  confirmDeleteOccurrenceOnly() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    const { master, occurrenceDate } = target;
+    const excludedDates = [...(master.repeat?.excludedDates || []), occurrenceDate];
+    this.dashboardService.updateSchedule({
+      ...master,
+      repeat: { ...master.repeat!, excludedDates }
+    });
+    this.deleteConfirmTarget.set(null);
+  }
+
+  // 繰り返し予定の削除確認：シリーズ全体(マスター)を削除する
+  confirmDeleteAllOccurrences() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    this.dashboardService.deleteSchedule(target.master.id);
+    this.deleteConfirmTarget.set(null);
+  }
+
+  cancelDeleteConfirm() {
+    this.deleteConfirmTarget.set(null);
   }
 }

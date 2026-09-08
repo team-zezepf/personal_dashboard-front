@@ -326,3 +326,18 @@
     </div>
   </div>
 </div>
+
+<!-- 繰り返し予定の削除確認モーダル -->
+<div class="delete-confirm-modal" [class.open]="deleteConfirmTarget() !== null" [attr.aria-hidden]="deleteConfirmTarget() === null">
+  <div class="delete-confirm-card" role="dialog" aria-modal="true">
+    <p class="delete-confirm-message">
+      「{{ deleteConfirmTarget()?.master?.title }}」は繰り返し予定です。<br>
+      どの範囲を削除しますか？
+    </p>
+    <div class="delete-confirm-actions">
+      <button class="delete-confirm-option" type="button" (click)="confirmDeleteOccurrenceOnly()">この回だけ削除</button>
+      <button class="delete-confirm-option all" type="button" (click)="confirmDeleteAllOccurrences()">すべて削除</button>
+      <button class="delete-confirm-cancel" type="button" (click)="cancelDeleteConfirm()">キャンセル</button>
+    </div>
+  </div>
+</div>

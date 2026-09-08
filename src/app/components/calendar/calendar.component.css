@@ -661,3 +661,75 @@
   background: var(--primary);
   color: white;
 }
+
+/* 繰り返し予定の削除確認モーダル */
+.delete-confirm-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 55, 0.35);
+  z-index: 2100;
+  padding: 20px;
+}
+
+.delete-confirm-modal.open {
+  display: flex;
+}
+
+.delete-confirm-card {
+  width: min(360px, 100%);
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
+  padding: 20px;
+}
+
+.delete-confirm-message {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.delete-confirm-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.delete-confirm-actions button {
+  height: 40px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-confirm-option {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--text);
+}
+
+.delete-confirm-option:hover {
+  background: #f5f8fa;
+}
+
+.delete-confirm-option.all {
+  border-color: #f0c5c5;
+  color: #d05a5a;
+}
+
+.delete-confirm-option.all:hover {
+  background: #fff4f4;
+}
+
+.delete-confirm-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.delete-confirm-cancel:hover {
+  color: var(--text);
+}

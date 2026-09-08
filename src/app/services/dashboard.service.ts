@@ -56,9 +56,18 @@ function expandScheduleOccurrences(schedules: Schedule[]): Schedule[] {
   const result: Schedule[] = [];
 
   for (const master of schedules) {
-    result.push(master);
     const repeat = master.repeat;
-    if (!repeat?.enabled) continue;
+    const excludedDates = new Set(repeat?.excludedDates || []);
+
+    if (!repeat?.enabled) {
+      result.push(master);
+      continue;
+    }
+
+    // masterのscheduleDate自体も1回目として扱うため、除外日に含まれていれば表示しない
+    if (!excludedDates.has(master.scheduleDate)) {
+      result.push(master);
+    }
 
     const countLimit = repeat.endType === 'count'
       ? Math.max(1, Number(repeat.endCount) || 1)
@@ -66,7 +75,7 @@ function expandScheduleOccurrences(schedules: Schedule[]): Schedule[] {
     const dateLimit = repeat.endType === 'date' ? repeat.endDate : null;
 
     let occurrenceDate = master.scheduleDate;
-    let count = 1; // masterを1回目としてカウント
+    let count = 1; // masterを1回目としてカウント(除外されていても回数自体は消費する)
 
     while (count < countLimit) {
       const next = nextOccurrenceDate(occurrenceDate, repeat.frequency);
@@ -76,13 +85,15 @@ function expandScheduleOccurrences(schedules: Schedule[]): Schedule[] {
       if (dateLimit && occurrenceDate > dateLimit) break;
       if (repeat.endType === 'never' && occurrenceDate > horizonStr) break;
 
-      result.push({
-        ...master,
-        id: `${master.id}::${occurrenceDate}`,
-        scheduleDate: occurrenceDate,
-        repeatMasterId: master.id,
-        isRepeatOccurrence: true
-      });
+      if (!excludedDates.has(occurrenceDate)) {
+        result.push({
+          ...master,
+          id: `${master.id}::${occurrenceDate}`,
+          scheduleDate: occurrenceDate,
+          repeatMasterId: master.id,
+          isRepeatOccurrence: true
+        });
+      }
       count++;
     }
   }
@@ -177,6 +188,7 @@ export class DashboardService {
               endType
               endDate
               endCount
+              excludedDates
             }
             createdAt
             updatedAt
@@ -321,7 +333,8 @@ export class DashboardService {
         frequency: s.repeat.frequency,
         endType: s.repeat.endType,
         endDate: s.repeat.endDate || null,
-        endCount: s.repeat.endCount ? Number(s.repeat.endCount) : null
+        endCount: s.repeat.endCount ? Number(s.repeat.endCount) : null,
+        excludedDates: s.repeat.excludedDates && s.repeat.excludedDates.length > 0 ? s.repeat.excludedDates : null
       } : null
     }));
 

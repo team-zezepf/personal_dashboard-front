@@ -43,6 +43,8 @@ export interface RepeatConfig {
   endType: 'never' | 'date' | 'count';
   endDate?: string | null;
   endCount?: number | string | null;
+  /** このシリーズのうち、個別に削除された回の日付(yyyy-MM-dd)一覧 */
+  excludedDates?: string[] | null;
 }
 
 export interface StockData {
