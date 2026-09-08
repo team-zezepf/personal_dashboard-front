@@ -264,16 +264,23 @@ export class DashboardService {
     }));
   }
 
+  // 未保存の新規予定に割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
+  // 呼び出しごとに確実に異なる値にするため、Date.now()ではなく単純減算のカウンターを使う
+  // (複製操作などで同一ミリ秒内にaddScheduleが連続呼び出しされてもIDが衝突しないようにするため)。
+  private nextTempScheduleId = -1;
+
   addSchedule(schedule: Omit<Schedule, 'id'>) {
-    const currentList = this.schedules();
-    const maxId = currentList.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0);
-    const newId = maxId + 1;
+    // 正のIDを推測で採番すると、サーバー側の「idを指定した更新リクエスト」と衝突し、
+    // 保存前に削除しようとすると存在しないIDとして削除失敗になる(または保存時に
+    // 他人のデータの更新とみなされて無視される)問題があったため、負の値を仮IDとする。
+    // saveChanges()送信時にこの仮IDはnullへ変換し、サーバー側で正式なIDを採番させる。
+    const tempId = this.nextTempScheduleId--;
     const newSchedule: Schedule = {
       ...schedule,
-      id: newId,
+      id: tempId,
       _dirty: true
     };
-    this.dirtyScheduleIds.add(newId);
+    this.dirtyScheduleIds.add(tempId);
     this.schedules.update(list => [...list, newSchedule]);
   }
 
@@ -294,6 +301,11 @@ export class DashboardService {
 
     this.dirtyScheduleIds.delete(scheduleId);
     this.schedules.update(list => list.filter(s => s.id !== scheduleId));
+
+    // まだ保存されていない(仮IDのままの)予定はサーバーに存在しないため、削除APIを呼ばずに終える
+    if (Number(scheduleId) < 0) {
+      return;
+    }
 
     const mutation = `
       mutation DeleteSchedule($id: ID!) {
@@ -338,7 +350,8 @@ export class DashboardService {
     }));
 
     const dirtySchedules = this.schedules().filter(s => this.dirtyScheduleIds.has(s.id)).map(s => ({
-      id: s.id,
+      // 仮ID(負の値)はサーバーに存在しないため、新規作成として扱われるようnullで送る
+      id: Number(s.id) < 0 ? null : s.id,
       userId: s.userId || 1,
       taskId: s.taskId,
       title: s.title,

@@ -226,9 +226,13 @@ export class CalendarComponent {
     return `${first.getFullYear()}年${first.getMonth() + 1}月${first.getDate()}日〜${last.getMonth() + 1}月${last.getDate()}日`;
   });
 
-  // 週表示グリッドの1時間あたりの分割数(5分単位)・高さ
+  // 週表示グリッドの1時間あたりの分割数(5分単位)・高さ(既存予定の描画に使う精度)
   readonly weekSubRowsPerHour = 12;
   readonly weekSubRowHeightPx = 2.5;
+
+  // ドラッグ操作(移動・時間変更)で時刻をスナップする単位(分)。
+  // 表示グリッドと同じ5分刻みだと細かすぎて意図しない時刻になりやすいため30分単位にする
+  readonly dragSnapMinutes = 30;
 
   // 週表示のグリッド上に予定を1つの連結した要素として配置する
   // (grid-row/grid-columnで直接位置指定し、5分単位で始端・終端がマス目の途中になっても実際の時刻通りに描画する)
@@ -393,28 +397,49 @@ export class CalendarComponent {
     }
     if (!this.dragMoved) return;
 
-    const totalSubRows = this.weekTimes.length * this.weekSubRowsPerHour;
+    const subRowMinutes = 60 / this.weekSubRowsPerHour;
+    const dyMinutes = (dy / this.weekSubRowHeightPx) * subRowMinutes;
     const dayDelta = Math.round(dx / state.colWidth);
-    const subRowDelta = Math.round(dy / this.weekSubRowHeightPx);
+
+    const displayStartMinutes = Number(this.weekTimes[0].substring(0, 2)) * 60;
+    const displayEndMinutes = displayStartMinutes + this.weekTimes.length * 60;
+    const snap = this.dragSnapMinutes;
+
+    const origStartMinutes = displayStartMinutes + (state.origRowStart - 2) * subRowMinutes;
+    const origSpanMinutes = state.origRowSpan * subRowMinutes;
+    const origEndMinutes = origStartMinutes + origSpanMinutes;
 
     let column: number;
-    let rowStart: number;
-    let rowSpan = state.origRowSpan;
+    let startMinutes: number;
+    let spanMinutes: number;
 
     if (state.mode === 'move') {
       const newDayIndex = this.clamp(state.origDayIndex + dayDelta, 0, 6);
       column = newDayIndex + 2;
-      rowStart = this.clamp(state.origRowStart + subRowDelta, 2, 2 + totalSubRows - rowSpan);
+      spanMinutes = origSpanMinutes;
+      const rawStart = origStartMinutes + dyMinutes;
+      startMinutes = this.clamp(
+        Math.round(rawStart / snap) * snap,
+        displayStartMinutes,
+        displayEndMinutes - spanMinutes
+      );
     } else if (state.mode === 'resize-top') {
       column = state.origDayIndex + 2;
-      const newRowStart = this.clamp(state.origRowStart + subRowDelta, 2, state.origRowStart + state.origRowSpan - 1);
-      rowSpan = state.origRowStart + state.origRowSpan - newRowStart;
-      rowStart = newRowStart;
+      const rawStart = origStartMinutes + dyMinutes;
+      const maxStart = origEndMinutes - snap;
+      startMinutes = this.clamp(Math.round(rawStart / snap) * snap, displayStartMinutes, maxStart);
+      spanMinutes = origEndMinutes - startMinutes;
     } else {
       column = state.origDayIndex + 2;
-      rowStart = state.origRowStart;
-      rowSpan = this.clamp(state.origRowSpan + subRowDelta, 1, 2 + totalSubRows - state.origRowStart);
+      startMinutes = origStartMinutes;
+      const rawEnd = origEndMinutes + dyMinutes;
+      const minEnd = origStartMinutes + snap;
+      const endMinutes = this.clamp(Math.round(rawEnd / snap) * snap, minEnd, displayEndMinutes);
+      spanMinutes = endMinutes - startMinutes;
     }
+
+    const rowStart = Math.round((startMinutes - displayStartMinutes) / subRowMinutes) + 2;
+    const rowSpan = Math.round(spanMinutes / subRowMinutes);
 
     this.dragPreview.set({ id: state.scheduleId, column, rowStart, rowSpan });
   }
