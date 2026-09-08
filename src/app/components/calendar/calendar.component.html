@@ -79,17 +79,38 @@
           }
         }
         @for (block of weekEventBlocks(); track block.id) {
-          <button
+          <div
             class="week-event"
-            type="button"
-            [style.grid-column]="block.column"
-            [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan"
-            (click)="onWeekEventClick(block.schedule)">
-            @if (block.schedule.repeat?.enabled) {
-              <span class="week-event-repeat-icon" title="繰り返し予定">↻</span>
+            [class.locked]="isDragLocked(block.schedule)"
+            [style.grid-column]="blockColumn(block)"
+            [style.grid-row]="blockRowStyle(block)">
+            <div
+              class="week-event-body"
+              tabindex="0"
+              role="button"
+              (mousedown)="onEventBodyMouseDown($event, block)"
+              (click)="onWeekEventClick(block.schedule)"
+              (keydown.enter)="onWeekEventClick(block.schedule)">
+              @if (block.schedule.repeat?.enabled) {
+                <span class="week-event-repeat-icon" title="繰り返し予定">↻</span>
+              }
+              {{ block.schedule.title }}
+            </div>
+            @if (!isDragLocked(block.schedule)) {
+              <div class="week-event-handle top" (mousedown)="onResizeMouseDown($event, block, 'top')"></div>
+              <div class="week-event-handle bottom" (mousedown)="onResizeMouseDown($event, block, 'bottom')"></div>
+              <div class="week-event-handle left" (mousedown)="onDuplicateMouseDown($event, block, 'left')"></div>
+              <div class="week-event-handle right" (mousedown)="onDuplicateMouseDown($event, block, 'right')"></div>
             }
-            {{ block.schedule.title }}
-          </button>
+          </div>
+        }
+        @for (ghost of duplicateGhostBlocks(); track ghost.id) {
+          <div
+            class="week-event ghost"
+            [style.grid-column]="ghost.column"
+            [style.grid-row]="ghost.rowStart + ' / span ' + ghost.rowSpan">
+            <div class="week-event-body">{{ ghost.schedule.title }}(コピー)</div>
+          </div>
         }
       </div>
     }
