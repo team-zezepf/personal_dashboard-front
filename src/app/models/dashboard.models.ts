@@ -25,6 +25,10 @@ export interface Schedule {
   updatedAt?: string | null;
   repeat?: RepeatConfig | null;
   _dirty?: boolean;
+  /** 繰り返し予定の展開によって生成された仮想的な1回分かどうか(クライアント側でのみ使用) */
+  isRepeatOccurrence?: boolean;
+  /** isRepeatOccurrenceがtrueの場合、展開元となった予定のid */
+  repeatMasterId?: string | number;
 }
 
 export interface RepeatConfig {
@@ -39,6 +43,8 @@ export interface RepeatConfig {
   endType: 'never' | 'date' | 'count';
   endDate?: string | null;
   endCount?: number | string | null;
+  /** このシリーズのうち、個別に削除された回の日付(yyyy-MM-dd)一覧 */
+  excludedDates?: string[] | null;
 }
 
 export interface StockData {

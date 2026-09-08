@@ -39,7 +39,8 @@ interface WeekEventBlock {
 export class CalendarComponent {
   private dashboardService = inject(DashboardService);
 
-  readonly schedules = this.dashboardService.schedules;
+  // 表示用(繰り返し予定を実日付に展開したもの)。編集・削除は常に元の予定(マスター)に対して行う
+  readonly schedules = this.dashboardService.scheduleOccurrences;
   readonly viewMode = signal<'month' | 'week'>('month');
 
   // Currently viewed year and month (0-indexed)
@@ -56,6 +57,11 @@ export class CalendarComponent {
   readonly isModalOpen = signal<boolean>(false);
   readonly isEditing = signal<boolean>(false);
   readonly editingScheduleId = signal<string | number | null>(null);
+  // 編集モーダルを開いた際に実際にクリックされた回の日付(繰り返し予定の場合、masterの日付とは限らない)
+  private editingOccurrenceDate: string | null = null;
+
+  // 繰り返し予定の削除確認(「この回だけ」/「すべて」の選択待ち)
+  readonly deleteConfirmTarget = signal<{ master: Schedule; occurrenceDate: string } | null>(null);
 
   // Modal form model
   modalTitle = '';
@@ -377,7 +383,19 @@ export class CalendarComponent {
     return `${newHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
-  openEditModal(schedule: Schedule) {
+  // 繰り返し予定の展開分(仮想的な1回分)がクリックされた場合、編集・削除の対象は
+  // 常に元の予定(マスター)にする(展開分は保存対象として存在しないため)
+  private resolveToMasterSchedule(schedule: Schedule): Schedule {
+    if (schedule.isRepeatOccurrence && schedule.repeatMasterId != null) {
+      const master = this.dashboardService.schedules().find(s => s.id === schedule.repeatMasterId);
+      if (master) return master;
+    }
+    return schedule;
+  }
+
+  openEditModal(scheduleOrOccurrence: Schedule) {
+    const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    this.editingOccurrenceDate = scheduleOrOccurrence.scheduleDate;
     this.isEditing.set(true);
     this.editingScheduleId.set(schedule.id);
     this.modalTitle = schedule.title;
@@ -400,6 +418,19 @@ export class CalendarComponent {
   deleteCurrentSchedule() {
     const id = this.editingScheduleId();
     if (id === null) return;
+
+    if (this.modalRepeatEnabled) {
+      const master = this.dashboardService.schedules().find(s => s.id === id);
+      if (master) {
+        this.deleteConfirmTarget.set({
+          master,
+          occurrenceDate: this.editingOccurrenceDate || master.scheduleDate
+        });
+        this.closeModal();
+        return;
+      }
+    }
+
     if (window.confirm(`「${this.modalTitle || 'この予定'}」を削除しますか？`)) {
       this.dashboardService.deleteSchedule(id);
       this.closeModal();
@@ -409,6 +440,13 @@ export class CalendarComponent {
   saveModalSchedule() {
     const targetDate = this.selectedDate() || this.dashboardService.currentDate();
     const isTask = this.modalScheduleType === 'task';
+
+    // 編集時、既存の除外日(個別削除された回)はモーダルのフォームで扱っていないため、
+    // 上書きしないようここで引き継ぐ
+    const existingMaster = this.isEditing() && this.editingScheduleId() !== null
+      ? this.dashboardService.schedules().find(s => s.id === this.editingScheduleId())
+      : null;
+    const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
 
     const scheduleData: Omit<Schedule, 'id'> = {
       userId: 1,
@@ -424,7 +462,8 @@ export class CalendarComponent {
         frequency: this.modalRepeatFrequency,
         endType: this.modalRepeatEndType,
         endDate: this.modalRepeatEndDate || null,
-        endCount: this.modalRepeatEndCount || null
+        endCount: this.modalRepeatEndCount || null,
+        excludedDates: existingExcludedDates
       } : null
     };
 
@@ -440,9 +479,42 @@ export class CalendarComponent {
     this.closeModal();
   }
 
-  deleteSchedule(schedule: Schedule) {
-    if (window.confirm(`「${schedule.title}」を削除しますか？`)) {
-      this.dashboardService.deleteSchedule(schedule.id);
+  deleteSchedule(scheduleOrOccurrence: Schedule) {
+    const master = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    if (master.repeat?.enabled) {
+      this.deleteConfirmTarget.set({
+        master,
+        occurrenceDate: scheduleOrOccurrence.scheduleDate
+      });
+      return;
     }
+    if (window.confirm(`「${master.title}」を削除しますか？`)) {
+      this.dashboardService.deleteSchedule(master.id);
+    }
+  }
+
+  // 繰り返し予定の削除確認：この回だけ除外日に加えて残りは維持する
+  confirmDeleteOccurrenceOnly() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    const { master, occurrenceDate } = target;
+    const excludedDates = [...(master.repeat?.excludedDates || []), occurrenceDate];
+    this.dashboardService.updateSchedule({
+      ...master,
+      repeat: { ...master.repeat!, excludedDates }
+    });
+    this.deleteConfirmTarget.set(null);
+  }
+
+  // 繰り返し予定の削除確認：シリーズ全体(マスター)を削除する
+  confirmDeleteAllOccurrences() {
+    const target = this.deleteConfirmTarget();
+    if (!target) return;
+    this.dashboardService.deleteSchedule(target.master.id);
+    this.deleteConfirmTarget.set(null);
+  }
+
+  cancelDeleteConfirm() {
+    this.deleteConfirmTarget.set(null);
   }
 }
