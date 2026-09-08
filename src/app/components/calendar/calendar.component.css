@@ -118,16 +118,16 @@
 }
 
 .day.today {
-  background: #eaf8fd;
-  border-color: #bce7f5;
+  background: transparent;
+  border-color: var(--primary);
   color: var(--primary-dark);
   font-weight: 700;
 }
 
 .day.selected {
-  background: #eaf8fd;
-  border-color: #9ddcf0;
-  color: var(--primary-dark);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
   font-weight: 700;
 }
 
@@ -143,6 +143,10 @@
 
 .dot.green {
   background: var(--green);
+}
+
+.day.selected .dot {
+  background: white;
 }
 
 /* 週表示 */

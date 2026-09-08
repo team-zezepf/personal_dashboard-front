@@ -46,7 +46,8 @@
 }
 
 .save-button:disabled {
-  opacity: 0.7;
+  background: #b0b7c0;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

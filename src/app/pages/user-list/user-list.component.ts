@@ -1,7 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { UserService } from '../../services/user.service';
 import { User, UserRole } from '../../models/dashboard.models';
@@ -30,7 +29,6 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
 })
 export class UserListPageComponent implements OnInit {
   private userService = inject(UserService);
-  private router = inject(Router);
 
   readonly users = this.userService.users;
   readonly isLoading = this.userService.isLoading;
@@ -112,10 +110,6 @@ export class UserListPageComponent implements OnInit {
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
     const d = date.getDate().toString().padStart(2, '0');
     return `${y}/${m}/${d}`;
-  }
-
-  goToRegister(): void {
-    this.router.navigateByUrl('/register');
   }
 
   openEditModal(user: User): void {

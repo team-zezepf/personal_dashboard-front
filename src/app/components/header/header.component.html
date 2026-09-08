@@ -1,10 +1,36 @@
 <header class="topbar">
-  <div class="brand">MY DASHBOARD</div>
-  <nav class="nav-links">
-    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">ダッシュボード</a>
-    <a class="nav-link" routerLink="/users" routerLinkActive="active">ユーザー管理</a>
-    <a class="nav-link" routerLink="/tools" routerLinkActive="active">ツール一覧</a>
-  </nav>
+  <div class="title-menu-wrapper">
+    <button
+      class="page-title-button"
+      type="button"
+      (click)="toggleTitleMenu()"
+      [attr.aria-expanded]="isTitleMenuOpen()"
+      aria-haspopup="true"
+    >
+      <span class="page-title-text">{{ pageTitle }}</span>
+    </button>
+
+    @if (isTitleMenuOpen()) {
+      <div class="title-menu" role="menu">
+        @for (item of visibleTitleMenuItems(); track item.path) {
+          <a
+            class="title-menu-item"
+            role="menuitem"
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: !!item.exact }"
+            (click)="closeTitleMenu()"
+          >
+            <span>{{ item.label }}</span>
+            @if (item.elevatedOnly) {
+              <span class="title-menu-item-icon" title="管理者・開発者向け">🔧</span>
+            }
+          </a>
+        }
+      </div>
+    }
+  </div>
+
   <div class="date">{{ formattedDate() }}</div>
 
   <div class="avatar-menu-wrapper">

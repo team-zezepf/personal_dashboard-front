@@ -15,6 +15,7 @@ export class FooterComponent {
   readonly isSaving = this.dashboardService.isSaving;
   readonly saveStatus = this.dashboardService.saveStatus;
   readonly saveMessage = this.dashboardService.saveMessage;
+  readonly hasChanges = this.dashboardService.hasChanges;
 
   onSave() {
     this.dashboardService.saveChanges();

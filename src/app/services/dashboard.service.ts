@@ -120,6 +120,8 @@ export class DashboardService {
   readonly isSaving = signal<boolean>(false);
   readonly saveMessage = signal<string>('');
   readonly saveStatus = signal<'idle' | 'saving' | 'success' | 'error'>('idle');
+  // タスク・予定に未保存の変更があるかどうか(セーブボタンの活性/非活性に使う)
+  readonly hasChanges = signal<boolean>(false);
 
   // Computed properties
   readonly todayTasks = computed(() => {
@@ -244,6 +246,7 @@ export class DashboardService {
       if (data.topics) this.topics.set(data.topics);
       this.dirtyTaskIds.clear();
       this.dirtyScheduleIds.clear();
+      this.hasChanges.set(false);
     });
   }
 
@@ -262,6 +265,7 @@ export class DashboardService {
       }
       return task;
     }));
+    this.hasChanges.set(true);
   }
 
   // 未保存の新規予定に割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
@@ -273,6 +277,8 @@ export class DashboardService {
     // 正のIDを推測で採番すると、サーバー側の「idを指定した更新リクエスト」と衝突し、
     // 保存前に削除しようとすると存在しないIDとして削除失敗になる(または保存時に
     // 他人のデータの更新とみなされて無視される)問題があったため、負の値を仮IDとする。
+    // Date.now()ではなく単純減算のカウンターを使うのは、複製操作などで同一ミリ秒内に
+    // addScheduleが連続呼び出しされてもIDが衝突しないようにするため。
     // saveChanges()送信時にこの仮IDはnullへ変換し、サーバー側で正式なIDを採番させる。
     const tempId = this.nextTempScheduleId--;
     const newSchedule: Schedule = {
@@ -282,6 +288,7 @@ export class DashboardService {
     };
     this.dirtyScheduleIds.add(tempId);
     this.schedules.update(list => [...list, newSchedule]);
+    this.hasChanges.set(true);
   }
 
   updateSchedule(schedule: Schedule) {
@@ -292,6 +299,7 @@ export class DashboardService {
       }
       return s;
     }));
+    this.hasChanges.set(true);
   }
 
   deleteSchedule(scheduleId: string | number) {
@@ -301,6 +309,7 @@ export class DashboardService {
 
     this.dirtyScheduleIds.delete(scheduleId);
     this.schedules.update(list => list.filter(s => s.id !== scheduleId));
+    this.hasChanges.set(this.dirtyTaskIds.size > 0 || this.dirtyScheduleIds.size > 0);
 
     // まだ保存されていない(仮IDのままの)予定はサーバーに存在しないため、削除APIを呼ばずに終える
     if (Number(scheduleId) < 0) {
@@ -414,6 +423,9 @@ export class DashboardService {
         this.saveMessage.set('保存完了' + (result.gitCommitted ? '（Gitコミット済）' : ''));
         this.dirtyTaskIds.clear();
         this.dirtyScheduleIds.clear();
+        this.hasChanges.set(false);
+        // 新規追加分の仮IDをサーバーが採番した正式なIDに置き換えるため再取得する
+        this.loadDashboardData();
       } else {
         this.saveStatus.set('error');
         this.saveMessage.set(result.message || '保存に失敗しました');

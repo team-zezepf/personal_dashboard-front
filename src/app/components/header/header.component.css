@@ -1,6 +1,6 @@
 .topbar {
   height: 64px;
-  background: linear-gradient(135deg, var(--primary), #0da4d7);
+  background: #6076e0;
   color: white;
   display: flex;
   align-items: center;
@@ -8,36 +8,78 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-.brand {
+.title-menu-wrapper {
+  position: relative;
+}
+
+.page-title-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-left: -10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.page-title-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.page-title-text {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
-.nav-links {
-  display: flex;
-  gap: 4px;
-  margin-left: 32px;
+.title-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  min-width: 180px;
+  padding: 6px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(31, 41, 55, 0.18);
+  z-index: 1200;
 }
 
-.nav-link {
-  padding: 6px 12px;
+.title-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
   border-radius: 7px;
-  color: rgba(255, 255, 255, 0.85);
+  background: none;
+  color: var(--text);
   font-size: 13px;
   font-weight: 600;
+  text-align: left;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: white;
+.title-menu-item:hover {
+  background: #f2f6f9;
 }
 
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+.title-menu-item-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.title-menu-item.active {
+  color: var(--primary-dark);
+  background: #eaf8fd;
 }
 
 .date {
@@ -118,12 +160,7 @@
     padding: 0 18px;
   }
 
-  .nav-links {
-    margin-left: 16px;
-  }
-
-  .nav-link {
-    padding: 6px 8px;
-    font-size: 12px;
+  .page-title-text {
+    font-size: 17px;
   }
 }
