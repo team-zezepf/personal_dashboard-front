@@ -186,18 +186,37 @@ export class DashboardService {
   }
 
   deleteSchedule(scheduleId: string | number) {
-    this.dirtyScheduleIds.add(scheduleId);
+    const index = this.schedules().findIndex(s => s.id === scheduleId);
+    if (index === -1) return;
+    const removedSchedule = this.schedules()[index];
+
+    this.dirtyScheduleIds.delete(scheduleId);
     this.schedules.update(list => list.filter(s => s.id !== scheduleId));
 
-    // Also call deleteSchedule mutation directly or mark for batch save
     const mutation = `
       mutation DeleteSchedule($id: ID!) {
         deleteSchedule(id: $id)
       }
     `;
     this.graphql.mutation<{ deleteSchedule: boolean }>(mutation, { id: scheduleId })
-      .pipe(catchError(() => of({ deleteSchedule: true })))
-      .subscribe();
+      .pipe(
+        catchError(err => {
+          console.error('Delete failed:', err);
+          return of({ deleteSchedule: false });
+        })
+      )
+      .subscribe(res => {
+        if (!res.deleteSchedule) {
+          // サーバー側で削除できなかった場合はローカル表示を元に戻し、失敗をユーザーに知らせる
+          this.schedules.update(list => {
+            const restored = [...list];
+            restored.splice(Math.min(index, restored.length), 0, removedSchedule);
+            return restored;
+          });
+          this.saveStatus.set('error');
+          this.saveMessage.set(`「${removedSchedule.title}」の削除に失敗しました`);
+        }
+      });
   }
 
   saveChanges() {
