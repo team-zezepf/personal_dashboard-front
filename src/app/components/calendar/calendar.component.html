@@ -85,6 +85,9 @@
             [style.grid-column]="block.column"
             [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan"
             (click)="onWeekEventClick(block.schedule)">
+            @if (block.schedule.repeat?.enabled) {
+              <span class="week-event-repeat-icon" title="繰り返し予定">↻</span>
+            }
             {{ block.schedule.title }}
           </button>
         }
@@ -114,7 +117,12 @@
           @for (event of selectedDateEvents(); track event.id) {
             <div class="calendar-event">
               <div class="calendar-event-time">{{ event.startTime.substring(0, 5) }} - {{ event.endTime.substring(0, 5) }}</div>
-              <div class="calendar-event-name">{{ event.title }}</div>
+              <div class="calendar-event-name">
+                @if (event.repeat?.enabled) {
+                  <span class="calendar-event-repeat-icon" title="繰り返し予定">↻</span>
+                }
+                {{ event.title }}
+              </div>
               @if (event.description) {
                 <div class="calendar-event-note">{{ event.description }}</div>
               }

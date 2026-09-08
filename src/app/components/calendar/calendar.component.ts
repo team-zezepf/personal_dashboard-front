@@ -39,7 +39,8 @@ interface WeekEventBlock {
 export class CalendarComponent {
   private dashboardService = inject(DashboardService);
 
-  readonly schedules = this.dashboardService.schedules;
+  // 表示用(繰り返し予定を実日付に展開したもの)。編集・削除は常に元の予定(マスター)に対して行う
+  readonly schedules = this.dashboardService.scheduleOccurrences;
   readonly viewMode = signal<'month' | 'week'>('month');
 
   // Currently viewed year and month (0-indexed)
@@ -377,7 +378,18 @@ export class CalendarComponent {
     return `${newHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
-  openEditModal(schedule: Schedule) {
+  // 繰り返し予定の展開分(仮想的な1回分)がクリックされた場合、編集・削除の対象は
+  // 常に元の予定(マスター)にする(展開分は保存対象として存在しないため)
+  private resolveToMasterSchedule(schedule: Schedule): Schedule {
+    if (schedule.isRepeatOccurrence && schedule.repeatMasterId != null) {
+      const master = this.dashboardService.schedules().find(s => s.id === schedule.repeatMasterId);
+      if (master) return master;
+    }
+    return schedule;
+  }
+
+  openEditModal(scheduleOrOccurrence: Schedule) {
+    const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
     this.isEditing.set(true);
     this.editingScheduleId.set(schedule.id);
     this.modalTitle = schedule.title;
@@ -400,7 +412,10 @@ export class CalendarComponent {
   deleteCurrentSchedule() {
     const id = this.editingScheduleId();
     if (id === null) return;
-    if (window.confirm(`「${this.modalTitle || 'この予定'}」を削除しますか？`)) {
+    const confirmMessage = this.modalRepeatEnabled
+      ? `「${this.modalTitle || 'この予定'}」を削除しますか？(繰り返し予定のため、すべての回が削除されます)`
+      : `「${this.modalTitle || 'この予定'}」を削除しますか？`;
+    if (window.confirm(confirmMessage)) {
       this.dashboardService.deleteSchedule(id);
       this.closeModal();
     }
@@ -440,8 +455,12 @@ export class CalendarComponent {
     this.closeModal();
   }
 
-  deleteSchedule(schedule: Schedule) {
-    if (window.confirm(`「${schedule.title}」を削除しますか？`)) {
+  deleteSchedule(scheduleOrOccurrence: Schedule) {
+    const schedule = this.resolveToMasterSchedule(scheduleOrOccurrence);
+    const confirmMessage = schedule.repeat?.enabled
+      ? `「${schedule.title}」を削除しますか？(繰り返し予定のため、すべての回が削除されます)`
+      : `「${schedule.title}」を削除しますか？`;
+    if (window.confirm(confirmMessage)) {
       this.dashboardService.deleteSchedule(schedule.id);
     }
   }
