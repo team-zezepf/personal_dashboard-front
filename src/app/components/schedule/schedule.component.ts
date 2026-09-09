@@ -5,7 +5,8 @@ import { Schedule } from '../../models/dashboard.models';
 
 interface TimelineHour {
   hour: number;
-  rowIndex: number;
+  rowStart: number;
+  rowSpan: number;
   timeLabel: string;
   hasEvent: boolean;
 }
@@ -33,16 +34,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private timerId: any = null;
 
-  readonly currentHour = signal<number>(new Date().getHours());
+  // 現在時刻をSUBROW_MINUTES(5分)単位で切り捨てた「分」(0〜1435)。
+  // タイムラインの表示開始位置をこの値に合わせることで、実際の残り時間がそのまま高さに反映される
+  readonly currentSlotStart = signal<number>(this.computeCurrentSlotStart());
   readonly todaySchedules = this.dashboardService.todaySchedules;
 
   readonly subRowHeightPx = 6;
+  readonly totalSubRows = HOUR_COUNT * SUBROWS_PER_HOUR;
 
   ngOnInit() {
     this.timerId = setInterval(() => {
-      const h = new Date().getHours();
-      if (this.currentHour() !== h) {
-        this.currentHour.set(h);
+      const s = this.computeCurrentSlotStart();
+      if (this.currentSlotStart() !== s) {
+        this.currentSlotStart.set(s);
       }
     }, 30000);
   }
@@ -53,36 +57,53 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
+  private computeCurrentSlotStart(): number {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return Math.floor(nowMinutes / SUBROW_MINUTES) * SUBROW_MINUTES;
+  }
+
   private get displayStartMinutes(): number {
-    return this.currentHour() * 60;
+    return this.currentSlotStart();
   }
 
   private get displayEndMinutes(): number {
-    return (this.currentHour() + HOUR_COUNT) * 60;
+    return this.currentSlotStart() + HOUR_COUNT * 60;
   }
 
+  // 表示範囲を「時」の境界(xx:00)で区切り、先頭と末尾は実際の残り分数に応じた
+  // 部分時間(part-hour)としてラベル・行数を割り当てる
   readonly timelineHours = computed<TimelineHour[]>(() => {
-    const baseHour = this.currentHour();
+    const displayStart = this.displayStartMinutes;
+    const displayEnd = this.displayEndMinutes;
     const schedules = this.todaySchedules();
 
     const hours: TimelineHour[] = [];
-    for (let i = 0; i < HOUR_COUNT; i++) {
-      const hour = (baseHour + i) % 24;
-      const hourStartMinutes = (baseHour + i) * 60;
-      const hourEndMinutes = hourStartMinutes + 60;
+    let cursor = displayStart;
+    let rowCursor = 1;
+
+    while (cursor < displayEnd) {
+      const hour = Math.floor(cursor / 60) % 24;
+      const nextHourBoundary = (Math.floor(cursor / 60) + 1) * 60;
+      const segmentEnd = Math.min(nextHourBoundary, displayEnd);
+      const rowSpan = (segmentEnd - cursor) / SUBROW_MINUTES;
 
       const hasEvent = schedules.some(s => {
         const startMinutes = this.toMinutes(s.startTime);
         const endMinutes = this.toMinutes(s.endTime);
-        return startMinutes < hourEndMinutes && endMinutes > hourStartMinutes;
+        return startMinutes < segmentEnd && endMinutes > cursor;
       });
 
       hours.push({
         hour,
-        rowIndex: i,
+        rowStart: rowCursor,
+        rowSpan,
         timeLabel: `${hour.toString().padStart(2, '0')}:00`,
         hasEvent
       });
+
+      rowCursor += rowSpan;
+      cursor = segmentEnd;
     }
     return hours;
   });
