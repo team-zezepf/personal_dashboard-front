@@ -13,9 +13,20 @@
         }
       }
       @for (block of timelineEventBlocks(); track block.id) {
-        <div class="event" [class.active]="block.isActive" [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan">
-          <div class="event-title">{{ block.schedule.title }}</div>
-          <div class="event-meta">{{ block.schedule.startTime.substring(0, 5) }} - {{ block.schedule.endTime.substring(0, 5) }}</div>
+        <div
+          class="event"
+          [class.active]="block.isActive"
+          [class.task]="block.schedule.scheduleType === 'TASK'"
+          [style.grid-row]="block.rowStart + ' / span ' + block.rowSpan">
+          @if (block.schedule.scheduleType === 'TASK') {
+            <div class="event-task-line">
+              <span class="event-task-time">{{ block.schedule.startTime.substring(0, 5) }}</span>
+              <span class="event-task-title">{{ block.schedule.title }}</span>
+            </div>
+          } @else {
+            <div class="event-title">{{ block.schedule.title }}</div>
+            <div class="event-meta">{{ block.schedule.startTime.substring(0, 5) }} - {{ block.schedule.endTime.substring(0, 5) }}</div>
+          }
         </div>
       }
     </div>
