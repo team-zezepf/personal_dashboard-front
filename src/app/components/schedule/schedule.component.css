@@ -43,6 +43,7 @@
 }
 
 .time {
+  grid-column: 1;
   color: var(--muted);
   font-size: 12px;
   padding-top: 4px;
@@ -50,6 +51,7 @@
 }
 
 .event {
+  grid-column: 2;
   position: relative;
   padding: 9px 12px;
   border-radius: 9px;
@@ -92,6 +94,7 @@
 }
 
 .empty {
+  grid-column: 2;
   min-height: 42px;
   border: 1px dashed #dfe5ea;
   border-radius: 9px;

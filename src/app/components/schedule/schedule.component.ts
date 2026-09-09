@@ -90,7 +90,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
       const hasEvent = schedules.some(s => {
         const startMinutes = this.toMinutes(s.startTime);
-        const endMinutes = this.toMinutes(s.endTime);
+        // 所要時間0分の予定はtimelineEventBlocks()側と同様に最低5分として扱う
+        // (揃えないと、この判定だけfalseになり空き枠と予定ブロックが二重に描画される)
+        let endMinutes = this.toMinutes(s.endTime);
+        if (endMinutes <= startMinutes) {
+          endMinutes = startMinutes + SUBROW_MINUTES;
+        }
         return startMinutes < segmentEnd && endMinutes > cursor;
       });
 
