@@ -93,6 +93,39 @@
   margin-top: 3px;
 }
 
+/* タスク(期限のみ・所要時間なし)は週表示のチップと形式・色を揃え、「時刻 タイトル」の1行で表示する */
+.event.task {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  border-color: var(--orange);
+  background: #fff3e0;
+}
+
+.event.task::before {
+  background: var(--orange);
+}
+
+.event-task-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8a5a00;
+  overflow: hidden;
+}
+
+.event-task-time {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.event-task-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .empty {
   grid-column: 2;
   min-height: 42px;
