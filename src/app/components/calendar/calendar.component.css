@@ -306,6 +306,44 @@
   margin-right: 2px;
 }
 
+/* タスク(期限のみ・所要時間なし)は行の高さに依存しない固定高さの浮遊チップで表示する */
+.week-task-marker {
+  position: relative;
+  z-index: 3;
+  overflow: visible;
+}
+
+.week-task-chip {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--orange);
+  background: #fff3e0;
+  color: #8a5a00;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.week-task-chip-time {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.week-task-chip-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 選択日の予定カード */
 .calendar-details-card {
   min-width: 0;
