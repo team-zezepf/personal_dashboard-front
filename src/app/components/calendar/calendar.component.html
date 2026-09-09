@@ -119,6 +119,25 @@
             <div class="week-event-body">{{ ghost.schedule.title }}(コピー)</div>
           </div>
         }
+        @for (marker of weekTaskMarkers(); track marker.id) {
+          <div
+            class="week-task-marker"
+            [style.grid-column]="marker.column"
+            [style.grid-row]="marker.rowStart + ' / span 1'">
+            <div
+              class="week-task-chip"
+              tabindex="0"
+              role="button"
+              (click)="onWeekEventClick(marker.schedule)"
+              (keydown.enter)="onWeekEventClick(marker.schedule)">
+              @if (marker.schedule.repeat?.enabled) {
+                <span class="week-event-repeat-icon" title="繰り返し予定">↻</span>
+              }
+              <span class="week-task-chip-time">{{ marker.schedule.startTime.substring(0, 5) }}</span>
+              <span class="week-task-chip-title">{{ marker.schedule.title }}</span>
+            </div>
+          </div>
+        }
       </div>
     }
   </div>

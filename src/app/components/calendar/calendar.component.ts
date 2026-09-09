@@ -30,6 +30,15 @@ interface WeekEventBlock {
   rowSpan: number;
 }
 
+// タスク(scheduleType: 'TASK')は「期間」ではなく「期限」を持つため、
+// 時間軸グリッドの行の高さに依存しない固定高さの浮遊チップとして表示する
+interface WeekTaskMarker {
+  id: string | number;
+  schedule: Schedule;
+  column: number;
+  rowStart: number;
+}
+
 interface DragState {
   scheduleId: string | number;
   mode: 'move' | 'resize-top' | 'resize-bottom';
@@ -261,7 +270,7 @@ export class CalendarComponent {
 
     days.forEach((day, dayIndex) => {
       schedulesList
-        .filter(s => s.scheduleDate === day.dateString)
+        .filter(s => s.scheduleDate === day.dateString && s.scheduleType !== 'TASK')
         .forEach(s => {
           const startMinutesRaw = this.toMinutes(s.startTime);
           const endMinutesRaw = this.toMinutes(s.endTime);
@@ -292,6 +301,43 @@ export class CalendarComponent {
     });
 
     return blocks;
+  });
+
+  // タスクは期限(startTime)の位置にのみマーカーを立てる(所要時間の概念がないため
+  // weekEventBlocksのような期間ベースの配置はせず、固定高さのチップとして描画する)
+  readonly weekTaskMarkers = computed<WeekTaskMarker[]>(() => {
+    const days = this.weekDays();
+    const schedulesList = this.schedules();
+    const subRowMinutes = 60 / this.weekSubRowsPerHour;
+    const firstDisplayHour = Number(this.weekTimes[0].substring(0, 2));
+    const lastDisplayHour = Number(this.weekTimes[this.weekTimes.length - 1].substring(0, 2));
+    const displayStartMinutes = firstDisplayHour * 60;
+    const displayEndMinutes = (lastDisplayHour + 1) * 60;
+
+    const markers: WeekTaskMarker[] = [];
+
+    days.forEach((day, dayIndex) => {
+      schedulesList
+        .filter(s => s.scheduleDate === day.dateString && s.scheduleType === 'TASK')
+        .forEach(s => {
+          const dueMinutesRaw = this.toMinutes(s.startTime);
+          const dueMinutes = Math.floor(dueMinutesRaw / subRowMinutes) * subRowMinutes;
+          if (dueMinutes < displayStartMinutes || dueMinutes >= displayEndMinutes) {
+            return; // 表示範囲(8〜22時)外の期限は描画しない
+          }
+
+          const rowStartSub = (dueMinutes - displayStartMinutes) / subRowMinutes;
+
+          markers.push({
+            id: s.id,
+            schedule: s,
+            column: dayIndex + 2, // 1列目は時間ラベル列
+            rowStart: rowStartSub + 2 // 1行目はヘッダー行
+          });
+        });
+    });
+
+    return markers;
   });
 
   private toMinutes(time: string): number {
