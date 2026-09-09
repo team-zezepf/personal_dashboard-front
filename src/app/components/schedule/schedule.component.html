@@ -5,11 +5,11 @@
     </div>
   </div>
   <div class="content">
-    <div class="schedule" [style.grid-template-rows]="'repeat(' + (timelineHours().length * 12) + ', ' + subRowHeightPx + 'px)'">
-      @for (row of timelineHours(); track row.hour) {
-        <div class="time" [style.grid-row]="(row.rowIndex * 12 + 1) + ' / span 12'">{{ row.timeLabel }}</div>
+    <div class="schedule" [style.grid-template-rows]="'repeat(' + totalSubRows + ', ' + subRowHeightPx + 'px)'">
+      @for (row of timelineHours(); track row.rowStart) {
+        <div class="time" [style.grid-row]="row.rowStart + ' / span ' + row.rowSpan">{{ row.timeLabel }}</div>
         @if (!row.hasEvent) {
-          <div class="empty" [style.grid-row]="(row.rowIndex * 12 + 1) + ' / span 12'"></div>
+          <div class="empty" [style.grid-row]="row.rowStart + ' / span ' + row.rowSpan" [style.min-height]="(row.rowSpan * subRowHeightPx) + 'px'"></div>
         }
       }
       @for (block of timelineEventBlocks(); track block.id) {
