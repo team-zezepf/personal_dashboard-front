@@ -131,10 +131,15 @@
   font-weight: 700;
 }
 
-.dot {
+.dots {
   position: absolute;
   left: 6px;
   bottom: 5px;
+  display: flex;
+  gap: 2px;
+}
+
+.dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
@@ -143,6 +148,10 @@
 
 .dot.green {
   background: var(--green);
+}
+
+.dot.task {
+  background: var(--orange);
 }
 
 .day.selected .dot {

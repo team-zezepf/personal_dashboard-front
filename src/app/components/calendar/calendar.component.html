@@ -43,8 +43,15 @@
             (click)="onDayClick(day)"
             [attr.data-date]="day.dateString">
             {{ day.dayNumber }}
-            @if (day.hasEvents) {
-              <div class="dot" [class.green]="day.isGreenDot"></div>
+            @if (day.hasSchedule || day.hasTask) {
+              <div class="dots">
+                @if (day.hasSchedule) {
+                  <div class="dot schedule" [class.green]="day.isGreenDot"></div>
+                }
+                @if (day.hasTask) {
+                  <div class="dot task"></div>
+                }
+              </div>
             }
           </div>
         }

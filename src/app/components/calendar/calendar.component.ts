@@ -10,7 +10,8 @@ interface CalendarDay {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
-  hasEvents: boolean;
+  hasSchedule: boolean;
+  hasTask: boolean;
   isGreenDot: boolean;
 }
 
@@ -130,7 +131,15 @@ export class CalendarComponent {
     const todayStr = this.dashboardService.currentDate();
     const schedulesList = this.schedules();
 
-    const scheduleDateSet = new Set(schedulesList.map(s => s.scheduleDate));
+    // 「毎日」の繰り返しはほぼ全日にoccurrenceが展開されるため、
+    // ドット判定からは除外する(そうしないと毎日ドットが点灯し続けて意味をなさない)
+    const dotTargetOccurrences = schedulesList.filter(s => s.repeat?.frequency !== 'daily');
+    const scheduleDateSet = new Set(
+      dotTargetOccurrences.filter(s => s.scheduleType !== 'TASK').map(s => s.scheduleDate)
+    );
+    const taskDateSet = new Set(
+      dotTargetOccurrences.filter(s => s.scheduleType === 'TASK').map(s => s.scheduleDate)
+    );
 
     // Month view
     const firstDay = new Date(year, month, 1);
@@ -152,7 +161,8 @@ export class CalendarComponent {
         dayNumber: prevDate.getDate(),
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        hasEvents: scheduleDateSet.has(dStr),
+        hasSchedule: scheduleDateSet.has(dStr),
+        hasTask: taskDateSet.has(dStr),
         isGreenDot: false
       });
     }
@@ -169,7 +179,8 @@ export class CalendarComponent {
         dayNumber: i,
         isCurrentMonth: true,
         isToday: dStr === todayStr,
-        hasEvents: scheduleDateSet.has(dStr),
+        hasSchedule: scheduleDateSet.has(dStr),
+        hasTask: taskDateSet.has(dStr),
         isGreenDot: dStr === '2026-08-07'
       });
     }
@@ -188,7 +199,8 @@ export class CalendarComponent {
         dayNumber: i,
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        hasEvents: scheduleDateSet.has(dStr),
+        hasSchedule: scheduleDateSet.has(dStr),
+        hasTask: taskDateSet.has(dStr),
         isGreenDot: false
       });
     }
