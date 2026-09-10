@@ -420,7 +420,7 @@ export class DashboardService {
       const result = res.saveChanges;
       if (result.success) {
         this.saveStatus.set('success');
-        this.saveMessage.set('保存完了' + (result.gitCommitted ? '（Gitコミット済）' : ''));
+        this.saveMessage.set('保存完了');
         this.dirtyTaskIds.clear();
         this.dirtyScheduleIds.clear();
         this.hasChanges.set(false);
