@@ -246,6 +246,8 @@ export class DashboardService {
       if (data.topics) this.topics.set(data.topics);
       this.dirtyTaskIds.clear();
       this.dirtyScheduleIds.clear();
+      this.dirtyDeletedTaskIds.clear();
+      this.dirtyDeletedScheduleIds.clear();
       this.hasChanges.set(false);
     });
   }
@@ -300,44 +302,24 @@ export class DashboardService {
     this.hasChanges.set(true);
   }
 
+  // 削除待ちのTask ID(保存ボタン押下時にsaveChangesへまとめて送る)。
+  private dirtyDeletedTaskIds = new Set<string | number>();
+
+  // タスクの削除も追加・編集と同じく保存ボタン待ちのdirty管理にする。
+  // 画面上は即座に一覧から消すが、サーバーへの削除は保存時にまとめて行う
+  // (保存前にリロードすれば削除前の状態に戻る、追加・編集の下書きと同じ挙動)。
   deleteTask(taskId: string | number) {
     const index = this.tasks().findIndex(t => t.id === taskId);
     if (index === -1) return;
-    const removedTask = this.tasks()[index];
 
     this.dirtyTaskIds.delete(taskId);
     this.tasks.update(list => list.filter(t => t.id !== taskId));
-    this.hasChanges.set(this.dirtyTaskIds.size > 0 || this.dirtyScheduleIds.size > 0);
 
-    // まだ保存されていない(仮IDのままの)タスクはサーバーに存在しないため、削除APIを呼ばずに終える
-    if (Number(taskId) < 0) {
-      return;
+    // まだ保存されていない(仮IDのままの)タスクはサーバーに存在しないため、削除待ちに加える必要はない
+    if (Number(taskId) >= 0) {
+      this.dirtyDeletedTaskIds.add(taskId);
     }
-
-    const mutation = `
-      mutation DeleteTask($id: ID!) {
-        deleteTask(id: $id)
-      }
-    `;
-    this.graphql.mutation<{ deleteTask: boolean }>(mutation, { id: taskId })
-      .pipe(
-        catchError(err => {
-          console.error('Delete task failed:', err);
-          return of({ deleteTask: false });
-        })
-      )
-      .subscribe(res => {
-        if (!res.deleteTask) {
-          // サーバー側で削除できなかった場合はローカル表示を元に戻し、失敗をユーザーに知らせる
-          this.tasks.update(list => {
-            const restored = [...list];
-            restored.splice(Math.min(index, restored.length), 0, removedTask);
-            return restored;
-          });
-          this.saveStatus.set('error');
-          this.saveMessage.set(`「${removedTask.title}」の削除に失敗しました`);
-        }
-      });
+    this.recomputeHasChanges();
   }
 
   // 未保存の新規予定に割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
@@ -374,44 +356,30 @@ export class DashboardService {
     this.hasChanges.set(true);
   }
 
+  // 削除待ちのSchedule ID(保存ボタン押下時にsaveChangesへまとめて送る)。
+  private dirtyDeletedScheduleIds = new Set<string | number>();
+
   deleteSchedule(scheduleId: string | number) {
     const index = this.schedules().findIndex(s => s.id === scheduleId);
     if (index === -1) return;
-    const removedSchedule = this.schedules()[index];
 
     this.dirtyScheduleIds.delete(scheduleId);
     this.schedules.update(list => list.filter(s => s.id !== scheduleId));
-    this.hasChanges.set(this.dirtyTaskIds.size > 0 || this.dirtyScheduleIds.size > 0);
 
-    // まだ保存されていない(仮IDのままの)予定はサーバーに存在しないため、削除APIを呼ばずに終える
-    if (Number(scheduleId) < 0) {
-      return;
+    // まだ保存されていない(仮IDのままの)予定はサーバーに存在しないため、削除待ちに加える必要はない
+    if (Number(scheduleId) >= 0) {
+      this.dirtyDeletedScheduleIds.add(scheduleId);
     }
+    this.recomputeHasChanges();
+  }
 
-    const mutation = `
-      mutation DeleteSchedule($id: ID!) {
-        deleteSchedule(id: $id)
-      }
-    `;
-    this.graphql.mutation<{ deleteSchedule: boolean }>(mutation, { id: scheduleId })
-      .pipe(
-        catchError(err => {
-          console.error('Delete failed:', err);
-          return of({ deleteSchedule: false });
-        })
-      )
-      .subscribe(res => {
-        if (!res.deleteSchedule) {
-          // サーバー側で削除できなかった場合はローカル表示を元に戻し、失敗をユーザーに知らせる
-          this.schedules.update(list => {
-            const restored = [...list];
-            restored.splice(Math.min(index, restored.length), 0, removedSchedule);
-            return restored;
-          });
-          this.saveStatus.set('error');
-          this.saveMessage.set(`「${removedSchedule.title}」の削除に失敗しました`);
-        }
-      });
+  private recomputeHasChanges() {
+    this.hasChanges.set(
+      this.dirtyTaskIds.size > 0 ||
+      this.dirtyScheduleIds.size > 0 ||
+      this.dirtyDeletedTaskIds.size > 0 ||
+      this.dirtyDeletedScheduleIds.size > 0
+    );
   }
 
   saveChanges() {
@@ -451,6 +419,9 @@ export class DashboardService {
       } : null
     }));
 
+    const deletedTaskIds = Array.from(this.dirtyDeletedTaskIds);
+    const deletedScheduleIds = Array.from(this.dirtyDeletedScheduleIds);
+
     const mutation = `
       mutation SaveChanges($input: SaveChangesInput!) {
         saveChanges(input: $input) {
@@ -464,9 +435,11 @@ export class DashboardService {
     const input: any = {};
     if (dirtyTasks.length > 0) input.tasks = dirtyTasks;
     if (dirtySchedules.length > 0) input.schedules = dirtySchedules;
+    if (deletedTaskIds.length > 0) input.deletedTaskIds = deletedTaskIds;
+    if (deletedScheduleIds.length > 0) input.deletedScheduleIds = deletedScheduleIds;
 
     // If nothing changed, we still save all or report clean state
-    if (dirtyTasks.length === 0 && dirtySchedules.length === 0) {
+    if (dirtyTasks.length === 0 && dirtySchedules.length === 0 && deletedTaskIds.length === 0 && deletedScheduleIds.length === 0) {
       setTimeout(() => {
         this.isSaving.set(false);
         this.saveStatus.set('success');
@@ -495,6 +468,8 @@ export class DashboardService {
         this.saveMessage.set('保存完了' + (result.gitCommitted ? '（Gitコミット済）' : ''));
         this.dirtyTaskIds.clear();
         this.dirtyScheduleIds.clear();
+        this.dirtyDeletedTaskIds.clear();
+        this.dirtyDeletedScheduleIds.clear();
         this.hasChanges.set(false);
         // 新規追加分の仮IDをサーバーが採番した正式なIDに置き換えるため再取得する
         this.loadDashboardData();
