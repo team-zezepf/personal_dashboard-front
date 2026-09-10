@@ -793,6 +793,10 @@ export class CalendarComponent {
     }
 
     if (window.confirm(`「${this.modalTitle || 'この予定'}」を削除しますか？`)) {
+      const master = this.dashboardService.schedules().find(s => s.id === id);
+      if (master?.taskId != null) {
+        this.dashboardService.deleteTask(master.taskId);
+      }
       this.dashboardService.deleteSchedule(id);
       this.closeModal();
     }
@@ -809,12 +813,39 @@ export class CalendarComponent {
       : null;
     const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
 
+    const title = this.modalTitle.trim() || '新しい予定';
+    const description = this.modalNote.trim();
+    const taskDate = isTask ? (this.modalDueDate || targetDate) : (this.modalStartDate || targetDate);
+
+    // カレンダーの「タスク」種別の予定は、「本日のタスク」ウィジェットが参照する
+    // Taskレコードとtask idで紐付ける。タスク種別への新規追加/切り替え時はTaskを新規作成し、
+    // 既存の紐付けタスクがあれば内容を追従、タスク種別でなくなった場合は紐付けタスクを削除する。
+    let resolvedTaskId: string | number | null = existingMaster?.taskId ?? null;
+    if (isTask) {
+      if (resolvedTaskId != null) {
+        this.dashboardService.updateTaskFields(resolvedTaskId, { title, description, taskDate });
+      } else {
+        const newTask = this.dashboardService.addTask({
+          userId: 1,
+          title,
+          description,
+          taskDate,
+          status: 'TODO',
+          completedAt: null
+        });
+        resolvedTaskId = newTask.id;
+      }
+    } else if (resolvedTaskId != null) {
+      this.dashboardService.deleteTask(resolvedTaskId);
+      resolvedTaskId = null;
+    }
+
     const scheduleData: Omit<Schedule, 'id'> = {
       userId: 1,
-      taskId: isTask ? 1 : null,
-      title: this.modalTitle.trim() || '新しい予定',
-      description: this.modalNote.trim(),
-      scheduleDate: isTask ? (this.modalDueDate || targetDate) : (this.modalStartDate || targetDate),
+      taskId: resolvedTaskId,
+      title,
+      description,
+      scheduleDate: isTask ? taskDate : (this.modalStartDate || targetDate),
       startTime: isTask ? (this.modalDueTime ? `${this.modalDueTime}:00` : '09:00:00') : `${this.modalStartTime}:00`,
       endTime: isTask ? (this.modalDueTime ? `${this.modalDueTime}:00` : '10:00:00') : `${this.modalEndTime}:00`,
       scheduleType: isTask ? 'TASK' : 'SCHEDULE',
@@ -850,6 +881,9 @@ export class CalendarComponent {
       return;
     }
     if (window.confirm(`「${master.title}」を削除しますか？`)) {
+      if (master.taskId != null) {
+        this.dashboardService.deleteTask(master.taskId);
+      }
       this.dashboardService.deleteSchedule(master.id);
     }
   }
@@ -871,6 +905,9 @@ export class CalendarComponent {
   confirmDeleteAllOccurrences() {
     const target = this.deleteConfirmTarget();
     if (!target) return;
+    if (target.master.taskId != null) {
+      this.dashboardService.deleteTask(target.master.taskId);
+    }
     this.dashboardService.deleteSchedule(target.master.id);
     this.deleteConfirmTarget.set(null);
   }
