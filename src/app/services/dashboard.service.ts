@@ -268,6 +268,78 @@ export class DashboardService {
     this.hasChanges.set(true);
   }
 
+  // 未保存の新規タスクに割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
+  // 予定側(nextTempScheduleId)とは別カウンターにしておき、taskIdとscheduleIdの
+  // 仮ID同士が偶然一致しないようにする。
+  private nextTempTaskId = -1;
+
+  // カレンダーの「タスク」種別の予定から呼ばれ、対応するTaskを仮IDで新規作成する。
+  // 戻り値のidをSchedule.taskIdに設定して呼び出し元で紐付ける。
+  addTask(task: Omit<Task, 'id'>): Task {
+    const tempId = this.nextTempTaskId--;
+    const newTask: Task = {
+      ...task,
+      id: tempId,
+      _dirty: true
+    };
+    this.dirtyTaskIds.add(tempId);
+    this.tasks.update(list => [...list, newTask]);
+    this.hasChanges.set(true);
+    return newTask;
+  }
+
+  // カレンダーの「タスク」種別の予定が編集された際、紐づくTaskの内容を追従させる。
+  updateTaskFields(taskId: string | number, fields: Partial<Pick<Task, 'title' | 'description' | 'taskDate'>>) {
+    this.tasks.update(list => list.map(task => {
+      if (task.id === taskId) {
+        this.dirtyTaskIds.add(taskId);
+        return { ...task, ...fields, _dirty: true };
+      }
+      return task;
+    }));
+    this.hasChanges.set(true);
+  }
+
+  deleteTask(taskId: string | number) {
+    const index = this.tasks().findIndex(t => t.id === taskId);
+    if (index === -1) return;
+    const removedTask = this.tasks()[index];
+
+    this.dirtyTaskIds.delete(taskId);
+    this.tasks.update(list => list.filter(t => t.id !== taskId));
+    this.hasChanges.set(this.dirtyTaskIds.size > 0 || this.dirtyScheduleIds.size > 0);
+
+    // まだ保存されていない(仮IDのままの)タスクはサーバーに存在しないため、削除APIを呼ばずに終える
+    if (Number(taskId) < 0) {
+      return;
+    }
+
+    const mutation = `
+      mutation DeleteTask($id: ID!) {
+        deleteTask(id: $id)
+      }
+    `;
+    this.graphql.mutation<{ deleteTask: boolean }>(mutation, { id: taskId })
+      .pipe(
+        catchError(err => {
+          console.error('Delete task failed:', err);
+          return of({ deleteTask: false });
+        })
+      )
+      .subscribe(res => {
+        if (!res.deleteTask) {
+          // サーバー側で削除できなかった場合はローカル表示を元に戻し、失敗をユーザーに知らせる
+          this.tasks.update(list => {
+            const restored = [...list];
+            restored.splice(Math.min(index, restored.length), 0, removedTask);
+            return restored;
+          });
+          this.saveStatus.set('error');
+          this.saveMessage.set(`「${removedTask.title}」の削除に失敗しました`);
+        }
+      });
+  }
+
   // 未保存の新規予定に割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
   // 呼び出しごとに確実に異なる値にするため、Date.now()ではなく単純減算のカウンターを使う
   // (複製操作などで同一ミリ秒内にaddScheduleが連続呼び出しされてもIDが衝突しないようにするため)。
