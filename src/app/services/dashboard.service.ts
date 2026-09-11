@@ -249,6 +249,7 @@ export class DashboardService {
       this.dirtyDeletedTaskIds.clear();
       this.dirtyDeletedScheduleIds.clear();
       this.hasChanges.set(false);
+      this.cancelAutoSave();
     });
   }
 
@@ -267,7 +268,7 @@ export class DashboardService {
       }
       return task;
     }));
-    this.hasChanges.set(true);
+    this.recomputeHasChanges();
   }
 
   // 未保存の新規タスクに割り振る仮ID(サーバー側の実IDと衝突しない負の値)。
@@ -286,7 +287,7 @@ export class DashboardService {
     };
     this.dirtyTaskIds.add(tempId);
     this.tasks.update(list => [...list, newTask]);
-    this.hasChanges.set(true);
+    this.recomputeHasChanges();
     return newTask;
   }
 
@@ -299,7 +300,7 @@ export class DashboardService {
       }
       return task;
     }));
-    this.hasChanges.set(true);
+    this.recomputeHasChanges();
   }
 
   // 削除待ちのTask ID(保存ボタン押下時にsaveChangesへまとめて送る)。
@@ -342,7 +343,7 @@ export class DashboardService {
     };
     this.dirtyScheduleIds.add(tempId);
     this.schedules.update(list => [...list, newSchedule]);
-    this.hasChanges.set(true);
+    this.recomputeHasChanges();
   }
 
   updateSchedule(schedule: Schedule) {
@@ -353,7 +354,7 @@ export class DashboardService {
       }
       return s;
     }));
-    this.hasChanges.set(true);
+    this.recomputeHasChanges();
   }
 
   // 削除待ちのSchedule ID(保存ボタン押下時にsaveChangesへまとめて送る)。
@@ -380,9 +381,40 @@ export class DashboardService {
       this.dirtyDeletedTaskIds.size > 0 ||
       this.dirtyDeletedScheduleIds.size > 0
     );
+    this.scheduleAutoSave();
+  }
+
+  // 最後の変更からこの時間(ms)操作がなければ自動保存する。
+  private static readonly AUTO_SAVE_DEBOUNCE_MS = 3000;
+  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // 変更のたびに呼び出し、タイマーをリセットする(デバウンス)。
+  // 保存ボタンは廃止せず、自動保存が間に合わない場合の手動フラッシュ手段として残す。
+  private scheduleAutoSave() {
+    this.cancelAutoSave();
+    if (!this.hasChanges()) {
+      return;
+    }
+    this.autoSaveTimer = setTimeout(() => {
+      this.autoSaveTimer = null;
+      // 手動保存(セーブボタン)と競合しないよう、保存中でなければ実行する
+      if (this.hasChanges() && !this.isSaving()) {
+        this.saveChanges();
+      }
+    }, DashboardService.AUTO_SAVE_DEBOUNCE_MS);
+  }
+
+  private cancelAutoSave() {
+    if (this.autoSaveTimer !== null) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = null;
+    }
   }
 
   saveChanges() {
+    // 手動保存・自動保存のどちらから呼ばれた場合も、これから保存するので
+    // 既存の自動保存タイマーは不要になる
+    this.cancelAutoSave();
     this.isSaving.set(true);
     this.saveStatus.set('saving');
     this.saveMessage.set('保存中...');
