@@ -12,7 +12,6 @@ import { DashboardService } from '../../services/dashboard.service';
 export class FooterComponent {
   private dashboardService = inject(DashboardService);
 
-  readonly isSaving = this.dashboardService.isSaving;
   readonly saveStatus = this.dashboardService.saveStatus;
   readonly saveMessage = this.dashboardService.saveMessage;
   readonly hasChanges = this.dashboardService.hasChanges;
