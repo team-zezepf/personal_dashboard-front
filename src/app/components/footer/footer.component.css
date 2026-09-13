@@ -1,17 +1,13 @@
+/* 全幅の帯にはせず、中身(トースト/インジケーター)だけが画面下に小さく浮く形にする */
 .save-footer {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 72px;
+  bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(90, 98, 108, 0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 -4px 18px rgba(31, 41, 55, 0.12);
+  pointer-events: none;
   z-index: 1000;
 }
 
@@ -19,41 +15,41 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  position: relative;
+  pointer-events: auto;
 }
 
-.save-button {
-  min-width: 150px;
-  height: 44px;
-  padding: 0 28px;
+/* save-toastと同じく、ページの背景色に関わらず読めるよう自前の不透明な背景を持たせる
+   (半透明の白背景だと、後ろに濃い帯を敷いていた頃を前提にしたコントラストになってしまい、
+   帯をなくすと文字が読みづらくなるため) */
+.unsaved-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
   border: 0;
-  border-radius: 10px;
-  background: var(--primary);
+  border-radius: 999px;
+  background: rgba(31, 41, 55, 0.9);
   color: white;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
-  transition: background 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: background 0.15s ease;
 }
 
-.save-button:hover:not(:disabled) {
-  background: var(--primary-dark);
+.unsaved-indicator:hover {
+  background: rgba(55, 65, 81, 0.95);
 }
 
-.save-button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.save-button:disabled {
-  background: #b0b7c0;
-  box-shadow: none;
-  cursor: not-allowed;
+.unsaved-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--orange, #f59e0b);
+  flex: 0 0 auto;
 }
 
 .save-toast {
-  position: absolute;
-  right: calc(100% + 16px);
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 12px;
