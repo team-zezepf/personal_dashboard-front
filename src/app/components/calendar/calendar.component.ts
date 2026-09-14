@@ -39,6 +39,25 @@ interface WeekTaskMarker {
   rowStart: number;
 }
 
+// saveModalSchedule()で入力内容を確定する前に、繰り返し予定の編集範囲
+// (この回だけ/すべて)を確認する必要がある場合、選択されるまで保持しておくスナップショット。
+interface EditFormSnapshot {
+  isTask: boolean;
+  title: string;
+  description: string;
+  taskDate: string;
+  targetDate: string;
+  modalDueTime: string;
+  modalStartDate: string;
+  modalStartTime: string;
+  modalEndTime: string;
+  modalRepeatEnabled: boolean;
+  modalRepeatFrequency: 'daily' | 'weekly' | 'monthly';
+  modalRepeatEndType: 'never' | 'date' | 'count';
+  modalRepeatEndDate: string;
+  modalRepeatEndCount: number;
+}
+
 interface DragState {
   scheduleId: string | number;
   mode: 'move' | 'resize-top' | 'resize-bottom';
@@ -93,6 +112,10 @@ export class CalendarComponent {
 
   // 繰り返し予定の削除確認(「この回だけ」/「すべて」の選択待ち)
   readonly deleteConfirmTarget = signal<{ master: Schedule; occurrenceDate: string } | null>(null);
+
+  // 繰り返し予定の編集確認(「この回だけ」/「すべて」の選択待ち)。
+  // モーダルの入力内容は、範囲を選ぶまでここにスナップショットとして保持しておく。
+  readonly editConfirmTarget = signal<{ master: Schedule; occurrenceDate: string; form: EditFormSnapshot } | null>(null);
 
   // 週表示：予定ブロックのドラッグ操作(移動・時間変更)
   private dragState: DragState | null = null;
@@ -806,30 +829,72 @@ export class CalendarComponent {
     const targetDate = this.selectedDate() || this.dashboardService.currentDate();
     const isTask = this.modalScheduleType === 'task';
 
-    // 編集時、既存の除外日(個別削除された回)はモーダルのフォームで扱っていないため、
-    // 上書きしないようここで引き継ぐ
     const existingMaster = this.isEditing() && this.editingScheduleId() !== null
       ? this.dashboardService.schedules().find(s => s.id === this.editingScheduleId())
       : null;
-    const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
 
     const title = this.modalTitle.trim() || '新しい予定';
     const description = this.modalNote.trim();
     const taskDate = isTask ? (this.modalDueDate || targetDate) : (this.modalStartDate || targetDate);
 
+    const form: EditFormSnapshot = {
+      isTask,
+      title,
+      description,
+      taskDate,
+      targetDate,
+      modalDueTime: this.modalDueTime,
+      modalStartDate: this.modalStartDate,
+      modalStartTime: this.modalStartTime,
+      modalEndTime: this.modalEndTime,
+      modalRepeatEnabled: this.modalRepeatEnabled,
+      modalRepeatFrequency: this.modalRepeatFrequency,
+      modalRepeatEndType: this.modalRepeatEndType,
+      modalRepeatEndDate: this.modalRepeatEndDate,
+      modalRepeatEndCount: this.modalRepeatEndCount
+    };
+
+    // 既存の繰り返し予定を編集する場合は、削除と同様にどの範囲(この回だけ/すべて)へ
+    // 反映するかを確認してから確定する
+    if (existingMaster?.repeat?.enabled) {
+      this.editConfirmTarget.set({
+        master: existingMaster,
+        occurrenceDate: this.editingOccurrenceDate || existingMaster.scheduleDate,
+        form
+      });
+      this.closeModal();
+      return;
+    }
+
+    this.applyScheduleEdit(this.isEditing() && this.editingScheduleId() !== null, this.editingScheduleId(), existingMaster, form);
+    this.closeModal();
+  }
+
+  // 予定の追加・更新を実際に確定する。繰り返し予定の「すべて変更」時はマスターをそのまま更新し、
+  // 「この回だけ変更」時はisEditingFlag=false・existingMaster=nullで呼び出して新規の単発予定として作成する。
+  private applyScheduleEdit(
+    isEditingFlag: boolean,
+    editingId: string | number | null,
+    existingMaster: Schedule | null | undefined,
+    form: EditFormSnapshot
+  ) {
+    // 編集時、既存の除外日(個別削除された回)はモーダルのフォームで扱っていないため、
+    // 上書きしないようここで引き継ぐ
+    const existingExcludedDates = existingMaster?.repeat?.excludedDates || null;
+
     // カレンダーの「タスク」種別の予定は、「本日のタスク」ウィジェットが参照する
     // Taskレコードとtask idで紐付ける。タスク種別への新規追加/切り替え時はTaskを新規作成し、
     // 既存の紐付けタスクがあれば内容を追従、タスク種別でなくなった場合は紐付けタスクを削除する。
     let resolvedTaskId: string | number | null = existingMaster?.taskId ?? null;
-    if (isTask) {
+    if (form.isTask) {
       if (resolvedTaskId != null) {
-        this.dashboardService.updateTaskFields(resolvedTaskId, { title, description, taskDate });
+        this.dashboardService.updateTaskFields(resolvedTaskId, { title: form.title, description: form.description, taskDate: form.taskDate });
       } else {
         const newTask = this.dashboardService.addTask({
           userId: 1,
-          title,
-          description,
-          taskDate,
+          title: form.title,
+          description: form.description,
+          taskDate: form.taskDate,
           status: 'TODO',
           completedAt: null
         });
@@ -843,32 +908,67 @@ export class CalendarComponent {
     const scheduleData: Omit<Schedule, 'id'> = {
       userId: 1,
       taskId: resolvedTaskId,
-      title,
-      description,
-      scheduleDate: isTask ? taskDate : (this.modalStartDate || targetDate),
-      startTime: isTask ? (this.modalDueTime ? `${this.modalDueTime}:00` : '09:00:00') : `${this.modalStartTime}:00`,
-      endTime: isTask ? (this.modalDueTime ? `${this.modalDueTime}:00` : '10:00:00') : `${this.modalEndTime}:00`,
-      scheduleType: isTask ? 'TASK' : 'SCHEDULE',
-      repeat: this.modalRepeatEnabled ? {
+      title: form.title,
+      description: form.description,
+      scheduleDate: form.isTask ? form.taskDate : (form.modalStartDate || form.targetDate),
+      startTime: form.isTask ? (form.modalDueTime ? `${form.modalDueTime}:00` : '09:00:00') : `${form.modalStartTime}:00`,
+      endTime: form.isTask ? (form.modalDueTime ? `${form.modalDueTime}:00` : '10:00:00') : `${form.modalEndTime}:00`,
+      scheduleType: form.isTask ? 'TASK' : 'SCHEDULE',
+      repeat: form.modalRepeatEnabled ? {
         enabled: true,
-        frequency: this.modalRepeatFrequency,
-        endType: this.modalRepeatEndType,
-        endDate: this.modalRepeatEndDate || null,
-        endCount: this.modalRepeatEndCount || null,
+        frequency: form.modalRepeatFrequency,
+        endType: form.modalRepeatEndType,
+        endDate: form.modalRepeatEndDate || null,
+        endCount: form.modalRepeatEndCount || null,
         excludedDates: existingExcludedDates
       } : null
     };
 
-    if (this.isEditing() && this.editingScheduleId() !== null) {
+    if (isEditingFlag && editingId !== null) {
       this.dashboardService.updateSchedule({
         ...scheduleData,
-        id: this.editingScheduleId()!
+        id: editingId
       });
     } else {
       this.dashboardService.addSchedule(scheduleData);
     }
+  }
 
-    this.closeModal();
+  // 繰り返し予定の編集確認：シリーズ全体(マスター)を編集後の内容で直接更新する
+  confirmEditAllOccurrences() {
+    const target = this.editConfirmTarget();
+    if (!target) return;
+    this.applyScheduleEdit(true, target.master.id, target.master, target.form);
+    this.editConfirmTarget.set(null);
+  }
+
+  // 繰り返し予定の編集確認：対象日だけを除外日に加えてマスターは維持し、
+  // 編集後の内容でその日1件だけの新しい単発予定を作る
+  confirmEditOccurrenceOnly() {
+    const target = this.editConfirmTarget();
+    if (!target) return;
+    const { master, occurrenceDate, form } = target;
+
+    const excludedDates = [...(master.repeat?.excludedDates || []), occurrenceDate];
+    this.dashboardService.updateSchedule({
+      ...master,
+      repeat: { ...master.repeat!, excludedDates }
+    });
+
+    // 分割後の単発予定は対象の回の日付に固定する(モーダルの日付欄はマスターの日付を
+    // 引き継いだままの場合があるため、編集対象の回の日付を優先する)
+    this.applyScheduleEdit(false, null, null, {
+      ...form,
+      taskDate: occurrenceDate,
+      modalStartDate: occurrenceDate,
+      modalRepeatEnabled: false
+    });
+
+    this.editConfirmTarget.set(null);
+  }
+
+  cancelEditConfirm() {
+    this.editConfirmTarget.set(null);
   }
 
   deleteSchedule(scheduleOrOccurrence: Schedule) {

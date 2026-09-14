@@ -388,3 +388,18 @@
     </div>
   </div>
 </div>
+
+<!-- 繰り返し予定の編集範囲確認モーダル(削除確認モーダルと同じスタイルを流用) -->
+<div class="delete-confirm-modal" [class.open]="editConfirmTarget() !== null" [attr.aria-hidden]="editConfirmTarget() === null">
+  <div class="delete-confirm-card" role="dialog" aria-modal="true">
+    <p class="delete-confirm-message">
+      「{{ editConfirmTarget()?.master?.title }}」は繰り返し予定です。<br>
+      どの範囲に変更を反映しますか？
+    </p>
+    <div class="delete-confirm-actions">
+      <button class="delete-confirm-option" type="button" (click)="confirmEditOccurrenceOnly()">この回だけ変更</button>
+      <button class="delete-confirm-option all" type="button" (click)="confirmEditAllOccurrences()">すべて変更</button>
+      <button class="delete-confirm-cancel" type="button" (click)="cancelEditConfirm()">キャンセル</button>
+    </div>
+  </div>
+</div>
