@@ -7,6 +7,7 @@
         <tr>
           <th>ツール名</th>
           <th>利用可能ロール</th>
+          <th class="col-fav">お気に入り</th>
         </tr>
       </thead>
 
@@ -27,6 +28,16 @@
                   >{{ roleLabel(role) }}</span>
                 }
               </div>
+            </td>
+            <td class="col-fav">
+              <button
+                class="fav-btn"
+                type="button"
+                [class.is-favorite]="isFavorite(tool)"
+                [disabled]="isPending(tool)"
+                [attr.aria-label]="(isFavorite(tool) ? tool.name + 'のお気に入りを解除' : tool.name + 'をお気に入りに追加')"
+                (click)="toggleFavorite(tool)"
+              >{{ isFavorite(tool) ? '★' : '☆' }}</button>
             </td>
           </tr>
         }

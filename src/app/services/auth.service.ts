@@ -9,6 +9,7 @@ export interface AuthUser {
   email: string;
   role: string;
   avatarFilename?: string | null;
+  favoriteTools?: string[];
 }
 
 interface LoginResponse {

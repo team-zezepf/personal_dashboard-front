@@ -87,6 +87,35 @@
   color: #c4cbd2;
 }
 
+.col-fav {
+  text-align: center;
+  width: 90px;
+}
+
+.fav-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px;
+  color: #c9d2db;
+  transition: transform 0.1s ease, color 0.15s ease;
+}
+
+.fav-btn:hover {
+  transform: scale(1.12);
+}
+
+.fav-btn.is-favorite {
+  color: var(--orange, #f59e0b);
+}
+
+.fav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 footer {
   margin-top: 40px;
   text-align: center;
@@ -105,8 +134,8 @@ footer {
     padding: 13px 14px;
   }
 
-  .tool-table th:last-child,
-  .tool-table td:last-child {
+  .tool-table th:nth-child(2),
+  .tool-table td:nth-child(2) {
     min-width: 180px;
   }
 }

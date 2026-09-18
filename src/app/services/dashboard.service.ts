@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
+import { NotificationService } from './notification.service';
 import { DashboardData, Schedule, Task, SaveResult, Topic, StockData } from '../models/dashboard.models';
 import { catchError, of, tap } from 'rxjs';
 
@@ -106,6 +107,7 @@ function expandScheduleOccurrences(schedules: Schedule[]): Schedule[] {
 })
 export class DashboardService {
   private graphql = inject(GraphQLService);
+  private notificationService = inject(NotificationService);
 
   readonly currentDate = signal<string>(getTodayString());
   readonly tasks = signal<Task[]>([]);
@@ -122,8 +124,6 @@ export class DashboardService {
   readonly isDataLoaded = signal<boolean>(false);
 
   readonly isSaving = signal<boolean>(false);
-  readonly saveMessage = signal<string>('');
-  readonly saveStatus = signal<'idle' | 'saving' | 'success' | 'error'>('idle');
   // タスク・予定に未保存の変更があるかどうか(セーブボタンの活性/非活性に使う)
   readonly hasChanges = signal<boolean>(false);
 
@@ -421,8 +421,7 @@ export class DashboardService {
     // 既存の自動保存タイマーは不要になる
     this.cancelAutoSave();
     this.isSaving.set(true);
-    this.saveStatus.set('saving');
-    this.saveMessage.set('保存中...');
+    this.notificationService.showSaving('保存中...');
 
     // Collect dirty tasks and schedules
     const dirtyTasks = this.tasks().filter(t => this.dirtyTaskIds.has(t.id)).map(t => ({
@@ -479,9 +478,7 @@ export class DashboardService {
     if (dirtyTasks.length === 0 && dirtySchedules.length === 0 && deletedTaskIds.length === 0 && deletedScheduleIds.length === 0) {
       setTimeout(() => {
         this.isSaving.set(false);
-        this.saveStatus.set('success');
-        this.saveMessage.set('変更はありません');
-        setTimeout(() => this.saveStatus.set('idle'), 2500);
+        this.notificationService.showResult('変更はありません', 'success', 2500);
       }, 300);
       return;
     }
@@ -501,8 +498,7 @@ export class DashboardService {
       this.isSaving.set(false);
       const result = res.saveChanges;
       if (result.success) {
-        this.saveStatus.set('success');
-        this.saveMessage.set('保存完了');
+        this.notificationService.showResult('保存完了', 'success');
         this.dirtyTaskIds.clear();
         this.dirtyScheduleIds.clear();
         this.dirtyDeletedTaskIds.clear();
@@ -511,15 +507,9 @@ export class DashboardService {
         // 新規追加分の仮IDをサーバーが採番した正式なIDに置き換えるため再取得する
         this.loadDashboardData();
       } else {
-        this.saveStatus.set('error');
-        this.saveMessage.set(result.message || '保存に失敗しました');
+        // エラーは自動で消さず、ユーザーが気づいて再試行するまで表示し続ける(既存の挙動を維持)
+        this.notificationService.showResult(result.message || '保存に失敗しました', 'error', null);
       }
-
-      setTimeout(() => {
-        if (this.saveStatus() === 'success') {
-          this.saveStatus.set('idle');
-        }
-      }, 3000);
     });
   }
 }

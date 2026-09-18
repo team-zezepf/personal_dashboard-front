@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../services/auth.service';
+import { AccountService } from '../../services/account.service';
 import { avatarUrl } from '../../utils/avatar';
 import { TOOL_ACCESS, isElevatedOnly, isRoleAllowed } from '../../config/tool-access';
+import { TOOLS, findToolByPath } from '../../config/tools';
+import { ToastComponent } from '../toast/toast.component';
 
 interface TitleMenuItem {
   label: string;
@@ -22,7 +25,7 @@ const TITLE_MENU_ITEMS: TitleMenuItem[] = [
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, ToastComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
@@ -31,11 +34,15 @@ export class HeaderComponent {
 
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
+  private accountService = inject(AccountService);
   private elementRef = inject(ElementRef<HTMLElement>);
 
   readonly currentUser = this.authService.currentUser;
   readonly isTitleMenuOpen = signal(false);
   readonly isAvatarMenuOpen = signal(false);
+
+  // トグル処理中のツール(連打による二重リクエストを防ぐため、★を個別に無効化する)
+  private readonly pendingFavoritePaths = signal<ReadonlySet<string>>(new Set());
 
   readonly formattedDate = computed(() => {
     const dateStr = this.dashboardService.currentDate();
@@ -50,6 +57,13 @@ export class HeaderComponent {
   readonly visibleTitleMenuItems = computed(() => {
     const role = this.currentUser()?.role;
     return TITLE_MENU_ITEMS.filter(item => isRoleAllowed(role, TOOL_ACCESS[item.path]));
+  });
+
+  // お気に入り登録済みのツールのうち、今のロールでアクセスできるものだけをツール一覧の並び順で表示する
+  readonly favoriteMenuItems = computed(() => {
+    const role = this.currentUser()?.role;
+    const favoritePaths = new Set(this.currentUser()?.favoriteTools ?? []);
+    return TOOLS.filter(tool => favoritePaths.has(tool.path) && isRoleAllowed(role, tool.roles));
   });
 
   toggleTitleMenu(): void {
@@ -82,5 +96,30 @@ export class HeaderComponent {
   onLogout(): void {
     this.closeAvatarMenu();
     this.authService.logout();
+  }
+
+  isFavoritePending(path: string): boolean {
+    return this.pendingFavoritePaths().has(path);
+  }
+
+  // 行本体(★以外)のクリックでは画面遷移させたいので、★クリック時はイベントの伝播を止める
+  toggleFavorite(path: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.isFavoritePending(path)) return;
+
+    const tool = findToolByPath(path);
+    if (!tool) return;
+
+    this.pendingFavoritePaths.update(paths => new Set(paths).add(path));
+    this.accountService.toggleFavoriteTool(tool.name, path).subscribe({
+      complete: () => {
+        this.pendingFavoritePaths.update(paths => {
+          const next = new Set(paths);
+          next.delete(path);
+          return next;
+        });
+      }
+    });
   }
 }

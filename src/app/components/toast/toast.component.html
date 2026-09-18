@@ -1,0 +1,14 @@
+@if (status() !== 'idle') {
+  <div class="toast-wrap">
+    <div
+      class="save-toast"
+      [class.success]="status() === 'success'"
+      [class.error]="status() === 'error'"
+      [class.saving]="status() === 'saving'">
+      @if (status() === 'saving') {
+        <span class="spinner"></span>
+      }
+      {{ message() }}
+    </div>
+  </div>
+}
