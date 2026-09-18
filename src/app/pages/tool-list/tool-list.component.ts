@@ -36,7 +36,8 @@ export class ToolListPageComponent {
   readonly tools: ToolRow[] = [
     { name: 'Dashboard', path: '/', roles: TOOL_ACCESS['/'] },
     { name: 'ユーザー管理', path: '/users', roles: TOOL_ACCESS['/users'] },
-    { name: 'ユーザー登録', path: '/register', roles: TOOL_ACCESS['/register'] }
+    { name: 'ユーザー登録', path: '/register', roles: TOOL_ACCESS['/register'] },
+    { name: '資格学習', path: '/study', roles: TOOL_ACCESS['/study'] }
   ];
 
   isAllowed(tool: ToolRow, role: Role): boolean {

@@ -1,0 +1,123 @@
+<app-header pageTitle="資格学習"></app-header>
+
+<main class="page">
+
+  @if (examStudy.view() !== 'start') {
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" [style.width.%]="examStudy.progressPercent()"></div>
+    </div>
+  }
+
+  @if (examStudy.errorMessage()) {
+    <div class="card error-card">{{ examStudy.errorMessage() }}</div>
+  }
+
+  <!-- スタート画面 -->
+  @if (examStudy.view() === 'start') {
+    <section class="card intro-card">
+      <h1 class="page-title">資格学習</h1>
+      <p class="intro-lead">基本情報技術者試験の対策問題を、2問ずつ解いていきましょう。</p>
+      <ul class="intro-list">
+        <li>問題プールから、毎回ランダムに10問を出題（4択・複数選択などの形式に対応）</li>
+        <li>2問回答するごとに、正誤と解説のページが表示されます</li>
+        <li>最後にまとめて結果を確認できます</li>
+      </ul>
+      <button class="btn btn-primary" type="button" [disabled]="examStudy.isLoading()" (click)="start()">
+        {{ examStudy.isLoading() ? '読み込み中...' : '学習を始める' }}
+      </button>
+    </section>
+  }
+
+  <!-- 出題画面 -->
+  @if (examStudy.view() === 'quiz') {
+    <section>
+      @for (q of examStudy.roundQuestions(); track q.id) {
+        <div class="question-card">
+          <div class="question-meta">
+            <span class="badge">{{ q.category }}: {{ q.subCategory }}</span>
+            <span class="question-number">第 {{ globalIndex($index) + 1 }} 問 / 全 {{ examStudy.sessionQuestions().length }} 問</span>
+          </div>
+          <p class="question-text">{{ q.question }}</p>
+          @if (q.image) {
+            <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
+          }
+          <ul class="choice-list">
+            @for (choice of q.choices; track $index) {
+              <li
+                class="choice-item"
+                [class.selected]="isSelected(q, $index)"
+                (click)="toggleChoice(q, $index)"
+              >
+                <label>
+                  <input
+                    [type]="q.type === 'multi' ? 'checkbox' : 'radio'"
+                    [checked]="isSelected(q, $index)"
+                    (click)="$event.preventDefault()"
+                  >
+                  <span>{{ choice }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      <div class="quiz-actions">
+        <button class="btn btn-primary" type="button" [disabled]="!canSubmitRound()" (click)="submitRound()">
+          回答する
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- 正誤・解説画面 -->
+  @if (examStudy.view() === 'review') {
+    <section>
+      @for (q of examStudy.roundQuestions(); track q.id) {
+        <div class="review-card" [class.is-correct]="resultFor(globalIndex($index))" [class.is-incorrect]="!resultFor(globalIndex($index))">
+          <div class="question-meta">
+            <span class="badge">{{ q.category }}: {{ q.subCategory }}</span>
+            <span class="question-number">第 {{ globalIndex($index) + 1 }} 問 / 全 {{ examStudy.sessionQuestions().length }} 問</span>
+          </div>
+          <div class="review-result-label" [class.is-correct]="resultFor(globalIndex($index))" [class.is-incorrect]="!resultFor(globalIndex($index))">
+            {{ resultFor(globalIndex($index)) ? '○ 正解' : '✕ 不正解' }}
+          </div>
+          <p class="review-question-text">{{ q.question }}</p>
+          @if (q.image) {
+            <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
+          }
+          <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, answerFor(globalIndex($index))) }}</p>
+          <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          <div class="explanation-box">
+            <span class="label">解説</span>
+            {{ q.explanation }}
+          </div>
+        </div>
+      }
+      <div class="quiz-actions">
+        <button class="btn btn-primary" type="button" (click)="nextRound()">
+          {{ examStudy.isLastRound() ? '結果を見る' : '次の問題へ' }}
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- 最終結果画面 -->
+  @if (examStudy.view() === 'result') {
+    <section class="card result-card">
+      <h2>お疲れさまでした！</h2>
+      <p class="final-score">正解数：{{ examStudy.correctCount() }} / {{ examStudy.sessionQuestions().length }} 問</p>
+      <div class="result-breakdown">
+        @for (q of examStudy.sessionQuestions(); track q.id; let i = $index) {
+          <div
+            class="result-chip"
+            [class.is-correct]="examStudy.results()[i]"
+            [class.is-incorrect]="!examStudy.results()[i]"
+            [title]="'第' + (i + 1) + '問：' + (examStudy.results()[i] ? '正解' : '不正解')"
+          >{{ i + 1 }}</div>
+        }
+      </div>
+      <button class="btn btn-primary" type="button" (click)="retry()">もう一度挑戦する</button>
+    </section>
+  }
+
+</main>
