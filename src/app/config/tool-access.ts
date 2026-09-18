@@ -13,7 +13,8 @@ export const TOOL_ACCESS: Record<string, ReadonlySet<Role>> = {
   '/users': ELEVATED_ROLES,
   '/register': ALL_ROLES,
   '/tools': ALL_ROLES,
-  '/study': ALL_ROLES
+  '/study': ALL_ROLES,
+  '/achievements': ALL_ROLES
 };
 
 export function isRoleAllowed(role: string | null | undefined, allowed: ReadonlySet<Role>): boolean {

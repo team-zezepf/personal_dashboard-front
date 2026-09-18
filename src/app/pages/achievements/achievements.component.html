@@ -1,0 +1,51 @@
+<app-header pageTitle="実績"></app-header>
+
+<main class="page">
+  <h1 class="page-title">資格学習の実績</h1>
+  <p class="page-desc">資格学習で10問中7問以上正解した日にドットが付きます。継続の記録として振り返りに使ってください。</p>
+
+  @if (errorMessage()) {
+    <div class="card error-card">{{ errorMessage() }}</div>
+  }
+
+  <article class="card calendar-card">
+    <div class="card-header">
+      <h2 class="card-title">カレンダー</h2>
+    </div>
+
+    <div class="content">
+      <div class="calendar-head">
+        <div class="month">{{ currentMonthLabel() }}</div>
+        <div class="nav">
+          <button type="button" [disabled]="isLoading()" (click)="prevMonth()">‹</button>
+          <button type="button" [disabled]="isLoading()" (click)="nextMonth()">›</button>
+        </div>
+      </div>
+
+      <div class="weekdays">
+        @for (w of weekdays; track $index) {
+          <div class="weekday">{{ w }}</div>
+        }
+      </div>
+
+      <div class="days">
+        @for (day of calendarDays(); track day.dateString) {
+          <div
+            class="day"
+            [class.muted]="!day.isCurrentMonth"
+            [class.today]="day.isToday">
+            {{ day.dayNumber }}
+            @if (isAchieved(day.dateString)) {
+              <div class="dot"></div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="dot"></span>
+      <span>その日に資格学習で7問以上正解した（1回以上）</span>
+    </div>
+  </article>
+</main>
