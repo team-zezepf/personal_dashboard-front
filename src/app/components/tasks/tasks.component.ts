@@ -21,10 +21,13 @@ export class TasksComponent {
   readonly progressRate = this.dashboardService.taskProgressRate;
 
   constructor() {
-    // 本日のタスクが全て完了したら自動的に最小化する。ページを開いた時点で
-    // 既に全て完了している場合(データ読み込み直後にeffectが走る)も同様に最小化される。
+    // 本日のタスクが全て完了したら自動的に最小化する(0件の場合も含む)。
+    // ページを開いた時点で既に全て完了/0件の場合も、データ読み込み直後に
+    // effectが走ることで同様に最小化される。
+    // isDataLoaded()を条件に含めるのは、読み込み前の初期状態(tasks=[]によりtotalCount=0)を
+    // 「本当に0件」と誤判定して一瞬最小化してしまうのを防ぐため。
     effect(() => {
-      if (this.totalCount() > 0 && this.completedCount() === this.totalCount()) {
+      if (this.dashboardService.isDataLoaded() && this.completedCount() === this.totalCount()) {
         this.isCollapsed.set(true);
       }
     });
