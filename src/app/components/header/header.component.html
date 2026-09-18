@@ -27,6 +27,29 @@
             }
           </a>
         }
+
+        @if (favoriteMenuItems().length > 0) {
+          <div class="title-menu-divider"></div>
+          <div class="title-menu-section-label">お気に入り</div>
+          @for (tool of favoriteMenuItems(); track tool.path) {
+            <a
+              class="title-menu-item"
+              role="menuitem"
+              [routerLink]="tool.path"
+              routerLinkActive="active"
+              (click)="closeTitleMenu()"
+            >
+              <span>{{ tool.name }}</span>
+              <button
+                class="fav-star-btn is-favorite"
+                type="button"
+                [disabled]="isFavoritePending(tool.path)"
+                [attr.aria-label]="tool.name + 'のお気に入りを解除'"
+                (click)="toggleFavorite(tool.path, $event)"
+              >★</button>
+            </a>
+          }
+        }
       </div>
     }
   </div>
@@ -54,3 +77,5 @@
     }
   </div>
 </header>
+
+<app-toast></app-toast>

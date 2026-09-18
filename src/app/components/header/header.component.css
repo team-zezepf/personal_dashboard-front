@@ -82,6 +82,43 @@
   background: #eaf8fd;
 }
 
+.title-menu-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 6px 4px;
+}
+
+.title-menu-section-label {
+  padding: 6px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+.fav-star-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  color: #c9d2db;
+}
+
+.fav-star-btn:hover {
+  transform: scale(1.1);
+}
+
+.fav-star-btn.is-favorite {
+  color: var(--orange, #f59e0b);
+}
+
+.fav-star-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .date {
   margin-left: auto;
   font-size: 13px;

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map, catchError, of } from 'rxjs';
 import { AuthService } from './auth.service';
+import { GraphQLService } from './graphql.service';
+import { NotificationService } from './notification.service';
 
 export interface AccountResponse {
   id: string | number;
@@ -17,6 +19,8 @@ export interface AccountResponse {
 export class AccountService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private graphql = inject(GraphQLService);
+  private notificationService = inject(NotificationService);
   private base = 'http://localhost:8080/api/account';
 
   updateProfile(
@@ -39,6 +43,37 @@ export class AccountService {
 
     return this.http.post<AccountResponse>(`${this.base}/profile`, formData).pipe(
       tap(res => this.authService.updateStoredUser({ name: res.name, avatarFilename: res.avatarFilename }))
+    );
+  }
+
+  // ツール一覧・ヘッダーどちらの★からも呼ばれる。成功/失敗を画面下部のトーストで知らせる
+  // (スケジュール保存などと同じNotificationServiceの仕組みに乗せている)。
+  toggleFavoriteTool(toolName: string, path: string): Observable<void> {
+    const wasFavorite = this.authService.currentUser()?.favoriteTools?.includes(path) ?? false;
+
+    const mutation = `
+      mutation ToggleFavoriteTool($path: String!) {
+        toggleFavoriteTool(path: $path) {
+          favoriteTools
+        }
+      }
+    `;
+
+    return this.graphql.mutation<{ toggleFavoriteTool: { favoriteTools: string[] } }>(mutation, { path }).pipe(
+      tap(res => {
+        this.authService.updateStoredUser({ favoriteTools: res.toggleFavoriteTool.favoriteTools });
+        const message = wasFavorite
+          ? `「${toolName}」のお気に入りを解除しました`
+          : `「${toolName}」をお気に入りに追加しました`;
+        this.notificationService.showResult(message, 'success');
+      }),
+      map(() => undefined),
+      catchError(err => {
+        console.error('Failed to toggle favorite tool:', err);
+        // 保存失敗はスケジュール保存等と同様、ユーザーが気づくまで自動で消さない
+        this.notificationService.showResult('お気に入りの更新に失敗しました', 'error', null);
+        return of(undefined);
+      })
     );
   }
 }

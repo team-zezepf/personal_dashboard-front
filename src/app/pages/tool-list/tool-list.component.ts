@@ -1,14 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
-import { Role, TOOL_ACCESS } from '../../config/tool-access';
-
-interface ToolRow {
-  name: string;
-  path: string;
-  roles: ReadonlySet<Role>;
-}
+import { Role } from '../../config/tool-access';
+import { ToolRow, TOOLS } from '../../config/tools';
+import { AuthService } from '../../services/auth.service';
+import { AccountService } from '../../services/account.service';
 
 const ROLE_LABELS: Record<Role, string> = {
   GENERAL: '一般',
@@ -30,15 +27,16 @@ const ROLE_BADGE_CLASSES: Record<Role, string> = {
   styleUrl: './tool-list.component.css'
 })
 export class ToolListPageComponent {
+  private authService = inject(AuthService);
+  private accountService = inject(AccountService);
+
   // バッジは常にこの順番で並べ、対象外のロールは薄く表示することで列を揃える
   readonly allRoles: Role[] = ['GENERAL', 'ADMIN', 'DEVELOPER'];
 
-  readonly tools: ToolRow[] = [
-    { name: 'Dashboard', path: '/', roles: TOOL_ACCESS['/'] },
-    { name: 'ユーザー管理', path: '/users', roles: TOOL_ACCESS['/users'] },
-    { name: 'ユーザー登録', path: '/register', roles: TOOL_ACCESS['/register'] },
-    { name: '資格学習', path: '/study', roles: TOOL_ACCESS['/study'] }
-  ];
+  readonly tools: ToolRow[] = TOOLS;
+
+  // トグル処理中のツール(連打による二重リクエストを防ぐため、ボタンを個別に無効化する)
+  private readonly pendingPaths = signal<ReadonlySet<string>>(new Set());
 
   isAllowed(tool: ToolRow, role: Role): boolean {
     return tool.roles.has(role);
@@ -50,5 +48,28 @@ export class ToolListPageComponent {
 
   roleBadgeClass(role: Role): string {
     return ROLE_BADGE_CLASSES[role];
+  }
+
+  isFavorite(tool: ToolRow): boolean {
+    return this.authService.currentUser()?.favoriteTools?.includes(tool.path) ?? false;
+  }
+
+  isPending(tool: ToolRow): boolean {
+    return this.pendingPaths().has(tool.path);
+  }
+
+  toggleFavorite(tool: ToolRow): void {
+    if (this.isPending(tool)) return;
+
+    this.pendingPaths.update((paths) => new Set(paths).add(tool.path));
+    this.accountService.toggleFavoriteTool(tool.name, tool.path).subscribe({
+      complete: () => {
+        this.pendingPaths.update((paths) => {
+          const next = new Set(paths);
+          next.delete(tool.path);
+          return next;
+        });
+      }
+    });
   }
 }

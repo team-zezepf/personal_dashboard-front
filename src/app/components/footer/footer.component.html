@@ -1,26 +1,13 @@
-@if (saveStatus() !== 'idle' || hasChanges()) {
+@if (hasChanges()) {
   <footer class="save-footer">
     <div class="footer-content">
-      @if (saveStatus() !== 'idle') {
-        <div
-          class="save-toast"
-          [class.success]="saveStatus() === 'success'"
-          [class.error]="saveStatus() === 'error'"
-          [class.saving]="saveStatus() === 'saving'">
-          @if (saveStatus() === 'saving') {
-            <span class="spinner"></span>
-          }
-          {{ saveMessage() }}
-        </div>
-      } @else {
-        <button
-          class="unsaved-indicator"
-          type="button"
-          (click)="onSave()">
-          <span class="dot"></span>
-          未保存の変更があります
-        </button>
-      }
+      <button
+        class="unsaved-indicator"
+        type="button"
+        (click)="onSave()">
+        <span class="dot"></span>
+        未保存の変更があります
+      </button>
     </div>
   </footer>
 }
