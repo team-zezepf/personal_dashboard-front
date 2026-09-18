@@ -117,6 +117,10 @@ export class DashboardService {
     { id: 3, author: 'ニュース', title: '気になる技術トピック' }
   ]);
 
+  // dashboardDataの読み込みが一度でも完了したか。初期状態のtasks=[]と、
+  // 読み込み後に「本日のタスクが本当に0件」だった場合を区別するために使う。
+  readonly isDataLoaded = signal<boolean>(false);
+
   readonly isSaving = signal<boolean>(false);
   readonly saveMessage = signal<string>('');
   readonly saveStatus = signal<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -250,6 +254,7 @@ export class DashboardService {
       this.dirtyDeletedScheduleIds.clear();
       this.hasChanges.set(false);
       this.cancelAutoSave();
+      this.isDataLoaded.set(true);
     });
   }
 
