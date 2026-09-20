@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService, EXAM_ACHIEVEMENT_THRESHOLD } from './exam-achievements.service';
+import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
 import { catchError, of } from 'rxjs';
 
@@ -8,6 +9,7 @@ export type ExamStudyView = 'start' | 'quiz' | 'review' | 'result';
 
 export const QUESTIONS_PER_ROUND = 2;
 const QUESTIONS_PER_SESSION = 10;
+export const POINTS_PER_CORRECT_ANSWER = 10;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -34,6 +36,7 @@ function isCorrectAnswer(question: ExamQuestion, answer: number[]): boolean {
 export class ExamStudyService {
   private graphql = inject(GraphQLService);
   private achievementsService = inject(ExamAchievementsService);
+  private accountService = inject(AccountService);
 
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -134,11 +137,21 @@ export class ExamStudyService {
   goToNextRound(): void {
     if (this.isLastRound()) {
       this.view.set('result');
+      this.awardPoints();
       this.recordAchievementIfQualified();
       return;
     }
     this.round.update((r) => r + 1);
     this.view.set('quiz');
+  }
+
+  // 正解数にかかわらず、正解した問題数だけポイントを付与する(実績記録のしきい値とは無関係)。
+  readonly pointsEarned = computed(() => this.correctCount() * POINTS_PER_CORRECT_ANSWER);
+
+  private awardPoints(): void {
+    const amount = this.pointsEarned();
+    if (amount <= 0) return;
+    this.accountService.addPoints(amount).subscribe();
   }
 
   // 10問中7問(EXAM_ACHIEVEMENT_THRESHOLD)以上正解した場合のみ実績として記録する。

@@ -76,4 +76,25 @@ export class AccountService {
       })
     );
   }
+
+  // ポイント獲得の演出(結果画面の表示など)は呼び出し元がクライアント側の計算で行うため、
+  // ここではヘッダーのポイント表示を最新化するだけでよく、専用のトースト通知は出さない。
+  addPoints(amount: number): Observable<void> {
+    const mutation = `
+      mutation AddPoints($amount: Int!) {
+        addPoints(amount: $amount) {
+          points
+        }
+      }
+    `;
+
+    return this.graphql.mutation<{ addPoints: { points: number } }>(mutation, { amount }).pipe(
+      tap(res => this.authService.updateStoredUser({ points: res.addPoints.points })),
+      map(() => undefined),
+      catchError(err => {
+        console.error('Failed to add points:', err);
+        return of(undefined);
+      })
+    );
+  }
 }
