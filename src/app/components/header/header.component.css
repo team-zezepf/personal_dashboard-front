@@ -119,10 +119,27 @@
   opacity: 0.6;
 }
 
-.date {
+.points-badge {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.points-badge .coin {
+  font-size: 14px;
+}
+
+.date {
   font-size: 13px;
   opacity: 0.9;
+  margin-left: 16px;
 }
 
 .avatar-menu-wrapper {

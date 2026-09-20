@@ -107,6 +107,7 @@
     <section class="card result-card">
       <h2>お疲れさまでした！</h2>
       <p class="final-score">正解数：{{ examStudy.correctCount() }} / {{ examStudy.sessionQuestions().length }} 問</p>
+      <div class="points-earned">🪙 +{{ examStudy.pointsEarned() }}pt 獲得！</div>
       <div class="result-breakdown">
         @for (q of examStudy.sessionQuestions(); track q.id; let i = $index) {
           <div
