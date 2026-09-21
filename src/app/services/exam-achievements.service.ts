@@ -12,12 +12,15 @@ export const EXAM_ACHIEVEMENT_THRESHOLD = 7;
 export class ExamAchievementsService {
   private graphql = inject(GraphQLService);
 
-  getRecords(startDate: string, endDate: string): Observable<ExamRecord[]> {
+  // examTypeを省略すると、科目を問わず全科目分の記録を返す
+  // (実績カレンダーは科目共通の1つのカレンダーとして表示するため)。
+  getRecords(startDate: string, endDate: string, examType?: string): Observable<ExamRecord[]> {
     const query = `
-      query GetExamRecords($startDate: String, $endDate: String) {
-        examRecords(startDate: $startDate, endDate: $endDate) {
+      query GetExamRecords($examType: String, $startDate: String, $endDate: String) {
+        examRecords(examType: $examType, startDate: $startDate, endDate: $endDate) {
           id
           userId
+          examType
           date
           correctCount
           totalCount
@@ -26,17 +29,18 @@ export class ExamAchievementsService {
       }
     `;
 
-    return this.graphql.query<{ examRecords: ExamRecord[] }>(query, { startDate, endDate }).pipe(
+    return this.graphql.query<{ examRecords: ExamRecord[] }>(query, { examType, startDate, endDate }).pipe(
       map((res) => res.examRecords)
     );
   }
 
-  recordCompletion(correctCount: number, totalCount: number): Observable<ExamRecord> {
+  recordCompletion(examType: string, correctCount: number, totalCount: number): Observable<ExamRecord> {
     const mutation = `
-      mutation RecordExamCompletion($correctCount: Int!, $totalCount: Int!) {
-        recordExamCompletion(correctCount: $correctCount, totalCount: $totalCount) {
+      mutation RecordExamCompletion($examType: String!, $correctCount: Int!, $totalCount: Int!) {
+        recordExamCompletion(examType: $examType, correctCount: $correctCount, totalCount: $totalCount) {
           id
           userId
+          examType
           date
           correctCount
           totalCount
@@ -45,7 +49,7 @@ export class ExamAchievementsService {
       }
     `;
 
-    return this.graphql.mutation<{ recordExamCompletion: ExamRecord }>(mutation, { correctCount, totalCount }).pipe(
+    return this.graphql.mutation<{ recordExamCompletion: ExamRecord }>(mutation, { examType, correctCount, totalCount }).pipe(
       map((res) => res.recordExamCompletion)
     );
   }

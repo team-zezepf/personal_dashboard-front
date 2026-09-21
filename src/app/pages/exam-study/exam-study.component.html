@@ -1,4 +1,4 @@
-<app-header pageTitle="資格学習"></app-header>
+<app-header [pageTitle]="subject?.name ?? '資格学習'"></app-header>
 
 <main class="page">
 
@@ -13,10 +13,10 @@
   }
 
   <!-- スタート画面 -->
-  @if (examStudy.view() === 'start') {
+  @if (examStudy.view() === 'start' && subject) {
     <section class="card intro-card">
-      <h1 class="page-title">資格学習</h1>
-      <p class="intro-lead">基本情報技術者試験の対策問題を、2問ずつ解いていきましょう。</p>
+      <h1 class="page-title">{{ subject.name }}</h1>
+      <p class="intro-lead">{{ subject.description }}</p>
       <ul class="intro-list">
         <li>問題プールから、毎回ランダムに10問を出題（4択・複数選択などの形式に対応）</li>
         <li>2問回答するごとに、正誤と解説のページが表示されます</li>

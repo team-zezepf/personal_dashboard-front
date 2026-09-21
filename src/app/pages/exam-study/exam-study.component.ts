@@ -1,9 +1,11 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { ExamStudyService } from '../../services/exam-study.service';
 import { ExamQuestion } from '../../models/exam-question.models';
+import { findExamSubject } from '../../config/exam-subjects';
 
 @Component({
   selector: 'app-exam-study-page',
@@ -15,9 +17,21 @@ import { ExamQuestion } from '../../models/exam-question.models';
 export class ExamStudyPageComponent {
   readonly examStudy = inject(ExamStudyService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  // ルートパラメータ(:examType)で指定された科目。未知のキーの場合は科目選択画面へ戻す。
+  private readonly examTypeParam = this.route.snapshot.paramMap.get('examType') ?? '';
+  readonly subject = findExamSubject(this.examTypeParam);
 
   // 出題画面での選択状態(質問id → 選択済み選択肢indexの配列)。ラウンドが変わるたびリセットする。
   private readonly selections = signal<Map<string | number, number[]>>(new Map());
+
+  constructor() {
+    if (!this.subject) {
+      this.router.navigateByUrl('/study');
+    }
+  }
 
   // 問題データのimageはバックエンド(自前のexam_questions.json)由来のSVGであり、ユーザー入力では
   // ないため、デフォルトのサニタイズ([innerHTML]は<svg>を許可しない)を明示的にバイパスする。
@@ -32,8 +46,9 @@ export class ExamStudyPageComponent {
   });
 
   start(): void {
+    if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession();
+    this.examStudy.startSession(this.subject.key);
   }
 
   isSelected(question: ExamQuestion, choiceIndex: number): boolean {
@@ -63,8 +78,9 @@ export class ExamStudyPageComponent {
   }
 
   retry(): void {
+    if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession();
+    this.examStudy.startSession(this.subject.key);
   }
 
   globalIndex(indexInRound: number): number {
