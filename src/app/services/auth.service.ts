@@ -10,6 +10,7 @@ export interface AuthUser {
   role: string;
   avatarFilename?: string | null;
   favoriteTools?: string[];
+  points?: number;
 }
 
 interface LoginResponse {
