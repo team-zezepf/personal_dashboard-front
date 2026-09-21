@@ -21,6 +21,7 @@
         <li>問題プールから、毎回ランダムに10問を出題（4択・複数選択などの形式に対応）</li>
         <li>2問回答するごとに、正誤と解説のページが表示されます</li>
         <li>最後にまとめて結果を確認できます</li>
+        <li>10問中7問以上正解すると、「実績」画面のカレンダーに記録されます</li>
       </ul>
       <button class="btn btn-primary" type="button" [disabled]="examStudy.isLoading()" (click)="start()">
         {{ examStudy.isLoading() ? '読み込み中...' : '学習を始める' }}

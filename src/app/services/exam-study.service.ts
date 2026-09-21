@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
+import { ExamAchievementsService, EXAM_ACHIEVEMENT_THRESHOLD } from './exam-achievements.service';
 import { ExamQuestion } from '../models/exam-question.models';
 import { catchError, of } from 'rxjs';
 
@@ -32,6 +33,7 @@ function isCorrectAnswer(question: ExamQuestion, answer: number[]): boolean {
 })
 export class ExamStudyService {
   private graphql = inject(GraphQLService);
+  private achievementsService = inject(ExamAchievementsService);
 
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -132,10 +134,26 @@ export class ExamStudyService {
   goToNextRound(): void {
     if (this.isLastRound()) {
       this.view.set('result');
+      this.recordAchievementIfQualified();
       return;
     }
     this.round.update((r) => r + 1);
     this.view.set('quiz');
+  }
+
+  // 10問中7問(EXAM_ACHIEVEMENT_THRESHOLD)以上正解した場合のみ実績として記録する。
+  // 記録の成否は学習結果の表示に影響しないため、エラーはログのみに留める。
+  private recordAchievementIfQualified(): void {
+    const totalCount = this.sessionQuestions().length;
+    const correctCount = this.correctCount();
+    if (correctCount < EXAM_ACHIEVEMENT_THRESHOLD) return;
+
+    this.achievementsService.recordCompletion(correctCount, totalCount).pipe(
+      catchError((err) => {
+        console.error('Failed to record exam achievement:', err);
+        return of(null);
+      })
+    ).subscribe();
   }
 
   isCorrect(question: ExamQuestion, answer: number[] | undefined): boolean {

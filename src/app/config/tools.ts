@@ -14,7 +14,8 @@ export const TOOLS: ToolRow[] = [
   { name: 'Dashboard', path: '/', roles: TOOL_ACCESS['/'] },
   { name: 'ユーザー管理', path: '/users', roles: TOOL_ACCESS['/users'] },
   { name: 'ユーザー登録', path: '/register', roles: TOOL_ACCESS['/register'] },
-  { name: '資格学習', path: '/study', roles: TOOL_ACCESS['/study'] }
+  { name: '資格学習', path: '/study', roles: TOOL_ACCESS['/study'] },
+  { name: '実績', path: '/achievements', roles: TOOL_ACCESS['/achievements'] }
 ];
 
 export function findToolByPath(path: string): ToolRow | undefined {
