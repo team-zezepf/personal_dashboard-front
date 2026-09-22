@@ -4,6 +4,7 @@ import { Observable, tap, map, catchError, of } from 'rxjs';
 import { AuthService } from './auth.service';
 import { GraphQLService } from './graphql.service';
 import { NotificationService } from './notification.service';
+import { environment } from '../../environments/environment';
 
 export interface AccountResponse {
   id: string | number;
@@ -21,7 +22,7 @@ export class AccountService {
   private authService = inject(AuthService);
   private graphql = inject(GraphQLService);
   private notificationService = inject(NotificationService);
-  private base = 'http://localhost:8080/api/account';
+  private base = `${environment.apiBaseUrl}/api/account`;
 
   updateProfile(
     name: string,

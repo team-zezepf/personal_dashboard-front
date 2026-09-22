@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface GraphQLResponse<T> {
   data?: T;
@@ -12,7 +13,7 @@ export interface GraphQLResponse<T> {
 })
 export class GraphQLService {
   private http = inject(HttpClient);
-  private endpoint = 'http://localhost:8080/graphql';
+  private endpoint = `${environment.apiBaseUrl}/graphql`;
 
   query<T>(query: string, variables: Record<string, any> = {}): Observable<T> {
     return this.http.post<GraphQLResponse<T>>(this.endpoint, { query, variables }).pipe(
