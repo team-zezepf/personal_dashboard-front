@@ -41,6 +41,9 @@ export class ExamStudyService {
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
 
+  // 現在学習中の科目(examType)。startSession()を呼ぶたびに更新される。
+  readonly examType = signal<string | null>(null);
+
   readonly view = signal<ExamStudyView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
   readonly round = signal(0);
@@ -71,13 +74,14 @@ export class ExamStudyService {
 
   readonly correctCount = computed(() => this.results().filter(Boolean).length);
 
-  startSession(): void {
+  startSession(examType: string): void {
+    this.examType.set(examType);
     this.isLoading.set(true);
     this.errorMessage.set('');
 
     const query = `
-      query GetExamQuestions {
-        examQuestions {
+      query GetExamQuestions($examType: String!) {
+        examQuestions(examType: $examType) {
           id
           category
           subCategory
@@ -91,7 +95,7 @@ export class ExamStudyService {
       }
     `;
 
-    this.graphql.query<{ examQuestions: ExamQuestion[] }>(query).pipe(
+    this.graphql.query<{ examQuestions: ExamQuestion[] }>(query, { examType }).pipe(
       catchError((err) => {
         this.errorMessage.set('問題データの取得に失敗しました。しばらくしてから再度お試しください。');
         console.error('Failed to load exam questions:', err);
@@ -161,7 +165,10 @@ export class ExamStudyService {
     const correctCount = this.correctCount();
     if (correctCount < EXAM_ACHIEVEMENT_THRESHOLD) return;
 
-    this.achievementsService.recordCompletion(correctCount, totalCount).pipe(
+    const examType = this.examType();
+    if (!examType) return;
+
+    this.achievementsService.recordCompletion(examType, correctCount, totalCount).pipe(
       catchError((err) => {
         console.error('Failed to record exam achievement:', err);
         return of(null);

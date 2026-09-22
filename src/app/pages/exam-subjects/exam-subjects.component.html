@@ -1,0 +1,16 @@
+<app-header pageTitle="資格学習"></app-header>
+
+<main class="page">
+  <h1 class="page-title">資格学習</h1>
+  <p class="page-desc">学習する科目を選んでください。</p>
+
+  <div class="subject-list">
+    @for (subject of subjects; track subject.key) {
+      <a class="subject-card" [routerLink]="subject.path">
+        <span class="subject-name">{{ subject.name }}</span>
+        <span class="subject-desc">{{ subject.description }}</span>
+        <span class="subject-arrow">›</span>
+      </a>
+    }
+  </div>
+</main>
