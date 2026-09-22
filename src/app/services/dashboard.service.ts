@@ -216,6 +216,9 @@ export class DashboardService {
     this.graphql.query<{ dashboardData: DashboardData }>(query, { date }).pipe(
       catchError(err => {
         console.warn('Backend GraphQL fetch failed, falling back to local defaults:', err);
+        // バックエンドに接続できない場合、開発時の見た目確認用に仮データへフォールバックするが、
+        // ユーザーが気づかずこの仮データを実データだと誤認しないよう、エラーを画面下部に表示し続ける
+        this.notificationService.showResult('バックエンドに接続できないため、仮のデータを表示しています', 'error', null);
         // Fallback default mock data
         return of({
           dashboardData: {
