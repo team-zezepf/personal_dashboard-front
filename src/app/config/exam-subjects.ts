@@ -22,6 +22,12 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     name: '簿記3級',
     description: '日商簿記3級の対策問題を、2問ずつ解いていきましょう。',
     path: '/study/boki3'
+  },
+  {
+    key: 'oyojoho',
+    name: '応用情報技術者試験',
+    description: '応用情報技術者試験の対策問題を、2問ずつ解いていきましょう。',
+    path: '/study/oyojoho'
   }
 ];
 
