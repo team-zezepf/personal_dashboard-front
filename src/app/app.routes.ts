@@ -11,6 +11,7 @@ import { AccountEditPageComponent } from './pages/account-edit/account-edit.comp
 import { ExamSubjectsPageComponent } from './pages/exam-subjects/exam-subjects.component';
 import { ExamStudyPageComponent } from './pages/exam-study/exam-study.component';
 import { AchievementsPageComponent } from './pages/achievements/achievements.component';
+import { DeveloperQaPageComponent } from './pages/developer-qa/developer-qa.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -24,5 +25,6 @@ export const routes: Routes = [
   { path: 'study', component: ExamSubjectsPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType', component: ExamStudyPageComponent, canActivate: [authGuard] },
   { path: 'achievements', component: AchievementsPageComponent, canActivate: [authGuard] },
+  { path: 'developer-qa', component: DeveloperQaPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

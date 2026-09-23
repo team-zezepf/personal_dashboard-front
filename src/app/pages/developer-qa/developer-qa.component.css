@@ -1,0 +1,256 @@
+.container {
+  max-width: 900px;
+  margin: 24px auto 40px;
+  padding: 0 24px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.tag-select {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid #f3c4c4;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.qa-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.05);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.qa-card:hover {
+  border-color: var(--primary);
+}
+
+.qa-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.qa-question {
+  margin: 6px 0 10px;
+  font-size: 13.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.qa-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.tag {
+  background: #eef2ff;
+  color: #4c51bf;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+}
+
+.edit-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.05);
+  padding: 24px;
+}
+
+.error-message {
+  background: #fdecec;
+  color: var(--red);
+  border: 1px solid #f3c4c4;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.form-row label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.form-row input[type="text"],
+.form-row textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-row textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.form-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.image-attach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.image-attach-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.image-thumb {
+  width: 96px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+.image-attach-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.image-label-input {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.image-attach-fields input {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.file-btn {
+  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.file-btn input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+footer {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+}
