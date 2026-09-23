@@ -13,6 +13,7 @@ import { ExamStudyPageComponent } from './pages/exam-study/exam-study.component'
 import { AchievementsPageComponent } from './pages/achievements/achievements.component';
 import { DeveloperQaPageComponent } from './pages/developer-qa/developer-qa.component';
 import { MockExamPageComponent } from './pages/mock-exam/mock-exam.component';
+import { GenreStudyPageComponent } from './pages/genre-study/genre-study.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'study', component: ExamSubjectsPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType', component: ExamStudyPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType/mock-exam', component: MockExamPageComponent, canActivate: [authGuard] },
+  { path: 'study/:examType/genre/:genreKey', component: GenreStudyPageComponent, canActivate: [authGuard] },
   { path: 'achievements', component: AchievementsPageComponent, canActivate: [authGuard] },
   { path: 'developer-qa', component: DeveloperQaPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }

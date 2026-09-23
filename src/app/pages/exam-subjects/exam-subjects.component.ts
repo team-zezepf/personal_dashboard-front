@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { EXAM_SUBJECTS } from '../../config/exam-subjects';
+import { getGenreContentsForSubject } from '../../config/genre-content';
+import { GenreContent } from '../../models/genre-content.models';
 
 @Component({
   selector: 'app-exam-subjects-page',
@@ -13,4 +15,8 @@ import { EXAM_SUBJECTS } from '../../config/exam-subjects';
 })
 export class ExamSubjectsPageComponent {
   readonly subjects = EXAM_SUBJECTS;
+
+  genresFor(examType: string): GenreContent[] {
+    return getGenreContentsForSubject(examType);
+  }
 }
