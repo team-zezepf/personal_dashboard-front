@@ -1,0 +1,164 @@
+<app-header [pageTitle]="(subject?.name ?? '模擬試験') + ' - 模擬試験'"></app-header>
+
+<main class="page">
+  @if (!subject) {
+    <p class="hint">科目が見つかりません。</p>
+  } @else {
+
+    @if (mockExam.view() === 'start') {
+      <div class="card intro-card">
+        <h1 class="intro-title">{{ subject.name }} 模擬試験</h1>
+        <ul class="intro-list">
+          <li>制限時間: {{ subject.mockExam.durationMinutes }}分</li>
+          <li>出題数: {{ subject.mockExam.questionCount }}問(2問ずつ表示されます)</li>
+          <li>合格ボーダー: 正解数が全体の{{ subject.mockExam.passRatio * 100 }}%以上</li>
+          <li>正誤は終了後にまとめて確認できます(回答中は表示されません)</li>
+          <li>残り時間が0になると、自動的に終了して採点されます</li>
+          <li>「棄権する」を選ぶと記録は残らず、結果を見ることもできません</li>
+        </ul>
+        @if (mockExam.errorMessage()) {
+          <p class="error-message">{{ mockExam.errorMessage() }}</p>
+        }
+        <button class="btn btn-primary" [disabled]="mockExam.isLoading()" (click)="start()">
+          {{ mockExam.isLoading() ? '準備中...' : '模擬試験を開始する' }}
+        </button>
+        <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+      </div>
+    }
+
+    @if (mockExam.view() === 'quiz') {
+      <div class="quiz-topbar">
+        <div class="quiz-info">
+          <span class="quiz-round-label">第 {{ globalIndex(0) + 1 }}〜{{ globalIndex(mockExam.roundQuestions().length - 1) + 1 }} 問 / 全 {{ mockExam.sessionQuestions().length }} 問</span>
+          <span class="quiz-answered-label">回答済み: {{ mockExam.answeredCount() }} / {{ mockExam.sessionQuestions().length }}</span>
+        </div>
+        <div class="timer-ring" [class.warning]="timerLevel() === 'warning'" [class.danger]="timerLevel() === 'danger'">
+          <svg width="52" height="52">
+            <circle class="bg" cx="26" cy="26" r="22"></circle>
+            <circle class="fg" cx="26" cy="26" r="22"
+              stroke-dasharray="138.2"
+              [attr.stroke-dashoffset]="138.2 * (1 - timerRatio())"></circle>
+          </svg>
+          <div class="timer-label">{{ timerLabel() }}</div>
+        </div>
+      </div>
+
+      <div class="exam-body">
+        <div class="exam-main">
+          @for (q of mockExam.roundQuestions(); track q.id; let i = $index) {
+            <div class="question-card">
+              <div class="question-meta">
+                <span class="badge">{{ q.category }}: {{ q.subCategory }}</span>
+                <span class="question-number">第 {{ globalIndex(i) + 1 }} 問 / 全 {{ mockExam.sessionQuestions().length }} 問</span>
+              </div>
+              @if (q.image) {
+                <div class="question-image" [innerHTML]="trustedImage(q.image)"></div>
+              }
+              <p class="question-text">{{ q.question }}</p>
+              <ul class="choice-list">
+                @for (choice of q.choices; track $index; let ci = $index) {
+                  <li class="choice-item" [class.selected]="mockExam.isSelected(globalIndex(i), ci)" (click)="mockExam.selectAnswer(globalIndex(i), ci)">
+                    <label>
+                      <input [type]="q.type === 'multi' ? 'checkbox' : 'radio'" [checked]="mockExam.isSelected(globalIndex(i), ci)" (click)="$event.preventDefault()">
+                      <span>{{ choice }}</span>
+                    </label>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <div class="exam-actions">
+            <button class="btn btn-danger" (click)="openAbandonModal()">棄権する</button>
+            <div class="exam-actions-right">
+              <button class="btn btn-ghost" [disabled]="mockExam.round() === 0" (click)="mockExam.goToRound(mockExam.round() - 1)">前の問題へ</button>
+              <button class="btn btn-ghost" [disabled]="mockExam.round() === mockExam.totalRounds() - 1" (click)="mockExam.goToRound(mockExam.round() + 1)">次の問題へ</button>
+              <button class="btn btn-primary" (click)="openFinishModal()">終了する</button>
+            </div>
+          </div>
+          <p class="note-inline">未回答のまま終了・時間切れになった問題は不正解として採点されます。番号をクリックすればいつでも別の問題へ移動できます。</p>
+        </div>
+
+        <div class="exam-side">
+          <h3>問題番号</h3>
+          <div class="q-grid">
+            @for (q of mockExam.sessionQuestions(); track q.id; let i = $index) {
+              <button
+                type="button"
+                class="q-cell"
+                [class.answered]="isAnswered(i)"
+                [class.current]="mockExam.roundStartIndex() <= i && i < mockExam.roundStartIndex() + 2"
+                (click)="mockExam.goToRound(roundOf(i))"
+              >{{ i + 1 }}</button>
+            }
+          </div>
+          <div class="q-legend">
+            <div><span class="box"></span>未回答</div>
+            <div><span class="box answered"></span>回答済み</div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (mockExam.view() === 'result' && mockExam.result(); as result) {
+      <div class="result-banner" [class.pass]="result.passed" [class.fail]="!result.passed">
+        <div class="result-label">{{ result.passed ? '合格' : '不合格' }}</div>
+        <div class="result-score">正解数: {{ result.correctCount }} / {{ result.totalCount }} 問(合格ボーダー {{ result.passBorder }}問)</div>
+        <div class="result-points">獲得ポイント: +{{ result.correctCount * 10 }}pt</div>
+      </div>
+
+      @for (q of mockExam.sessionQuestions(); track q.id; let i = $index) {
+        <div class="review-card" [class.is-correct]="mockExam.isCorrect(q, mockExam.answers()[i])" [class.is-incorrect]="!mockExam.isCorrect(q, mockExam.answers()[i])">
+          <div class="question-meta">
+            <span class="badge">{{ q.category }}: {{ q.subCategory }}</span>
+            <span class="question-number">第 {{ i + 1 }} 問</span>
+          </div>
+          <div class="review-result-label" [class.is-correct]="mockExam.isCorrect(q, mockExam.answers()[i])" [class.is-incorrect]="!mockExam.isCorrect(q, mockExam.answers()[i])">
+            {{ mockExam.isCorrect(q, mockExam.answers()[i]) ? '○ 正解' : '✕ 不正解' }}
+          </div>
+          <p class="review-question-text">{{ q.question }}</p>
+          <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, mockExam.answers()[i]) }}</p>
+          <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          <div class="explanation-box">
+            <span class="label">解説</span>
+            {{ q.explanation }}
+          </div>
+        </div>
+      }
+
+      <div class="result-footer">
+        <button class="btn btn-primary" (click)="backToSubjects()">科目一覧に戻る</button>
+      </div>
+    }
+  }
+</main>
+
+@if (showAbandonModal()) {
+  <div class="modal-overlay">
+    <div class="modal-box">
+      <h3>模擬試験を棄権しますか？</h3>
+      <p>棄権すると記録は残らず、結果を確認することもできません。この操作は取り消せません。</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="closeAbandonModal()">戻る</button>
+        <button class="btn btn-danger" (click)="confirmAbandon()">棄権する</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showFinishModal()) {
+  <div class="modal-overlay">
+    <div class="modal-box">
+      <h3>模擬試験を終了しますか？</h3>
+      @if (unansweredCount() > 0) {
+        <p>未回答の問題が{{ unansweredCount() }}問あります。このまま終了すると未回答分は不正解として採点されます。</p>
+      } @else {
+        <p>すべての問題に回答済みです。終了して結果を確認します。</p>
+      }
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="closeFinishModal()">戻る</button>
+        <button class="btn btn-primary" (click)="confirmFinish()">終了して採点する</button>
+      </div>
+    </div>
+  </div>
+}

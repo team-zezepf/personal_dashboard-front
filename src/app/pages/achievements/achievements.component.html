@@ -2,7 +2,18 @@
 
 <main class="page">
   <h1 class="page-title">資格学習の実績</h1>
-  <p class="page-desc">資格学習で10問中7問以上正解した日にドットが付きます。継続の記録として振り返りに使ってください。</p>
+  <p class="page-desc">
+    @if (tab() === 'practice') {
+      資格学習で10問中7問以上正解した日にドットが付きます。継続の記録として振り返りに使ってください。
+    } @else {
+      模擬試験に合格した日にドットが付きます。不合格だった受験のみの日にはドットは付きません。
+    }
+  </p>
+
+  <div class="tab-switch">
+    <button type="button" [class.active]="tab() === 'practice'" (click)="switchTab('practice')">学習</button>
+    <button type="button" [class.active]="tab() === 'mock'" (click)="switchTab('mock')">模擬試験</button>
+  </div>
 
   @if (errorMessage()) {
     <div class="card error-card">{{ errorMessage() }}</div>
@@ -45,7 +56,11 @@
 
     <div class="legend">
       <span class="dot"></span>
-      <span>その日に資格学習で7問以上正解した（1回以上）</span>
+      @if (tab() === 'practice') {
+        <span>その日に資格学習で7問以上正解した（1回以上）</span>
+      } @else {
+        <span>その日に模擬試験へ合格した（1回以上）</span>
+      }
     </div>
   </article>
 </main>

@@ -2,7 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../../components/header/header.component';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
-import { ExamRecord } from '../../models/exam-record.models';
+import { ExamRecord, ExamRecordMode } from '../../models/exam-record.models';
 import { catchError, of } from 'rxjs';
 
 interface AchievementCalendarDay {
@@ -11,6 +11,8 @@ interface AchievementCalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
 }
+
+type AchievementTab = 'practice' | 'mock';
 
 function dateToString(d: Date): string {
   const year = d.getFullYear();
@@ -34,6 +36,7 @@ export class AchievementsPageComponent {
   readonly achievedDates = signal<ReadonlySet<string>>(new Set());
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
+  readonly tab = signal<AchievementTab>('practice');
 
   readonly weekdays = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -83,6 +86,12 @@ export class AchievementsPageComponent {
     return this.achievedDates().has(dateString);
   }
 
+  switchTab(tab: AchievementTab): void {
+    if (this.tab() === tab) return;
+    this.tab.set(tab);
+    this.loadRecordsForCurrentMonth();
+  }
+
   prevMonth(): void {
     if (this.viewMonth() === 0) {
       this.viewYear.update((y) => y - 1);
@@ -112,7 +121,8 @@ export class AchievementsPageComponent {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    this.achievementsService.getRecords(startDate, endDate).pipe(
+    const mode: ExamRecordMode = this.tab() === 'practice' ? 'PRACTICE' : 'MOCK_EXAM';
+    this.achievementsService.getRecords(startDate, endDate, undefined, mode).pipe(
       catchError((err) => {
         console.error('Failed to load exam records:', err);
         this.errorMessage.set('実績の取得に失敗しました。しばらくしてから再度お試しください。');

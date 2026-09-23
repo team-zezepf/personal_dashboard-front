@@ -1,0 +1,518 @@
+:host {
+  display: contents;
+}
+
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+}
+
+.intro-card {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.intro-title {
+  font-size: 1.1rem;
+  margin: 0 0 14px;
+}
+
+.intro-list {
+  color: var(--muted);
+  padding-left: 20px;
+  margin-bottom: 24px;
+  font-size: 0.92rem;
+}
+
+.intro-list li {
+  margin-bottom: 6px;
+}
+
+.error-message {
+  background: #fdecec;
+  color: var(--red);
+  border: 1px solid #f3c4c4;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  margin-right: 8px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+  background: #b9dced;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid #f3c4c4;
+}
+
+/* ===== 出題中の上部バー(タイマー) ===== */
+.quiz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.quiz-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.quiz-round-label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.timer-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.timer-ring svg {
+  transform: rotate(-90deg);
+}
+
+.timer-ring circle {
+  fill: none;
+  stroke-width: 5;
+}
+
+.timer-ring .bg {
+  stroke: var(--line);
+}
+
+.timer-ring .fg {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+.timer-ring.warning .fg {
+  stroke: var(--orange);
+}
+
+.timer-ring.danger .fg {
+  stroke: var(--red);
+}
+
+.timer-ring .timer-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ===== 出題本体 + サイドの問題番号グリッド ===== */
+.exam-body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.exam-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.exam-side {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  position: sticky;
+  top: 20px;
+}
+
+.exam-side h3 {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.q-cell {
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafbfc;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.q-cell.answered {
+  background: #eaf7fd;
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.q-cell.current {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.q-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.q-legend .box {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border: 1px solid var(--line);
+}
+
+.q-legend .box.answered {
+  background: #eaf7fd;
+  border-color: var(--primary);
+}
+
+/* ===== 問題カード ===== */
+.question-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+}
+
+.question-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  background: #eef2ff;
+  color: #3a4a9f;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.question-number {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.question-image {
+  margin-bottom: 12px;
+}
+
+.question-text {
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+}
+
+.choice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choice-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.choice-item:hover {
+  border-color: var(--primary);
+}
+
+.choice-item.selected {
+  border-color: var(--primary);
+  background: #eaf7fd;
+}
+
+.choice-item label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.exam-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exam-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.exam-actions-right .btn {
+  margin-right: 0;
+}
+
+.note-inline {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+/* ===== 確認ダイアログ ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 41, 55, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-box {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-box h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.modal-box p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-actions .btn {
+  margin-right: 0;
+}
+
+/* ===== 結果画面 ===== */
+.result-banner {
+  text-align: center;
+  border-radius: 14px;
+  padding: 28px 20px;
+  margin-bottom: 20px;
+}
+
+.result-banner.pass {
+  background: #eafaf2;
+  border: 1px solid var(--green);
+}
+
+.result-banner.fail {
+  background: #fdedec;
+  border: 1px solid var(--red);
+}
+
+.result-banner .result-label {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.result-banner.pass .result-label {
+  color: var(--green);
+}
+
+.result-banner.fail .result-label {
+  color: var(--red);
+}
+
+.result-banner .result-score {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.result-banner .result-points {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.review-card {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+
+.review-card.is-correct {
+  border-color: var(--green);
+  background: #eafaf2;
+}
+
+.review-card.is-incorrect {
+  border-color: var(--red);
+  background: #fdedec;
+}
+
+.review-result-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.review-result-label.is-correct {
+  color: var(--green);
+}
+
+.review-result-label.is-incorrect {
+  color: var(--red);
+}
+
+.review-question-text {
+  font-weight: 600;
+  margin: 6px 0 12px;
+  white-space: pre-wrap;
+}
+
+.review-line {
+  font-size: 0.92rem;
+  margin: 4px 0;
+}
+
+.review-line .label {
+  color: var(--muted);
+  margin-right: 6px;
+}
+
+.explanation-box {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.92rem;
+}
+
+.explanation-box .label {
+  font-weight: 700;
+  color: var(--primary-dark);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.result-footer {
+  text-align: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .exam-body {
+    flex-direction: column-reverse;
+  }
+  .exam-side {
+    width: 100%;
+    position: static;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 18px 12px 48px;
+  }
+  .card, .question-card {
+    padding: 18px 16px;
+  }
+}
