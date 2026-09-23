@@ -6,11 +6,19 @@
 
   <div class="subject-list">
     @for (subject of subjects; track subject.key) {
-      <a class="subject-card" [routerLink]="subject.path">
-        <span class="subject-name">{{ subject.name }}</span>
-        <span class="subject-desc">{{ subject.description }}</span>
-        <span class="subject-arrow">›</span>
-      </a>
+      <div class="subject-card">
+        <div class="subject-info">
+          <span class="subject-name">{{ subject.name }}</span>
+          <span class="subject-desc">{{ subject.description }}</span>
+          <span class="subject-mock-desc">
+            模擬試験: {{ subject.mockExam.durationMinutes }}分・{{ subject.mockExam.questionCount }}問・合格ボーダー{{ subject.mockExam.passRatio * 100 }}%
+          </span>
+        </div>
+        <div class="subject-actions">
+          <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
+          <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
+        </div>
+      </div>
     }
   </div>
 </main>
