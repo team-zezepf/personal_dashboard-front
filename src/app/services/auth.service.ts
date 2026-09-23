@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AuthUser {
   id: string | number;
@@ -27,7 +28,7 @@ const USER_KEY = 'auth_user';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private authBase = 'http://localhost:8080/api/auth';
+  private authBase = `${environment.apiBaseUrl}/api/auth`;
 
   readonly currentUser = signal<AuthUser | null>(this.readStoredUser());
 

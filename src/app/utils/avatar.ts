@@ -1,4 +1,6 @@
-const AVATAR_BASE_URL = 'http://localhost:8080/avatars';
+import { environment } from '../../environments/environment';
+
+const AVATAR_BASE_URL = `${environment.apiBaseUrl}/avatars`;
 const DEFAULT_AVATAR_FILENAME = 'default.png';
 
 export function avatarUrl(filename?: string | null): string {
