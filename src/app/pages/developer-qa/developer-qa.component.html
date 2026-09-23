@@ -1,0 +1,109 @@
+<app-header pageTitle="開発Q&A"></app-header>
+
+<main class="container">
+  @if (mode() === 'list') {
+    <div class="toolbar">
+      <input
+        class="search-input"
+        type="text"
+        placeholder="タイトル・本文で検索"
+        [ngModel]="keyword()"
+        (ngModelChange)="keyword.set($event)"
+      >
+      <select class="tag-select" [ngModel]="tagFilter()" (ngModelChange)="tagFilter.set($event)">
+        <option value="">すべてのタグ</option>
+        @for (tag of availableTags(); track tag) {
+          <option [value]="tag">{{ tag }}</option>
+        }
+      </select>
+      <button class="btn btn-primary" type="button" (click)="openNew()">＋ 新規Q&A</button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="hint">読み込み中...</p>
+    } @else if (filteredEntries().length === 0) {
+      <p class="hint">該当するQ&Aがありません。</p>
+    } @else {
+      @for (entry of filteredEntries(); track entry.id) {
+        <div class="qa-card" (click)="openEdit(entry)">
+          <p class="qa-title">{{ entry.title }}</p>
+          <p class="qa-question">{{ entry.question }}</p>
+          <div class="qa-meta">
+            <div class="qa-tags">
+              @for (tag of entry.tags; track tag) {
+                <span class="tag">{{ tag }}</span>
+              }
+            </div>
+            <span>投稿: {{ entry.authorName }} / 更新: {{ (entry.updatedAt ?? '').slice(0, 10) }}</span>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  @if (mode() === 'edit') {
+    <div class="edit-card">
+      @if (errorMessage()) {
+        <p class="error-message">{{ errorMessage() }}</p>
+      }
+
+      <div class="form-row">
+        <label for="qa-title">タイトル</label>
+        <input id="qa-title" type="text" [(ngModel)]="formTitle">
+      </div>
+
+      <div class="form-row">
+        <label for="qa-question">質問</label>
+        <textarea id="qa-question" rows="3" [(ngModel)]="formQuestion"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="qa-answer">回答（本文中で「図1を参照」のように下の添付画像を参照できます）</label>
+        <textarea id="qa-answer" rows="6" [(ngModel)]="formAnswer"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>添付画像</label>
+        @if (formImages().length > 0) {
+          <div class="image-attach-list">
+            @for (image of formImages(); track image.filename; let i = $index) {
+              <div class="image-attach-item">
+                <img class="image-thumb" [src]="qaImageUrl(image.filename)" alt="">
+                <div class="image-attach-fields">
+                  <input type="text" class="image-label-input" [(ngModel)]="image.label" [ngModelOptions]="{standalone: true}">
+                  <input type="text" placeholder="キャプション" [(ngModel)]="image.caption" [ngModelOptions]="{standalone: true}">
+                </div>
+                <button class="btn btn-ghost btn-sm" type="button" (click)="removeImage(i)">削除</button>
+              </div>
+            }
+          </div>
+        }
+        <label class="btn btn-ghost file-btn">
+          {{ isUploadingImage() ? 'アップロード中...' : '＋ 画像を追加' }}
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" [disabled]="isUploadingImage()" (change)="onImageSelected($event)">
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label for="qa-tags">タグ（カンマ区切り）</label>
+        <input id="qa-tags" type="text" [(ngModel)]="formTagsText">
+      </div>
+
+      <div class="form-actions">
+        @if (editingId() !== null) {
+          <button class="btn btn-danger" type="button" [disabled]="isSubmitting()" (click)="deleteEntry()">削除</button>
+        } @else {
+          <span></span>
+        }
+        <div class="form-actions-right">
+          <button class="btn btn-ghost" type="button" [disabled]="isSubmitting()" (click)="cancelEdit()">キャンセル</button>
+          <button class="btn btn-primary" type="button" [disabled]="isSubmitting()" (click)="save()">保存</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <footer>
+    © 2026 MY DASHBOARD
+  </footer>
+</main>
