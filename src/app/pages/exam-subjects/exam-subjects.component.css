@@ -60,6 +60,22 @@
   margin-top: 2px;
 }
 
+.subject-genre-links {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.subject-genre-links a {
+  color: var(--primary-dark);
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.subject-genre-links a:hover {
+  text-decoration: underline;
+}
+
 .subject-actions {
   display: flex;
   gap: 8px;

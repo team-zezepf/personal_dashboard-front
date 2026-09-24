@@ -1,0 +1,110 @@
+<app-header [pageTitle]="(content?.genreName ?? 'ジャンル') + 'のまとめ'"></app-header>
+
+<main class="page">
+  @if (!subject || !content) {
+    <p class="hint">ページが見つかりません。</p>
+  } @else {
+    <div class="breadcrumb">
+      <a routerLink="/study">資格学習</a> › <a [routerLink]="subject.path">{{ subject.name }}</a> › {{ content.genreName }}(まとめ)
+    </div>
+
+    <div class="page-layout">
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-label">このジャンルの目次</div>
+          <nav class="sidebar-nav">
+            @for (topic of content.topics; track topic.title; let i = $index) {
+              <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">
+                <span class="sidebar-no">{{ i + 1 }}</span>{{ topic.title }}
+              </a>
+            }
+          </nav>
+          <a class="sidebar-practice-link" [routerLink]="subject.path">{{ content.genreName }}の問題を解く ›</a>
+        </div>
+      </aside>
+
+      <div class="main-content">
+        <div class="page-header">
+          <h1>{{ content.genreName }}のまとめ</h1>
+          <p>{{ content.description }}</p>
+        </div>
+
+        @for (topic of content.topics; track topic.title; let i = $index) {
+          <section class="topic" [id]="'topic-' + i" [attr.data-topic-index]="i">
+            <h2><span class="topic-no">{{ i + 1 }}</span>{{ topic.title }}</h2>
+            <p class="topic-related">{{ topic.relatedExamples }}</p>
+
+            @for (block of topic.blocks; track $index) {
+              @switch (blockType(block)) {
+                @case ('paragraph') {
+                  <p [innerHTML]="trustedHtml($any(block).html)"></p>
+                }
+                @case ('table') {
+                  <table class="ref-table">
+                    <thead>
+                      <tr>
+                        @for (h of $any(block).headers; track h) {
+                          <th>{{ h }}</th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of $any(block).rows; track $index) {
+                        <tr>
+                          @for (cell of row; track $index) {
+                            <td>{{ cell }}</td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+                @case ('example') {
+                  <div class="example-box">
+                    <span class="label">{{ $any(block).label }}</span>
+                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
+                  </div>
+                }
+                @case ('pitfall') {
+                  <div class="pitfall-box">
+                    <span class="label">{{ $any(block).label }}</span>
+                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
+                  </div>
+                }
+                @case ('formula') {
+                  <div class="formula-box">
+                    <span class="label">{{ $any(block).label }}</span>
+                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
+                  </div>
+                }
+                @case ('figure') {
+                  <div class="fig">
+                    <div [innerHTML]="trustedHtml($any(block).svg)"></div>
+                    @if ($any(block).caption) {
+                      <div class="fig-caption">{{ $any(block).caption }}</div>
+                    }
+                  </div>
+                }
+                @case ('iconGrid') {
+                  <div class="gate-grid">
+                    @for (item of $any(block).items; track item.label) {
+                      <div class="gate-card">
+                        <div [innerHTML]="trustedHtml(item.svg)"></div>
+                        <div class="gate-name">{{ item.label }}: {{ item.desc }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            }
+          </section>
+        }
+
+        <div class="cta-footer">
+          <a class="btn btn-primary" [routerLink]="subject.path">{{ content.genreName }}の問題を解く</a>
+          <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+        </div>
+      </div>
+    </div>
+  }
+</main>
