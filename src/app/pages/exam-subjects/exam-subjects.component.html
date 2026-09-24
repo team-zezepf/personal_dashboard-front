@@ -15,9 +15,9 @@
           </span>
           @if (genresFor(subject.key).length > 0) {
             <div class="subject-genre-links">
-              まとめ:
+              <span class="subject-genre-label">まとめ</span>
               @for (genre of genresFor(subject.key); track genre.genreKey) {
-                <a [routerLink]="[subject.path, 'genre', genre.genreKey]">{{ genre.genreName }}</a>
+                <a class="genre-chip" [routerLink]="[subject.path, 'genre', genre.genreKey]">{{ genre.genreName }}</a>
               }
             </div>
           }
