@@ -12,7 +12,6 @@ export const KIHONJOHO_NETWORK_CONTENT: GenreContent = {
   genreKey: 'network',
   genreName: 'ネットワーク',
   category: 'テクノロジ系',
-  questionCount: 21,
   description: 'LAN/WANの基礎からTCP/IPの階層構造、IPアドレスとサブネット、代表的なプロトコル、ネットワーク機器、セキュリティまで、ネットワークで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

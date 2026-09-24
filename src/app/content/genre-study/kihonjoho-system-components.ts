@@ -12,7 +12,6 @@ export const KIHONJOHO_SYSTEM_COMPONENTS_CONTENT: GenreContent = {
   genreKey: 'system-components',
   genreName: 'システム構成要素',
   category: 'テクノロジ系',
-  questionCount: 13,
   description: 'クラスタリング・負荷分散・冗長化などシステムの可用性を高める構成や稼働率の計算、信頼性設計の考え方、クラウドサービスの分類など、システム構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

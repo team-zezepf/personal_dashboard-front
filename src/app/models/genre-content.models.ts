@@ -60,8 +60,6 @@ export interface GenreContent {
   genreName: string;
   // ジャンル選択ページでの見出しに使う大分類(テクノロジ系/マネジメント系/ストラテジ系など)
   category: string;
-  // ジャンル選択ページのカードに表示する出題数の目安。問題データ追加時に手動更新する
-  questionCount: number;
   description: string;
   topics: GenreTopic[];
 }

@@ -5,7 +5,6 @@ export const KIHONJOHO_MULTIMEDIA_CONTENT: GenreContent = {
   genreKey: 'multimedia',
   genreName: 'マルチメディア',
   category: 'テクノロジ系',
-  questionCount: 10,
   description: '画像・音声・動画のデジタル化や圧縮方式、コーデックとコンテナ形式の違いなど、マルチメディア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {
