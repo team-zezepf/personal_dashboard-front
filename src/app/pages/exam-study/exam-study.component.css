@@ -81,6 +81,16 @@
 .btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
 
 .question-card {
   background: var(--card);
@@ -260,6 +270,11 @@
   justify-content: center;
   gap: 8px;
   margin-bottom: 28px;
+}
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 .result-chip {
   width: 34px;
