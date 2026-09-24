@@ -4,6 +4,8 @@ export const KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'sw-development-technique',
   genreName: 'ソフトウェア開発技術',
+  category: 'テクノロジ系',
+  questionCount: 6,
   description: 'オブジェクト指向・開発モデル・状態遷移図・テスト技法など、ソフトウェア開発技術で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

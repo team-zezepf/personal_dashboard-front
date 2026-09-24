@@ -11,6 +11,8 @@ export const KIHONJOHO_SECURITY_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'security',
   genreName: 'セキュリティ',
+  category: 'テクノロジ系',
+  questionCount: 16,
   description: '暗号方式・認証技術・代表的なサイバー攻撃とその対策など、セキュリティで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

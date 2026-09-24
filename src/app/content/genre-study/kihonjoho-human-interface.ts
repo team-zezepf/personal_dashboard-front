@@ -4,6 +4,8 @@ export const KIHONJOHO_HUMAN_INTERFACE_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'human-interface',
   genreName: 'ヒューマンインタフェース',
+  category: 'テクノロジ系',
+  questionCount: 10,
   description: 'GUI・CUIなどインタフェースの種類、ユーザビリティ・アクセシビリティといった使いやすさに関する概念、メニューの種類、インタフェース設計の原則を整理しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

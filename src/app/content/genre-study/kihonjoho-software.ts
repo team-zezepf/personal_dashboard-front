@@ -11,6 +11,8 @@ export const KIHONJOHO_SOFTWARE_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'software',
   genreName: 'ソフトウェア',
+  category: 'テクノロジ系',
+  questionCount: 15,
   description: 'OSの役割・基本機能や仮想記憶、ミドルウェア・デバイスドライバなどの周辺ソフトウェア、ソフトウェアの品質特性・配布形態など、ソフトウェア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

@@ -60,37 +60,6 @@
   margin-top: 2px;
 }
 
-.subject-genre-links {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.subject-genre-label {
-  font-size: 0.72rem;
-  color: var(--muted);
-  font-weight: 600;
-  margin-right: 2px;
-}
-
-.genre-chip {
-  display: inline-block;
-  background: #eef2ff;
-  color: #3a4a9f;
-  text-decoration: none;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.genre-chip:hover {
-  background: #e0e6ff;
-}
-
 .subject-actions {
   display: flex;
   gap: 8px;
@@ -133,9 +102,9 @@
   }
   .subject-actions {
     width: 100%;
+    flex-direction: column;
   }
   .subject-actions .btn {
-    flex: 1;
     text-align: center;
   }
 }

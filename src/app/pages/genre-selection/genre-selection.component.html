@@ -1,0 +1,33 @@
+<app-header [pageTitle]="(subject?.name ?? '資格学習') + ' - ジャンル選択'"></app-header>
+
+<main class="page">
+  @if (!subject) {
+    <p class="hint">科目が見つかりません。</p>
+  } @else {
+    <div class="breadcrumb">
+      <a routerLink="/study">資格学習</a> › {{ subject.name }} のジャンルを選択
+    </div>
+
+    <h1 class="page-title">{{ subject.name }}</h1>
+    <p class="page-desc">学習したいジャンルを選んでください。読み終えたら「練習する」「模擬試験を受ける」で定着度を確認しましょう。</p>
+
+    @for (group of categoryGroups(); track group.category) {
+      <div class="category-group">
+        <h3>{{ group.category }}</h3>
+        <div class="genre-grid">
+          @for (genre of group.genres; track genre.genreKey) {
+            <a class="genre-card" [routerLink]="[subject.path, 'genre', genre.genreKey]">
+              <span class="genre-name">{{ genre.genreName }}</span>
+              <span class="genre-count">{{ genre.questionCount }}問</span>
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="page-footer">
+      <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
+      <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
+    </div>
+  }
+</main>

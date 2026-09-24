@@ -4,6 +4,8 @@ export const KIHONJOHO_SYSTEM_DEVELOPMENT_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'system-development',
   genreName: 'システム開発技術',
+  category: 'テクノロジ系',
+  questionCount: 10,
   description: '要件定義から設計・実装・テストまでのシステム開発工程と、レビューや保守に関する代表的な技法を解説しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

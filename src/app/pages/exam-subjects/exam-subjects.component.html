@@ -13,16 +13,11 @@
           <span class="subject-mock-desc">
             模擬試験: {{ subject.mockExam.durationMinutes }}分・{{ subject.mockExam.questionCount }}問・合格ボーダー{{ subject.mockExam.passRatio * 100 }}%
           </span>
-          @if (genresFor(subject.key).length > 0) {
-            <div class="subject-genre-links">
-              <span class="subject-genre-label">まとめ</span>
-              @for (genre of genresFor(subject.key); track genre.genreKey) {
-                <a class="genre-chip" [routerLink]="[subject.path, 'genre', genre.genreKey]">{{ genre.genreName }}</a>
-              }
-            </div>
-          }
         </div>
         <div class="subject-actions">
+          @if (hasGenres(subject.key)) {
+            <a class="btn btn-ghost" [routerLink]="[subject.path, 'genres']">学習する</a>
+          }
           <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
           <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
         </div>

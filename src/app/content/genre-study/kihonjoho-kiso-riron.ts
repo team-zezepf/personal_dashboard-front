@@ -11,6 +11,8 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'kiso-riron',
   genreName: '基礎理論',
+  category: 'テクノロジ系',
+  questionCount: 20,
   description: '2進数・論理演算・数値表現など、基礎理論で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

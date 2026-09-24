@@ -4,6 +4,8 @@ export const KIHONJOHO_DATABASE_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'database',
   genreName: 'データベース',
+  category: 'テクノロジ系',
+  questionCount: 17,
   description: 'テーブル設計・SQL操作・トランザクション管理など、データベースで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

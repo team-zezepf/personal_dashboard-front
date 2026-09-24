@@ -4,6 +4,8 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'computer-components',
   genreName: 'コンピュータ構成要素',
+  category: 'テクノロジ系',
+  questionCount: 17,
   description: 'CPUの仕組み・記憶階層・補助記憶装置・システムの信頼性設計など、コンピュータ構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {
