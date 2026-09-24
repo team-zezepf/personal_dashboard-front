@@ -27,7 +27,7 @@
 
 .subject-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   background: var(--card);
@@ -61,19 +61,34 @@
 }
 
 .subject-genre-links {
-  font-size: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.subject-genre-label {
+  font-size: 0.72rem;
   color: var(--muted);
-  margin-top: 4px;
+  font-weight: 600;
+  margin-right: 2px;
 }
 
-.subject-genre-links a {
-  color: var(--primary-dark);
+.genre-chip {
+  display: inline-block;
+  background: #eef2ff;
+  color: #3a4a9f;
   text-decoration: none;
-  margin-left: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
-.subject-genre-links a:hover {
-  text-decoration: underline;
+.genre-chip:hover {
+  background: #e0e6ff;
 }
 
 .subject-actions {
