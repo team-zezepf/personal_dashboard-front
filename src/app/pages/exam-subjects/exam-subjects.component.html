@@ -14,12 +14,22 @@
             模擬試験: {{ subject.mockExam.durationMinutes }}分・{{ subject.mockExam.questionCount }}問・合格ボーダー{{ subject.mockExam.passRatio * 100 }}%
           </span>
           @if (genresFor(subject.key).length > 0) {
-            <div class="subject-genre-links">
-              <span class="subject-genre-label">まとめ</span>
-              @for (genre of genresFor(subject.key); track genre.genreKey) {
-                <a class="genre-chip" [routerLink]="[subject.path, 'genre', genre.genreKey]">{{ genre.genreName }}</a>
-              }
-            </div>
+            <button
+              type="button"
+              class="genre-toggle"
+              [class.open]="isGenresExpanded(subject.key)"
+              (click)="toggleGenres(subject.key)"
+            >
+              ジャンル別まとめを見る({{ genresFor(subject.key).length }})
+              <span class="chevron">›</span>
+            </button>
+            @if (isGenresExpanded(subject.key)) {
+              <div class="subject-genre-links">
+                @for (genre of genresFor(subject.key); track genre.genreKey) {
+                  <a class="genre-chip" [routerLink]="[subject.path, 'genre', genre.genreKey]">{{ genre.genreName }}</a>
+                }
+              </div>
+            }
           }
         </div>
         <div class="subject-actions">
