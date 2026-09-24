@@ -118,7 +118,10 @@
           >{{ i + 1 }}</div>
         }
       </div>
-      <button class="btn btn-primary" type="button" (click)="retry()">もう一度挑戦する</button>
+      <div class="result-actions">
+        <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+        <button class="btn btn-primary" type="button" (click)="retry()">もう一度挑戦する</button>
+      </div>
     </section>
   }
 

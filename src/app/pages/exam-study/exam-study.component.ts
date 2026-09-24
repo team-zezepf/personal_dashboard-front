@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { ExamStudyService } from '../../services/exam-study.service';
@@ -10,7 +10,7 @@ import { findExamSubject } from '../../config/exam-subjects';
 @Component({
   selector: 'app-exam-study-page',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent],
   templateUrl: './exam-study.component.html',
   styleUrl: './exam-study.component.css'
 })
