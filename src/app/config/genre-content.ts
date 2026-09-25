@@ -17,6 +17,12 @@ import { KIHONJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/kih
 import { KIHONJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-business-strategy';
 import { KIHONJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/kihonjoho-corporate-legal';
 import { KIHONJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-system-strategy';
+import { BOKI3_KISO_CHISHIKI_CONTENT } from '../content/genre-study/boki3-kiso-chishiki';
+import { BOKI3_SHIWAKE_CONTENT } from '../content/genre-study/boki3-shiwake';
+import { BOKI3_SHISANHYO_CONTENT } from '../content/genre-study/boki3-shisanhyo';
+import { BOKI3_KESSAN_SEIRI_CONTENT } from '../content/genre-study/boki3-kessan-seiri';
+import { BOKI3_ZAIMU_SHOHYO_CONTENT } from '../content/genre-study/boki3-zaimu-shohyo';
+import { BOKI3_DENPYO_CHOBO_CONTENT } from '../content/genre-study/boki3-denpyo-chobo';
 import { OYOJOHO_KISO_RIRON_CONTENT } from '../content/genre-study/oyojoho-kiso-riron';
 import { OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT } from '../content/genre-study/oyojoho-algorithms-programming';
 import { OYOJOHO_COMPUTER_COMPONENTS_CONTENT } from '../content/genre-study/oyojoho-computer-components';
@@ -53,6 +59,12 @@ export const GENRE_CONTENTS: GenreContent[] = [
   KIHONJOHO_BUSINESS_STRATEGY_CONTENT,
   KIHONJOHO_CORPORATE_LEGAL_CONTENT,
   KIHONJOHO_SYSTEM_STRATEGY_CONTENT,
+  BOKI3_KISO_CHISHIKI_CONTENT,
+  BOKI3_SHIWAKE_CONTENT,
+  BOKI3_SHISANHYO_CONTENT,
+  BOKI3_KESSAN_SEIRI_CONTENT,
+  BOKI3_ZAIMU_SHOHYO_CONTENT,
+  BOKI3_DENPYO_CHOBO_CONTENT,
   OYOJOHO_KISO_RIRON_CONTENT,
   OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT,
   OYOJOHO_COMPUTER_COMPONENTS_CONTENT,
