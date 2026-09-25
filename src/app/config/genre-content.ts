@@ -23,6 +23,20 @@ import { BOKI3_SHISANHYO_CONTENT } from '../content/genre-study/boki3-shisanhyo'
 import { BOKI3_KESSAN_SEIRI_CONTENT } from '../content/genre-study/boki3-kessan-seiri';
 import { BOKI3_ZAIMU_SHOHYO_CONTENT } from '../content/genre-study/boki3-zaimu-shohyo';
 import { BOKI3_DENPYO_CHOBO_CONTENT } from '../content/genre-study/boki3-denpyo-chobo';
+import { OYOJOHO_KISO_RIRON_CONTENT } from '../content/genre-study/oyojoho-kiso-riron';
+import { OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT } from '../content/genre-study/oyojoho-algorithms-programming';
+import { OYOJOHO_COMPUTER_COMPONENTS_CONTENT } from '../content/genre-study/oyojoho-computer-components';
+import { OYOJOHO_SYSTEM_COMPONENTS_CONTENT } from '../content/genre-study/oyojoho-system-components';
+import { OYOJOHO_SOFTWARE_CONTENT } from '../content/genre-study/oyojoho-software';
+import { OYOJOHO_DATABASE_CONTENT } from '../content/genre-study/oyojoho-database';
+import { OYOJOHO_NETWORK_CONTENT } from '../content/genre-study/oyojoho-network';
+import { OYOJOHO_SECURITY_CONTENT } from '../content/genre-study/oyojoho-security';
+import { OYOJOHO_SYSTEM_DEVELOPMENT_CONTENT } from '../content/genre-study/oyojoho-system-development';
+import { OYOJOHO_PROJECT_MANAGEMENT_CONTENT } from '../content/genre-study/oyojoho-project-management';
+import { OYOJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/oyojoho-service-management';
+import { OYOJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/oyojoho-system-strategy';
+import { OYOJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/oyojoho-business-strategy';
+import { OYOJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/oyojoho-corporate-legal';
 
 // ジャンル別まとめページのコンテンツ一覧。今後ジャンルを追加する際はここに登録するだけでよい
 // (科目一覧画面への導線・ルーティングは登録されたコンテンツを見て自動的に反映される)。
@@ -50,7 +64,21 @@ export const GENRE_CONTENTS: GenreContent[] = [
   BOKI3_SHISANHYO_CONTENT,
   BOKI3_KESSAN_SEIRI_CONTENT,
   BOKI3_ZAIMU_SHOHYO_CONTENT,
-  BOKI3_DENPYO_CHOBO_CONTENT
+  BOKI3_DENPYO_CHOBO_CONTENT,
+  OYOJOHO_KISO_RIRON_CONTENT,
+  OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT,
+  OYOJOHO_COMPUTER_COMPONENTS_CONTENT,
+  OYOJOHO_SYSTEM_COMPONENTS_CONTENT,
+  OYOJOHO_SOFTWARE_CONTENT,
+  OYOJOHO_DATABASE_CONTENT,
+  OYOJOHO_NETWORK_CONTENT,
+  OYOJOHO_SECURITY_CONTENT,
+  OYOJOHO_SYSTEM_DEVELOPMENT_CONTENT,
+  OYOJOHO_PROJECT_MANAGEMENT_CONTENT,
+  OYOJOHO_SERVICE_MANAGEMENT_CONTENT,
+  OYOJOHO_SYSTEM_STRATEGY_CONTENT,
+  OYOJOHO_BUSINESS_STRATEGY_CONTENT,
+  OYOJOHO_CORPORATE_LEGAL_CONTENT
 ];
 
 export function findGenreContent(examType: string, genreKey: string): GenreContent | undefined {
