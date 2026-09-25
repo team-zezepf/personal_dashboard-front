@@ -5,7 +5,7 @@
     <p class="hint">ページが見つかりません。</p>
   } @else {
     <div class="breadcrumb">
-      <a routerLink="/study">資格学習</a> › <a [routerLink]="subject.path">{{ subject.name }}</a> › {{ content.genreName }}(まとめ)
+      <a routerLink="/study">資格学習</a> › <a [routerLink]="[subject.path, 'genres']">{{ subject.name }}</a> › {{ content.genreName }}(まとめ)
     </div>
 
     <div class="page-layout">
@@ -19,7 +19,6 @@
               </a>
             }
           </nav>
-          <a class="sidebar-practice-link" [routerLink]="subject.path">{{ content.genreName }}の問題を解く ›</a>
         </div>
       </aside>
 
@@ -101,7 +100,7 @@
         }
 
         <div class="cta-footer">
-          <a class="btn btn-primary" [routerLink]="subject.path">{{ content.genreName }}の問題を解く</a>
+          <a class="btn btn-ghost" [routerLink]="[subject.path, 'genres']">ジャンル一覧に戻る</a>
           <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
         </div>
       </div>

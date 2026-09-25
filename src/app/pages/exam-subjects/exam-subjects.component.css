@@ -49,11 +49,6 @@
   font-weight: 700;
 }
 
-.subject-desc {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 .subject-mock-desc {
   font-size: 0.75rem;
   color: var(--primary-dark);
