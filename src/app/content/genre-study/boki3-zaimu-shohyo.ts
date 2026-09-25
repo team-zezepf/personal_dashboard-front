@@ -8,7 +8,7 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
   description: '貸借対照表と損益計算書という2つの決算書がそれぞれ何を表すのか、両者がどうつながっているのかを図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {
-      title: '貸借対照表(B/S)の構造と貸借対照表等式',
+      title: '貸借対照表(B/S)',
       blocks: [
         { type: 'paragraph', html: '貸借対照表(B/S: Balance Sheet)は、決算日などの<strong>一定時点</strong>における企業の財政状態、すなわち「何をどれだけ持っているか(資産)」「他人から調達した分(負債)」「自分のものといえる分(純資産)」を示す財務諸表である。左側に資産、右側に負債と純資産を並べ、両者の合計は必ず一致する。この関係を<strong>貸借対照表等式</strong>と呼ぶ。' },
         {
@@ -55,7 +55,7 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
       ]
     },
     {
-      title: '損益計算書(P/L)の構造と当期純利益の計算',
+      title: '損益計算書(P/L)',
       blocks: [
         { type: 'paragraph', html: '損益計算書(P/L: Profit and Loss Statement)は、貸借対照表とは異なり、<strong>一会計期間</strong>(通常は1年間)の収益と費用を集計し、その差額から企業の経営成績を明らかにする財務諸表である。収益合計から費用合計を差し引いた金額を当期純利益といい、費用が収益を上回る場合は当期純損失となる。' },
         {
@@ -80,7 +80,7 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
       ]
     },
     {
-      title: '純資産(資本)と当期純利益のつながり',
+      title: '純資産と当期純利益',
       blocks: [
         { type: 'paragraph', html: '損益計算書で計算された当期純利益は、その期の儲けを示すだけでなく、貸借対照表の純資産(資本)を増やす要素として反映される。この2つの決算書はそれぞれ独立した表ではなく、<strong>当期純利益を介してつながっている</strong>点が財務諸表を理解するうえでの要である。' },
         { type: 'paragraph', html: '株式会社の場合、純資産の部は株主が出資した金額を表す<strong>資本金</strong>と、これまでの利益の蓄積を表す<strong>繰越利益剰余金</strong>などに区分される。一方、個人企業(個人事業主)の場合は区分をせず、単に「資本」という1つの科目で純資産をまとめて表す。' },
