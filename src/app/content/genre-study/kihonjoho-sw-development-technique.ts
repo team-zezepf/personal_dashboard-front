@@ -9,7 +9,6 @@ export const KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT: GenreContent = {
   topics: [
     {
       title: 'オブジェクト指向プログラミングの三大要素',
-      relatedExamples: '関連する出題例: 「オブジェクト指向プログラミングの特徴として適切なものを、すべて選べ」など',
       blocks: [
         { type: 'paragraph', html: 'オブジェクト指向とは、データ(属性)とそれを操作する処理(メソッド)をひとつの「オブジェクト」としてまとめて扱う考え方である。代表的な特徴として「カプセル化」「継承」「ポリモーフィズム(多態性)」の3つが挙げられる。' },
         {
@@ -27,7 +26,6 @@ export const KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT: GenreContent = {
     },
     {
       title: '開発モデル(ウォーターフォールとアジャイル)',
-      relatedExamples: '関連する出題例: 「要件定義・設計・開発・テストの各工程を上流から下流へ順番に一度だけ実施し、原則として後戻りを想定しない開発モデルはどれか」「短い開発サイクルを繰り返しながら、顧客の要望の変化に柔軟に対応していく開発手法を何と呼ぶか」など',
       blocks: [
         { type: 'paragraph', html: 'ソフトウェア開発の進め方(開発モデル)には、工程を順番に一度だけ進めるウォーターフォールモデルと、短い期間で開発を繰り返すアジャイル開発が代表的である。両者は工程の進み方が対照的なので、図の形で違いを覚えるとよい。' },
         {
@@ -75,7 +73,6 @@ export const KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT: GenreContent = {
     },
     {
       title: '状態遷移図',
-      relatedExamples: '関連する出題例: 「状態遷移図において、ある状態でイベントEが発生した場合に遷移する状態はどれか」',
       blocks: [
         { type: 'paragraph', html: '状態遷移図は、システムやオブジェクトが取り得る「状態」を楕円(または丸角の箱)で表し、状態を変化させる「イベント」を矢印とラベルで表した図である。ある状態からイベントが発生したとき、そのイベントの矢印をたどった先が遷移後の状態になる。' },
         {
@@ -102,7 +99,6 @@ export const KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT: GenreContent = {
     },
     {
       title: 'テスト技法(単体テストとブラックボックステスト)',
-      relatedExamples: '関連する出題例: 「プログラムを構成する個々のモジュール(関数・クラスなど)が単独で正しく動作するかを検証するテストを何と呼ぶか」「プログラムの内部構造を考慮せず、入力に対する出力が仕様通りであるかに着目してテストを行う手法を何と呼ぶか」など',
       blocks: [
         { type: 'paragraph', html: 'ソフトウェアのテストは、対象範囲の広さによる「テストレベル」と、内部構造を見るかどうかによる「テスト技法」の2つの観点で分類できる。' },
         {

@@ -9,7 +9,6 @@ export const OYOJOHO_PROJECT_MANAGEMENT_CONTENT: GenreContent = {
   topics: [
     {
       title: 'プロジェクトの立ち上げとステークホルダマネジメント',
-      relatedExamples: '関連する出題例: 「プロジェクトの目的、概要、責任者、予算の大枠などを記載し、プロジェクトの開始を正式に認可する文書を何と呼ぶか」「プロジェクトに影響を与える、あるいはプロジェクトから影響を受ける利害関係者を特定し、それぞれの期待や関心に応じて適切にコミュニケーションを取っていくマネジメント活動を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -38,7 +37,6 @@ export const OYOJOHO_PROJECT_MANAGEMENT_CONTENT: GenreContent = {
     },
     {
       title: 'WBSとアローダイアグラム(PERT図)によるクリティカルパスの計算',
-      relatedExamples: '関連する出題例: 「プロジェクトの作業を階層的に分解し、管理可能な単位まで細分化した成果物志向の構成図を何と呼ぶか」「プロジェクトの各作業の依存関係を図示し、開始から終了までの全経路のうち最も所要日数が長い経路を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -111,7 +109,6 @@ export const OYOJOHO_PROJECT_MANAGEMENT_CONTENT: GenreContent = {
     },
     {
       title: '三点見積り(PERT法)と工期短縮技法',
-      relatedExamples: '関連する出題例: 「PERT法による所要期間の見積りにおいて、楽観値a、最可能値m、悲観値bを用いて期待値を(a+4m+b)/6で算出する技法を何と呼ぶか」「クリティカルパス上の複数の作業を並行して実施できるように工程を組み替え、コストを大きく増やさずに工期短縮を図る技法を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -144,7 +141,6 @@ export const OYOJOHO_PROJECT_MANAGEMENT_CONTENT: GenreContent = {
     },
     {
       title: 'アーンドバリューマネジメント(EVM)による定量的な進捗管理',
-      relatedExamples: '関連する出題例: 「アーンドバリューマネジメント(EVM)において、出来高(EV)を計画値(PV)で割って求める指標で、1より小さいとスケジュールが遅延していることを示す指標はどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -190,7 +186,6 @@ export const OYOJOHO_PROJECT_MANAGEMENT_CONTENT: GenreContent = {
     },
     {
       title: 'リスクマネジメントの対応戦略',
-      relatedExamples: '関連する出題例: 「リスクへの対応戦略のうち、リスクの発生確率や影響度を許容範囲まで下げるために予防策を講じる戦略を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',

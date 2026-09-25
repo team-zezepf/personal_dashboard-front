@@ -16,7 +16,6 @@ export const KIHONJOHO_HARDWARE_CONTENT: GenreContent = {
   topics: [
     {
       title: '記憶装置(半導体メモリ・HDD/SSD・RAID)',
-      relatedExamples: '関連する出題例: 「不揮発性の半導体メモリはどれか」「HDDとSSDの特徴として正しいもの」「複数の磁気ディスクを組み合わせて耐障害性を高める技術(RAID)」など',
       blocks: [
         { type: 'paragraph', html: '半導体メモリには、電源を切るとデータが消える「揮発性」のものと、電源を切ってもデータが保持される「不揮発性」のものがある。用途によって使い分けられている。' },
         {
@@ -74,7 +73,6 @@ export const KIHONJOHO_HARDWARE_CONTENT: GenreContent = {
     },
     {
       title: '入出力装置とディスプレイ',
-      relatedExamples: '関連する出題例: 「画素(ピクセル)の密度を表す用語(解像度)」「画面に指やペンで触れて入力する装置(タッチパネル)」「3次元データから立体物を造形する装置(3Dプリンタ)」など',
       blocks: [
         { type: 'paragraph', html: 'コンピュータの入出力装置は、人や外部環境とのデータのやり取りを担う。データを取り込む「入力装置」、データを出し出力する「出力装置」、両方を兼ねる「入出力装置」に大別できる。' },
         {
@@ -126,7 +124,6 @@ export const KIHONJOHO_HARDWARE_CONTENT: GenreContent = {
     },
     {
       title: 'センサとアクチュエータ',
-      relatedExamples: '関連する出題例: 「温度・湿度・光量などの物理的な情報を電気信号に変換して取り込む装置(センサ)」「電気信号を受けて機械的な運動に変換する装置(アクチュエータ)」など',
       blocks: [
         { type: 'paragraph', html: 'センサとアクチュエータは、コンピュータ(制御装置)と物理世界とを結ぶ装置であり、組み込みシステムやIoT機器で対になって使われることが多い。変換する向きが正反対である点が重要である。' },
         {
@@ -168,7 +165,6 @@ export const KIHONJOHO_HARDWARE_CONTENT: GenreContent = {
     },
     {
       title: '処理装置と近距離無線通信',
-      relatedExamples: '関連する出題例: 「画像処理やグラフィックス描画に特化した演算を高速に行う処理装置(GPU)」「ICカードやスマートフォンをかざすだけで通信する近距離無線技術(NFC)」など',
       blocks: [
         { type: 'paragraph', html: 'コンピュータの主要な処理装置には、汎用的な処理を順に実行するCPUのほか、特定の処理に特化した専用の処理装置がある。' },
         {

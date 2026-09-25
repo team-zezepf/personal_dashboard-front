@@ -9,7 +9,6 @@ export const OYOJOHO_SYSTEM_COMPONENTS_CONTENT: GenreContent = {
   topics: [
     {
       title: '稼働率の計算:直列・並列システムとMTBF/MTTR',
-      relatedExamples: '関連する出題例: 「稼働率0.9の装置を直列に2台接続したシステム全体の稼働率はいくつか」「稼働率0.9の装置を並列(冗長構成)に2台接続したシステム全体の稼働率はいくつか」など',
       blocks: [
         { type: 'paragraph', html: '稼働率とは、システムが正常に稼働している時間の割合を表す指標である。応用情報技術者試験では、稼働率そのものをMTBF・MTTRから求めさせたうえで、それを直列・並列に組み合わせたシステム全体の稼働率を計算させる、複合的な出題が中心となる。' },
         { type: 'formula', label: '稼働率の基本式', html: '稼働率 = MTBF ÷ (MTBF + MTTR)<br>(MTBF: 平均故障間隔、MTTR: 平均修理時間)' },
@@ -45,7 +44,6 @@ export const OYOJOHO_SYSTEM_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: '待機系による冗長化:デュアルシステム・デュプレックスシステムとフェールオーバー',
-      relatedExamples: '関連する出題例: 「現用系のサーバが故障した際に、待機系のサーバへ自動的に処理を引き継ぐ仕組みを何と呼ぶか」など',
       blocks: [
         { type: 'paragraph', html: '複数のシステムを組み合わせて可用性を高める方式は、両系統を同時に稼働させ続けるか、一方を待機させておくかによって大きく2つに分けられる。さらに待機系をどこまで稼働させておくかによって、切替速度とコストのバランスが変わる。' },
         {
@@ -66,7 +64,6 @@ export const OYOJOHO_SYSTEM_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: 'ストレージの冗長化(RAID)と負荷分散によるシステム構成',
-      relatedExamples: '関連する出題例: 「複数台のディスクにデータとパリティ情報を分散して書き込むことで、1台のディスクが故障してもデータを復旧できる構成はどれか」「複数のサーバに処理を分散させ、特定のサーバへの負荷集中を防ぐとともに可用性を高める装置・仕組みはどれか」など',
       blocks: [
         { type: 'paragraph', html: 'ディスク単体の故障に備える仕組みがRAID(Redundant Arrays of Inexpensive Disks)であり、複数のディスクを組み合わせて冗長性や性能を高める。また、複数のサーバへ処理を振り分けるロードバランサは、負荷分散だけでなく可用性の向上にも寄与する。' },
         {

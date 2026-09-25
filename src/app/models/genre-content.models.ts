@@ -50,7 +50,6 @@ export type GenreContentBlock =
 
 export interface GenreTopic {
   title: string;
-  relatedExamples: string;
   blocks: GenreContentBlock[];
 }
 

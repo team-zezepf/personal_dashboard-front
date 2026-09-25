@@ -9,7 +9,6 @@ export const OYOJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
   topics: [
     {
       title: 'CPUの性能評価(クロック・CPI・MIPS)とパイプライン処理',
-      relatedExamples: '関連する出題例: 「クロック周波数が2GHzのCPUで、ある命令の実行に平均4クロックサイクルを要する場合、1秒間に実行できる命令数(MIPS換算)に最も近いものはどれか」「命令の取り出し・解読・実行などの各段階を複数の命令で重ね合わせて処理し、スループットを向上させる方式はどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -108,7 +107,6 @@ export const OYOJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: 'キャッシュメモリと記憶階層(実効アクセス時間・SRAM/DRAM)',
-      relatedExamples: '関連する出題例: 「キャッシュメモリのヒット率が90%、キャッシュメモリのアクセス時間が10ns、主記憶のアクセス時間が100nsのとき、実効アクセス時間に最も近い値はどれか」「電源を切ると記憶内容が消える揮発性メモリのうち、リフレッシュ動作を必要とし、構造が単純で大容量化・低コスト化に向いているものはどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -173,7 +171,6 @@ export const OYOJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: '入出力の制御方式(割り込み・DMA)',
-      relatedExamples: '関連する出題例: 「入出力装置からの要求によってCPUの処理を一時中断し、専用の処理(割り込みハンドラ)を実行してから元の処理に戻る仕組みを何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',

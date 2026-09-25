@@ -16,7 +16,6 @@ export const OYOJOHO_SECURITY_CONTENT: GenreContent = {
   topics: [
     {
       title: '公開鍵暗号方式とハイブリッド暗号方式',
-      relatedExamples: '関連する出題例: 「暗号化に使う鍵と復号に使う鍵が異なり、公開鍵を誰でも入手できる形で公開する暗号方式はどれか」「公開鍵暗号方式の処理速度の遅さを補うため、データ本体は共通鍵で暗号化し、その共通鍵自体を公開鍵暗号方式で暗号化して送る方式を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -77,7 +76,6 @@ export const OYOJOHO_SECURITY_CONTENT: GenreContent = {
     },
     {
       title: 'デジタル署名によるなりすまし・改ざんの検知',
-      relatedExamples: '関連する出題例: 「送信者が秘密鍵でメッセージのハッシュ値を暗号化して添付することで、受信者が公開鍵を使って『改ざんされていないこと』と『送信者本人であること』を確認できる仕組みはどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -128,7 +126,6 @@ export const OYOJOHO_SECURITY_CONTENT: GenreContent = {
     },
     {
       title: 'Webアプリケーションへの攻撃(SQLインジェクション・XSS・CSRF)とWAF',
-      relatedExamples: '関連する出題例: 「入力値をそのままSQL文に組み込むことで、攻撃者が意図しないSQL文を実行させてしまう脆弱性・攻撃はどれか」「攻撃者が悪意あるスクリプトをWebページに埋め込み、閲覧者のブラウザ上で実行させることでCookie情報の窃取などを行う攻撃はどれか」「利用者が別サイトにログイン中の状態を悪用し、利用者の意図しないリクエストを正規サイトへ送信させてしまう攻撃はどれか」「Webアプリケーションへの通信内容を検査し、既知の攻撃パターンを検知・遮断するセキュリティ機器・機能はどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -185,7 +182,6 @@ export const OYOJOHO_SECURITY_CONTENT: GenreContent = {
     },
     {
       title: 'ゼロデイ攻撃と脆弱性の深刻度評価(CVE・CVSS)',
-      relatedExamples: '関連する出題例: 「脆弱性が発見されてから修正プログラム(パッチ)が提供されるまでの間に、その脆弱性を悪用して行われる攻撃を何と呼ぶか」「情報セキュリティの脆弱性の深刻度を、攻撃元区分や影響範囲などの基準に基づき0.0〜10.0の数値で評価する共通の指標はどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -235,7 +231,6 @@ export const OYOJOHO_SECURITY_CONTENT: GenreContent = {
     },
     {
       title: '多要素認証(MFA)',
-      relatedExamples: '関連する出題例: 「パスワードに加えてSMSで送られるワンタイムコードや指紋認証など、異なる種類の認証要素を組み合わせて認証の強度を高める方式を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
