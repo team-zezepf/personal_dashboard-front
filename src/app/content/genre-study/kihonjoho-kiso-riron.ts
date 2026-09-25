@@ -164,7 +164,7 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
         {
           type: 'figure',
           svg: `
-            <svg viewBox="0 0 360 70" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+            <svg viewBox="0 0 440 70" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
               <g font-size="13" fill="#333" text-anchor="middle">
                 <rect x="0" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="20" y="35">1</text>
                 <rect x="40" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="60" y="35">0</text>
@@ -172,11 +172,13 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
                 <rect x="120" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="140" y="35">1</text>
                 <rect x="160" y="15" width="40" height="30" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/><text x="180" y="35" fill="#2f5fe0">1</text>
               </g>
-              <text x="270" y="35" font-size="12" fill="#7b8794">← パリティビット(1が偶数個になるよう付加)</text>
+              <text x="270" y="35" font-size="12" fill="#7b8794">← パリティビット</text>
             </svg>
           `,
           caption: 'データ「1011」は1が3個(奇数)なので、偶数パリティにするため「1」を付加して1の個数を4個(偶数)にそろえる。'
-        }
+        },
+        { type: 'example', label: '例題: 受信側がどうやって誤りに気づくか(偶数パリティの場合)', html: '正常な場合: 「1011」+パリティ「1」を受信 → 1の個数は<strong>4個(偶数)</strong> → 想定通りなので正常と判断。<br>伝送中に1ビットが化けた場合: 3ビット目が反転し「1001」+パリティ「1」を受信 → 1の個数は<strong>3個(奇数)</strong> → 「偶数のはず」という想定と異なるため誤りと判断できる。' },
+        { type: 'pitfall', label: 'つまずきやすいポイント', html: 'パリティビットで分かるのは「誤りが起きたこと」だけで、「どのビットが化けたか」は特定できない。また2ビット同時に反転すると1の個数の偶奇が元に戻ってしまい、誤りを検出できない(パリティチェックの限界)。' }
       ]
     },
     {
