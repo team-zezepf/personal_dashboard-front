@@ -8,7 +8,7 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
   description: '貸借対照表と損益計算書という2つの決算書がそれぞれ何を表すのか、両者がどうつながっているのかを図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {
-      title: '貸借対照表(B/S)の構造と貸借対照表等式',
+      title: '貸借対照表(B/S)',
       blocks: [
         { type: 'paragraph', html: '貸借対照表(B/S: Balance Sheet)は、決算日などの<strong>一定時点</strong>における企業の財政状態、すなわち「何をどれだけ持っているか(資産)」「他人から調達した分(負債)」「自分のものといえる分(純資産)」を示す財務諸表である。左側に資産、右側に負債と純資産を並べ、両者の合計は必ず一致する。この関係を<strong>貸借対照表等式</strong>と呼ぶ。' },
         {
@@ -50,12 +50,52 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
             ['純資産の部', '資本金・繰越利益剰余金', '株主からの出資額、過去からの利益の蓄積 など']
           ]
         },
-        { type: 'paragraph', html: '資産・負債はそれぞれ、決算日の翌日から<strong>1年以内</strong>に現金化・費用化されるものを流動資産・流動負債、1年を超えて保有・使用されるものを固定資産・固定負債に区分する(この1年という基準を正常営業循環基準・1年基準と呼ぶ)。また、貸借対照表の資産は、現金化しやすいものから順に並べる<strong>流動性配列法</strong>で記載するのが一般的である。' },
-        { type: 'pitfall', label: 'つまずきやすいポイント', html: '「流動」か「固定」かは勘定科目の名前だけで覚えるのではなく、「1年以内に現金化・費用化されるか」で判断する。例えば同じ「土地」でも通常は固定資産だが、期間の基準を忘れて機械的に分類しようとすると誤りやすい。また、資産の記載順序(流動性配列法)を負債・純資産の配列と混同しないこと。' }
+        { type: 'paragraph', html: '資産・負債は、仕入→販売→代金回収という通常の営業サイクルに含まれるもの(現金・商品・売掛金・買掛金など)を流動資産・流動負債とする<sup>※</sup>。それ以外のもの(貸付金・借入金など)は、決算日の翌日から1年以内に現金化・決済されるかどうかで、流動資産・流動負債か固定資産・固定負債かを判定する。また、貸借対照表の資産は、現金化しやすいものから順に並べる<strong>流動性配列法</strong>で記載するのが一般的である。' },
+        { type: 'paragraph', html: '<small>※このように営業サイクルを基準に流動/固定を判定する考え方を<strong>正常営業循環基準</strong>、期間(1年)を基準に判定する考え方を<strong>1年基準</strong>と呼ぶ。まず正常営業循環基準を優先して適用し、それに当てはまらないものにだけ1年基準を使う、という2段階の判定になっている。</small>' },
+        {
+          type: 'figure',
+          svg: `
+            <svg viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+              <defs>
+                <marker id="zsArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#c9820a"/>
+                </marker>
+              </defs>
+
+              <rect x="10" y="14" width="180" height="46" rx="8" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+              <text x="100" y="42" font-size="14" fill="#c9820a" text-anchor="middle" font-weight="bold">正常営業循環基準</text>
+
+              <rect x="10" y="114" width="180" height="46" rx="8" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+              <text x="100" y="142" font-size="14" fill="#c9820a" text-anchor="middle" font-weight="bold">1年基準</text>
+
+              <rect x="10" y="204" width="230" height="50" rx="10" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+              <text x="125" y="234" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">固定資産または固定負債</text>
+
+              <rect x="250" y="14" width="180" height="146" rx="10" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+              <text x="340" y="70" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">流動資産</text>
+              <text x="340" y="90" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">または</text>
+              <text x="340" y="110" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">流動負債</text>
+
+              <line x1="190" y1="37" x2="248" y2="37" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="220" y="26" font-size="11" fill="#555" text-anchor="middle">当てはまる</text>
+
+              <line x1="190" y1="137" x2="248" y2="137" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="220" y="126" font-size="11" fill="#555" text-anchor="middle">当てはまる</text>
+
+              <line x1="100" y1="62" x2="100" y2="111" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="112" y="90" font-size="11" fill="#555">当てはまらない</text>
+
+              <line x1="100" y1="162" x2="100" y2="201" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="112" y="185" font-size="11" fill="#555">当てはまらない</text>
+            </svg>
+          `,
+          caption: 'まず正常営業循環基準に当てはまるかを判定し、当てはまらない場合のみ1年基準で判定する、という2段階のフロー。'
+        },
+        { type: 'pitfall', label: 'つまずきやすいポイント', html: '現金・売掛金・商品が流動資産なのは「1年以内に現金化されるから」ではなく、通常の営業サイクルに含まれるからである(正常営業循環基準、上記の※を参照)。「1年以内かどうか」で判定するのは、営業サイクルに含まれない貸付金・借入金などに限られる。また、資産の記載順序(流動性配列法)を負債・純資産の配列と混同しないこと。' }
       ]
     },
     {
-      title: '損益計算書(P/L)の構造と当期純利益の計算',
+      title: '損益計算書(P/L)',
       blocks: [
         { type: 'paragraph', html: '損益計算書(P/L: Profit and Loss Statement)は、貸借対照表とは異なり、<strong>一会計期間</strong>(通常は1年間)の収益と費用を集計し、その差額から企業の経営成績を明らかにする財務諸表である。収益合計から費用合計を差し引いた金額を当期純利益といい、費用が収益を上回る場合は当期純損失となる。' },
         {
@@ -80,7 +120,7 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
       ]
     },
     {
-      title: '純資産(資本)と当期純利益のつながり',
+      title: '純資産と当期純利益',
       blocks: [
         { type: 'paragraph', html: '損益計算書で計算された当期純利益は、その期の儲けを示すだけでなく、貸借対照表の純資産(資本)を増やす要素として反映される。この2つの決算書はそれぞれ独立した表ではなく、<strong>当期純利益を介してつながっている</strong>点が財務諸表を理解するうえでの要である。' },
         { type: 'paragraph', html: '株式会社の場合、純資産の部は株主が出資した金額を表す<strong>資本金</strong>と、これまでの利益の蓄積を表す<strong>繰越利益剰余金</strong>などに区分される。一方、個人企業(個人事業主)の場合は区分をせず、単に「資本」という1つの科目で純資産をまとめて表す。' },
