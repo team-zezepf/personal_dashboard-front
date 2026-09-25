@@ -124,12 +124,10 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
               <text x="4" y="45" font-size="13" fill="#333">A=0</text>
               <line x1="10" y1="110" x2="100" y2="110" stroke="#333" stroke-width="2"/>
               <text x="4" y="128" font-size="13" fill="#333">B=1</text>
-              <path d="M100,38 C130,38 150,42 172,80 C150,118 130,122 100,122 C114,108 114,52 100,38 Z" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2.5"/>
-              <text x="135" y="85" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">OR</text>
+              <path d="M100,38 C130,38 150,42 172,80 C150,118 130,122 100,122 C114,108 114,52 100,38 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5"/>
               <line x1="172" y1="80" x2="230" y2="80" stroke="#333" stroke-width="2"/>
               <path d="M230,60 L230,100 L266,80 Z" fill="#fdeaea" stroke="#d64545" stroke-width="2.5"/>
               <circle cx="272" cy="80" r="6" fill="white" stroke="#d64545" stroke-width="2.5"/>
-              <text x="248" y="73" font-size="13" fill="#d64545" text-anchor="middle" font-weight="bold">NOT</text>
               <line x1="278" y1="80" x2="360" y2="80" stroke="#333" stroke-width="2"/>
               <text x="330" y="68" font-size="13" fill="#333">Z=?</text>
             </svg>
