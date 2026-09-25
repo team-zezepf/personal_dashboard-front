@@ -17,6 +17,12 @@ import { KIHONJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/kih
 import { KIHONJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-business-strategy';
 import { KIHONJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/kihonjoho-corporate-legal';
 import { KIHONJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-system-strategy';
+import { BOKI3_KISO_CHISHIKI_CONTENT } from '../content/genre-study/boki3-kiso-chishiki';
+import { BOKI3_SHIWAKE_CONTENT } from '../content/genre-study/boki3-shiwake';
+import { BOKI3_SHISANHYO_CONTENT } from '../content/genre-study/boki3-shisanhyo';
+import { BOKI3_KESSAN_SEIRI_CONTENT } from '../content/genre-study/boki3-kessan-seiri';
+import { BOKI3_ZAIMU_SHOHYO_CONTENT } from '../content/genre-study/boki3-zaimu-shohyo';
+import { BOKI3_DENPYO_CHOBO_CONTENT } from '../content/genre-study/boki3-denpyo-chobo';
 
 // ジャンル別まとめページのコンテンツ一覧。今後ジャンルを追加する際はここに登録するだけでよい
 // (科目一覧画面への導線・ルーティングは登録されたコンテンツを見て自動的に反映される)。
@@ -38,7 +44,13 @@ export const GENRE_CONTENTS: GenreContent[] = [
   KIHONJOHO_SERVICE_MANAGEMENT_CONTENT,
   KIHONJOHO_BUSINESS_STRATEGY_CONTENT,
   KIHONJOHO_CORPORATE_LEGAL_CONTENT,
-  KIHONJOHO_SYSTEM_STRATEGY_CONTENT
+  KIHONJOHO_SYSTEM_STRATEGY_CONTENT,
+  BOKI3_KISO_CHISHIKI_CONTENT,
+  BOKI3_SHIWAKE_CONTENT,
+  BOKI3_SHISANHYO_CONTENT,
+  BOKI3_KESSAN_SEIRI_CONTENT,
+  BOKI3_ZAIMU_SHOHYO_CONTENT,
+  BOKI3_DENPYO_CHOBO_CONTENT
 ];
 
 export function findGenreContent(examType: string, genreKey: string): GenreContent | undefined {
