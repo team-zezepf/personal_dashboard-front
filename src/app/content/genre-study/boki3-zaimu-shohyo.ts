@@ -52,6 +52,45 @@ export const BOKI3_ZAIMU_SHOHYO_CONTENT: GenreContent = {
         },
         { type: 'paragraph', html: '資産・負債は、仕入→販売→代金回収という通常の営業サイクルに含まれるもの(現金・商品・売掛金・買掛金など)を流動資産・流動負債とする<sup>※</sup>。それ以外のもの(貸付金・借入金など)は、決算日の翌日から1年以内に現金化・決済されるかどうかで、流動資産・流動負債か固定資産・固定負債かを判定する。また、貸借対照表の資産は、現金化しやすいものから順に並べる<strong>流動性配列法</strong>で記載するのが一般的である。' },
         { type: 'paragraph', html: '<small>※このように営業サイクルを基準に流動/固定を判定する考え方を<strong>正常営業循環基準</strong>、期間(1年)を基準に判定する考え方を<strong>1年基準</strong>と呼ぶ。まず正常営業循環基準を優先して適用し、それに当てはまらないものにだけ1年基準を使う、という2段階の判定になっている。</small>' },
+        {
+          type: 'figure',
+          svg: `
+            <svg viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+              <defs>
+                <marker id="zsArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#c9820a"/>
+                </marker>
+              </defs>
+
+              <rect x="10" y="14" width="180" height="46" rx="8" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+              <text x="100" y="42" font-size="14" fill="#c9820a" text-anchor="middle" font-weight="bold">正常営業循環基準</text>
+
+              <rect x="10" y="114" width="180" height="46" rx="8" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+              <text x="100" y="142" font-size="14" fill="#c9820a" text-anchor="middle" font-weight="bold">1年基準</text>
+
+              <rect x="10" y="204" width="230" height="50" rx="10" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+              <text x="125" y="234" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">固定資産または固定負債</text>
+
+              <rect x="250" y="14" width="180" height="146" rx="10" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+              <text x="340" y="70" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">流動資産</text>
+              <text x="340" y="90" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">または</text>
+              <text x="340" y="110" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">流動負債</text>
+
+              <line x1="190" y1="37" x2="248" y2="37" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="220" y="26" font-size="11" fill="#555" text-anchor="middle">当てはまる</text>
+
+              <line x1="190" y1="137" x2="248" y2="137" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="220" y="126" font-size="11" fill="#555" text-anchor="middle">当てはまる</text>
+
+              <line x1="100" y1="62" x2="100" y2="111" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="112" y="90" font-size="11" fill="#555">当てはまらない</text>
+
+              <line x1="100" y1="162" x2="100" y2="201" stroke="#c9820a" stroke-width="2.5" marker-end="url(#zsArrow)"/>
+              <text x="112" y="185" font-size="11" fill="#555">当てはまらない</text>
+            </svg>
+          `,
+          caption: 'まず正常営業循環基準に当てはまるかを判定し、当てはまらない場合のみ1年基準で判定する、という2段階のフロー。'
+        },
         { type: 'pitfall', label: 'つまずきやすいポイント', html: '現金・売掛金・商品が流動資産なのは「1年以内に現金化されるから」ではなく、通常の営業サイクルに含まれるからである(正常営業循環基準、上記の※を参照)。「1年以内かどうか」で判定するのは、営業サイクルに含まれない貸付金・借入金などに限られる。また、資産の記載順序(流動性配列法)を負債・純資産の配列と混同しないこと。' }
       ]
     },
