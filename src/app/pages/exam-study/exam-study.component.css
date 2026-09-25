@@ -91,6 +91,11 @@
   border-color: var(--primary);
   color: var(--primary-dark);
 }
+.intro-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
 
 .question-card {
   background: var(--card);

@@ -23,9 +23,12 @@
         <li>最後にまとめて結果を確認できます</li>
         <li>10問中7問以上正解すると、「実績」画面のカレンダーに記録されます</li>
       </ul>
-      <button class="btn btn-primary" type="button" [disabled]="examStudy.isLoading()" (click)="start()">
-        {{ examStudy.isLoading() ? '読み込み中...' : '学習を始める' }}
-      </button>
+      <div class="intro-actions">
+        <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+        <button class="btn btn-primary" type="button" [disabled]="examStudy.isLoading()" (click)="start()">
+          {{ examStudy.isLoading() ? '読み込み中...' : '学習を始める' }}
+        </button>
+      </div>
     </section>
   }
 

@@ -104,23 +104,6 @@
   color: white;
 }
 
-.sidebar-practice-link {
-  display: block;
-  text-align: center;
-  margin-top: 14px;
-  padding: 10px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: white;
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.sidebar-practice-link:hover {
-  background: var(--primary-dark);
-}
-
 .main-content {
   flex: 1;
   min-width: 0;
