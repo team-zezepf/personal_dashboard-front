@@ -11,7 +11,7 @@
     <div class="page-layout">
       <aside class="sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-label">このジャンルの目次</div>
+          <div class="sidebar-label">目次</div>
           <nav class="sidebar-nav">
             @for (topic of content.topics; track topic.title; let i = $index) {
               <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">
@@ -31,7 +31,6 @@
         @for (topic of content.topics; track topic.title; let i = $index) {
           <section class="topic" [id]="'topic-' + i" [attr.data-topic-index]="i">
             <h2><span class="topic-no">{{ i + 1 }}</span>{{ topic.title }}</h2>
-            <p class="topic-related">{{ topic.relatedExamples }}</p>
 
             @for (block of topic.blocks; track $index) {
               @switch (blockType(block)) {

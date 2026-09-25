@@ -9,7 +9,6 @@ export const OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
   topics: [
     {
       title: '計算量(オーダー記法)と整列・探索アルゴリズムの比較',
-      relatedExamples: '関連する出題例: 「クイックソートの平均計算量として正しいものはどれか」「整列済みの配列に対して二分探索を行う場合の計算量として正しいものはどれか」「同じ値を持つデータが複数存在するとき、整列前の相対的な順序が整列後も保たれる整列アルゴリズムの性質を何と呼ぶか」など',
       blocks: [
         { type: 'paragraph', html: 'アルゴリズムの効率を表す指標であるオーダー記法(O記法)は基本情報技術者試験でも扱われるが、応用情報技術者試験ではさらに、平均計算量と最悪計算量の違い、ピボットの選び方によって性能が変化する理由、整列アルゴリズムの「安定性」まで踏み込んで問われる。' },
         { type: 'formula', label: '計算量(オーダー記法)の大小関係', html: '処理時間の増加が緩やかな順に並べると次のようになる。<br>O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(2ⁿ)<br>応用情報技術者試験では、O(n log n)とO(n²)の使い分けに加え、単純な再帰などに現れるO(2ⁿ)(指数的な計算量)を見分けられるかも問われる。' },
@@ -39,7 +38,6 @@ export const OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
     },
     {
       title: 'スタックとキューを用いた操作のトレース',
-      relatedExamples: '関連する出題例: 「データを格納した順序とは逆の順序で取り出されるデータ構造はどれか」など',
       blocks: [
         { type: 'paragraph', html: 'スタック(LIFO: Last In First Out)とキュー(FIFO: First In First Out)は基本情報技術者試験でも問われる基礎知識だが、応用情報技術者試験ではpushとpop、あるいはenqueueとdequeueが入り交じった一連の操作をトレースし、各操作で「何が取り出されるか」「最終的にデータ構造内に何が残るか」を正確に追跡する力が問われる。' },
         { type: 'example', label: '例題: push/popが混在する操作のトレース', html: 'push(A), push(B), pop(), push(C), push(D), pop(), pop() の順に操作したときの、各popで取り出される値と最終的なスタックの中身を追跡する。<br>push(A): スタック[A]<br>push(B): スタック[A, B]<br><strong>pop()→B</strong>を取り出す: スタック[A]<br>push(C): スタック[A, C]<br>push(D): スタック[A, C, D]<br><strong>pop()→D</strong>を取り出す: スタック[A, C]<br><strong>pop()→C</strong>を取り出す: スタック[A]<br>取り出された順序は<strong>B, D, C</strong>。最終的にスタックに残るのは<strong>A</strong>のみである。' },
@@ -49,7 +47,6 @@ export const OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
     },
     {
       title: 'グラフの探索(深さ優先探索・幅優先探索)',
-      relatedExamples: '関連する出題例: 「グラフ探索において、スタック(または再帰)を用いて可能な限り深くまで探索を進めてから後戻りする探索方法はどれか」など',
       blocks: [
         { type: 'paragraph', html: 'グラフ(木構造を含む)を探索するアルゴリズムの代表例として、深さ優先探索(DFS: Depth-First Search)と幅優先探索(BFS: Breadth-First Search)がある。DFSはスタック(または再帰呼び出し)を用いて1つの経路を行き止まりまで進んでから後戻りするのに対し、BFSはキューを用いて根に近い頂点から順に探索する。' },
         {
@@ -92,7 +89,6 @@ export const OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
     },
     {
       title: '再帰処理のトレースと動的計画法',
-      relatedExamples: '関連する出題例: 「再帰的に定義された階乗関数fact(n)=n*fact(n-1)(n>0), fact(0)=1において、fact(4)を呼び出したときの呼び出し回数(fact(4)自身を含む)はいくつか」「フィボナッチ数列を再帰で単純に計算すると計算量が指数的に増大する問題を、部分問題の計算結果を保存して再利用することで効率化する手法はどれか」など',
       blocks: [
         { type: 'paragraph', html: 'サブルーチンが自分自身を呼び出す再帰は基本情報技術者試験でも扱われるが、応用情報技術者試験では「合計で何回呼び出されるか」「どのタイミングで計算が確定するか」といった、より詳細なトレースが求められる。また、同じ引数の呼び出しが何度も発生し非効率になる再帰を改善する動的計画法も重要な出題テーマである。' },
         {
@@ -133,7 +129,6 @@ export const OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
     },
     {
       title: 'ハッシュ法とキーの衝突(シノニム)',
-      relatedExamples: '関連する出題例: 「ハッシュ法において、異なるキーが同じハッシュ値になってしまうことを何と呼ぶか」など',
       blocks: [
         { type: 'paragraph', html: 'ハッシュ法は、キーの値から一定の計算(ハッシュ関数)によって格納位置(アドレス)を直接求めることで、平均的にO(1)という高速なデータアクセスを実現する格納・探索方式である。代表的なハッシュ関数として、キーを表の大きさで割った余りを用いる剰余法(除算法)がある。' },
         {

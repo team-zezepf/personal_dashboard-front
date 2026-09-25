@@ -9,7 +9,6 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
   topics: [
     {
       title: 'コンピュータの基本構成(5大装置)',
-      relatedExamples: '関連する出題例: 「コンピュータの5大装置に含まれないものはどれか」など',
       blocks: [
         { type: 'paragraph', html: 'コンピュータは「入力装置・出力装置・記憶装置・演算装置・制御装置」の5大装置から構成される。このうち演算装置と制御装置をあわせて中央処理装置(CPU)と呼ぶ。' },
         {
@@ -51,7 +50,6 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: 'CPUの高速化技術(クロック・パイプライン・マルチコア)',
-      relatedExamples: '関連する出題例: 「1秒間に処理できるクロック信号の回数を表す単位はどれか」「命令の各段階を重ね合わせて並行処理する方式」「複数の処理装置(コア)を搭載した構成」など',
       blocks: [
         { type: 'paragraph', html: 'CPUの動作はクロック信号に同期して行われる。1秒間のクロック信号の回数を表す単位がクロック周波数(Hz)であり、数値が大きいほど一般に処理速度は高い。実際の処理速度はクロック周波数だけでなく、1命令の実行に必要なクロック数(CPI)や並列処理の仕組みにも左右される。' },
         { type: 'formula', label: 'クロック周期と命令実行時間', html: 'クロック周期(秒) = 1 ÷ クロック周波数(Hz)<br>1命令の実行時間 = CPI(1命令あたりの平均クロック数) × クロック周期' },
@@ -93,7 +91,6 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: '記憶階層(レジスタ・キャッシュメモリ・主記憶)',
-      relatedExamples: '関連する出題例: 「CPUが高速にアクセスできる主記憶装置であり…揮発性のメモリ」「CPUと主記憶の間に置かれ、速度差を緩和する記憶装置」「CPU内部にあり、最も高速な記憶装置」「リフレッシュ動作が必要な揮発性メモリ」「電源を切っても記憶内容が消えない読み出し専用の記憶素子」など',
       blocks: [
         { type: 'paragraph', html: 'CPUに近い記憶装置ほど高速・小容量・高コストであり、遠い記憶装置ほど低速・大容量・低コストになる。この階層構造を記憶階層と呼ぶ。' },
         {
@@ -132,7 +129,6 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: '補助記憶装置と入出力インタフェース',
-      relatedExamples: '関連する出題例: 「SSD(Solid State Drive)の特徴として、誤っているものはどれか」「パソコンと周辺機器を接続するための代表的なシリアルインタフェース規格」「出力装置に分類される機器」など',
       blocks: [
         { type: 'paragraph', html: '補助記憶装置は電源を切っても内容が消えない不揮発性の記憶装置で、主記憶よりも低速だが大容量・低コストである。代表例としてHDD(磁気ディスク)とSSD(半導体メモリ)がある。' },
         {
@@ -157,7 +153,6 @@ export const KIHONJOHO_COMPUTER_COMPONENTS_CONTENT: GenreContent = {
     },
     {
       title: 'システムの信頼性設計(高信頼化構成と稼働率)',
-      relatedExamples: '関連する出題例: 「同一の処理を行う2系統のシステムを用意し、結果を相互に照合しながら運用する高信頼化構成」「主系と従系の2系統を用意し、障害発生時に従系へ切り替える構成」「故障してから次に故障するまでの平均動作時間を表す指標」「故障してから修理が完了し復旧するまでの平均時間を表す指標」「MTBFが270時間、MTTRが30時間のシステムの稼働率」など',
       blocks: [
         { type: 'paragraph', html: 'システムの信頼性を高める代表的な構成として、デュアルシステムとデュプレックスシステムがある。両者は名称が似ているため、構成の違いを図でイメージして区別するとよい。' },
         {

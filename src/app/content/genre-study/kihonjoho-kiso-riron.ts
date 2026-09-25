@@ -68,7 +68,6 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
   topics: [
     {
       title: '基数変換(2進数・8進数・16進数)',
-      relatedExamples: '関連する出題例: 「2進数の1101を10進数に変換」「16進数のA3を10進数に変換」など',
       blocks: [
         { type: 'paragraph', html: 'コンピュータは内部で2進数(0と1)を使ってデータを扱う。桁数が多く読みにくいため、人が扱う際は8進数や16進数で短く表記することが多い。' },
         {
@@ -91,7 +90,6 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
     },
     {
       title: '論理演算と論理回路',
-      relatedExamples: '関連する出題例: 「論理回路の出力を求める」「ド・モルガンの法則」「XORの結果」など',
       blocks: [
         { type: 'paragraph', html: '論理演算は0/1(偽/真)を扱う演算で、論理回路図は演算の組み合わせを図で表したもの。まずは基本の6種類の入出力を覚える。' },
         {
@@ -139,7 +137,6 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
     },
     {
       title: '数値の表現方法',
-      relatedExamples: '関連する出題例: 「浮動小数点数の指数部とは」「2の補数の求め方」など',
       blocks: [
         { type: 'paragraph', html: 'コンピュータが数値を2進数で表現する方式には、小数点の位置を固定する方式と、指数を使って可変にする方式がある。' },
         {
@@ -162,7 +159,6 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
     },
     {
       title: '誤り検出(パリティビット)',
-      relatedExamples: '関連する出題例: 「1の個数の偶奇を調整するビットは何か」',
       blocks: [
         { type: 'paragraph', html: 'データ伝送中の誤りを検出するため、データに1ビット付加して1の個数を偶数(偶数パリティ)または奇数(奇数パリティ)にそろえる。受信側で1の個数を数え、想定と異なれば誤りと判断できる。' },
         {
@@ -185,7 +181,6 @@ export const KIHONJOHO_KISO_RIRON_CONTENT: GenreContent = {
     },
     {
       title: '文字コード',
-      relatedExamples: '関連する出題例: 「世界中の文字を統一的に扱う文字コード体系はどれか」',
       blocks: [
         {
           type: 'table',

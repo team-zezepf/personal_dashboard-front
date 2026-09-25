@@ -9,7 +9,6 @@ export const OYOJOHO_DATABASE_CONTENT: GenreContent = {
   topics: [
     {
       title: '正規化の実践(関数従属性と第2〜第3正規形)',
-      relatedExamples: '関連する出題例: 「関係データベースの正規化において、非キー属性がすべての候補キーに完全関数従属し、かつ推移的関数従属を持たない状態を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -59,7 +58,6 @@ export const OYOJOHO_DATABASE_CONTENT: GenreContent = {
     },
     {
       title: 'SQLの結合・集計・副問い合わせと関係代数',
-      relatedExamples: '関連する出題例: 「SQLで、2つの表を結合する際に、一方の表の全行を残し、対応する行がない場合はNULLで埋めて結合する結合方法はどれか」「関係代数における『射影』の説明として、正しいものはどれか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -93,7 +91,6 @@ export const OYOJOHO_DATABASE_CONTENT: GenreContent = {
     },
     {
       title: 'トランザクション制御(ACID特性・排他制御・デッドロック)',
-      relatedExamples: '関連する出題例: 「複数のトランザクションが同時に同一データへアクセスする際、データの整合性を保つために行うロックなどの制御を何と呼ぶか」「複数のトランザクションが互いに相手のロック解除を待ち続け、処理が進まなくなる状態をデータベースでは特に何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
@@ -161,7 +158,6 @@ export const OYOJOHO_DATABASE_CONTENT: GenreContent = {
     },
     {
       title: 'インデックス(B木)と分散データベースの設計判断',
-      relatedExamples: '関連する出題例: 「大量データからの検索を高速化するために、キー値とレコードの格納位置を対応付けた補助的なデータ構造として、多くのRDBMSで採用されている木構造はどれか」「分散システムにおいて、一貫性(Consistency)・可用性(Availability)・分断耐性(Partition tolerance)の3つをすべて同時に満たすことはできないとする定理を何と呼ぶか」など',
       blocks: [
         {
           type: 'paragraph',
