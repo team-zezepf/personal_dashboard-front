@@ -11,6 +11,7 @@ export const KIHONJOHO_HARDWARE_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'hardware',
   genreName: 'ハードウェア',
+  category: 'テクノロジ系',
   description: '記憶装置・入出力装置・センサ/アクチュエータなど、ハードウェアを構成する基本要素の特徴を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

@@ -58,6 +58,8 @@ export interface GenreContent {
   examType: string;
   genreKey: string;
   genreName: string;
+  // ジャンル選択ページでの見出しに使う大分類(テクノロジ系/マネジメント系/ストラテジ系など)
+  category: string;
   description: string;
   topics: GenreTopic[];
 }

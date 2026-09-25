@@ -4,6 +4,7 @@ export const KIHONJOHO_ALGORITHMS_PROGRAMMING_CONTENT: GenreContent = {
   examType: 'kihonjoho',
   genreKey: 'algorithms-programming',
   genreName: 'アルゴリズムとプログラミング',
+  category: 'テクノロジ系',
   description: 'ソート・探索アルゴリズムや基本的なデータ構造(スタック・キュー・木構造など)、フローチャートの読み方など、アルゴリズムとプログラミングで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。',
   topics: [
     {

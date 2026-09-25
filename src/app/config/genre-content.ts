@@ -12,6 +12,11 @@ import { KIHONJOHO_HUMAN_INTERFACE_CONTENT } from '../content/genre-study/kihonj
 import { KIHONJOHO_MULTIMEDIA_CONTENT } from '../content/genre-study/kihonjoho-multimedia';
 import { KIHONJOHO_SYSTEM_DEVELOPMENT_CONTENT } from '../content/genre-study/kihonjoho-system-development';
 import { KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT } from '../content/genre-study/kihonjoho-sw-development-technique';
+import { KIHONJOHO_PROJECT_MANAGEMENT_CONTENT } from '../content/genre-study/kihonjoho-project-management';
+import { KIHONJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/kihonjoho-service-management';
+import { KIHONJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-business-strategy';
+import { KIHONJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/kihonjoho-corporate-legal';
+import { KIHONJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-system-strategy';
 
 // ジャンル別まとめページのコンテンツ一覧。今後ジャンルを追加する際はここに登録するだけでよい
 // (科目一覧画面への導線・ルーティングは登録されたコンテンツを見て自動的に反映される)。
@@ -28,7 +33,12 @@ export const GENRE_CONTENTS: GenreContent[] = [
   KIHONJOHO_HUMAN_INTERFACE_CONTENT,
   KIHONJOHO_MULTIMEDIA_CONTENT,
   KIHONJOHO_SYSTEM_DEVELOPMENT_CONTENT,
-  KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT
+  KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT,
+  KIHONJOHO_PROJECT_MANAGEMENT_CONTENT,
+  KIHONJOHO_SERVICE_MANAGEMENT_CONTENT,
+  KIHONJOHO_BUSINESS_STRATEGY_CONTENT,
+  KIHONJOHO_CORPORATE_LEGAL_CONTENT,
+  KIHONJOHO_SYSTEM_STRATEGY_CONTENT
 ];
 
 export function findGenreContent(examType: string, genreKey: string): GenreContent | undefined {
