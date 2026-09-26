@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
+import { CodeBlockComponent } from '../../components/code-block/code-block.component';
 import { ExamStudyService } from '../../services/exam-study.service';
+import { EXAM_ACHIEVEMENT_RATIO } from '../../services/exam-achievements.service';
 import { ExamQuestion } from '../../models/exam-question.models';
 import { findExamSubject } from '../../config/exam-subjects';
 
 @Component({
   selector: 'app-exam-study-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent],
   templateUrl: './exam-study.component.html',
   styleUrl: './exam-study.component.css'
 })
@@ -23,6 +25,9 @@ export class ExamStudyPageComponent {
   // ルートパラメータ(:examType)で指定された科目。未知のキーの場合は科目選択画面へ戻す。
   private readonly examTypeParam = this.route.snapshot.paramMap.get('examType') ?? '';
   readonly subject = findExamSubject(this.examTypeParam);
+
+  // スタート画面で案内する、実績の記録に必要な正解数(出題数の7割以上)
+  readonly achievementBorder = Math.ceil((this.subject?.practice.questionsPerSession ?? 0) * EXAM_ACHIEVEMENT_RATIO);
 
   // 出題画面での選択状態(質問id → 選択済み選択肢indexの配列)。ラウンドが変わるたびリセットする。
   private readonly selections = signal<Map<string | number, number[]>>(new Map());
@@ -48,7 +53,7 @@ export class ExamStudyPageComponent {
   start(): void {
     if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession(this.subject.key);
+    this.examStudy.startSession(this.subject.key, this.subject.practice);
   }
 
   isSelected(question: ExamQuestion, choiceIndex: number): boolean {
@@ -80,7 +85,7 @@ export class ExamStudyPageComponent {
   retry(): void {
     if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession(this.subject.key);
+    this.examStudy.startSession(this.subject.key, this.subject.practice);
   }
 
   globalIndex(indexInRound: number): number {

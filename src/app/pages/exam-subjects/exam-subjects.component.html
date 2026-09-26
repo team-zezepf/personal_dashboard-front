@@ -9,16 +9,22 @@
       <div class="subject-card">
         <div class="subject-info">
           <span class="subject-name">{{ subject.name }}</span>
-          <span class="subject-mock-desc">
-            模擬試験: {{ subject.mockExam.durationMinutes }}分・{{ subject.mockExam.questionCount }}問・合格ボーダー{{ subject.mockExam.passRatio * 100 }}%
-          </span>
+          @if (subject.mockExam; as mockExam) {
+            <span class="subject-mock-desc">
+              模擬試験: {{ mockExam.durationMinutes }}分・{{ mockExam.questionCount }}問・合格ボーダー{{ mockExam.passRatio * 100 }}%
+            </span>
+          } @else {
+            <span class="subject-mock-desc is-muted">{{ subject.description }}</span>
+          }
         </div>
         <div class="subject-actions">
           @if (hasGenres(subject.key)) {
             <a class="btn btn-ghost" [routerLink]="[subject.path, 'genres']">学習する</a>
           }
           <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
-          <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
+          @if (subject.mockExam) {
+            <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
+          }
         </div>
       </div>
     }

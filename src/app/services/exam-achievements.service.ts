@@ -3,8 +3,9 @@ import { GraphQLService } from './graphql.service';
 import { ExamRecord, ExamRecordMode } from '../models/exam-record.models';
 import { Observable, map } from 'rxjs';
 
-// 資格学習(練習)で「実績」とみなす正解数のしきい値(10問中7問以上正解)
-export const EXAM_ACHIEVEMENT_THRESHOLD = 7;
+// 資格学習(練習)で「実績」とみなす正解率のしきい値。科目によって1回の出題数が異なるため割合で持ち、
+// 必要な正解数は Math.ceil(出題数 * 割合) で求める(10問なら7問、5問なら4問)
+export const EXAM_ACHIEVEMENT_RATIO = 0.7;
 
 @Injectable({
   providedIn: 'root'

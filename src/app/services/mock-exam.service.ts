@@ -3,7 +3,7 @@ import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService } from './exam-achievements.service';
 import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
-import { ExamSubject } from '../config/exam-subjects';
+import { MockExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
@@ -40,7 +40,7 @@ export class MockExamService {
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
 
-  readonly subject = signal<ExamSubject | null>(null);
+  readonly subject = signal<MockExamSubject | null>(null);
   readonly view = signal<MockExamView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
   readonly answers = signal<(number[] | undefined)[]>([]);
@@ -60,7 +60,7 @@ export class MockExamService {
   });
   readonly answeredCount = computed(() => this.answers().filter((a) => a && a.length > 0).length);
 
-  prepare(examType: string, subject: ExamSubject): void {
+  prepare(examType: string, subject: MockExamSubject): void {
     this.subject.set(subject);
     this.view.set('start');
     this.isLoading.set(false);
