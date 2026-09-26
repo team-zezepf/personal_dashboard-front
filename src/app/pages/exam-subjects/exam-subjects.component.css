@@ -55,6 +55,10 @@
   margin-top: 2px;
 }
 
+.subject-mock-desc.is-muted {
+  color: var(--muted);
+}
+
 .subject-actions {
   display: flex;
   gap: 8px;

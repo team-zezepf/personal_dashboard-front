@@ -1,0 +1,63 @@
+/*
+ * 擬似言語の手続・関数の宣言に使う「○」は、Consolasなどの欧文等幅フォントでは小文字のoのように小さく
+ * 表示されてしまう。この記号だけ日本語フォントで表示されるよう、unicode-rangeで対象を絞ったフォントを先頭に置く。
+ */
+@font-face {
+  font-family: "PseudoCodeSymbol";
+  src: local("BIZ UDGothic"), local("MS Gothic"), local("Yu Gothic"), local("Hiragino Sans");
+  unicode-range: U+25CB;
+}
+
+:host {
+  display: block;
+}
+
+.code-block {
+  margin: 4px 0 18px;
+  padding: 10px 0;
+  background: #f7f9fc;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-family: "PseudoCodeSymbol", Consolas, "BIZ UDGothic", "Osaka-Mono", "MS Gothic", monospace;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.code-line {
+  display: flex;
+  white-space: pre;
+}
+
+.line-number {
+  flex-shrink: 0;
+  width: 3em;
+  padding-right: 12px;
+  text-align: right;
+  color: #a3adb9;
+  border-right: 1px solid var(--line);
+  user-select: none;
+}
+
+.line-source {
+  padding: 0 16px 0 14px;
+}
+
+.blank {
+  display: inline-block;
+  min-width: 2.6em;
+  padding: 0 4px;
+  text-align: center;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #b45309;
+  background: #fff7e8;
+  border: 1.5px solid var(--orange);
+  border-radius: 4px;
+}
+
+@media (max-width: 480px) {
+  .code-block {
+    font-size: 0.82rem;
+  }
+}

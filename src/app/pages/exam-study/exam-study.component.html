@@ -18,10 +18,10 @@
       <h1 class="page-title">{{ subject.name }}</h1>
       <p class="intro-lead">{{ subject.description }}</p>
       <ul class="intro-list">
-        <li>問題プールから、毎回ランダムに10問を出題（4択・複数選択などの形式に対応）</li>
-        <li>2問回答するごとに、正誤と解説のページが表示されます</li>
+        <li>問題プールから、毎回ランダムに{{ subject.practice.questionsPerSession }}問を出題（4択・複数選択などの形式に対応）</li>
+        <li>{{ subject.practice.questionsPerRound }}問回答するごとに、正誤と解説のページが表示されます</li>
         <li>最後にまとめて結果を確認できます</li>
-        <li>10問中7問以上正解すると、「実績」画面のカレンダーに記録されます</li>
+        <li>{{ subject.practice.questionsPerSession }}問中{{ achievementBorder }}問以上正解すると、「実績」画面のカレンダーに記録されます</li>
       </ul>
       <div class="intro-actions">
         <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
@@ -42,6 +42,9 @@
             <span class="question-number">第 {{ globalIndex($index) + 1 }} 問 / 全 {{ examStudy.sessionQuestions().length }} 問</span>
           </div>
           <p class="question-text">{{ q.question }}</p>
+          @if (q.code) {
+            <app-code-block [code]="q.code"></app-code-block>
+          }
           @if (q.image) {
             <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
           }
@@ -86,6 +89,9 @@
             {{ resultFor(globalIndex($index)) ? '○ 正解' : '✕ 不正解' }}
           </div>
           <p class="review-question-text">{{ q.question }}</p>
+          @if (q.code) {
+            <app-code-block [code]="q.code"></app-code-block>
+          }
           @if (q.image) {
             <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
           }
@@ -93,7 +99,7 @@
           <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
           <div class="explanation-box">
             <span class="label">解説</span>
-            {{ q.explanation }}
+            <p class="explanation-text">{{ q.explanation }}</p>
           </div>
         </div>
       }

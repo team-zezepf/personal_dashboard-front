@@ -3,12 +3,11 @@ import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService } from './exam-achievements.service';
 import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
-import { ExamSubject } from '../config/exam-subjects';
+import { MockExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
 export const QUESTIONS_PER_ROUND = 2;
-export const POINTS_PER_CORRECT_ANSWER = 10;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -40,7 +39,7 @@ export class MockExamService {
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
 
-  readonly subject = signal<ExamSubject | null>(null);
+  readonly subject = signal<MockExamSubject | null>(null);
   readonly view = signal<MockExamView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
   readonly answers = signal<(number[] | undefined)[]>([]);
@@ -50,7 +49,7 @@ export class MockExamService {
   readonly remainingSeconds = signal(0);
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
-  readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean } | null>(null);
+  readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean; pointsEarned: number } | null>(null);
 
   readonly totalRounds = computed(() => Math.ceil(this.sessionQuestions().length / QUESTIONS_PER_ROUND) || 1);
   readonly roundStartIndex = computed(() => this.round() * QUESTIONS_PER_ROUND);
@@ -60,7 +59,7 @@ export class MockExamService {
   });
   readonly answeredCount = computed(() => this.answers().filter((a) => a && a.length > 0).length);
 
-  prepare(examType: string, subject: ExamSubject): void {
+  prepare(examType: string, subject: MockExamSubject): void {
     this.subject.set(subject);
     this.view.set('start');
     this.isLoading.set(false);
@@ -182,12 +181,13 @@ export class MockExamService {
     const totalCount = questions.length;
     const passBorder = Math.ceil(totalCount * subject.mockExam.passRatio);
     const passed = correctCount >= passBorder;
+    const pointsEarned = correctCount * subject.pointsPerCorrectAnswer;
 
-    this.result.set({ correctCount, totalCount, passBorder, passed });
+    this.result.set({ correctCount, totalCount, passBorder, passed, pointsEarned });
     this.view.set('result');
 
-    if (correctCount > 0) {
-      this.accountService.addPoints(correctCount * POINTS_PER_CORRECT_ANSWER).subscribe();
+    if (pointsEarned > 0) {
+      this.accountService.addPoints(pointsEarned).subscribe();
     }
 
     // 実績カレンダーには合格した受験のみ記録する(不合格の受験は記録を残さない)

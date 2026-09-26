@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { MockExamService } from '../../services/mock-exam.service';
-import { findExamSubject } from '../../config/exam-subjects';
+import { findExamSubject, hasMockExam } from '../../config/exam-subjects';
 
 @Component({
   selector: 'app-mock-exam-page',
@@ -20,7 +20,9 @@ export class MockExamPageComponent implements OnDestroy {
   private readonly router = inject(Router);
 
   private readonly examTypeParam = this.route.snapshot.paramMap.get('examType') ?? '';
-  readonly subject = findExamSubject(this.examTypeParam);
+  // 模擬試験を提供していない科目(科目Bなど)のURLを直接開いた場合も、未知のキーと同様に科目選択画面へ戻す
+  private readonly foundSubject = findExamSubject(this.examTypeParam);
+  readonly subject = hasMockExam(this.foundSubject) ? this.foundSubject : undefined;
 
   readonly showAbandonModal = signal(false);
   readonly showFinishModal = signal(false);

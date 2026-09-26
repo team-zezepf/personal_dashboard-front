@@ -1,0 +1,9 @@
+<div class="code-block" role="region" aria-label="プログラム">
+  @for (line of lines(); track $index) {
+    <div class="code-line">
+      <span class="line-number">{{ $index + 1 }}</span>
+      <!-- white-space: pre で表示するため、区間の間に余計な空白が入らないよう1行で書いている -->
+      <span class="line-source">@for (segment of line; track $index) {<span [class.blank]="segment.isBlank">{{ segment.text }}</span>}</span>
+    </div>
+  }
+</div>

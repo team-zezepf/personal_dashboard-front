@@ -7,13 +7,29 @@ export interface ExamSubjectMockExamConfig {
   passRatio: number;
 }
 
+export interface ExamSubjectPracticeConfig {
+  // 1回の練習で出題する問題数
+  questionsPerSession: number;
+  // 何問ごとに正誤・解説のページを挟むか
+  questionsPerRound: number;
+}
+
 export interface ExamSubject {
   key: string;
   name: string;
   description: string;
   path: string;
-  mockExam: ExamSubjectMockExamConfig;
+  practice: ExamSubjectPracticeConfig;
+  // 1問正解するごとに付与するポイント(練習・模擬試験で共通)
+  pointsPerCorrectAnswer: number;
+  // 省略した科目は模擬試験を提供しない(科目一覧に「模擬試験を受ける」ボタンを出さない)
+  mockExam?: ExamSubjectMockExamConfig;
 }
+
+export type MockExamSubject = ExamSubject & { mockExam: ExamSubjectMockExamConfig };
+
+const DEFAULT_PRACTICE: ExamSubjectPracticeConfig = { questionsPerSession: 10, questionsPerRound: 2 };
+const DEFAULT_POINTS_PER_CORRECT_ANSWER = 10;
 
 /**
  * 資格学習で選択できる科目のマスタ一覧。ここを追加するだけで、科目選択画面
@@ -23,16 +39,29 @@ export interface ExamSubject {
 export const EXAM_SUBJECTS: ExamSubject[] = [
   {
     key: 'kihonjoho',
-    name: '基本情報技術者試験',
-    description: '基本情報技術者試験の対策問題を、2問ずつ解いていきましょう。',
+    name: '基本情報技術者試験（科目A）',
+    description: '基本情報技術者試験 科目Aの対策問題を、2問ずつ解いていきましょう。',
     path: '/study/kihonjoho',
+    practice: DEFAULT_PRACTICE,
+    pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
     mockExam: { durationMinutes: 90, questionCount: 60, passRatio: 0.6 }
+  },
+  {
+    // 科目Bは1問が長いため、1問ずつ正誤・解説を確認できるようにしている
+    key: 'kihonjoho-b',
+    name: '基本情報技術者試験（科目B）',
+    description: '擬似言語のプログラムや情報セキュリティの問題を、1問ずつじっくり解いていきましょう。',
+    path: '/study/kihonjoho-b',
+    practice: { questionsPerSession: 5, questionsPerRound: 1 },
+    pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER
   },
   {
     key: 'boki3',
     name: '簿記3級',
     description: '日商簿記3級の対策問題を、2問ずつ解いていきましょう。',
     path: '/study/boki3',
+    practice: DEFAULT_PRACTICE,
+    pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
     mockExam: { durationMinutes: 60, questionCount: 100, passRatio: 0.7 }
   },
   {
@@ -40,10 +69,17 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     name: '応用情報技術者試験',
     description: '応用情報技術者試験の対策問題を、2問ずつ解いていきましょう。',
     path: '/study/oyojoho',
+    practice: DEFAULT_PRACTICE,
+    // 基本情報より難易度が高いため、1問あたりのポイントを多めにしている
+    pointsPerCorrectAnswer: 20,
     mockExam: { durationMinutes: 150, questionCount: 80, passRatio: 0.6 }
   }
 ];
 
 export function findExamSubject(key: string | null | undefined): ExamSubject | undefined {
   return EXAM_SUBJECTS.find((s) => s.key === key);
+}
+
+export function hasMockExam(subject: ExamSubject | undefined): subject is MockExamSubject {
+  return subject?.mockExam !== undefined;
 }
