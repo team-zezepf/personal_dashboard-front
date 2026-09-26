@@ -18,8 +18,8 @@
           }
         </div>
         <div class="subject-actions">
-          @if (hasGenres(subject.key)) {
-            <a class="btn btn-ghost" [routerLink]="[subject.path, 'genres']">学習する</a>
+          @if (firstGenreKey(subject.key); as genreKey) {
+            <a class="btn btn-ghost" [routerLink]="[subject.path, 'genre', genreKey]">学習する</a>
           }
           <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
           @if (subject.mockExam) {

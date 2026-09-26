@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { firstGenreOf } from './config/genre-content';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
@@ -14,7 +15,6 @@ import { AchievementsPageComponent } from './pages/achievements/achievements.com
 import { DeveloperQaPageComponent } from './pages/developer-qa/developer-qa.component';
 import { MockExamPageComponent } from './pages/mock-exam/mock-exam.component';
 import { GenreStudyPageComponent } from './pages/genre-study/genre-study.component';
-import { GenreSelectionPageComponent } from './pages/genre-selection/genre-selection.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -28,7 +28,14 @@ export const routes: Routes = [
   { path: 'study', component: ExamSubjectsPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType', component: ExamStudyPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType/mock-exam', component: MockExamPageComponent, canActivate: [authGuard] },
-  { path: 'study/:examType/genres', component: GenreSelectionPageComponent, canActivate: [authGuard] },
+  // ジャンル選択画面はなくし、まとめページのサイドバーでジャンルを切り替える。以前のURLは先頭のジャンルへ転送する
+  {
+    path: 'study/:examType/genres',
+    redirectTo: ({ params }) => {
+      const first = firstGenreOf(params['examType']);
+      return first ? `study/${params['examType']}/genre/${first.genreKey}` : 'study';
+    }
+  },
   { path: 'study/:examType/genre/:genreKey', component: GenreStudyPageComponent, canActivate: [authGuard] },
   { path: 'achievements', component: AchievementsPageComponent, canActivate: [authGuard] },
   { path: 'developer-qa', component: DeveloperQaPageComponent, canActivate: [authGuard] },

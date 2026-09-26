@@ -5,7 +5,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RecentMockExamsComponent } from '../../components/recent-mock-exams/recent-mock-exams.component';
 import { PointHistoryComponent } from '../../components/point-history/point-history.component';
 import { EXAM_SUBJECTS } from '../../config/exam-subjects';
-import { getGenreContentsForSubject } from '../../config/genre-content';
+import { firstGenreOf } from '../../config/genre-content';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
 import { catchError, of } from 'rxjs';
 
@@ -44,7 +44,8 @@ export class ExamSubjectsPageComponent implements OnInit {
     return this.passCounts().get(examType) ?? 0;
   }
 
-  hasGenres(examType: string): boolean {
-    return getGenreContentsForSubject(examType).length > 0;
+  // 「学習する」はジャンル選択を挟まず、先頭のジャンルのまとめページを開く
+  firstGenreKey(examType: string): string | undefined {
+    return firstGenreOf(examType)?.genreKey;
   }
 }
