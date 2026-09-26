@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マルチメディアのまとめ | 基本情報技術者試験（科目A）</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目A） › マルチメディア</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="multimedia" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>マルチメディアのまとめ</h1>
+      <p class="genre-description">画像・音声・動画のデジタル化や圧縮方式、コーデックとコンテナ形式の違いなど、マルチメディア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>静止画像の圧縮方式(JPEG・GIF・PNG)</h2>
+      <p>画像や動画などのマルチメディアデータはそのままでは非常にデータ量が大きいため、目的に応じた圧縮方式が使われる。圧縮方式は大きく分けて、展開すると元のデータに完全に復元できる「可逆圧縮」と、一部の情報を犠牲にする代わりに高い圧縮率を得られる「非可逆圧縮」の2種類がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>形式</th><th>圧縮方式</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>JPEG</td><td>非可逆圧縮</td><td>写真などの自然画像の圧縮に広く用いられる。高い圧縮率を得られるが、圧縮のたびに画質が劣化する。</td></tr>
+          <tr><td>GIF</td><td>可逆圧縮</td><td>最大256色までの表現に制限されるが、透過表示やアニメーションに対応する。</td></tr>
+          <tr><td>PNG</td><td>可逆圧縮</td><td>フルカラーや透過(アルファチャンネル)に対応する。画質は劣化しないが、JPEGほどの圧縮率は得られない。</td></tr>
+          <tr><td>BMP</td><td>無圧縮(非圧縮)</td><td>Windows標準のビットマップ形式。圧縮しないためファイルサイズが大きくなりやすい。</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「可逆圧縮」と「非可逆圧縮」を混同しやすい。GIF・PNGは可逆圧縮(完全復元できる)、JPEGは非可逆圧縮(一部の情報が失われる)である。JPEGは保存し直す(再圧縮する)たびに画質が少しずつ劣化していく点にも注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>音声のデジタル化(標本化・量子化・符号化)</h2>
+      <p>マイクなどで収録したアナログの音声信号をコンピュータで扱うには、デジタルデータに変換する必要がある。この変換は「標本化(サンプリング)」→「量子化」→「符号化」の3段階で行われる。標本化は信号を一定の時間間隔で区切って値を取り出す処理、量子化は取り出した値をあらかじめ定めた段階(ビット数に応じた数値)に対応させる処理、符号化はその数値を2進数のデータ列に変換する処理である。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 420 180" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <g stroke="#c7cdd6" stroke-width="1">
+            <line x1="40" y1="20" x2="400" y2="20"/>
+            <line x1="40" y1="50" x2="400" y2="50"/>
+            <line x1="40" y1="80" x2="400" y2="80"/>
+            <line x1="40" y1="110" x2="400" y2="110"/>
+            <line x1="40" y1="140" x2="400" y2="140"/>
+          </g>
+          <text x="10" y="24" font-size="10" fill="#333">3</text>
+          <text x="10" y="54" font-size="10" fill="#333">2</text>
+          <text x="10" y="84" font-size="10" fill="#333">1</text>
+          <text x="10" y="114" font-size="10" fill="#333">0</text>
+          <line x1="40" y1="10" x2="40" y2="140" stroke="#333" stroke-width="1.5"/>
+          <line x1="40" y1="140" x2="400" y2="140" stroke="#333" stroke-width="1.5"/>
+          <path d="M40,90 C70,30 100,30 130,90 C160,150 190,150 220,90 C250,30 280,30 310,90 C340,150 370,150 400,110" fill="none" stroke="#0f8fa8" stroke-width="2"/>
+          <g stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,3">
+            <line x1="70" y1="10" x2="70" y2="140"/>
+            <line x1="100" y1="10" x2="100" y2="140"/>
+            <line x1="130" y1="10" x2="130" y2="140"/>
+            <line x1="160" y1="10" x2="160" y2="140"/>
+            <line x1="190" y1="10" x2="190" y2="140"/>
+            <line x1="220" y1="10" x2="220" y2="140"/>
+            <line x1="250" y1="10" x2="250" y2="140"/>
+            <line x1="280" y1="10" x2="280" y2="140"/>
+            <line x1="310" y1="10" x2="310" y2="140"/>
+            <line x1="340" y1="10" x2="340" y2="140"/>
+            <line x1="370" y1="10" x2="370" y2="140"/>
+          </g>
+          <g fill="#2f5fe0">
+            <circle cx="70" cy="50" r="4"/>
+            <circle cx="100" cy="20" r="4"/>
+            <circle cx="130" cy="80" r="4"/>
+            <circle cx="160" cy="140" r="4"/>
+            <circle cx="190" cy="140" r="4"/>
+            <circle cx="220" cy="80" r="4"/>
+            <circle cx="250" cy="20" r="4"/>
+            <circle cx="280" cy="50" r="4"/>
+            <circle cx="310" cy="80" r="4"/>
+            <circle cx="340" cy="140" r="4"/>
+            <circle cx="370" cy="110" r="4"/>
+          </g>
+          <text x="200" y="160" font-size="11" fill="#7c3aed" text-anchor="middle">← 標本化間隔(サンプリング周期)</text>
+          <text x="60" y="12" font-size="10" fill="#0f8fa8">アナログ信号</text>
+        </svg>
+        <figcaption class="fig-caption">青緑の曲線(アナログ信号)を一定間隔(紫の破線)で区切って値を取り出すのが標本化、取り出した値を近い段階(青い点)に割り当てるのが量子化である。</figcaption>
+      </figure>
+      <div class="formula-box">
+        <span class="label">音声データ量の計算式</span>
+        <span>データ量(バイト) = サンプリング周波数(Hz) × 量子化ビット数(bit) × チャンネル数 × 録音時間(秒) ÷ 8<br>(標本化と量子化によって1秒あたりに生成されるビット数を求め、録音時間を掛けてバイト単位に変換する)</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: CD音質(44,100Hz・16ビット・ステレオ)で10秒間録音した場合のデータ量</span>
+        <span>44,100Hz × 16ビット × 2チャンネル(ステレオ) × 10秒 ÷ 8<br>= 44,100 × 16 × 2 × 10 ÷ 8 = <strong>1,764,000バイト(約1,764KB)</strong></span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>標本化(サンプリング周波数)は「時間軸をどれだけ細かく区切るか」、量子化(量子化ビット数)は「振幅の値をどれだけ細かい段階で表すか」を決めるものであり、役割が異なる。データ量の計算では両方を掛け合わせる必要があり、どちらか一方だけで計算しないよう注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>動画・音声の圧縮規格とファイル構造(MPEG・コーデック・コンテナ形式)</h2>
+      <p>動画ファイルは、映像データと音声データなど複数の種類のデータを組み合わせて扱う。データを圧縮・復元する「方式」と、それらをひとつのファイルにまとめる「入れ物」は別の概念であり、それぞれコーデック・コンテナ形式と呼ばれる。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>MPEG</td><td>動画や音声データの圧縮符号化方式に関する一連の国際標準規格の総称(MPEG-1、MPEG-2、MPEG-4など)。</td></tr>
+          <tr><td>コーデック(codec)</td><td>データを圧縮符号化(encode)・復号(decode)する方式やソフトウェアのこと。</td></tr>
+          <tr><td>コンテナ形式</td><td>映像・音声・字幕など複数のデータストリームを1つのファイルにまとめて格納する形式。MP4やAVIなどがある。</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「コーデック」と「コンテナ形式」を混同しやすい。コーデックはデータを圧縮・復号する"方式"であり、コンテナ形式はそれらをまとめる"ファイルの入れ物"である。例えばMP4はコンテナ形式であり、その中に特定のコーデックで圧縮された映像・音声データが格納されている。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>マルチメディアの応用技術(MIDI・ストリーミング配信・AR)</h2>
+      <p>マルチメディア分野では、データ形式そのものだけでなく、その活用に関わる技術も出題される。演奏情報のやり取り、動画・音声の配信方式、現実空間への情報の重ね合わせといった技術の名称と特徴を整理しておく。</p>
+      <table class="ref-table">
+        <thead><tr><th>技術</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>MIDI</td><td>電子楽器やコンピュータの間で、音の高さ・強さ・タイミングなどの演奏情報をやり取りするための標準規格。音声そのもの(波形データ)ではなく演奏情報を扱う点が特徴。</td></tr>
+          <tr><td>ストリーミング配信</td><td>動画や音声データを受信しながら順次再生することで、すべてのデータをダウンロードし終える前から再生を開始できる配信方式。</td></tr>
+          <tr><td>AR(拡張現実)</td><td>現実の映像や風景に、コンピュータが生成した文字や画像などの情報を重ね合わせて表示する技術。</td></tr>
+          <tr><td>VR(仮想現実)</td><td>コンピュータが作り出した仮想的な空間を、あたかも現実であるかのように知覚・体験させる技術。</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>MIDIは音声データそのものではなく「演奏情報(楽譜に近いデータ)」を扱う規格であり、波形そのものを記録するMP3やWAVとは異なる。また、ARは現実の映像に情報を重ねる技術、VRは仮想空間に没入する技術であり、両者を混同しないよう区別して覚える。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../kihonjoho/human-interface.html"><small>‹ 前のジャンル</small>ヒューマンインタフェース</a>
+      <a class="next" href="../kihonjoho/system-development.html"><small>次のジャンル ›</small>システム開発技術</a>
+    </nav>
+  </main>
+</body>
+</html>

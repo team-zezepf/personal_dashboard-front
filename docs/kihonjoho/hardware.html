@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ハードウェアのまとめ | 基本情報技術者試験（科目A）</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目A） › ハードウェア</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="hardware" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>ハードウェアのまとめ</h1>
+      <p class="genre-description">記憶装置・入出力装置・センサ/アクチュエータなど、ハードウェアを構成する基本要素の特徴を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>記憶装置(半導体メモリ・HDD/SSD・RAID)</h2>
+      <p>半導体メモリには、電源を切るとデータが消える「揮発性」のものと、電源を切ってもデータが保持される「不揮発性」のものがある。用途によって使い分けられている。</p>
+      <table class="ref-table">
+        <thead><tr><th>メモリ種別</th><th>揮発性</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>DRAM</td><td>揮発性</td><td>コンデンサに電荷を蓄えて記憶する。定期的な再書き込み(リフレッシュ)が必要。主記憶装置に使用</td></tr>
+          <tr><td>SRAM</td><td>揮発性</td><td>フリップフロップ回路で記憶する。リフレッシュ不要で高速だが高コスト。キャッシュメモリに使用</td></tr>
+          <tr><td>ROM</td><td>不揮発性</td><td>読み出し専用として利用される(一部、電気的に書換え可能なものもある)</td></tr>
+          <tr><td>フラッシュメモリ</td><td>不揮発性</td><td>電気的にデータの消去・書き込みが可能。電源を切ってもデータを保持する。SSDやUSBメモリなどに使用</td></tr>
+        </tbody>
+      </table>
+      <figure class="fig">
+        <svg viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="10" y="10" width="180" height="120" rx="8" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="100" y="30" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">HDD</text>
+          <circle cx="100" cy="85" r="35" fill="none" stroke="#2f5fe0" stroke-width="2"/>
+          <circle cx="100" cy="85" r="5" fill="#2f5fe0"/>
+          <line x1="100" y1="85" x2="148" y2="58" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="100" y="142" font-size="11" fill="#2f5fe0" text-anchor="middle">磁気ディスクを回転させ読み書き(駆動部分あり)</text>
+
+          <rect x="230" y="10" width="180" height="120" rx="8" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="320" y="30" font-size="14" fill="#1f9d55" text-anchor="middle" font-weight="bold">SSD</text>
+          <rect x="270" y="55" width="100" height="60" rx="4" fill="#ffffff" stroke="#1f9d55" stroke-width="2"/>
+          <text x="320" y="90" font-size="12" fill="#1f9d55" text-anchor="middle">半導体メモリ</text>
+          <text x="320" y="142" font-size="11" fill="#1f9d55" text-anchor="middle">駆動部分なし(フラッシュメモリで記憶)</text>
+        </svg>
+        <figcaption class="fig-caption">HDDは磁気ディスクを回転させ磁気ヘッドで読み書きするため駆動部分を持つ。SSDは半導体メモリ(フラッシュメモリ)にデータを記録するため駆動部分を持たない。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>比較項目</th><th>HDD</th><th>SSD</th></tr></thead>
+        <tbody>
+          <tr><td>記憶媒体</td><td>磁気ディスク(駆動部分あり)</td><td>半導体メモリ(駆動部分なし)</td></tr>
+          <tr><td>読み書き速度</td><td>比較的遅い</td><td>比較的速い</td></tr>
+          <tr><td>耐衝撃性</td><td>可動部があるため劣る</td><td>優れる</td></tr>
+          <tr><td>容量単価(1GBあたり)</td><td>一般に安い</td><td>一般に高い</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>HDDとSSDの比較問題では「速度」「耐衝撃性」「容量単価」の優劣が入れ替えられて出題されやすい。「HDDは可動部品を持ち低コスト、SSDは駆動部分がなく高速・耐衝撃だが単価は高い」という対応をセットで覚えること。</span>
+      </div>
+      <p>RAID(Redundant Arrays of Inexpensive Disks)は、複数の磁気ディスク装置を組み合わせて1台の論理的な装置のように扱う技術である。データを分散して書き込むことで高速化を図ったり、同じデータを複数台に記録することで耐障害性を高めたりする。</p>
+      <table class="ref-table">
+        <thead><tr><th>RAIDレベル</th><th>方式</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>RAID0(ストライピング)</td><td>データを分散して複数ディスクに書き込む</td><td>読み書きが高速化するが冗長性はなく、1台故障すると全データが失われる</td></tr>
+          <tr><td>RAID1(ミラーリング)</td><td>同じデータを複数ディスクに複製して書き込む</td><td>耐障害性が高いが、実効容量はディスク合計より少なくなる</td></tr>
+          <tr><td>RAID5</td><td>データと誤り訂正用のパリティを分散して記録</td><td>1台の故障までは復旧可能。速度と耐障害性のバランスがよい</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>入出力装置とディスプレイ</h2>
+      <p>コンピュータの入出力装置は、人や外部環境とのデータのやり取りを担う。データを取り込む「入力装置」、データを出し出力する「出力装置」、両方を兼ねる「入出力装置」に大別できる。</p>
+      <table class="ref-table">
+        <thead><tr><th>分類</th><th>装置例</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>入力装置</td><td>キーボード、マウス、スキャナ</td><td>外部からデータを取り込む装置</td></tr>
+          <tr><td>出力装置</td><td>ディスプレイ、プリンタ、プロッタ、3Dプリンタ</td><td>データを外部へ出力する装置(3Dプリンタは3D設計データをもとに材料を層状に積み重ねて立体物を造形する)</td></tr>
+          <tr><td>入出力装置</td><td>タッチパネル</td><td>ディスプレイに指やペンで触れることで入力もできる、入力と出力を兼ねた装置</td></tr>
+        </tbody>
+      </table>
+      <figure class="fig">
+        <svg viewBox="0 0 420 140" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="60" y="20" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">低解像度</text>
+          <rect x="15" y="30" width="90" height="60" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <line x1="45" y1="30" x2="45" y2="90" stroke="#2f5fe0" stroke-width="1.5"/>
+          <line x1="75" y1="30" x2="75" y2="90" stroke="#2f5fe0" stroke-width="1.5"/>
+          <line x1="15" y1="60" x2="105" y2="60" stroke="#2f5fe0" stroke-width="1.5"/>
+          <text x="60" y="112" font-size="11" fill="#2f5fe0" text-anchor="middle">画素数が少なく粗い</text>
+
+          <text x="320" y="20" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">高解像度</text>
+          <rect x="245" y="30" width="150" height="60" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <line x1="270" y1="30" x2="270" y2="90" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="295" y1="30" x2="295" y2="90" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="320" y1="30" x2="320" y2="90" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="345" y1="30" x2="345" y2="90" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="370" y1="30" x2="370" y2="90" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="245" y1="45" x2="395" y2="45" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="245" y1="60" x2="395" y2="60" stroke="#1f9d55" stroke-width="1"/>
+          <line x1="245" y1="75" x2="395" y2="75" stroke="#1f9d55" stroke-width="1"/>
+          <text x="320" y="112" font-size="11" fill="#1f9d55" text-anchor="middle">画素数が多く精細</text>
+        </svg>
+        <figcaption class="fig-caption">解像度は画素(ピクセル)の密度・きめ細かさを表す指標。画素数が多いほど精細な表示になる。</figcaption>
+      </figure>
+      <div class="gate-grid">
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="60" height="40" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+            <text x="40" y="35" font-size="12" fill="#2f5fe0" text-anchor="middle" font-weight="bold">タッチ</text>
+          </svg>
+          <div class="gate-name">タッチパネル: 画面に指やペンで直接触れて入力</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="60" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+            <text x="40" y="35" font-size="12" fill="#1f9d55" text-anchor="middle" font-weight="bold">トラック</text>
+          </svg>
+          <div class="gate-name">トラックボール: 固定された球を転がしてポインタを操作</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="60" height="40" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+            <text x="40" y="35" font-size="12" fill="#c9820a" text-anchor="middle" font-weight="bold">ジョイ</text>
+          </svg>
+          <div class="gate-name">ジョイスティック: レバーを倒して方向・位置を入力</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="60" height="40" rx="6" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+            <text x="40" y="35" font-size="12" fill="#7c3aed" text-anchor="middle" font-weight="bold">ライト</text>
+          </svg>
+          <div class="gate-name">ライトペン: ペン先を画面に当てて位置を検出</div>
+        </div>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「解像度」(画素の密度)、「リフレッシュレート」(1秒間に画面を書き換える回数)、「コントラスト比」(最も明るい部分と暗い部分の差)、「応答速度」(画素の色が変化する速さ)は、いずれもディスプレイの性能を表す別の指標であり混同しやすい。画素の“数・密度”を表す用語は解像度だけである。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>センサとアクチュエータ</h2>
+      <p>センサとアクチュエータは、コンピュータ(制御装置)と物理世界とを結ぶ装置であり、組み込みシステムやIoT機器で対になって使われることが多い。変換する向きが正反対である点が重要である。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="60" y="30" font-size="11" fill="#2f5fe0" text-anchor="middle">温度・湿度・光など</text>
+          <rect x="10" y="50" width="110" height="50" rx="8" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="65" y="80" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">センサ</text>
+
+          <line x1="120" y1="75" x2="175" y2="75" stroke="#333" stroke-width="2"/>
+          <text x="147" y="65" font-size="10" fill="#333" text-anchor="middle">電気信号</text>
+
+          <rect x="175" y="50" width="100" height="50" rx="8" fill="#f7f9fb" stroke="#c7cdd6" stroke-width="2"/>
+          <text x="225" y="80" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">制御装置</text>
+
+          <line x1="275" y1="75" x2="330" y2="75" stroke="#333" stroke-width="2"/>
+          <text x="302" y="65" font-size="10" fill="#333" text-anchor="middle">制御信号</text>
+
+          <rect x="330" y="50" width="100" height="50" rx="8" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="380" y="80" font-size="13" fill="#1f9d55" text-anchor="middle" font-weight="bold">アクチュエータ</text>
+          <text x="380" y="30" font-size="11" fill="#1f9d55" text-anchor="middle">回転・振動など機械的な運動</text>
+        </svg>
+        <figcaption class="fig-caption">センサは物理量を電気信号に変換して制御装置に渡し(入力)、制御装置からの指令をアクチュエータが機械的な動きに変換する(出力)。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>検出する物理量</th><th>センサの例</th></tr></thead>
+        <tbody>
+          <tr><td>温度</td><td>温度センサ</td></tr>
+          <tr><td>湿度</td><td>湿度センサ</td></tr>
+          <tr><td>光量</td><td>光センサ(照度センサ)</td></tr>
+          <tr><td>圧力</td><td>圧力センサ</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>センサとアクチュエータは変換の向きが逆である。センサは「物理量→電気信号」(入力装置)、アクチュエータは「電気信号→機械的な運動」(出力装置)。名称と働きを取り違えないよう注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>処理装置と近距離無線通信</h2>
+      <p>コンピュータの主要な処理装置には、汎用的な処理を順に実行するCPUのほか、特定の処理に特化した専用の処理装置がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>項目</th><th>CPU</th><th>GPU</th></tr></thead>
+        <tbody>
+          <tr><td>得意な処理</td><td>複雑な条件分岐を含む汎用的な処理を順に実行</td><td>同種の演算を大量のデータに並列に実行(画像処理向き)</td></tr>
+          <tr><td>コア数</td><td>少数の高性能なコア</td><td>多数の単純な演算コア</td></tr>
+          <tr><td>主な用途</td><td>OSの制御、アプリケーションの実行など全般</td><td>画像処理・グラフィックス描画、機械学習の演算など</td></tr>
+        </tbody>
+      </table>
+      <p>近距離無線通信にはいくつかの規格があり、通信できる距離や用途によって使い分けられる。</p>
+      <table class="ref-table">
+        <thead><tr><th>技術</th><th>通信距離の目安</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>NFC</td><td>数cm〜10cm程度</td><td>ICカードやスマートフォンなどをかざすだけで通信できる近距離無線通信技術。交通系ICカードや決済などに利用</td></tr>
+          <tr><td>Bluetooth</td><td>数m〜数十m程度</td><td>ヘッドホンやマウスなど周辺機器の無線接続に広く利用</td></tr>
+          <tr><td>Wi-Fi</td><td>数十m程度(屋内)</td><td>無線LANとしてネットワークへの接続に利用</td></tr>
+          <tr><td>赤外線通信</td><td>数m程度(見通し内)</td><td>赤外線を使った通信。家電のリモコンなどに利用</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>NFCは「かざすだけ」で通信できる極めて近距離(数cm程度)の技術である点が最大の特徴。Bluetooth・Wi-Fiなど他の無線通信技術との通信距離の違いが問われやすいので、距離の大小関係(NFC < Bluetooth < Wi-Fi)を押さえておく。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../kihonjoho/system-components.html"><small>‹ 前のジャンル</small>システム構成要素</a>
+      <a class="next" href="../kihonjoho/human-interface.html"><small>次のジャンル ›</small>ヒューマンインタフェース</a>
+    </nav>
+  </main>
+</body>
+</html>

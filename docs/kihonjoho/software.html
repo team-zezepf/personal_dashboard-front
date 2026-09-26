@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ソフトウェアのまとめ | 基本情報技術者試験（科目A）</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目A） › ソフトウェア</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="software" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>ソフトウェアのまとめ</h1>
+      <p class="genre-description">OSの役割・基本機能や仮想記憶、ミドルウェア・デバイスドライバなどの周辺ソフトウェア、ソフトウェアの品質特性・配布形態など、ソフトウェア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>ソフトウェアの品質特性</h2>
+      <p>ソフトウェアの品質は、JIS X 0129(ISO/IEC 9126)により機能性・信頼性・使用性・効率性・保守性・移植性の6つの特性に整理されている。試験では各特性の説明文を読み、どの特性を指しているかを見分ける問題が出やすい。</p>
+      <table class="ref-table">
+        <thead><tr><th>特性</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>機能性</td><td>利用者が必要とする機能を、指定された条件下で備えている度合い</td></tr>
+          <tr><td>信頼性</td><td>指定された条件下で、要求された機能を維持して動作し続ける能力</td></tr>
+          <tr><td>使用性</td><td>利用者が理解し、習得し、使用しやすい度合い</td></tr>
+          <tr><td>効率性</td><td>少ない資源で効率よく処理を行う能力</td></tr>
+          <tr><td>保守性</td><td>システムの機能を理解し、修正しやすい度合い</td></tr>
+          <tr><td>移植性</td><td>別の環境(機種・OSなど)に移しやすい度合い</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 「信頼性」の説明として最も適切なものはどれか</span>
+        <span>選択肢: ①必要なときにシステムを利用できる度合い ②指定された条件下で、要求された機能を維持して動作し続ける能力 ③少ない資源で効率よく処理を行う能力 ④システムの機能を理解し、修正しやすい度合い<br>①は可用性、③は効率性、④は保守性の説明である。よって正解は<strong>②</strong>。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「信頼性」と「可用性」は混同しやすい。信頼性は障害を起こさず動作し続ける能力(壊れにくさ)を指すのに対し、可用性は必要なときにシステムを利用できる度合い(稼働率のようなもの)を指す。試験では選択肢として並べて出されることが多いので、意味の違いを区別しておく。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>OSの役割と基本機能</h2>
+      <p>OS(オペレーティングシステム)は、CPUやメモリなどのハードウェア資源を管理し、アプリケーションソフトウェアに共通の実行環境を提供する基本ソフトウェアである。OSの代表的な機能として、資源管理・ジョブ管理・タスク管理がある。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="60" y="140" width="280" height="40" rx="6" fill="#f7f9fb" stroke="#c7cdd6" stroke-width="2"/>
+          <text x="200" y="165" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">ハードウェア(CPU・メモリ・入出力装置)</text>
+          <line x1="200" y1="140" x2="200" y2="120" stroke="#333" stroke-width="2"/>
+          <rect x="60" y="70" width="280" height="50" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="200" y="92" font-size="14" fill="#2f5fe0" text-anchor="middle" font-weight="bold">OS(基本ソフトウェア)</text>
+          <text x="200" y="110" font-size="11" fill="#2f5fe0" text-anchor="middle">資源管理・ジョブ管理・タスク管理</text>
+          <line x1="200" y1="70" x2="200" y2="50" stroke="#333" stroke-width="2"/>
+          <rect x="60" y="10" width="280" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="200" y="35" font-size="14" fill="#1f9d55" text-anchor="middle" font-weight="bold">アプリケーションソフトウェア</text>
+        </svg>
+        <figcaption class="fig-caption">OSはハードウェアとアプリケーションソフトウェアの間に位置し、共通の実行環境を提供する。</figcaption>
+      </figure>
+      <div class="gate-grid">
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="80" height="40" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+            <text x="50" y="35" font-size="13" fill="#2f5fe0" text-anchor="middle" font-weight="bold">資源管理</text>
+          </svg>
+          <div class="gate-name">資源管理機能: CPU・メモリ・入出力装置などのハードウェア資源を複数のプログラムに配分する</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="80" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+            <text x="50" y="35" font-size="13" fill="#1f9d55" text-anchor="middle" font-weight="bold">ジョブ管理</text>
+          </svg>
+          <div class="gate-name">ジョブ管理: 利用者が依頼した一連の処理(ジョブ)を、投入から終了まで一括して管理する</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="10" y="10" width="80" height="40" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+            <text x="50" y="35" font-size="13" fill="#c9820a" text-anchor="middle" font-weight="bold">タスク管理</text>
+          </svg>
+          <div class="gate-name">タスク管理(プロセス管理): 実行中の個々のプログラム(プロセス)にCPU時間の割り当てなどを制御する</div>
+        </div>
+      </div>
+      <figure class="fig">
+        <svg viewBox="0 0 420 130" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="10" y="18" font-size="12" fill="#333">CPU時間の流れ →</text>
+          <line x1="10" y1="100" x2="410" y2="100" stroke="#333" stroke-width="1"/>
+          <rect x="10" y="60" width="90" height="40" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="55" y="85" font-size="12" fill="#2f5fe0" text-anchor="middle">プログラムA</text>
+          <rect x="100" y="60" width="90" height="40" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="145" y="85" font-size="12" fill="#1f9d55" text-anchor="middle">プログラムB</text>
+          <rect x="190" y="60" width="90" height="40" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="235" y="85" font-size="12" fill="#2f5fe0" text-anchor="middle">プログラムA</text>
+          <rect x="280" y="60" width="90" height="40" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="325" y="85" font-size="12" fill="#1f9d55" text-anchor="middle">プログラムB</text>
+        </svg>
+        <figcaption class="fig-caption">マルチタスクでは、OSがCPU時間を細かく分割して複数のプログラムに切り替えながら割り当てるため、あたかも同時に実行しているように見える。</figcaption>
+      </figure>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ジョブ管理は利用者が依頼した一連の処理(ジョブ)を投入から終了まで一括して管理するのに対し、タスク管理(プロセス管理)は実行中の個々のプログラム(プロセス・タスク)にCPU時間を割り当てるなど、より細かい単位を制御する機能である。「ジョブ」と「タスク(プロセス)」の粒度の違いを混同しないこと。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>ファイル管理と仮想記憶</h2>
+      <p>ファイルシステムは、補助記憶装置上のデータをファイル単位で管理し、作成・読み書き・削除などの操作を可能にするOSの機能である。</p>
+      <p>仮想記憶は、補助記憶装置の一部を主記憶の延長として扱うことで、実際の主記憶容量を超えるサイズのプログラムやデータを扱えるようにする技術である。主記憶に入りきらないデータは、必要に応じて補助記憶装置との間で入れ替えられる。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="20" y="30" width="140" height="70" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="90" y="60" font-size="13" fill="#2f5fe0" text-anchor="middle" font-weight="bold">主記憶</text>
+          <text x="90" y="78" font-size="10" fill="#2f5fe0" text-anchor="middle">(容量小・高速)</text>
+          <rect x="260" y="20" width="140" height="90" rx="6" fill="#f7f9fb" stroke="#c7cdd6" stroke-width="2"/>
+          <text x="330" y="52" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">補助記憶装置</text>
+          <text x="330" y="70" font-size="10" fill="#333" text-anchor="middle">(容量大・低速)</text>
+          <text x="330" y="88" font-size="10" fill="#333" text-anchor="middle">仮想記憶として利用</text>
+          <line x1="160" y1="52" x2="260" y2="52" stroke="#c9820a" stroke-width="2"/>
+          <text x="210" y="44" font-size="10" fill="#c9820a" text-anchor="middle">スワップアウト</text>
+          <line x1="260" y1="82" x2="160" y2="82" stroke="#c9820a" stroke-width="2"/>
+          <text x="210" y="100" font-size="10" fill="#c9820a" text-anchor="middle">スワップイン</text>
+        </svg>
+        <figcaption class="fig-caption">スワッピングは、仮想記憶において主記憶に入りきらないデータを補助記憶装置との間で入れ替える処理である。</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例題: 主記憶の容量を超えるプログラムを実行できるようにする技術は何か</span>
+        <span>選択肢: ①仮想記憶 ②キャッシュメモリ ③デフラグメンテーション ④スワッピング<br>②は処理速度を高速化する仕組み、③は記憶領域の断片化を解消する処理、④は仮想記憶を実現するための入れ替え処理そのものを指す。「容量を超えて扱えるようにする」技術自体を指すのは<strong>①仮想記憶</strong>。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「仮想記憶」は主記憶容量を超えるサイズのプログラムやデータを扱うための仕組み(概念)であり、「スワッピング」はその仕組みを実現するために主記憶と補助記憶の間で実際にデータを入れ替える処理を指す。両者を同じ意味だと思い込まないこと。また、キャッシュメモリは処理速度を高速化するための仕組みであり、記憶容量を拡張する仮想記憶とは目的が異なる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>周辺ソフトウェア(ミドルウェア・デバイスドライバ・ファームウェア)</h2>
+      <p>ハードウェアとアプリケーションソフトウェアの間には、それぞれ異なる役割を担うソフトウェアが階層的に存在する。ファームウェアは機器に組み込まれてハードウェアの基本動作を制御し、デバイスドライバはOSが個々の周辺機器を制御できるようにし、ミドルウェアはOSとアプリケーションの中間で共通機能を提供する。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="60" y="0" width="280" height="36" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="200" y="23" font-size="13" fill="#1f9d55" text-anchor="middle" font-weight="bold">アプリケーションソフトウェア</text>
+          <rect x="60" y="46" width="280" height="36" rx="6" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+          <text x="200" y="69" font-size="13" fill="#7c3aed" text-anchor="middle" font-weight="bold">ミドルウェア</text>
+          <rect x="60" y="92" width="280" height="36" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="200" y="115" font-size="13" fill="#2f5fe0" text-anchor="middle" font-weight="bold">OS(+デバイスドライバ)</text>
+          <rect x="60" y="138" width="280" height="36" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+          <text x="200" y="161" font-size="13" fill="#c9820a" text-anchor="middle" font-weight="bold">ファームウェア</text>
+          <rect x="60" y="184" width="280" height="36" rx="6" fill="#f7f9fb" stroke="#c7cdd6" stroke-width="2"/>
+          <text x="200" y="207" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">ハードウェア</text>
+        </svg>
+        <figcaption class="fig-caption">ハードウェアに近い順に、ファームウェア→OS(デバイスドライバを含む)→ミドルウェア→アプリケーションという階層で捉えられる。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>種類</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>デバイスドライバ</td><td>特定の周辺機器をOSが制御できるようにするため、機器ごとに用意される制御用ソフトウェア</td></tr>
+          <tr><td>ミドルウェア</td><td>OSとアプリケーションソフトウェアの中間に位置し、データベース接続など特定の共通機能を提供するソフトウェア</td></tr>
+          <tr><td>ファームウェア</td><td>ハードウェアの制御のために機器に組み込まれた、基本的な動作を制御するソフトウェア(ROM等に格納されることが多い)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ファームウェアは機器本体に組み込まれる(ハードウェア寄りの)ソフトウェアであるのに対し、デバイスドライバはOS側から個々のハードウェアを制御するためのソフトウェアである。また、ミドルウェアはOSとアプリケーションの間で共通機能を提供するものであり、特定の周辺機器を制御するデバイスドライバとは役割が異なる。3つの「制御・仲介ソフトウェア」が担う境界の違いを整理して覚える。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>ソフトウェアの配布形態</h2>
+      <p>ソフトウェアには、ソースコードの公開範囲や対価の有無によっていくつかの配布形態がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>配布形態</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>フリーウェア</td><td>無償で利用できるソフトウェア(ソースコードは非公開であることが多い)</td></tr>
+          <tr><td>シェアウェア</td><td>一定期間または一定機能を無料で試用でき、継続して利用する場合には対価の支払いを求める配布形態</td></tr>
+          <tr><td>オープンソースソフトウェア(OSS)</td><td>ソースコードが公開されており、一定のライセンス条件の下で誰でも自由に利用・改変・再配布できるソフトウェア</td></tr>
+          <tr><td>パッケージソフトウェア</td><td>汎用的な機能を持ち、パッケージ化されて販売・提供されるソフトウェア</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「無料かどうか」だけで判断しないこと。フリーウェアとシェアウェアはどちらも無料で使い始められるが、シェアウェアは継続利用に対価が必要になる点で異なる。また、オープンソースソフトウェアの本質は「無料」であることではなく、「ソースコードが公開され、改変・再配布が認められている」ことである。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../kihonjoho/security.html"><small>‹ 前のジャンル</small>セキュリティ</a>
+      <a class="next" href="../kihonjoho/system-components.html"><small>次のジャンル ›</small>システム構成要素</a>
+    </nav>
+  </main>
+</body>
+</html>

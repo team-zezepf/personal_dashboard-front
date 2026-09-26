@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>システム開発技術のまとめ | 基本情報技術者試験（科目A）</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目A） › システム開発技術</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="system-development" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>システム開発技術のまとめ</h1>
+      <p class="genre-description">要件定義から設計・実装・テストまでのシステム開発工程と、レビューや保守に関する代表的な技法を解説しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>開発工程(要件定義・外部設計・内部設計)</h2>
+      <p>システム開発は、上流工程から下流工程へと順に進む。まず利用者の業務内容や要望を分析して「何を作るか」を明確にし(要件定義)、その内容をもとに利用者から見える部分の仕様を決め(外部設計)、続いて開発者側の視点でプログラムの内部構造を詳細化する(内部設計)。工程が進むほど、対象は「利用者視点」から「開発者視点」へと移っていく。</p>
+      <table class="ref-table">
+        <thead><tr><th>工程</th><th>内容</th><th>視点</th></tr></thead>
+        <tbody>
+          <tr><td>要件定義</td><td>利用者の業務内容や要望を分析し、システムに求められる機能・性能を明確にする</td><td>利用者</td></tr>
+          <tr><td>外部設計(概要設計)</td><td>画面レイアウトや帳票など、利用者から見えるインタフェースの仕様を設計する</td><td>利用者</td></tr>
+          <tr><td>内部設計(詳細設計)</td><td>プログラムの内部構造やモジュール分割など、開発者側の視点で仕様を詳細化する</td><td>開発者</td></tr>
+          <tr><td>プログラミング</td><td>設計内容をもとにソースコードを作成する</td><td>開発者</td></tr>
+        </tbody>
+      </table>
+      <figure class="fig">
+        <svg viewBox="0 0 440 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="10" y="10" width="110" height="30" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="65" y="30" font-size="13" fill="#2f5fe0" text-anchor="middle" font-weight="bold">要件定義</text>
+          <rect x="65" y="44" width="110" height="30" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="120" y="64" font-size="13" fill="#1f9d55" text-anchor="middle" font-weight="bold">外部設計</text>
+          <rect x="120" y="78" width="110" height="30" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+          <text x="175" y="98" font-size="13" fill="#c9820a" text-anchor="middle" font-weight="bold">内部設計</text>
+          <rect x="175" y="112" width="110" height="30" rx="6" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+          <text x="230" y="132" font-size="13" fill="#7c3aed" text-anchor="middle" font-weight="bold">プログラミング</text>
+          <rect x="230" y="146" width="110" height="30" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="285" y="166" font-size="13" fill="#0f8fa8" text-anchor="middle" font-weight="bold">テスト</text>
+          <line x1="65" y1="40" x2="120" y2="44" stroke="#7b8794" stroke-width="2"/>
+          <line x1="120" y1="74" x2="175" y2="78" stroke="#7b8794" stroke-width="2"/>
+          <line x1="175" y1="108" x2="230" y2="112" stroke="#7b8794" stroke-width="2"/>
+          <line x1="230" y1="142" x2="285" y2="146" stroke="#7b8794" stroke-width="2"/>
+        </svg>
+        <figcaption class="fig-caption">ウォーターフォールモデル: 上流工程(要件定義)から下流工程(テスト)へ、後戻りしない前提で順番に進める開発モデル。</figcaption>
+      </figure>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「外部設計」と「内部設計」は名前が似ていて混同しやすい。外部設計は<strong>利用者から見える</strong>画面・帳票などの仕様を決める工程、内部設計は<strong>開発者だけが意識する</strong>プログラム内部の構造(モジュール分割など)を決める工程である。「外に見えるか、中身だけの話か」で判断するとよい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>テストの種類と実施順序</h2>
+      <p>テストは、開発した部分が小さい順に「単体テスト→結合テスト→システムテスト→受入テスト」の順で段階的に範囲を広げながら行う。設計の各工程で決めた仕様に対応する形で、それぞれのテストの検証範囲が決まっている点がポイントである。</p>
+      <table class="ref-table">
+        <thead><tr><th>テスト</th><th>検証内容</th><th>対応する設計工程</th><th>主な実施者</th></tr></thead>
+        <tbody>
+          <tr><td>単体テスト</td><td>モジュール(プログラム)単体が仕様通りに動作するか</td><td>内部設計</td><td>開発者</td></tr>
+          <tr><td>結合テスト</td><td>複数モジュールを組み合わせ、モジュール間のインタフェースが正しく機能するか</td><td>外部設計</td><td>開発者</td></tr>
+          <tr><td>システムテスト(総合テスト)</td><td>システム全体が要件定義で定めた機能・性能をすべて満たすか</td><td>要件定義</td><td>開発者(開発側)</td></tr>
+          <tr><td>受入テスト(検収テスト)</td><td>納品されたシステムが業務要件や契約内容を満たすか</td><td>要件定義</td><td>発注者(利用者側)</td></tr>
+        </tbody>
+      </table>
+      <figure class="fig">
+        <svg viewBox="0 0 440 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="10" y="10" width="150" height="34" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="85" y="31" font-size="12" fill="#2f5fe0" text-anchor="middle" font-weight="bold">要件定義</text>
+          <rect x="10" y="54" width="150" height="34" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="85" y="75" font-size="12" fill="#1f9d55" text-anchor="middle" font-weight="bold">外部設計</text>
+          <rect x="10" y="98" width="150" height="34" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+          <text x="85" y="119" font-size="12" fill="#c9820a" text-anchor="middle" font-weight="bold">内部設計</text>
+          <rect x="10" y="142" width="150" height="34" rx="6" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+          <text x="85" y="163" font-size="12" fill="#7c3aed" text-anchor="middle" font-weight="bold">プログラミング</text>
+          <rect x="280" y="10" width="150" height="34" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="355" y="31" font-size="12" fill="#0f8fa8" text-anchor="middle" font-weight="bold">受入テスト</text>
+          <rect x="280" y="54" width="150" height="34" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="355" y="75" font-size="12" fill="#0f8fa8" text-anchor="middle" font-weight="bold">システムテスト</text>
+          <rect x="280" y="98" width="150" height="34" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="355" y="119" font-size="12" fill="#0f8fa8" text-anchor="middle" font-weight="bold">結合テスト</text>
+          <rect x="280" y="142" width="150" height="34" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="355" y="163" font-size="12" fill="#0f8fa8" text-anchor="middle" font-weight="bold">単体テスト</text>
+          <line x1="160" y1="27" x2="280" y2="27" stroke="#7b8794" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="160" y1="71" x2="280" y2="71" stroke="#7b8794" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="160" y1="115" x2="280" y2="115" stroke="#7b8794" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="160" y1="159" x2="280" y2="159" stroke="#7b8794" stroke-width="1.5" stroke-dasharray="4,3"/>
+        </svg>
+        <figcaption class="fig-caption">V字モデル: 各設計工程で決めた仕様が、対応するテストの検証対象になる(要件定義⇔受入テスト、外部設計⇔システムテスト、内部設計⇔結合テスト、プログラミング⇔単体テスト)。</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例: 結合テストの検証イメージ</span>
+        <span>モジュールAとモジュールBをそれぞれ単体テストで検証した後、結合テストではAとBを実際に接続し、Aが渡すデータをBが正しく受け取れるかなど、<strong>モジュール間のインタフェース</strong>が仕様通りに機能するかを確認する。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>4種類のテストは「検証範囲の広さ」と「誰が行うか」で区別する。単体・結合・システムテストは<strong>開発者側</strong>が行うが、受入テストだけは<strong>発注者(利用者)側</strong>が主体となる点に注意。また回帰テスト(リグレッションテスト)は、プログラムを修正した際に既存の正常な機能へ悪影響(デグレード)が出ていないかを確認するテストで、上記4種類とは別の「修正のたびに行う」テストである。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>レビュー技法(ウォークスルー・インスペクション)</h2>
+      <p>プログラムや設計書は、完成後にテストで誤りを見つけるより前に、複数人でレビューして早期に問題点を洗い出すことが望ましい。代表的なレビュー技法として、ウォークスルーとインスペクションがある。両者は「誰が進行するか」「どれだけ形式張っているか」で区別される。</p>
+      <table class="ref-table">
+        <thead><tr><th>技法</th><th>進行役</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>ウォークスルー</td><td>作成者(開発者)自身</td><td>作成者が説明役となり、参加者と一緒に内容をたどりながら検証する、比較的簡易なレビュー</td></tr>
+          <tr><td>インスペクション</td><td>モデレーター(進行役)</td><td>作成者以外の第三者が進行役となり、役割分担された参加者が形式に沿って検証する、公式で厳格なレビュー</td></tr>
+          <tr><td>ペアプログラミング</td><td>(レビューではなく開発スタイル)</td><td>2人1組でコードを書きながら常時レビューし合う開発手法。完成物を後から見直す「レビュー技法」とは性質が異なる</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ウォークスルーとインスペクションは「開発者(作成者)自身が主導するか、第三者が主導するか」で覚えるとよい。ウォークスルーは<strong>作成者主導</strong>の比較的軽いレビュー、インスペクションは<strong>第三者(モデレーター)主導</strong>の公式なレビューである。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>保守・解析技術(リファクタリング・リバースエンジニアリング)</h2>
+      <p>開発したシステムは、運用開始後も保守や改修が続く。ここでは、既存のプログラムに手を加えたり解析したりする代表的な技法を整理する。</p>
+      <table class="ref-table">
+        <thead><tr><th>技法</th><th>内容</th><th>方向性</th></tr></thead>
+        <tbody>
+          <tr><td>リファクタリング</td><td>外部から見た動作(仕様)を変えずに、内部構造を分かりやすく保守しやすい形に整理し直す</td><td>同じプログラムを内部で作り直す</td></tr>
+          <tr><td>リバースエンジニアリング</td><td>既存のプログラムやシステムを解析し、明文化されていなかった設計内容や仕組みを明らかにする</td><td>実装 → 設計(逆方向)</td></tr>
+          <tr><td>フォワードエンジニアリング</td><td>設計書などの上流工程の成果物をもとに、通常の順序でプログラムを開発する</td><td>設計 → 実装(順方向)</td></tr>
+          <tr><td>プロトタイピング</td><td>開発の早い段階で試作品(プロトタイプ)を作り、利用者に確認してもらいながら仕様を固める</td><td>要件定義・設計の補助</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>リファクタリングは「動作は変えずに中身だけ整理する」作業であり、バグ修正や機能追加(振る舞いの変更)とは異なる。またリバースエンジニアリングは実装物から設計情報を導き出す<strong>逆方向</strong>の解析、フォワードエンジニアリングは設計から実装へ進む<strong>通常の開発方向</strong>であり、矢印の向きで対比して覚えるとよい。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../kihonjoho/multimedia.html"><small>‹ 前のジャンル</small>マルチメディア</a>
+      <a class="next" href="../kihonjoho/sw-development-technique.html"><small>次のジャンル ›</small>ソフトウェア開発技術</a>
+    </nav>
+  </main>
+</body>
+</html>

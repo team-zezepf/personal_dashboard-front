@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>決算整理のまとめ | 簿記3級</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 簿記3級 › 決算整理</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="boki3" data-genre-key="kessan-seiri" data-category="簿記3級">
+    <header class="genre-header">
+      <h1>決算整理のまとめ</h1>
+      <p class="genre-description">経過勘定・減価償却・貸倒引当金・売上原価の算定など、決算にあたって行う各種の整理仕訳の考え方と計算方法を、具体的な数値例とともに整理しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>経過勘定(前払・前受・未払・未収)と再振替仕訳</h2>
+      <p>一会計期間の損益を正しく計算するため、決算日を基準に「当期に属する費用・収益」と「次期に属する費用・収益」を区別し直す手続きを経過勘定の整理と呼ぶ。すでに支払い・受け取りが済んでいるが期間がずれている場合を繰延べ(前払・前受)、まだ支払い・受け取りが済んでいないが当期分がすでに発生している場合を見越し(未払・未収)という。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="10" y="16" font-size="11" fill="#333" font-weight="bold">繰延べ(前払費用・前受収益)</text>
+          <line x1="20" y1="50" x2="420" y2="50" stroke="#c7cdd6" stroke-width="2"/>
+          <rect x="140" y="37" width="200" height="16" fill="#eef2ff" stroke="#2f5fe0" stroke-width="1.5"/>
+          <text x="240" y="48" font-size="9" fill="#2f5fe0" text-anchor="middle">支払(受取)済みの期間</text>
+          <line x1="260" y1="30" x2="260" y2="65" stroke="#d64545" stroke-width="2" stroke-dasharray="3,2"/>
+          <text x="260" y="80" font-size="10" fill="#d64545" text-anchor="middle">決算日</text>
+          <text x="300" y="95" font-size="9" fill="#2f5fe0" text-anchor="middle">この先(次期分)を前払費用/前受収益として繰り延べる</text>
+
+          <text x="10" y="130" font-size="11" fill="#333" font-weight="bold">見越し(未払費用・未収収益)</text>
+          <line x1="20" y1="160" x2="420" y2="160" stroke="#c7cdd6" stroke-width="2"/>
+          <rect x="180" y="147" width="80" height="16" fill="#eafaf0" stroke="#1f9d55" stroke-width="1.5"/>
+          <text x="220" y="159" font-size="9" fill="#1f9d55" text-anchor="middle">未払いの期間</text>
+          <line x1="260" y1="145" x2="260" y2="175" stroke="#d64545" stroke-width="2" stroke-dasharray="3,2"/>
+          <text x="260" y="190" font-size="10" fill="#d64545" text-anchor="middle">決算日</text>
+          <text x="330" y="145" font-size="9" fill="#7b8794" text-anchor="middle">支払(受取)日は次期</text>
+        </svg>
+        <figcaption class="fig-caption">繰延べは「支払(受取)済みのうち決算日より後の期間」を、見越しは「決算日より前にすでに発生しているが未決済の期間」を切り分けて計上する。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>区分</th><th>内容</th><th>勘定の性質</th><th>決算整理仕訳の向き</th></tr></thead>
+        <tbody>
+          <tr><td>前払費用</td><td>次期分の費用をすでに支払っている</td><td>資産(前払保険料など)</td><td>費用を減らし、資産を増やす</td></tr>
+          <tr><td>前受収益</td><td>次期分の収益をすでに受け取っている</td><td>負債(前受家賃など)</td><td>収益を減らし、負債を増やす</td></tr>
+          <tr><td>未払費用</td><td>当期分の費用がまだ未払いである</td><td>負債(未払利息など)</td><td>費用を増やし、負債を増やす</td></tr>
+          <tr><td>未収収益</td><td>当期分の収益がまだ未収である</td><td>資産(未収利息など)</td><td>収益を増やし、資産を増やす</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 前受収益(受取家賃120,000円のうち次期分30,000円)</span>
+        <span>決算整理前の受取家賃勘定の残高が120,000円(1年分を前受けしていた)であり、このうち次期分が30,000円含まれている場合<br>決算整理仕訳: <strong>(借)受取家賃 30,000 (貸)前受家賃 30,000</strong><br>受取家賃(収益)を30,000円減らし、前受家賃(負債)として次期に繰り延べる。</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 前払費用(前払保険料15,000円)と翌期首の再振替仕訳</span>
+        <span>決算にあたり、保険料の前払分15,000円を計上する場合<br>決算整理仕訳: (借)前払保険料 15,000 (貸)保険料 15,000<br>翌期首の再振替仕訳: <strong>(借)保険料 15,000 (貸)前払保険料 15,000</strong><br>再振替仕訳によって、前払保険料(資産)をいったん取り崩し、翌期の費用(保険料)として計上し直す。</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 未払費用(未払利息9,000円)</span>
+        <span>借入金の利息(年12,000円、後払い)のうち、決算日までに発生しているが未払いの分が9,000円ある場合<br>決算整理仕訳: <strong>(借)支払利息 9,000 (貸)未払利息 9,000</strong><br>未払利息(負債)を計上し、まだ支払っていなくても当期の費用として認識する。</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 未収収益(未収利息6,000円)</span>
+        <span>貸付金の利息のうち、決算日までに発生しているが未収の分が6,000円ある場合<br>決算整理仕訳: <strong>(借)未収利息 6,000 (貸)受取利息 6,000</strong><br>未収利息(資産)を計上し、まだ受け取っていなくても当期の収益として認識する。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>前払・前受(繰延べ)と未払・未収(見越し)の方向を混同しない。前払費用・未収収益は資産、前受収益・未払費用は負債である。また経過勘定は翌期首に必ず再振替仕訳を行い、決算整理仕訳と貸借を逆にして元の費用・収益勘定に振り戻す点を忘れないこと。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>減価償却(定額法・直接法と間接法)</h2>
+      <p>建物や備品などの固定資産は、使用や時の経過によって価値が減少していく。この価値の減少分を、決算にあたって費用として計上する手続きを減価償却と呼ぶ。3級でよく出題されるのは、毎期均等額を費用計上する定額法である。</p>
+      <div class="formula-box">
+        <span class="label">定額法による年間減価償却費</span>
+        <span>(取得原価 − 残存価額) ÷ 耐用年数 = 減価償却費(1年あたり)</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 取得原価600,000円、残存価額0円、耐用年数6年</span>
+        <span>年間減価償却費 = (600,000円 − 0円) ÷ 6年 = <strong>100,000円</strong><br>間接法による仕訳: (借)減価償却費 100,000 (貸)減価償却累計額 100,000</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 取得原価400,000円、残存価額は取得原価の10%、耐用年数8年</span>
+        <span>残存価額 = 400,000円 × 10% = 40,000円<br>年間減価償却費 = (400,000円 − 40,000円) ÷ 8年 = 360,000円 ÷ 8年 = <strong>45,000円</strong></span>
+      </div>
+      <figure class="fig">
+        <svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="30" y="20" width="150" height="50" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="105" y="40" font-size="11" fill="#2f5fe0" text-anchor="middle">備品(取得原価)</text>
+          <text x="105" y="58" font-size="11" fill="#2f5fe0" text-anchor="middle">600,000円</text>
+          <rect x="230" y="20" width="160" height="50" rx="6" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
+          <text x="310" y="40" font-size="11" fill="#d64545" text-anchor="middle">減価償却累計額</text>
+          <text x="310" y="58" font-size="11" fill="#d64545" text-anchor="middle">(控除)100,000円</text>
+          <line x1="180" y1="45" x2="230" y2="45" stroke="#333" stroke-width="2"/>
+          <rect x="90" y="105" width="220" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="200" y="130" font-size="11" fill="#1f9d55" text-anchor="middle">帳簿価額(未償却残高) = 500,000円</text>
+        </svg>
+        <figcaption class="fig-caption">間接法では取得原価(備品)はそのまま残し、減価償却累計額という資産のマイナス勘定を用いて帳簿価額(取得原価−累計額)を表す。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>方法</th><th>仕訳の考え方</th><th>帳簿上の表示</th></tr></thead>
+        <tbody>
+          <tr><td>直接法</td><td>(借)減価償却費 ×× (貸)備品 ××</td><td>固定資産の帳簿価額を直接減額する</td></tr>
+          <tr><td>間接法</td><td>(借)減価償却費 ×× (貸)減価償却累計額 ××</td><td>取得原価はそのまま残し、減価償却累計額を控除して表示する(3級で主に出題される方法)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>残存価額がある場合(「取得原価の10%」など)は、取得原価からその金額を差し引いてから耐用年数で割ることを忘れない。また間接法では減価償却累計額を貸方に計上し、備品などの取得原価そのものは減らさない(直接法のように取得原価を直接減らすわけではない)点に注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>貸倒引当金(差額補充法)</h2>
+      <p>売掛金や受取手形などの金銭債権は、将来相手先が支払不能となり回収できなくなる(貸し倒れる)おそれがある。そこで決算にあたり、将来の貸し倒れに備えてあらかじめ見積もり計上しておく金額が貸倒引当金である。3級では、期末債権残高に一定の設定率を掛けて設定額を求める方法が中心となる。</p>
+      <p>貸倒引当金の設定にあたり、決算整理前にすでに貸倒引当金の残高がある場合、設定額と既存残高との差額だけを追加で繰り入れる方法を差額補充法と呼ぶ。3級で最も頻出する処理方法である。</p>
+      <div class="formula-box">
+        <span class="label">差額補充法による貸倒引当金繰入額</span>
+        <span>(期末債権残高 × 貸倒設定率) − 貸倒引当金の決算整理前残高 = 貸倒引当金繰入額</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 売掛金残高200,000円、設定率2%、既存残高1,000円</span>
+        <span>設定額 = 200,000円 × 2% = 4,000円<br>貸倒引当金繰入額 = 4,000円 − 1,000円 = <strong>3,000円</strong><br>仕訳: (借)貸倒引当金繰入 3,000 (貸)貸倒引当金 3,000</span>
+      </div>
+      <table class="ref-table">
+        <thead><tr><th>項目</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>貸倒引当金</td><td>将来の貸し倒れに備えて見積もり計上する評価性の勘定(貸方に残高を持つ)</td></tr>
+          <tr><td>貸倒引当金繰入</td><td>貸倒引当金を積み増す際に計上する費用の勘定</td></tr>
+          <tr><td>差額補充法</td><td>設定額と決算整理前残高との差額のみを繰入額として計上する方法</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>差額補充法では、設定額(期末債権残高×設定率)をそのまま繰入額としてはならない。必ず決算整理前の貸倒引当金残高を確認し、その差額のみを貸倒引当金繰入として計上する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>売上原価の算定(三分法)</h2>
+      <p>商品売買を仕入・売上・繰越商品の3つの勘定で記帳する方法を三分法と呼ぶ。三分法では、期中の仕入時に仕入勘定へ全額を記帳するため、決算にあたって「実際に販売した商品の原価」である売上原価を別途算定し直す必要がある。</p>
+      <div class="formula-box">
+        <span class="label">売上原価の算定</span>
+        <span>期首商品棚卸高 + 当期商品仕入高 − 期末商品棚卸高 = 売上原価</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 期首商品棚卸高50,000円、当期商品仕入高300,000円、期末商品棚卸高40,000円</span>
+        <span>売上原価 = 50,000円 + 300,000円 − 40,000円 = <strong>310,000円</strong><br>決算整理仕訳①(期首商品棚卸高を仕入に加算): (借)仕入 50,000 (貸)繰越商品 50,000<br>決算整理仕訳②(期末商品棚卸高を仕入から差し引く): (借)繰越商品 40,000 (貸)仕入 40,000</span>
+      </div>
+      <p>この一連の決算整理は「仕入」と「繰越商品」の2つの勘定科目のみを用いて行う点が特徴である。①で前期繰越の商品(期首商品棚卸高)をいったん仕入勘定に戻し、②で当期末に売れ残った商品(期末商品棚卸高)を仕入勘定から繰越商品勘定へ振り替えることで、仕入勘定の残高が最終的に売上原価を示すことになる。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>仕入勘定への振替は「期首棚卸高を仕入に加算(繰越商品→仕入)」「期末棚卸高を仕入から控除(仕入→繰越商品)」の2本の仕訳から成る。どちらも勘定科目は仕入と繰越商品のみであり、売上勘定は登場しない点に注意する(売上と混同しない)。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>現金過不足の整理</h2>
+      <p>現金の実際有高と帳簿残高が一致しない場合、いったん現金過不足という仮勘定で差額を処理する。決算日までに原因が判明した分は本来の勘定に振り替え、それでも原因が判明しない残額は、決算整理で最終的に雑損(費用)または雑益(収益)に振り替える。</p>
+      <div class="example-box">
+        <span class="label">例題: 現金過不足(借方)3,000円の原因が決算日まで判明しなかった場合</span>
+        <span>仕訳: <strong>(借)雑損 3,000 (貸)現金過不足 3,000</strong><br>逆に現金が実際有高の方が多く超過していた場合は、雑益(収益)として計上する。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>現金過不足勘定はあくまで一時的な仮勘定であり、貸借対照表・損益計算書には残せない。決算日を迎えても原因が不明な残高は、不足なら雑損(費用)、超過なら雑益(収益)に必ず振り替えて残高をゼロにする。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-5">
+      <h2><span class="topic-no">6</span>その他の決算整理(貯蔵品・銀行勘定調整表・有価証券・法人税等)</h2>
+      <p>ここでは、出題数は少ないものの決算整理として押さえておくべき論点を横断的にまとめる。</p>
+      <p>通信費として処理した郵便切手や、租税公課として処理した収入印紙のうち、期末に未使用のまま残っているものは、貯蔵品(資産)に振り替えて次期に繰り越す。翌期首には再振替仕訳を行い、もとの費用勘定に振り戻す。</p>
+      <div class="example-box">
+        <span class="label">例題: 未使用の郵便切手2,000円を貯蔵品に振り替える</span>
+        <span>決算整理仕訳: (借)貯蔵品 2,000 (貸)通信費 2,000<br>翌期首の再振替仕訳: <strong>(借)通信費 2,000 (貸)貯蔵品 2,000</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 未使用の収入印紙5,000円の翌期首の再振替仕訳</span>
+        <span>決算整理仕訳: (借)貯蔵品 5,000 (貸)租税公課 5,000<br>翌期首の再振替仕訳: <strong>(借)租税公課 5,000 (貸)貯蔵品 5,000</strong></span>
+      </div>
+      <p>企業の当座預金勘定の残高と、銀行が発行する残高証明書の残高が一致しないことがある。この不一致の原因(未取立小切手・未渡小切手・時間外預入など)を明らかにするために作成する表を銀行勘定調整表と呼ぶ。</p>
+      <p>売買目的で保有する有価証券は、決算日に時価で評価替えする。帳簿価額よりも時価が値上がりしていれば有価証券評価益(収益)、値下がりしていれば有価証券評価損(費用)を計上する。</p>
+      <div class="example-box">
+        <span class="label">例題: 売買目的有価証券(帳簿価額80,000円)の決算日の時価が95,000円の場合</span>
+        <span>評価差額 = 95,000円 − 80,000円 = 15,000円<br>仕訳: <strong>(借)売買目的有価証券 15,000 (貸)有価証券評価益 15,000</strong></span>
+      </div>
+      <p>法人税・住民税及び事業税(法人税等)は、期中に中間申告を行い一部を納付し、決算で年税額が確定した後、中間納付額を差し引いた残額を未払法人税等として計上する。</p>
+      <div class="example-box">
+        <span class="label">例題: 中間申告150,000円を現金納付、決算で年税額320,000円が確定</span>
+        <span>中間申告時の仕訳: (借)仮払法人税等 150,000 (貸)現金 150,000<br>決算時の仕訳: <strong>(借)法人税等 320,000 (貸)仮払法人税等 150,000 (貸)未払法人税等 170,000</strong><br>未払法人税等 = 320,000円 − 150,000円 = 170,000円</span>
+      </div>
+      <table class="ref-table">
+        <thead><tr><th>論点</th><th>要点</th></tr></thead>
+        <tbody>
+          <tr><td>貯蔵品</td><td>未使用の切手・印紙などを費用から資産(貯蔵品)へ振り替え、翌期首に再振替仕訳で戻す</td></tr>
+          <tr><td>銀行勘定調整表</td><td>当座預金勘定の残高と銀行残高証明書の残高の不一致原因を明らかにする表</td></tr>
+          <tr><td>有価証券の評価替え</td><td>売買目的有価証券を時価評価し、差額を評価益(収益)または評価損(費用)として計上する</td></tr>
+          <tr><td>法人税等</td><td>中間納付額は仮払法人税等(資産)、決算確定額との差額は未払法人税等(負債)として計上する</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>有価証券は時価が帳簿価額より「上がれば評価益(収益)」「下がれば評価損(費用)」であり、方向を逆にしない。また貯蔵品は決算整理仕訳と翌期首の再振替仕訳とで、借方・貸方の勘定科目がちょうど逆になる点を押さえておく。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>当期純利益の算定</h2>
+      <p>これまでの決算整理を経て、当期に属する収益・費用がすべて確定する。この収益総額と費用総額の差額として算定されるのが当期純利益であり、一会計期間の経営成績を示す損益計算書上の最終的な数値である。</p>
+      <div class="formula-box">
+        <span class="label">当期純利益の算定</span>
+        <span>収益総額 − 費用総額 = 当期純利益</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 収益総額と費用総額から当期純利益を求める</span>
+        <span>売上高500,000円、受取利息6,000円のとき<br>収益総額 = 500,000円 + 6,000円 = 506,000円<br>売上原価310,000円、給料80,000円、減価償却費45,000円、その他費用20,000円のとき<br>費用総額 = 310,000円 + 80,000円 + 45,000円 + 20,000円 = 455,000円<br>当期純利益 = 506,000円 − 455,000円 = <strong>51,000円</strong></span>
+      </div>
+      <p>決算整理後は、収益・費用の各勘定を損益勘定に振り替え(決算振替仕訳)、その差額として計算された当期純利益を繰越利益剰余金(資本)に振り替える。これにより、当期純利益は貸借対照表上の純資産(資本)の増加としても反映される。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>当期純利益は「収益総額−費用総額」であり、「資産総額−負債総額」(これは資本の額を表す)とは別の計算である。両者は最終的に一致する関係にあるが、算定の式そのものを混同しないこと。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../boki3/shisanhyo.html"><small>‹ 前のジャンル</small>試算表</a>
+      <a class="next" href="../boki3/zaimu-shohyo.html"><small>次のジャンル ›</small>財務諸表</a>
+    </nav>
+  </main>
+</body>
+</html>
