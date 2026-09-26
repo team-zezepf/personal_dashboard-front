@@ -1,0 +1,51 @@
+<div class="chart-wrap">
+  <svg
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height"
+    [attr.width]="width()"
+    [attr.height]="height"
+    role="img"
+    [attr.aria-label]="ariaLabel()">
+    @for (t of yTicks(); track t.value) {
+      <line class="grid" [attr.x1]="pad.left" [attr.x2]="width() - pad.right" [attr.y1]="t.y" [attr.y2]="t.y" />
+      <text class="axis" [attr.x]="pad.left - 8" [attr.y]="t.y + 4" text-anchor="end">{{ t.value }}%</text>
+    }
+    @if (passLineY() !== null) {
+      <line class="pass-line" [attr.x1]="pad.left" [attr.x2]="width() - pad.right" [attr.y1]="passLineY()" [attr.y2]="passLineY()" />
+    }
+    @for (it of geometry().items; track it.index) {
+      @if (it.showLabel) {
+        <text class="axis" [attr.x]="it.x" [attr.y]="height - 10" text-anchor="middle">{{ it.label }}</text>
+      }
+    }
+    @for (seg of geometry().segments; track $index) {
+      <polyline class="series" [attr.points]="seg" />
+    }
+    @for (it of geometry().items; track it.index) {
+      @if (it.y !== null) {
+        <circle class="point" [class.active]="hovered() === it.index" [attr.cx]="it.x" [attr.cy]="it.y" r="4.5" />
+      }
+    }
+    @if (geometry().last; as last) {
+      <text class="last-label" [attr.x]="last.x" [attr.y]="(last.y ?? 0) - 12" text-anchor="middle">{{ round(last.value ?? 0) }}%</text>
+    }
+    @for (it of geometry().items; track it.index) {
+      @if (it.y !== null) {
+        <rect
+          class="hit"
+          [attr.x]="it.x - geometry().hitWidth / 2"
+          [attr.y]="pad.top"
+          [attr.width]="geometry().hitWidth"
+          [attr.height]="height - pad.top - pad.bottom"
+          (mouseenter)="hovered.set(it.index)"
+          (mouseleave)="hovered.set(null)" />
+      }
+    }
+  </svg>
+  @if (tooltip(); as tip) {
+    <div class="tooltip" [style.left.%]="tip.left" [style.top.px]="tip.top">
+      <strong>{{ tip.value }}%</strong>
+      @if (tip.detail) {<span class="detail">（{{ tip.detail }}）</span>}
+      <br>{{ tip.label }}
+    </div>
+  }
+</div>

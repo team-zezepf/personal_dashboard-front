@@ -39,6 +39,35 @@ export class ExamAchievementsService {
     );
   }
 
+  // 模擬試験の全ての記録(不合格の回を含む)を、問題ごとの記録とともに返す。
+  // 実績ページの科目ごとの記録・推移グラフ・分野別の正答率と、資格学習の画面の直近の記録に使う。
+  getMockExamRecords(): Observable<ExamRecord[]> {
+    const query = `
+      query GetMockExamRecords {
+        examRecords(mode: "MOCK_EXAM") {
+          id
+          userId
+          examType
+          mode
+          date
+          correctCount
+          totalCount
+          passed
+          answers {
+            questionId
+            selected
+            correct
+          }
+          createdAt
+        }
+      }
+    `;
+
+    return this.graphql.query<{ examRecords: ExamRecord[] }>(query).pipe(
+      map((res) => res.examRecords)
+    );
+  }
+
   // mode省略時は練習(PRACTICE)として記録する(既存の呼び出し元との後方互換)。
   // 模擬試験は不合格の回も記録するため、合否(passed)と問題ごとの記録(answers)も渡す。
   // 省略した場合は合格・問題の記録なしとして保存される。
