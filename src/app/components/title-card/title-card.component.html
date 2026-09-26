@@ -3,12 +3,14 @@
     <p class="error">{{ errorMessage() }}</p>
   } @else if (status(); as s) {
     <div class="title-hero">
-      <div class="title-badge" [class.none]="!s.current">
-        <span class="rank">Lv.{{ s.current?.level ?? 0 }}</span>
-        @for (line of s.current?.badgeLines ?? ['称号なし']; track $index) {
-          <span class="badge-line">{{ line }}</span>
-        }
-      </div>
+      @if (s.current; as current) {
+        <img class="title-badge-image" [src]="current.badgeImage" [alt]="current.name + 'の称号バッジ'" width="120" height="127">
+      } @else {
+        <div class="title-badge none">
+          <span class="rank">Lv.0</span>
+          称号なし
+        </div>
+      }
       <div class="title-now">
         <div class="label">現在の称号</div>
         <div class="name">{{ s.current?.name ?? 'まだ称号はありません' }}</div>
