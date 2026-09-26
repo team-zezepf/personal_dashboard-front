@@ -35,6 +35,16 @@ export class NotificationService {
     }
   }
 
+  // 指定したメッセージを表示中の場合だけ消す。取得失敗のエラーを、再取得に成功した時点で消す用途を想定しており、
+  // その間に表示された別の通知(保存完了など)は巻き添えで消さないようメッセージが一致する場合に限定している
+  dismiss(message: string): void {
+    if (this.status() === 'idle' || this.message() !== message) {
+      return;
+    }
+    this.clearAutoIdle();
+    this.status.set('idle');
+  }
+
   private clearAutoIdle(): void {
     if (this.autoIdleTimer !== null) {
       clearTimeout(this.autoIdleTimer);
