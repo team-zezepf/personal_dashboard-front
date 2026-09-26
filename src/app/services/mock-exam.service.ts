@@ -8,7 +8,6 @@ import { catchError, of } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
 export const QUESTIONS_PER_ROUND = 2;
-export const POINTS_PER_CORRECT_ANSWER = 10;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -50,7 +49,7 @@ export class MockExamService {
   readonly remainingSeconds = signal(0);
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
-  readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean } | null>(null);
+  readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean; pointsEarned: number } | null>(null);
 
   readonly totalRounds = computed(() => Math.ceil(this.sessionQuestions().length / QUESTIONS_PER_ROUND) || 1);
   readonly roundStartIndex = computed(() => this.round() * QUESTIONS_PER_ROUND);
@@ -182,12 +181,13 @@ export class MockExamService {
     const totalCount = questions.length;
     const passBorder = Math.ceil(totalCount * subject.mockExam.passRatio);
     const passed = correctCount >= passBorder;
+    const pointsEarned = correctCount * subject.pointsPerCorrectAnswer;
 
-    this.result.set({ correctCount, totalCount, passBorder, passed });
+    this.result.set({ correctCount, totalCount, passBorder, passed, pointsEarned });
     this.view.set('result');
 
-    if (correctCount > 0) {
-      this.accountService.addPoints(correctCount * POINTS_PER_CORRECT_ANSWER).subscribe();
+    if (pointsEarned > 0) {
+      this.accountService.addPoints(pointsEarned).subscribe();
     }
 
     // 実績カレンダーには合格した受験のみ記録する(不合格の受験は記録を残さない)

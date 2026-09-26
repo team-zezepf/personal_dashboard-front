@@ -53,7 +53,7 @@ export class ExamStudyPageComponent {
   start(): void {
     if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession(this.subject.key, this.subject.practice);
+    this.examStudy.startSession(this.subject);
   }
 
   isSelected(question: ExamQuestion, choiceIndex: number): boolean {
@@ -85,7 +85,7 @@ export class ExamStudyPageComponent {
   retry(): void {
     if (!this.subject) return;
     this.selections.set(new Map());
-    this.examStudy.startSession(this.subject.key, this.subject.practice);
+    this.examStudy.startSession(this.subject);
   }
 
   globalIndex(indexInRound: number): number {

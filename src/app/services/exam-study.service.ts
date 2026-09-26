@@ -3,12 +3,10 @@ import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService, EXAM_ACHIEVEMENT_RATIO } from './exam-achievements.service';
 import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
-import { ExamSubjectPracticeConfig } from '../config/exam-subjects';
+import { ExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
 export type ExamStudyView = 'start' | 'quiz' | 'review' | 'result';
-
-export const POINTS_PER_CORRECT_ANSWER = 10;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -43,8 +41,9 @@ export class ExamStudyService {
   // 現在学習中の科目(examType)。startSession()を呼ぶたびに更新される。
   readonly examType = signal<string | null>(null);
 
-  // 何問ごとに正誤・解説のページを挟むか。科目ごとの設定をstartSession()で受け取る。
+  // 何問ごとに正誤・解説のページを挟むか、1問正解ごとのポイント。科目ごとの設定をstartSession()で受け取る。
   readonly questionsPerRound = signal(2);
+  private readonly pointsPerCorrectAnswer = signal(10);
 
   readonly view = signal<ExamStudyView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
@@ -76,9 +75,12 @@ export class ExamStudyService {
 
   readonly correctCount = computed(() => this.results().filter(Boolean).length);
 
-  startSession(examType: string, practice: ExamSubjectPracticeConfig): void {
+  startSession(subject: ExamSubject): void {
+    const examType = subject.key;
+    const practice = subject.practice;
     this.examType.set(examType);
     this.questionsPerRound.set(practice.questionsPerRound);
+    this.pointsPerCorrectAnswer.set(subject.pointsPerCorrectAnswer);
     this.isLoading.set(true);
     this.errorMessage.set('');
 
@@ -154,7 +156,7 @@ export class ExamStudyService {
   }
 
   // 正解数にかかわらず、正解した問題数だけポイントを付与する(実績記録のしきい値とは無関係)。
-  readonly pointsEarned = computed(() => this.correctCount() * POINTS_PER_CORRECT_ANSWER);
+  readonly pointsEarned = computed(() => this.correctCount() * this.pointsPerCorrectAnswer());
 
   private awardPoints(): void {
     const amount = this.pointsEarned();
