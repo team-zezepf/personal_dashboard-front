@@ -1,0 +1,120 @@
+<section class="card">
+  <h2 class="card-title">科目ごとの記録</h2>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  } @else if (isLoading()) {
+    <p class="hint">読み込み中...</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="text">科目</th>
+            <th>受験</th>
+            <th>合格</th>
+            <th>合格率</th>
+            <th>最高得点</th>
+            <th>直近の得点</th>
+            <th>直近{{ recentCount }}回平均</th>
+            <th><span class="visually-hidden">詳細</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.subject.key) {
+            <tr>
+              <td class="text">{{ row.subject.name }}</td>
+              <td>{{ row.summary.attempts }}回</td>
+              <td>{{ row.summary.attempts > 0 ? row.summary.passes + '回' : '—' }}</td>
+              <td>{{ round(row.summary.passRate) }}</td>
+              <td>{{ percent(row.summary.best) }}</td>
+              <td>{{ percent(row.summary.latest) }}</td>
+              <td>
+                @if (row.summary.recentAverage !== null) {
+                  {{ round(row.summary.recentAverage) }}
+                } @else if (row.summary.attempts > 0) {
+                  <span class="muted">受験 {{ row.summary.attempts }} / {{ recentCount }}回</span>
+                } @else {
+                  —
+                }
+              </td>
+              <td>
+                <button type="button" class="btn-detail" [disabled]="row.summary.attempts === 0" (click)="openDetail(row.subject)">詳細</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">不合格の回も含めた、全ての受験の記録です（記録を始める前の不合格の回は含まれません）。</p>
+  }
+</section>
+
+<dialog #detailDialog class="detail-dialog" aria-labelledby="mock-detail-title" (click)="onDialogClick($event)">
+  @if (selectedSubject(); as subject) {
+    <div class="modal-head">
+      <h3 id="mock-detail-title">{{ subject.name }} の詳細</h3>
+      <button type="button" class="modal-close" aria-label="閉じる" (click)="closeDetail()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="chart-head">
+        <p class="section-title">正答率の推移 <span class="sub">直近{{ recentCount }}回</span></p>
+        @if (selectedGenre() === allGenres) {
+          <span class="legend-key">
+            <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" /></svg>
+            合格ライン {{ subject.mockExam.passRatio * 100 }}%
+          </span>
+        }
+        <select aria-label="表示する分野" [value]="selectedGenre()" (change)="selectGenre($any($event.target).value)">
+          @for (g of genreOptions(); track g) {
+            <option [value]="g" [selected]="g === selectedGenre()">{{ g }}</option>
+          }
+        </select>
+      </div>
+
+      @if (subjectAttempts().length > 0) {
+        <app-trend-chart
+          [points]="trendPoints()"
+          [passLine]="selectedGenre() === allGenres ? subject.mockExam.passRatio * 100 : null"
+          [ariaLabel]="subject.name + '（' + selectedGenre() + '）の直近の正答率の推移'" />
+      }
+
+      @if (trendStats(); as stats) {
+        <div class="stat-row">
+          @if (selectedGenre() === allGenres) {
+            <span>直近{{ stats.total }}回平均 <b>{{ stats.average }}%</b></span>
+            @if (selectedSummary(); as s) {
+              <span>合格率 <b>{{ round(s.passRate) }}</b>（{{ s.passes }} / {{ s.attempts }}回）</span>
+            }
+            <span>最高 <b>{{ stats.best }}%</b></span>
+          } @else {
+            <span>この分野の平均 <b>{{ stats.average }}%</b></span>
+            <span>出題された回 <b>{{ stats.covered }}</b> / {{ stats.total }}回</span>
+          }
+        </div>
+      } @else if (selectedGenre() !== allGenres) {
+        <p class="hint">直近{{ recentCount }}回に、この分野の問題の記録がありません。</p>
+      }
+
+      <p class="section-title">分野別の正答率 <span class="sub">直近{{ recentCount }}回の全ての解答から集計</span></p>
+      @if (isQuestionsLoading()) {
+        <p class="hint">読み込み中...</p>
+      } @else if (genres().length === 0) {
+        <p class="hint">問題ごとの記録がまだありません。これから受験した回から集計されます。</p>
+      } @else {
+        <ul class="genre-list">
+          @for (g of genres(); track g.genre) {
+            <li>
+              <button type="button" class="genre-row" [class.active]="g.genre === selectedGenre()" [title]="genreTitle(g)" (click)="selectGenre(g.genre)">
+                <span class="genre-name">{{ g.genre }}@if (g.isWeak) {<span class="weak-tag">苦手</span>}</span>
+                <span class="genre-bar"><span class="fill" [class.weak]="g.isWeak" [class.few]="g.isFew" [style.width.%]="g.rate"></span></span>
+                <span class="genre-val" [class.muted]="g.isFew">{{ round(g.rate) }} <small>{{ g.correct }}/{{ g.total }}</small></span>
+              </button>
+            </li>
+          }
+        </ul>
+        <p class="hint">正答率が{{ weakRate }}%未満の分野に「苦手」を付けています。解答数が{{ minAnswers }}問未満の分野は参考値です（グレー）。分野を押すと、その分野の推移を表示します。</p>
+      }
+    </div>
+  }
+</dialog>

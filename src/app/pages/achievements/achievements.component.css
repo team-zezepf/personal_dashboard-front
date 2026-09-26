@@ -3,7 +3,8 @@
 }
 
 .page {
-  max-width: 640px;
+  /* 模擬試験タブの「科目ごとの記録」の表(8列)が収まるよう、他の画面より広くしている */
+  max-width: 760px;
   margin: 0 auto;
   padding: 24px 16px 64px;
 }

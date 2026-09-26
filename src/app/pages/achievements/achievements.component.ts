@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../../components/header/header.component';
+import { MockExamSummaryComponent } from '../../components/mock-exam-summary/mock-exam-summary.component';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
 import { ExamRecord, ExamRecordMode } from '../../models/exam-record.models';
 import { catchError, of } from 'rxjs';
@@ -24,7 +25,7 @@ function dateToString(d: Date): string {
 @Component({
   selector: 'app-achievements-page',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, HeaderComponent, MockExamSummaryComponent],
   templateUrl: './achievements.component.html',
   styleUrl: './achievements.component.css'
 })
