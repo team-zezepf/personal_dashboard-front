@@ -10,7 +10,7 @@
         <h1 class="intro-title">{{ subject.name }} 模擬試験</h1>
         <ul class="intro-list">
           <li>制限時間: {{ subject.mockExam.durationMinutes }}分</li>
-          <li>出題数: {{ subject.mockExam.questionCount }}問(2問ずつ表示されます)</li>
+          <li>出題数: {{ subject.mockExam.questionCount }}問({{ subject.mockExam.questionsPerPage }}問ずつ表示されます)</li>
           <li>合格ボーダー: 正解数が全体の{{ subject.mockExam.passRatio * 100 }}%以上</li>
           <li>正誤は終了後にまとめて確認できます(回答中は表示されません)</li>
           <li>残り時間が0になると、自動的に終了して採点されます</li>
@@ -29,7 +29,13 @@
     @if (mockExam.view() === 'quiz') {
       <div class="quiz-topbar">
         <div class="quiz-info">
-          <span class="quiz-round-label">第 {{ globalIndex(0) + 1 }}〜{{ globalIndex(mockExam.roundQuestions().length - 1) + 1 }} 問 / 全 {{ mockExam.sessionQuestions().length }} 問</span>
+          <span class="quiz-round-label">
+            @if (mockExam.roundQuestions().length > 1) {
+              第 {{ globalIndex(0) + 1 }}〜{{ globalIndex(mockExam.roundQuestions().length - 1) + 1 }} 問 / 全 {{ mockExam.sessionQuestions().length }} 問
+            } @else {
+              第 {{ globalIndex(0) + 1 }} 問 / 全 {{ mockExam.sessionQuestions().length }} 問
+            }
+          </span>
           <span class="quiz-answered-label">回答済み: {{ mockExam.answeredCount() }} / {{ mockExam.sessionQuestions().length }}</span>
         </div>
         <div class="timer-ring" [class.warning]="timerLevel() === 'warning'" [class.danger]="timerLevel() === 'danger'">
@@ -55,6 +61,9 @@
                 <div class="question-image" [innerHTML]="trustedImage(q.image)"></div>
               }
               <p class="question-text">{{ q.question }}</p>
+              @if (q.code) {
+                <app-code-block [code]="q.code"></app-code-block>
+              }
               <ul class="choice-list">
                 @for (choice of q.choices; track $index; let ci = $index) {
                   <li class="choice-item" [class.selected]="mockExam.isSelected(globalIndex(i), ci)" (click)="mockExam.selectAnswer(globalIndex(i), ci)">
@@ -87,7 +96,7 @@
                 type="button"
                 class="q-cell"
                 [class.answered]="isAnswered(i)"
-                [class.current]="mockExam.roundStartIndex() <= i && i < mockExam.roundStartIndex() + 2"
+                [class.current]="isInCurrentRound(i)"
                 (click)="mockExam.goToRound(roundOf(i))"
               >{{ i + 1 }}</button>
             }
@@ -117,11 +126,14 @@
             {{ mockExam.isCorrect(q, mockExam.answers()[i]) ? '○ 正解' : '✕ 不正解' }}
           </div>
           <p class="review-question-text">{{ q.question }}</p>
+          @if (q.code) {
+            <app-code-block [code]="q.code"></app-code-block>
+          }
           <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, mockExam.answers()[i]) }}</p>
           <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
           <div class="explanation-box">
             <span class="label">解説</span>
-            {{ q.explanation }}
+            <p class="explanation-text">{{ q.explanation }}</p>
           </div>
         </div>
       }

@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
+import { CodeBlockComponent } from '../../components/code-block/code-block.component';
 import { MockExamService } from '../../services/mock-exam.service';
 import { findExamSubject, hasMockExam } from '../../config/exam-subjects';
 
 @Component({
   selector: 'app-mock-exam-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent],
   templateUrl: './mock-exam.component.html',
   styleUrl: './mock-exam.component.css'
 })
@@ -78,7 +79,11 @@ export class MockExamPageComponent implements OnDestroy {
   }
 
   roundOf(globalIndex: number): number {
-    return Math.floor(globalIndex / 2);
+    return Math.floor(globalIndex / this.mockExam.questionsPerPage());
+  }
+
+  isInCurrentRound(globalIndex: number): boolean {
+    return this.roundOf(globalIndex) === this.mockExam.round();
   }
 
   openAbandonModal(): void {

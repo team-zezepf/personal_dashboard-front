@@ -7,7 +7,6 @@ import { MockExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
-export const QUESTIONS_PER_ROUND = 2;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -51,11 +50,13 @@ export class MockExamService {
 
   readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean; pointsEarned: number } | null>(null);
 
-  readonly totalRounds = computed(() => Math.ceil(this.sessionQuestions().length / QUESTIONS_PER_ROUND) || 1);
-  readonly roundStartIndex = computed(() => this.round() * QUESTIONS_PER_ROUND);
+  // 1ページに表示する問題数(科目ごとの設定)
+  readonly questionsPerPage = computed(() => this.subject()?.mockExam.questionsPerPage ?? 2);
+  readonly totalRounds = computed(() => Math.ceil(this.sessionQuestions().length / this.questionsPerPage()) || 1);
+  readonly roundStartIndex = computed(() => this.round() * this.questionsPerPage());
   readonly roundQuestions = computed(() => {
     const start = this.roundStartIndex();
-    return this.sessionQuestions().slice(start, start + QUESTIONS_PER_ROUND);
+    return this.sessionQuestions().slice(start, start + this.questionsPerPage());
   });
   readonly answeredCount = computed(() => this.answers().filter((a) => a && a.length > 0).length);
 
@@ -90,6 +91,7 @@ export class MockExamService {
           correct
           explanation
           image
+          code
         }
       }
     `;
