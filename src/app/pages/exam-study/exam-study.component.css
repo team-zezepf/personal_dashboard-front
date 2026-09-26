@@ -240,6 +240,11 @@
   padding: 12px 14px;
   font-size: 0.92rem;
 }
+/* 解説中の改行(選択肢ごとの説明やトレースの手順など)をそのまま表示する */
+.explanation-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
 .explanation-box .label {
   font-weight: 700;
   color: var(--primary-dark);

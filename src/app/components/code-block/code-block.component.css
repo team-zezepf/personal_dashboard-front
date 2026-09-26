@@ -1,3 +1,13 @@
+/*
+ * 擬似言語の手続・関数の宣言に使う「○」は、Consolasなどの欧文等幅フォントでは小文字のoのように小さく
+ * 表示されてしまう。この記号だけ日本語フォントで表示されるよう、unicode-rangeで対象を絞ったフォントを先頭に置く。
+ */
+@font-face {
+  font-family: "PseudoCodeSymbol";
+  src: local("BIZ UDGothic"), local("MS Gothic"), local("Yu Gothic"), local("Hiragino Sans");
+  unicode-range: U+25CB;
+}
+
 :host {
   display: block;
 }
@@ -9,7 +19,7 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow-x: auto;
-  font-family: Consolas, "BIZ UDGothic", "Osaka-Mono", "MS Gothic", monospace;
+  font-family: "PseudoCodeSymbol", Consolas, "BIZ UDGothic", "Osaka-Mono", "MS Gothic", monospace;
   font-size: 0.9rem;
   line-height: 1.75;
 }
