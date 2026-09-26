@@ -1,155 +1,104 @@
-<app-header [pageTitle]="(content()?.genreName ?? 'ジャンル') + 'のまとめ'"></app-header>
+<app-header [pageTitle]="(genre()?.genreName ?? 'ジャンル') + 'のまとめ'"></app-header>
 
 <main class="page">
-  @if (!subject() || !content()) {
-    <p class="hint">ページが見つかりません。</p>
-  } @else if (subject(); as subject) {
-  @if (content(); as content) {
-    <div class="breadcrumb">
-      <a routerLink="/study">資格学習</a> › {{ subject.name }} › {{ content.genreName }}(まとめ)
-    </div>
-
-    <div class="page-layout">
-      <aside class="sidebar">
-        <nav class="sidebar-card" aria-label="ジャンルと目次">
-          <div class="sidebar-label">ジャンル・目次</div>
-          @for (group of categoryGroups(); track group.category) {
-            <div class="sb-cat">{{ group.category }}</div>
-            @for (genre of group.genres; track genre.genreKey) {
-              @if (genre.genreKey === content.genreKey) {
-                <a class="sb-genre open" [routerLink]="[subject.path, 'genre', genre.genreKey]" aria-current="page">
-                  <span>{{ genre.genreName }}</span><span class="chev" aria-hidden="true">›</span>
-                </a>
-                <div class="sidebar-nav">
-                  @for (topic of content.topics; track topic.title; let i = $index) {
-                    <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">
-                      <span class="sidebar-no">{{ i + 1 }}</span>{{ topic.title }}
-                    </a>
-                  }
-                </div>
-              } @else {
-                <a class="sb-genre" [routerLink]="[subject.path, 'genre', genre.genreKey]">
-                  <span>{{ genre.genreName }}</span><span class="chev" aria-hidden="true">›</span>
-                </a>
-              }
-            }
-          }
-        </nav>
-      </aside>
-
-      <!-- スマホ幅: ジャンルはプルダウン、見出しは横スクロールのボタン -->
-      <div class="sp-nav">
-        <label for="sp-genre-select">ジャンル</label>
-        <select id="sp-genre-select" [value]="content.genreKey" (change)="selectGenre($any($event.target).value)">
-          @for (group of categoryGroups(); track group.category) {
-            <optgroup [label]="group.category">
-              @for (genre of group.genres; track genre.genreKey) {
-                <option [value]="genre.genreKey" [selected]="genre.genreKey === content.genreKey">{{ genre.genreName }}</option>
-              }
-            </optgroup>
-          }
-        </select>
-        <div class="sp-chips">
-          @for (topic of content.topics; track topic.title; let i = $index) {
-            <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">{{ i + 1 }}. {{ topic.title }}</a>
-          }
-        </div>
+  @if (subject(); as subject) {
+    @if (genre(); as genre) {
+      <div class="breadcrumb">
+        <a routerLink="/study">資格学習</a> › {{ subject.name }} › {{ genre.genreName }}(まとめ)
       </div>
 
-      <div class="main-content">
-        <div class="page-header">
-          <h1>{{ content.genreName }}のまとめ</h1>
-          <p>{{ content.description }}</p>
-        </div>
-
-        @for (topic of content.topics; track topic.title; let i = $index) {
-          <section class="topic" [id]="'topic-' + i" [attr.data-topic-index]="i">
-            <h2><span class="topic-no">{{ i + 1 }}</span>{{ topic.title }}</h2>
-
-            @for (block of topic.blocks; track $index) {
-              @switch (blockType(block)) {
-                @case ('paragraph') {
-                  <p [innerHTML]="trustedHtml($any(block).html)"></p>
-                }
-                @case ('table') {
-                  <table class="ref-table">
-                    <thead>
-                      <tr>
-                        @for (h of $any(block).headers; track h) {
-                          <th>{{ h }}</th>
-                        }
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of $any(block).rows; track $index) {
-                        <tr>
-                          @for (cell of row; track $index) {
-                            <td>{{ cell }}</td>
-                          }
-                        </tr>
+      <div class="page-layout">
+        <aside class="sidebar">
+          <nav class="sidebar-card" aria-label="ジャンルと目次">
+            <div class="sidebar-label">ジャンル・目次</div>
+            @for (group of categoryGroups(); track group.category) {
+              <div class="sb-cat">{{ group.category }}</div>
+              @for (g of group.genres; track g.genreKey) {
+                @if (g.genreKey === genre.genreKey) {
+                  <a class="sb-genre open" [routerLink]="[subject.path, 'genre', g.genreKey]" aria-current="page">
+                    <span>{{ g.genreName }}</span><span class="chev" aria-hidden="true">›</span>
+                  </a>
+                  @if (doc(); as doc) {
+                    <div class="sidebar-nav">
+                      @for (title of doc.topicTitles; track $index; let i = $index) {
+                        <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">
+                          <span class="sidebar-no">{{ i + 1 }}</span>{{ title }}
+                        </a>
                       }
-                    </tbody>
-                  </table>
-                }
-                @case ('example') {
-                  <div class="example-box">
-                    <span class="label">{{ $any(block).label }}</span>
-                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
-                  </div>
-                }
-                @case ('pitfall') {
-                  <div class="pitfall-box">
-                    <span class="label">{{ $any(block).label }}</span>
-                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
-                  </div>
-                }
-                @case ('formula') {
-                  <div class="formula-box">
-                    <span class="label">{{ $any(block).label }}</span>
-                    <span [innerHTML]="trustedHtml($any(block).html)"></span>
-                  </div>
-                }
-                @case ('figure') {
-                  <div class="fig">
-                    <div [innerHTML]="trustedHtml($any(block).svg)"></div>
-                    @if ($any(block).caption) {
-                      <div class="fig-caption">{{ $any(block).caption }}</div>
-                    }
-                  </div>
-                }
-                @case ('iconGrid') {
-                  <div class="gate-grid">
-                    @for (item of $any(block).items; track item.label) {
-                      <div class="gate-card">
-                        <div [innerHTML]="trustedHtml(item.svg)"></div>
-                        <div class="gate-name">{{ item.label }}: {{ item.desc }}</div>
-                      </div>
-                    }
-                  </div>
+                    </div>
+                  }
+                } @else {
+                  <a class="sb-genre" [routerLink]="[subject.path, 'genre', g.genreKey]">
+                    <span>{{ g.genreName }}</span><span class="chev" aria-hidden="true">›</span>
+                  </a>
                 }
               }
             }
-          </section>
-        }
+          </nav>
+        </aside>
 
-        <nav class="genre-nav" aria-label="前後のジャンル">
-          @if (adjacent().prev; as prev) {
-            <a class="prev" [routerLink]="[subject.path, 'genre', prev.genreKey]"><small>‹ 前のジャンル</small>{{ prev.genreName }}</a>
-          } @else {
-            <span class="placeholder"></span>
+        <!-- スマホ幅: ジャンルはプルダウン、見出しは横スクロールのボタン -->
+        <div class="sp-nav">
+          <label for="sp-genre-select">ジャンル</label>
+          <select id="sp-genre-select" [value]="genre.genreKey" (change)="selectGenre($any($event.target).value)">
+            @for (group of categoryGroups(); track group.category) {
+              <optgroup [label]="group.category">
+                @for (g of group.genres; track g.genreKey) {
+                  <option [value]="g.genreKey" [selected]="g.genreKey === genre.genreKey">{{ g.genreName }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+          @if (doc(); as doc) {
+            <div class="sp-chips">
+              @for (title of doc.topicTitles; track $index; let i = $index) {
+                <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">{{ i + 1 }}. {{ title }}</a>
+              }
+            </div>
           }
-          @if (adjacent().next; as next) {
-            <a class="next" [routerLink]="[subject.path, 'genre', next.genreKey]"><small>次のジャンル ›</small>{{ next.genreName }}</a>
-          } @else {
-            <span class="placeholder"></span>
-          }
-        </nav>
+        </div>
 
-        <div class="cta-footer">
-          <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+        <div class="main-content">
+          <div class="page-header">
+            <h1>{{ genre.genreName }}のまとめ</h1>
+            @if (doc(); as doc) {
+              <p>{{ doc.description }}</p>
+            }
+          </div>
+
+          @switch (docState().status) {
+            @case ('loading') {
+              <p class="hint">読み込み中...</p>
+            }
+            @case ('error') {
+              <p class="hint error">まとめの読み込みに失敗しました。時間をおいて再度お試しください。</p>
+            }
+            @case ('loaded') {
+              <!-- 本文は docs/ の静的HTML(共通のスタイルは docs/assets/study.css) -->
+              <div class="genre-article" [innerHTML]="doc()!.html"></div>
+            }
+          }
+
+          <nav class="genre-nav" aria-label="前後のジャンル">
+            @if (adjacent().prev; as prev) {
+              <a class="prev" [routerLink]="[subject.path, 'genre', prev.genreKey]"><small>‹ 前のジャンル</small>{{ prev.genreName }}</a>
+            } @else {
+              <span class="placeholder"></span>
+            }
+            @if (adjacent().next; as next) {
+              <a class="next" [routerLink]="[subject.path, 'genre', next.genreKey]"><small>次のジャンル ›</small>{{ next.genreName }}</a>
+            } @else {
+              <span class="placeholder"></span>
+            }
+          </nav>
+
+          <div class="cta-footer">
+            <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+          </div>
         </div>
       </div>
-    </div>
-  }
+    }
+  } @else {
+    <p class="hint">ページが見つかりません。</p>
   }
 </main>

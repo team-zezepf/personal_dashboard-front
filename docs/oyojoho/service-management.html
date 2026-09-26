@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サービスマネジメントのまとめ | 応用情報技術者試験</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 応用情報技術者試験 › サービスマネジメント</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="oyojoho" data-genre-key="service-management" data-category="マネジメント系">
+    <header class="genre-header">
+      <h1>サービスマネジメントのまとめ</h1>
+      <p class="genre-description">ITILの各プロセス(インシデント管理・問題管理・変更管理・キャパシティ管理)を、SLA/OLA/UCの関係や変更諮問委員会(CAB)による統制の仕組みまで踏み込んで整理するとともに、独立した第三者の立場で行うシステム監査についても解説しています。基本情報より一段深い「実務での判断」を意識して読み進めましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>ITILの全体像とSLA・OLA・UCの関係</h2>
+      <p>ITIL(Information Technology Infrastructure Library)は、ITサービスマネジメントにおけるベストプラクティス(成功事例)を体系的にまとめたフレームワークであり、インシデント管理・問題管理・変更管理・キャパシティ管理などのプロセスが定義されている。応用情報では、ITILを他のマネジメント系フレームワークと混同させる出題があるため、それぞれの主眼を区別できるようにしておく必要がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>名称</th><th>主眼</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>ITIL</td><td>ITサービスマネジメント</td><td>ITサービスの企画・設計・移行・運用・改善に関するベストプラクティスをまとめたフレームワーク</td></tr>
+          <tr><td>PMBOK</td><td>プロジェクトマネジメント</td><td>個別プロジェクトを計画・実行・統制するための知識体系</td></tr>
+          <tr><td>COBIT</td><td>ITガバナンス・統制</td><td>経営目標達成の観点からITの統制目標を定義し、成熟度を評価するためのフレームワーク</td></tr>
+          <tr><td>CMMI</td><td>プロセス成熟度</td><td>ソフトウェア開発・保守プロセスの成熟度を段階的に評価するモデル</td></tr>
+        </tbody>
+      </table>
+      <p>サービス提供者と利用者との間で、提供するサービスの品質・範囲・責任分担などの目標値について合意した文書をSLA(Service Level Agreement, サービスレベル合意書)という。SLAは可用性や応答時間などの目標値を明文化し、サービス品質を測る基準として機能する。応用情報では、SLAを支える2つの関連契約であるOLAとUCの区別まで問われることがある。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>合意の当事者</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>SLA(サービスレベル合意書)</td><td>サービス提供者 ⇔ 利用者(顧客)</td><td>サービス全体として提供者が利用者に約束する品質目標を定めた文書</td></tr>
+          <tr><td>OLA(運用レベル合意書)</td><td>提供者内部の部門 ⇔ 部門</td><td>SLAの目標値を達成するために、提供者組織内の各部門間で取り決める内部合意</td></tr>
+          <tr><td>UC(引き受け契約)</td><td>提供者 ⇔ 外部の供給者</td><td>SLAの目標値を達成するために、外部のサプライヤ(委託先)と取り交わす契約</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>SLAは「提供者と利用者(顧客)の間」の合意であるのに対し、OLAは「提供者組織の内部」の合意、UCは「提供者と外部供給者の間」の契約である。SLAで約束した目標値を、組織内部ではOLAで、外部委託先とはUCで裏付けているという入れ子構造を理解しておくと、応用的な出題にも対応しやすい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>インシデント管理と問題管理(既知の誤り・KEDB)</h2>
+      <p>サービスの停止など、通常のサービス運用を阻害する未計画の事象をインシデントという。インシデント管理は、根本原因の追求よりもまず迅速なサービス復旧を最優先とするプロセスであり、暫定的な回避策(ワークアラウンド)を用いてでも早期復旧を図る。一方、同種のインシデントが繰り返し発生する場合、その根本原因(問題)を調査・特定し、恒久対策や暫定的な回避策を「既知の誤り(Known Error)」として既知の誤りデータベース(KEDB)に記録・管理するのが問題管理の役割である。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 170" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="0" y="15" width="90" height="45" rx="6" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
+          <text x="45" y="35" font-size="11" fill="#d64545" text-anchor="middle" font-weight="bold">未計画の事象</text>
+          <text x="45" y="49" font-size="11" fill="#d64545" text-anchor="middle" font-weight="bold">(インシデント)</text>
+
+          <line x1="90" y1="37" x2="115" y2="37" stroke="#333" stroke-width="1.5"/>
+
+          <rect x="115" y="15" width="130" height="45" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="180" y="35" font-size="11" fill="#2f5fe0" text-anchor="middle" font-weight="bold">インシデント管理</text>
+          <text x="180" y="49" font-size="9" fill="#2f5fe0" text-anchor="middle">(ワークアラウンドで早期復旧)</text>
+
+          <line x1="245" y1="37" x2="270" y2="37" stroke="#333" stroke-width="1.5"/>
+
+          <rect x="270" y="15" width="90" height="45" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="315" y="42" font-size="11" fill="#1f9d55" text-anchor="middle" font-weight="bold">サービス復旧</text>
+
+          <line x1="180" y1="60" x2="180" y2="115" stroke="#333" stroke-width="1.5"/>
+          <text x="193" y="90" font-size="9" fill="#333">繰り返し発生</text>
+
+          <rect x="110" y="115" width="140" height="45" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+          <text x="180" y="135" font-size="11" fill="#c9820a" text-anchor="middle" font-weight="bold">問題管理</text>
+          <text x="180" y="150" font-size="9" fill="#c9820a" text-anchor="middle">(根本原因を調査・特定)</text>
+
+          <line x1="250" y1="137" x2="275" y2="137" stroke="#333" stroke-width="1.5"/>
+
+          <rect x="275" y="115" width="100" height="45" rx="6" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+          <text x="325" y="132" font-size="10" fill="#7c3aed" text-anchor="middle" font-weight="bold">既知の誤り</text>
+          <text x="325" y="146" font-size="10" fill="#7c3aed" text-anchor="middle" font-weight="bold">としてKEDBに登録</text>
+        </svg>
+        <figcaption class="fig-caption">インシデント管理はワークアラウンドを用いて迅速にサービスを復旧させる。同種のインシデントが繰り返し発生する場合、問題管理が根本原因を調査し、対策(恒久対策または暫定的な回避策)を「既知の誤り」としてKEDB(既知の誤りデータベース)に登録する。恒久対策を本番環境へ適用する際は変更管理のプロセスに引き継がれる。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>項目</th><th>インシデント管理</th><th>問題管理</th></tr></thead>
+        <tbody>
+          <tr><td>目的</td><td>サービスを速やかに復旧させる(暫定対応優先)</td><td>根本原因を特定し、恒久的な再発防止策を講じる</td></tr>
+          <tr><td>時間軸の考え方</td><td>迅速性を最優先し、原因が不明でも復旧を優先する</td><td>時間をかけてでも原因究明・恒久対策を優先する</td></tr>
+          <tr><td>主な成果物</td><td>ワークアラウンドによるサービス復旧</td><td>既知の誤り(Known Error)としてのKEDBへの登録、恒久対策</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「繰り返し発生するインシデントの根本原因を調査・特定し、恒久対策や暫定的な回避策を管理するプロセスはどれか」という設問では、選択肢に「インシデント管理」が並ぶことが多いが、根本原因の追求と既知の誤りの管理は問題管理の役割である。インシデント管理はあくまで個々のインシデントへの「その場の対応」であり、恒久対策の検討や既知の誤りの登録までは行わない点を区別する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>変更管理(CAB)とキャパシティ管理</h2>
+      <p>変更管理は、IT環境に対する変更要求(RFC: Request for Change)を受け付け、変更が及ぼす影響を評価したうえで承認・実施・記録を統制することで、変更に伴うリスクを管理するプロセスである。変更の可否は、変更諮問委員会(CAB: Change Advisory Board)による審査を経て決定されることが多く、審査の重さは変更の種類によって使い分けられる。</p>
+      <table class="ref-table">
+        <thead><tr><th>変更の種類</th><th>特徴</th><th>承認プロセス</th></tr></thead>
+        <tbody>
+          <tr><td>標準変更</td><td>あらかじめ承認された定型的な変更(手順が確立し、リスクが低い)</td><td>個別の審査を省略し、事前承認済みの手順に従って実施</td></tr>
+          <tr><td>通常変更</td><td>個別に影響評価が必要な一般的な変更</td><td>RFCを提出し、CABの審査・承認を経て実施</td></tr>
+          <tr><td>緊急変更</td><td>障害対応など、直ちに実施しなければ被害が拡大する変更</td><td>緊急変更諮問委員会(ECAB)など少人数で迅速に承認</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 変更の種類の判断</span>
+        <span>本番環境で重大な障害が発生し、原因となったモジュールを直ちにロールバックしなければサービス停止が長引く状況を考える。通常の変更と同様にCABの定例審査を待っていては被害が拡大するため、このケースは<strong>緊急変更</strong>として扱い、少人数の関係者(ECAB相当)による迅速な承認を経て実施するのが適切である。一方、毎月定例で行うパッチ適用のように手順が確立し影響が小さい変更は、都度の個別審査を省略できる<strong>標準変更</strong>として扱うことができる。変更の種類に応じて承認の重さを使い分ける判断力が、応用情報では問われる。</span>
+      </div>
+      <p>一方、キャパシティ管理は、現在および将来のサービス需要を予測し、サーバ性能やネットワーク帯域などの処理能力を過不足なく確保・維持することを目的とするプロセスである。ITILでは、対象とする視点の違いから3つの領域に分けて整理されることが多い。</p>
+      <table class="ref-table">
+        <thead><tr><th>領域</th><th>着眼点</th></tr></thead>
+        <tbody>
+          <tr><td>ビジネスキャパシティ管理</td><td>将来の事業計画・業務量の変化を踏まえ、中長期的に必要となる容量を予測する</td></tr>
+          <tr><td>サービスキャパシティ管理</td><td>提供中の各ITサービスの性能・応答時間を監視し、SLAで合意した水準を維持する</td></tr>
+          <tr><td>リソースキャパシティ管理</td><td>サーバ・ストレージ・ネットワークなど個々の資源の使用状況を監視し、逼迫を防ぐ</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>変更管理・構成管理・キャパシティ管理はいずれもIT基盤の統制に関わるため選択肢に並びやすい。「変更してよいか審査・統制する」のが変更管理、「構成要素の情報を正確に記録する」のが構成管理、「将来必要な処理能力を予測・確保する」のがキャパシティ管理と、それぞれの主眼で切り分ける。また可用性管理は「止まらないこと」に着目するのに対し、キャパシティ管理は「性能・容量が足りること」に着目する点も混同しやすい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>システム監査(独立性と監査プロセス)</h2>
+      <p>システム監査とは、情報システムに関するリスクのコントロール(内部統制)が適切に整備・運用されているかを、監査対象から独立した専門的な立場の監査人が検証・評価する活動である。監査人が監査対象の業務から独立していること(独立性)は、監査意見の客観性・信頼性を担保するうえで不可欠な前提であり、たとえば開発担当者自身が自らの開発したシステムを監査することは認められない。</p>
+      <table class="ref-table">
+        <thead><tr><th>工程</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>監査計画の策定</td><td>監査の目的・対象範囲・実施時期などを定める</td></tr>
+          <tr><td>予備調査</td><td>監査対象の業務内容や関連資料を事前に把握する</td></tr>
+          <tr><td>本調査</td><td>インタビューや資料閲覧、証跡の確認などにより監査証拠を収集する</td></tr>
+          <tr><td>評価・結論の形成</td><td>収集した監査証拠に基づき、基準への適合状況を評価する</td></tr>
+          <tr><td>監査報告</td><td>発見した問題点や改善勧告を監査報告書としてまとめ、経営層等に報告する</td></tr>
+          <tr><td>フォローアップ</td><td>報告した改善勧告への対応状況を、後日改めて確認する</td></tr>
+        </tbody>
+      </table>
+      <p>システム監査は、以下のような混同しやすい概念と対比して問われることが多い。内部統制は監査「される側」である経営者・組織が自ら整備・運用する管理の仕組みそのものであり、システム監査はその内部統制が有効に機能しているかを独立した立場で「検証する側」の活動である。またペネトレーションテストは、実際に攻撃を模してシステムの技術的な脆弱性を検証する個別の技術的手法であり、内部統制やコントロール全般の適合性を評価するシステム監査とは対象・観点が異なる。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「独立した第三者の立場で検証・評価する」という表現は、システム監査を特徴づけるキーワードである。内部統制は組織が自ら構築・運用する管理の仕組み(監査される対象)であるのに対し、システム監査はその内部統制の整備・運用状況を独立の立場から評価する活動(監査する側)である点を取り違えないようにする。監査を実施する者と監査される業務の担当者が同一であってはならない、という独立性の原則も併せて押さえておく。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../oyojoho/project-management.html"><small>‹ 前のジャンル</small>プロジェクトマネジメント</a>
+      <a class="next" href="../oyojoho/system-strategy.html"><small>次のジャンル ›</small>システム戦略</a>
+    </nav>
+  </main>
+</body>
+</html>

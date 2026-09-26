@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基礎理論のまとめ | 基本情報技術者試験（科目A）</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目A） › 基礎理論</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="kiso-riron" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>基礎理論のまとめ</h1>
+      <p class="genre-description">2進数・論理演算・数値表現など、基礎理論で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>基数変換(2進数・8進数・16進数)</h2>
+      <p>コンピュータは内部で2進数(0と1)を使ってデータを扱う。桁数が多く読みにくいため、人が扱う際は8進数や16進数で短く表記することが多い。</p>
+      <table class="ref-table">
+        <thead><tr><th>10進数</th><th>2進数</th><th>8進数</th><th>16進数</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0000</td><td>0</td><td>0</td></tr>
+          <tr><td>7</td><td>0111</td><td>7</td><td>7</td></tr>
+          <tr><td>10</td><td>1010</td><td>12</td><td>A</td></tr>
+          <tr><td>15</td><td>1111</td><td>17</td><td>F</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 2進数 1101 → 10進数</span>
+        <span>1101(2) = 1×2³ + 1×2² + 0×2¹ + 1×2⁰ = 8 + 4 + 0 + 1 = <strong>13</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 16進数 2F → 10進数</span>
+        <span>2F(16) = 2×16¹ + 15×16⁰ = 32 + 15 = <strong>47</strong>(A〜Fはそれぞれ10〜15を表す)</span>
+      </div>
+      <p>逆に10進数をn進数に変換するには「基数で割り続け、余りを下から順に並べる」除算法を使う。商が0になるまで基数で割り、出てきた余りを最後から先頭へ向かって並べると変換後の数値になる。</p>
+      <div class="example-box">
+        <span class="label">例題: 10進数 26 → 2進数</span>
+        <span>26 ÷ 2 = 13 余り 0<br>13 ÷ 2 = 6 余り 1<br>6 ÷ 2 = 3 余り 0<br>3 ÷ 2 = 1 余り 1<br>1 ÷ 2 = 0 余り 1<br>余りを下から上に読むと 26(10) = <strong>11010(2)</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 10進数 200 → 16進数</span>
+        <span>200 ÷ 16 = 12 余り 8<br>12 ÷ 16 = 0 余り 12(C)<br>余りを下から上に読むと 200(10) = <strong>C8(16)</strong>(余り12はCと表記)</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>8進数・16進数はどちらも「各桁の重み(8のn乗、16のn乗)×桁の値」を足し合わせるだけで10進数に変換できる。基数(2, 8, 16)が違うだけで考え方は同じ。逆方向(10進数→n進数)は割り算の「余り」を使う点が、10進数への変換(掛け算で重みを足す)と逆になることを意識するとよい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>論理演算と論理回路</h2>
+      <p>論理演算は0/1(偽/真)を扱う演算で、論理回路図は演算の組み合わせを図で表したもの。まずは基本の6種類の入出力を覚える。</p>
+      <table class="ref-table">
+        <thead><tr><th>A</th><th>B</th><th>AND</th><th>OR</th><th>XOR</th><th>NAND</th><th>NOR</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+          <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <p>論理回路図では、ゲートの形そのものが種類を表す。AND/NANDは左辺が直線+右側が半円、OR/NOR/XORは背面がへこみ先端がとがった形、NOTは三角形。NAND・NOR・NOTの出力側についている小さな丸は「反転(否定)」を表す。</p>
+      <div class="gate-grid">
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
+            <path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2.5"/>
+            <line x1="67" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">AND: 両方1のとき1</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
+            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5"/>
+            <line x1="72" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">OR: どちらかが1で1</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="30" x2="20" y2="30" stroke="#7b8794" stroke-width="2"/>
+            <path d="M20,8 L20,52 L62,30 Z" fill="#fdeaea" stroke="#d64545" stroke-width="2.5"/>
+            <circle cx="68" cy="30" r="6" fill="white" stroke="#d64545" stroke-width="2.5"/>
+            <line x1="74" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">NOT: 入力を反転(丸は反転を表す)</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
+            <path d="M12,8 C24,18 24,42 12,52" fill="none" stroke="#c9820a" stroke-width="2.5"/>
+            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#fff4e5" stroke="#c9820a" stroke-width="2.5"/>
+            <line x1="72" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">XOR: 異なるとき1(ORに入力側の二重線)</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
+            <path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2.5"/>
+            <circle cx="73" cy="30" r="6" fill="white" stroke="#7c3aed" stroke-width="2.5"/>
+            <line x1="79" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">NAND: ANDの反転(出力に丸)</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
+            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2.5"/>
+            <circle cx="78" cy="30" r="6" fill="white" stroke="#0f8fa8" stroke-width="2.5"/>
+            <line x1="84" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
+          </svg>
+          <div class="gate-name">NOR: ORの反転(出力に丸)</div>
+        </div>
+      </div>
+      <figure class="fig">
+        <svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <line x1="10" y1="50" x2="100" y2="50" stroke="#333" stroke-width="2"/>
+          <text x="4" y="45" font-size="13" fill="#333">A=0</text>
+          <line x1="10" y1="110" x2="100" y2="110" stroke="#333" stroke-width="2"/>
+          <text x="4" y="128" font-size="13" fill="#333">B=1</text>
+          <path d="M100,38 C130,38 150,42 172,80 C150,118 130,122 100,122 C114,108 114,52 100,38 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5"/>
+          <line x1="172" y1="80" x2="230" y2="80" stroke="#333" stroke-width="2"/>
+          <path d="M230,60 L230,100 L266,80 Z" fill="#fdeaea" stroke="#d64545" stroke-width="2.5"/>
+          <circle cx="272" cy="80" r="6" fill="white" stroke="#d64545" stroke-width="2.5"/>
+          <line x1="278" y1="80" x2="360" y2="80" stroke="#333" stroke-width="2"/>
+          <text x="330" y="68" font-size="13" fill="#333">Z=?</text>
+        </svg>
+        <figcaption class="fig-caption">例: A=0, B=1をORに入れて1、その出力をNOTに通すと0。よって Z=0。(NOT出力の丸は反転を表す)</figcaption>
+      </figure>
+      <div class="formula-box">
+        <span class="label">ド・モルガンの法則</span>
+        <span>¬(A ∧ B) = ¬A ∨ ¬B　(「AかつBでない」は「Aでない、またはBでない」)<br>¬(A ∨ B) = ¬A ∧ ¬B　(「AまたはBでない」は「Aでない、かつBでない」)</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>数値の表現方法</h2>
+      <p>コンピュータが数値を2進数で表現する方式には、小数点の位置を固定する方式と、指数を使って可変にする方式がある。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 400 70" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="0" y="10" width="50" height="40" fill="#eef2ff" stroke="#2f5fe0" stroke-width="1.5"/>
+          <text x="25" y="34" font-size="11" fill="#2f5fe0" text-anchor="middle">符号部</text>
+          <rect x="50" y="10" width="140" height="40" fill="#eafaf0" stroke="#1f9d55" stroke-width="1.5"/>
+          <text x="120" y="34" font-size="11" fill="#1f9d55" text-anchor="middle">指数部</text>
+          <rect x="190" y="10" width="200" height="40" fill="#fff4e5" stroke="#c9820a" stroke-width="1.5"/>
+          <text x="290" y="34" font-size="11" fill="#c9820a" text-anchor="middle">仮数部</text>
+        </svg>
+        <figcaption class="fig-caption">浮動小数点数のビット構成: 符号部・指数部(小数点の位置)・仮数部(有効数字)</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例題: 2の補数(負の数の表現)の求め方</span>
+        <span>各ビットを反転(0→1, 1→0)し、最後に1を加える。<br>例: 5 = 00000101 → 反転 11111010 → +1 → 11111011(これが -5 を表す)</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「1の補数」は反転するだけ、「2の補数」はさらに+1する。混同しやすいので注意。固定小数点数は精度・範囲が固定、浮動小数点数は指数部により広い範囲を表現できる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>誤り検出(パリティビット)</h2>
+      <p>データ伝送中の誤りを検出するため、データに1ビット付加して1の個数を偶数(偶数パリティ)または奇数(奇数パリティ)にそろえる。受信側で1の個数を数え、想定と異なれば誤りと判断できる。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 70" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <g font-size="13" fill="#333" text-anchor="middle">
+            <rect x="0" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="20" y="35">1</text>
+            <rect x="40" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="60" y="35">0</text>
+            <rect x="80" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="100" y="35">1</text>
+            <rect x="120" y="15" width="40" height="30" fill="#f7f9fb" stroke="#c7cdd6"/><text x="140" y="35">1</text>
+            <rect x="160" y="15" width="40" height="30" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/><text x="180" y="35" fill="#2f5fe0">1</text>
+          </g>
+          <text x="270" y="35" font-size="12" fill="#7b8794">← パリティビット</text>
+        </svg>
+        <figcaption class="fig-caption">データ「1011」は1が3個(奇数)なので、偶数パリティにするため「1」を付加して1の個数を4個(偶数)にそろえる。</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例題: 受信側がどうやって誤りに気づくか(偶数パリティの場合)</span>
+        <span>正常な場合: 「1011」+パリティ「1」を受信 → 1の個数は<strong>4個(偶数)</strong> → 想定通りなので正常と判断。<br>伝送中に1ビットが化けた場合: 3ビット目が反転し「1001」+パリティ「1」を受信 → 1の個数は<strong>3個(奇数)</strong> → 「偶数のはず」という想定と異なるため誤りと判断できる。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>パリティビットで分かるのは「誤りが起きたこと」だけで、「どのビットが化けたか」は特定できない。また2ビット同時に反転すると1の個数の偶奇が元に戻ってしまい、誤りを検出できない(パリティチェックの限界)。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>文字コード</h2>
+      <table class="ref-table">
+        <thead><tr><th>コード</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>ASCII</td><td>英数字・記号を7ビットで表現する最も基本的な文字コード</td></tr>
+          <tr><td>JISコード</td><td>日本語(ひらがな・カタカナ・漢字)を扱うために策定</td></tr>
+          <tr><td>Unicode</td><td>世界中の文字を統一的な体系で扱うために策定(現在主流)</td></tr>
+          <tr><td>EBCDIC</td><td>主にIBM系大型機で使われてきた文字コード</td></tr>
+        </tbody>
+      </table>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <span></span>
+      <a class="next" href="../kihonjoho/network.html"><small>次のジャンル ›</small>ネットワーク</a>
+    </nav>
+  </main>
+</body>
+</html>

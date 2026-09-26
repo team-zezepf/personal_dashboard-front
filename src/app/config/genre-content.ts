@@ -1,97 +1,70 @@
-import { GenreContent } from '../models/genre-content.models';
-import { KIHONJOHO_KISO_RIRON_CONTENT } from '../content/genre-study/kihonjoho-kiso-riron';
-import { KIHONJOHO_NETWORK_CONTENT } from '../content/genre-study/kihonjoho-network';
-import { KIHONJOHO_COMPUTER_COMPONENTS_CONTENT } from '../content/genre-study/kihonjoho-computer-components';
-import { KIHONJOHO_ALGORITHMS_PROGRAMMING_CONTENT } from '../content/genre-study/kihonjoho-algorithms-programming';
-import { KIHONJOHO_DATABASE_CONTENT } from '../content/genre-study/kihonjoho-database';
-import { KIHONJOHO_SECURITY_CONTENT } from '../content/genre-study/kihonjoho-security';
-import { KIHONJOHO_SOFTWARE_CONTENT } from '../content/genre-study/kihonjoho-software';
-import { KIHONJOHO_SYSTEM_COMPONENTS_CONTENT } from '../content/genre-study/kihonjoho-system-components';
-import { KIHONJOHO_HARDWARE_CONTENT } from '../content/genre-study/kihonjoho-hardware';
-import { KIHONJOHO_HUMAN_INTERFACE_CONTENT } from '../content/genre-study/kihonjoho-human-interface';
-import { KIHONJOHO_MULTIMEDIA_CONTENT } from '../content/genre-study/kihonjoho-multimedia';
-import { KIHONJOHO_SYSTEM_DEVELOPMENT_CONTENT } from '../content/genre-study/kihonjoho-system-development';
-import { KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT } from '../content/genre-study/kihonjoho-sw-development-technique';
-import { KIHONJOHO_PROJECT_MANAGEMENT_CONTENT } from '../content/genre-study/kihonjoho-project-management';
-import { KIHONJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/kihonjoho-service-management';
-import { KIHONJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-business-strategy';
-import { KIHONJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/kihonjoho-corporate-legal';
-import { KIHONJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/kihonjoho-system-strategy';
-import { BOKI3_KISO_CHISHIKI_CONTENT } from '../content/genre-study/boki3-kiso-chishiki';
-import { BOKI3_SHIWAKE_CONTENT } from '../content/genre-study/boki3-shiwake';
-import { BOKI3_SHISANHYO_CONTENT } from '../content/genre-study/boki3-shisanhyo';
-import { BOKI3_KESSAN_SEIRI_CONTENT } from '../content/genre-study/boki3-kessan-seiri';
-import { BOKI3_ZAIMU_SHOHYO_CONTENT } from '../content/genre-study/boki3-zaimu-shohyo';
-import { BOKI3_DENPYO_CHOBO_CONTENT } from '../content/genre-study/boki3-denpyo-chobo';
-import { OYOJOHO_KISO_RIRON_CONTENT } from '../content/genre-study/oyojoho-kiso-riron';
-import { OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT } from '../content/genre-study/oyojoho-algorithms-programming';
-import { OYOJOHO_COMPUTER_COMPONENTS_CONTENT } from '../content/genre-study/oyojoho-computer-components';
-import { OYOJOHO_SYSTEM_COMPONENTS_CONTENT } from '../content/genre-study/oyojoho-system-components';
-import { OYOJOHO_SOFTWARE_CONTENT } from '../content/genre-study/oyojoho-software';
-import { OYOJOHO_DATABASE_CONTENT } from '../content/genre-study/oyojoho-database';
-import { OYOJOHO_NETWORK_CONTENT } from '../content/genre-study/oyojoho-network';
-import { OYOJOHO_SECURITY_CONTENT } from '../content/genre-study/oyojoho-security';
-import { OYOJOHO_SYSTEM_DEVELOPMENT_CONTENT } from '../content/genre-study/oyojoho-system-development';
-import { OYOJOHO_PROJECT_MANAGEMENT_CONTENT } from '../content/genre-study/oyojoho-project-management';
-import { OYOJOHO_SERVICE_MANAGEMENT_CONTENT } from '../content/genre-study/oyojoho-service-management';
-import { OYOJOHO_SYSTEM_STRATEGY_CONTENT } from '../content/genre-study/oyojoho-system-strategy';
-import { OYOJOHO_BUSINESS_STRATEGY_CONTENT } from '../content/genre-study/oyojoho-business-strategy';
-import { OYOJOHO_CORPORATE_LEGAL_CONTENT } from '../content/genre-study/oyojoho-corporate-legal';
-
-// ジャンル別まとめページのコンテンツ一覧。今後ジャンルを追加する際はここに登録するだけでよい
-// (科目一覧画面への導線・ルーティングは登録されたコンテンツを見て自動的に反映される)。
-export const GENRE_CONTENTS: GenreContent[] = [
-  KIHONJOHO_KISO_RIRON_CONTENT,
-  KIHONJOHO_NETWORK_CONTENT,
-  KIHONJOHO_COMPUTER_COMPONENTS_CONTENT,
-  KIHONJOHO_ALGORITHMS_PROGRAMMING_CONTENT,
-  KIHONJOHO_DATABASE_CONTENT,
-  KIHONJOHO_SECURITY_CONTENT,
-  KIHONJOHO_SOFTWARE_CONTENT,
-  KIHONJOHO_SYSTEM_COMPONENTS_CONTENT,
-  KIHONJOHO_HARDWARE_CONTENT,
-  KIHONJOHO_HUMAN_INTERFACE_CONTENT,
-  KIHONJOHO_MULTIMEDIA_CONTENT,
-  KIHONJOHO_SYSTEM_DEVELOPMENT_CONTENT,
-  KIHONJOHO_SW_DEVELOPMENT_TECHNIQUE_CONTENT,
-  KIHONJOHO_PROJECT_MANAGEMENT_CONTENT,
-  KIHONJOHO_SERVICE_MANAGEMENT_CONTENT,
-  KIHONJOHO_BUSINESS_STRATEGY_CONTENT,
-  KIHONJOHO_CORPORATE_LEGAL_CONTENT,
-  KIHONJOHO_SYSTEM_STRATEGY_CONTENT,
-  BOKI3_KISO_CHISHIKI_CONTENT,
-  BOKI3_SHIWAKE_CONTENT,
-  BOKI3_SHISANHYO_CONTENT,
-  BOKI3_KESSAN_SEIRI_CONTENT,
-  BOKI3_ZAIMU_SHOHYO_CONTENT,
-  BOKI3_DENPYO_CHOBO_CONTENT,
-  OYOJOHO_KISO_RIRON_CONTENT,
-  OYOJOHO_ALGORITHMS_PROGRAMMING_CONTENT,
-  OYOJOHO_COMPUTER_COMPONENTS_CONTENT,
-  OYOJOHO_SYSTEM_COMPONENTS_CONTENT,
-  OYOJOHO_SOFTWARE_CONTENT,
-  OYOJOHO_DATABASE_CONTENT,
-  OYOJOHO_NETWORK_CONTENT,
-  OYOJOHO_SECURITY_CONTENT,
-  OYOJOHO_SYSTEM_DEVELOPMENT_CONTENT,
-  OYOJOHO_PROJECT_MANAGEMENT_CONTENT,
-  OYOJOHO_SERVICE_MANAGEMENT_CONTENT,
-  OYOJOHO_SYSTEM_STRATEGY_CONTENT,
-  OYOJOHO_BUSINESS_STRATEGY_CONTENT,
-  OYOJOHO_CORPORATE_LEGAL_CONTENT
-];
-
-export function findGenreContent(examType: string, genreKey: string): GenreContent | undefined {
-  return GENRE_CONTENTS.find((c) => c.examType === examType && c.genreKey === genreKey);
+// ジャンル別まとめの一覧。本文は docs/<examType>/<genreKey>.html の静的HTMLにある(front#129)。
+// ジャンルを追加するときは、ここに登録し、docs/ にHTMLを追加する(docs/README.md を参照)。
+export interface GenreEntry {
+  examType: string;
+  genreKey: string;
+  genreName: string;
+  // サイドバーでの見出しに使う大分類(テクノロジ系/マネジメント系/ストラテジ系など)
+  category: string;
 }
 
-export function getGenreContentsForSubject(examType: string): GenreContent[] {
-  return GENRE_CONTENTS.filter((c) => c.examType === examType);
+export const GENRES: GenreEntry[] = [
+  { examType: 'kihonjoho', genreKey: 'kiso-riron', genreName: '基礎理論', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'network', genreName: 'ネットワーク', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'computer-components', genreName: 'コンピュータ構成要素', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'algorithms-programming', genreName: 'アルゴリズムとプログラミング', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'database', genreName: 'データベース', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'security', genreName: 'セキュリティ', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'software', genreName: 'ソフトウェア', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'system-components', genreName: 'システム構成要素', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'hardware', genreName: 'ハードウェア', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'human-interface', genreName: 'ヒューマンインタフェース', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'multimedia', genreName: 'マルチメディア', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'system-development', genreName: 'システム開発技術', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'sw-development-technique', genreName: 'ソフトウェア開発技術', category: 'テクノロジ系' },
+  { examType: 'kihonjoho', genreKey: 'project-management', genreName: 'プロジェクトマネジメント', category: 'マネジメント系' },
+  { examType: 'kihonjoho', genreKey: 'service-management', genreName: 'サービスマネジメント', category: 'マネジメント系' },
+  { examType: 'kihonjoho', genreKey: 'business-strategy', genreName: '経営戦略', category: 'ストラテジ系' },
+  { examType: 'kihonjoho', genreKey: 'corporate-legal', genreName: '企業と法務', category: 'ストラテジ系' },
+  { examType: 'kihonjoho', genreKey: 'system-strategy', genreName: 'システム戦略', category: 'ストラテジ系' },
+  { examType: 'boki3', genreKey: 'kiso-chishiki', genreName: '基礎知識', category: '簿記3級' },
+  { examType: 'boki3', genreKey: 'shiwake', genreName: '仕訳', category: '簿記3級' },
+  { examType: 'boki3', genreKey: 'shisanhyo', genreName: '試算表', category: '簿記3級' },
+  { examType: 'boki3', genreKey: 'kessan-seiri', genreName: '決算整理', category: '簿記3級' },
+  { examType: 'boki3', genreKey: 'zaimu-shohyo', genreName: '財務諸表', category: '簿記3級' },
+  { examType: 'boki3', genreKey: 'denpyo-chobo', genreName: '伝票・帳簿', category: '簿記3級' },
+  { examType: 'oyojoho', genreKey: 'kiso-riron', genreName: '基礎理論', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'algorithms-programming', genreName: 'アルゴリズムとプログラミング', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'computer-components', genreName: 'コンピュータ構成要素', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'system-components', genreName: 'システム構成要素', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'software', genreName: 'ソフトウェア', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'database', genreName: 'データベース', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'network', genreName: 'ネットワーク', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'security', genreName: 'セキュリティ', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'system-development', genreName: 'システム開発技術', category: 'テクノロジ系' },
+  { examType: 'oyojoho', genreKey: 'project-management', genreName: 'プロジェクトマネジメント', category: 'マネジメント系' },
+  { examType: 'oyojoho', genreKey: 'service-management', genreName: 'サービスマネジメント', category: 'マネジメント系' },
+  { examType: 'oyojoho', genreKey: 'system-strategy', genreName: 'システム戦略', category: 'ストラテジ系' },
+  { examType: 'oyojoho', genreKey: 'business-strategy', genreName: '経営戦略', category: 'ストラテジ系' },
+  { examType: 'oyojoho', genreKey: 'corporate-legal', genreName: '企業と法務', category: 'ストラテジ系' }
+];
+
+// 本文のHTMLのパス(アプリでは docs/ をそのまま同梱している)
+export function genreDocPath(genre: Pick<GenreEntry, 'examType' | 'genreKey'>): string {
+  return `docs/${genre.examType}/${genre.genreKey}.html`;
+}
+
+export function findGenre(examType: string, genreKey: string): GenreEntry | undefined {
+  return GENRES.find((c) => c.examType === examType && c.genreKey === genreKey);
+}
+
+export function getGenreContentsForSubject(examType: string): GenreEntry[] {
+  return GENRES.filter((c) => c.examType === examType);
 }
 
 export interface GenreCategoryGroup {
   category: string;
-  genres: GenreContent[];
+  genres: GenreEntry[];
 }
 
 // 登録順を保ったまま、カテゴリ(テクノロジ系/マネジメント系/ストラテジ系など)ごとにまとめる
@@ -109,12 +82,12 @@ export function groupGenresByCategory(examType: string): GenreCategoryGroup[] {
 }
 
 // 科目の「学習する」で最初に開くジャンル(カテゴリごとにまとめたときの先頭)
-export function firstGenreOf(examType: string): GenreContent | undefined {
+export function firstGenreOf(examType: string): GenreEntry | undefined {
   return groupGenresByCategory(examType)[0]?.genres[0];
 }
 
 // サイドバーと同じ並び(カテゴリごとにまとめた順)での前後のジャンル
-export function adjacentGenres(examType: string, genreKey: string): { prev?: GenreContent; next?: GenreContent } {
+export function adjacentGenres(examType: string, genreKey: string): { prev?: GenreEntry; next?: GenreEntry } {
   const ordered = groupGenresByCategory(examType).flatMap((g) => g.genres);
   const index = ordered.findIndex((g) => g.genreKey === genreKey);
   if (index < 0) return {};

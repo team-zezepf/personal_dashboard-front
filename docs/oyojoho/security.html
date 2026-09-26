@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>セキュリティのまとめ | 応用情報技術者試験</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 応用情報技術者試験 › セキュリティ</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="oyojoho" data-genre-key="security" data-category="テクノロジ系">
+    <header class="genre-header">
+      <h1>セキュリティのまとめ</h1>
+      <p class="genre-description">公開鍵暗号とハイブリッド暗号方式・デジタル署名の検証手順、SQLインジェクション/XSS/CSRFといったWebアプリケーションへの攻撃とその対策、ゼロデイ攻撃や脆弱性評価指標、多要素認証など、応用情報技術者試験のセキュリティ分野で問われる「仕組みの理解」と「攻防のロジック」を掘り下げて解説します。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>公開鍵暗号方式とハイブリッド暗号方式</h2>
+      <p>公開鍵暗号方式は、暗号化に使う鍵(公開鍵)と復号に使う鍵(秘密鍵)が異なる非対称な暗号方式である。公開鍵は誰でも入手できる形で配布してよく、対応する秘密鍵を持つ本人だけが復号できる。代表例のRSAは「大きな数の素因数分解は計算量的に極めて困難である」という数学的な性質(トラップドア関数)を安全性の根拠としており、公開鍵から秘密鍵を導き出すことは事実上不可能とされている。楕円曲線暗号(ECC)も、より短い鍵長で同等の安全性を実現する非対称暗号として実務で広く使われる。</p>
+      <table class="ref-table">
+        <thead><tr><th>方式</th><th>鍵の関係</th><th>処理速度</th><th>代表的なアルゴリズム</th><th>安全性の根拠</th></tr></thead>
+        <tbody>
+          <tr><td>共通鍵暗号方式</td><td>暗号化・復号に同一の鍵を使う</td><td>高速</td><td>AES、(旧)DES</td><td>鍵空間の広さ(総当たり困難性)</td></tr>
+          <tr><td>公開鍵暗号方式</td><td>暗号化(公開鍵)と復号(秘密鍵)で異なる鍵を使う</td><td>共通鍵暗号方式より大幅に低速</td><td>RSA、楕円曲線暗号(ECC)</td><td>素因数分解問題・離散対数問題の困難性</td></tr>
+        </tbody>
+      </table>
+      <p>公開鍵暗号方式は安全性が高い一方で処理が重く、通信するデータ本体をすべて公開鍵暗号方式で暗号化するのは非効率である。そこで実際の通信(TLS/SSLなど)では、両方式の長所を組み合わせたハイブリッド暗号方式が用いられる。データ本体は高速な共通鍵暗号方式で暗号化し、その共通鍵(セッション鍵)だけを受信者の公開鍵で暗号化して送ることで、速度と鍵配送の安全性を両立させる。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="0" y="14" font-size="11" fill="#7b8794" font-weight="bold">① データ本体: 共通鍵Kで暗号化(高速)</text>
+          <rect x="0" y="24" width="55" height="36" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="27" y="46" font-size="11" fill="#333" text-anchor="middle">平文</text>
+          <line x1="55" y1="42" x2="90" y2="42" stroke="#333" stroke-width="1.5"/>
+          <rect x="90" y="24" width="105" height="36" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="142" y="46" font-size="10" fill="#2f5fe0" text-anchor="middle" font-weight="bold">共通鍵Kで暗号化</text>
+          <line x1="195" y1="42" x2="230" y2="42" stroke="#333" stroke-width="1.5"/>
+          <rect x="230" y="24" width="65" height="36" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="262" y="46" font-size="10" fill="#333" text-anchor="middle">暗号文</text>
+          <line x1="295" y1="42" x2="330" y2="42" stroke="#333" stroke-width="1.5"/>
+          <text x="335" y="46" font-size="10" fill="#7b8794">受信者へ</text>
+
+          <text x="0" y="94" font-size="11" fill="#7b8794" font-weight="bold">② 共通鍵K自体: 受信者の公開鍵で暗号化</text>
+          <rect x="0" y="104" width="55" height="36" rx="4" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+          <text x="27" y="126" font-size="10" fill="#7c3aed" text-anchor="middle" font-weight="bold">共通鍵K</text>
+          <line x1="55" y1="122" x2="90" y2="122" stroke="#333" stroke-width="1.5"/>
+          <rect x="90" y="104" width="135" height="36" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="157" y="126" font-size="9" fill="#1f9d55" text-anchor="middle" font-weight="bold">受信者の公開鍵で暗号化</text>
+          <line x1="225" y1="122" x2="260" y2="122" stroke="#333" stroke-width="1.5"/>
+          <rect x="260" y="104" width="135" height="36" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="327" y="126" font-size="9" fill="#333" text-anchor="middle">暗号化された共通鍵</text>
+        </svg>
+        <figcaption class="fig-caption">ハイブリッド暗号方式: データ本体は共通鍵Kで、共通鍵K自体は受信者の公開鍵で、それぞれ暗号化して一緒に送る。受信者はまず自分の秘密鍵で共通鍵Kを復元し、その共通鍵Kを使ってデータ本体を復号する(公開鍵暗号方式は鍵の受け渡しのみに使う)。</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例題: なぜ公開鍵暗号方式だけで済ませないのか</span>
+        <span>公開鍵暗号方式はRSAなどの数学的処理に基づくため、共通鍵暗号方式(AESなど)に比べて処理コストが桁違いに大きい。大容量のデータ本体を毎回公開鍵暗号方式で暗号化・復号すると通信のたびに大きな遅延が生じる。そこで<strong>「重い処理(公開鍵暗号)は小さな鍵の受け渡しだけに使い、重い処理を必要としないデータ本体は軽い処理(共通鍵暗号)に任せる」</strong>という役割分担がハイブリッド暗号方式の核心である。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ハイブリッド暗号方式は「共通鍵暗号方式と公開鍵暗号方式のどちらか」ではなく、両方を組み合わせて使う方式である。「データ本体を暗号化する鍵」と「その鍵を暗号化するための鍵」を混同し、公開鍵でデータ本体を直接暗号化していると誤読しないように注意する。また公開鍵暗号方式では、送信者は受信者の公開鍵で暗号化し、受信者は自分の秘密鍵で復号する(秘密鍵は復号する側だけが保持する)。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>デジタル署名によるなりすまし・改ざんの検知</h2>
+      <p>デジタル署名は、公開鍵暗号方式の鍵の使い方を「秘匿目的とは逆向き」に利用する技術である。通常の公開鍵暗号では「公開鍵で暗号化→秘密鍵で復号」して第三者に読ませないが、デジタル署名では「秘密鍵で暗号化(署名)→公開鍵で復号(検証)」して、本人にしか作れない署名であることを誰でも検証できるようにする。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 160" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="0" y="14" font-size="11" fill="#7b8794" font-weight="bold">送信者: 文書のハッシュ値を秘密鍵で暗号化=署名</text>
+          <rect x="0" y="22" width="55" height="34" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="27" y="44" font-size="10" fill="#333" text-anchor="middle">文書</text>
+          <line x1="55" y1="39" x2="88" y2="39" stroke="#333" stroke-width="1.5"/>
+          <rect x="88" y="22" width="78" height="34" rx="6" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2"/>
+          <text x="127" y="44" font-size="10" fill="#0f8fa8" text-anchor="middle" font-weight="bold">ハッシュ関数</text>
+          <line x1="166" y1="39" x2="199" y2="39" stroke="#333" stroke-width="1.5"/>
+          <rect x="199" y="22" width="70" height="34" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="234" y="44" font-size="9" fill="#333" text-anchor="middle">ハッシュ値</text>
+          <line x1="269" y1="39" x2="302" y2="39" stroke="#333" stroke-width="1.5"/>
+          <rect x="302" y="22" width="130" height="34" rx="6" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
+          <text x="367" y="44" font-size="9" fill="#d64545" text-anchor="middle" font-weight="bold">送信者の秘密鍵で暗号化=署名</text>
+
+          <text x="0" y="90" font-size="11" fill="#7b8794" font-weight="bold">受信者: 2つのハッシュ値を比較して検証</text>
+          <rect x="0" y="98" width="170" height="34" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="85" y="120" font-size="9" fill="#2f5fe0" text-anchor="middle" font-weight="bold">受信文書からハッシュ値Aを計算</text>
+          <rect x="0" y="136" width="170" height="24" rx="4" fill="none" stroke="none"/>
+
+          <rect x="200" y="98" width="170" height="34" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="285" y="120" font-size="9" fill="#1f9d55" text-anchor="middle" font-weight="bold">署名を送信者の公開鍵で復号→B</text>
+
+          <line x1="170" y1="115" x2="200" y2="115" stroke="none"/>
+          <text x="200" y="150" font-size="10" fill="#c9820a" font-weight="bold">A = B なら「改ざんなし・本人が作成」と確認できる(否認防止)</text>
+        </svg>
+        <figcaption class="fig-caption">デジタル署名の検証: 受信文書から計算したハッシュ値Aと、署名を送信者の公開鍵で復号して得たハッシュ値Bを比較する。一致すれば改ざんされておらず、対応する秘密鍵を持つ本人が作成したことになり、本人が後から「送っていない」と主張すること(否認)も防止できる。</figcaption>
+      </figure>
+      <div class="example-box">
+        <span class="label">例題: 署名から確認できる2つのこと</span>
+        <span>文書が通信途中で改ざんされると、受信者が計算するハッシュ値Aは元の文書と食い違う値になる。一方、署名を復号して得られるハッシュ値Bは送信時点のまま変化しない。したがってA≠Bとなり<strong>改ざんを検知</strong>できる。また、署名は送信者の秘密鍵でしか作成できないため、公開鍵で正しく復号できたということは<strong>対応する秘密鍵の持ち主(=送信者本人)が署名した</strong>ことの証明にもなる。この2つ目の性質が「送っていないと後から否認できない(否認防止)」という効果を生む。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ハッシュ関数は鍵を使わない一方向の変換であり、復号できる暗号化とは別物である。また、デジタル署名で使う鍵の向きは通常の公開鍵暗号(秘匿目的)と逆であることに注意する。秘匿目的では「受信者の公開鍵で暗号化→受信者の秘密鍵で復号」だが、デジタル署名では「送信者の秘密鍵で署名→送信者の公開鍵で検証」であり、「誰の」「どちらの」鍵を使うのかを取り違えやすい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>Webアプリケーションへの攻撃(SQLインジェクション・XSS・CSRF)とWAF</h2>
+      <p>Webアプリケーションは、利用者からの入力を適切に検証・無害化しないと、攻撃者に想定外の操作を許してしまう。代表的な攻撃であるSQLインジェクション・クロスサイトスクリプティング(XSS)・クロスサイトリクエストフォージェリ(CSRF)は、いずれも「入力欄の脆弱性」を突く点は共通するが、不正な処理が「どこで」「誰の権限で」実行されるかが異なる。</p>
+      <table class="ref-table">
+        <thead><tr><th>攻撃</th><th>不正な処理が実行される場所</th><th>仕組みの要点</th><th>主な対策</th></tr></thead>
+        <tbody>
+          <tr><td>SQLインジェクション</td><td>Webサーバ側のデータベース</td><td>入力値をエスケープせずSQL文に結合し、攻撃者の文字列がSQL文の一部として実行される</td><td>プレースホルダ(バインド機構)の利用、入力値検証</td></tr>
+          <tr><td>クロスサイトスクリプティング(XSS)</td><td>閲覧者(被害者)のブラウザ側</td><td>脆弱なサイトに埋め込まれたスクリプトが、閲覧者のブラウザ上で実行される</td><td>出力時のエスケープ処理(サニタイジング)</td></tr>
+          <tr><td>クロスサイトリクエストフォージェリ(CSRF)</td><td>正規サイト側(被害者の認証状態を悪用)</td><td>ログイン中の利用者のブラウザに、意図しないリクエストを自動送信させる</td><td>ワンタイムトークンの検証、SameSite属性の設定</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: SQLインジェクションによる認証突破</span>
+        <span>ログインフォームのパスワード欄に「' OR '1'='1」のような文字列を入力すると、Webアプリが組み立てるSQL文の条件式が常に真になり、<strong>本来のパスワードを知らなくてもログインが成立してしまう</strong>ことがある。対策の核心は「入力値を文字列としてSQL文に直接連結しない」ことであり、SQL文の雛形に後から値だけを安全に当てはめるプレースホルダ(バインド機構)が有効である。</span>
+      </div>
+      <figure class="fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="0" y="14" font-size="10" fill="#7b8794" font-weight="bold">① 正規サイトへログイン(Cookieで認証状態を保持)</text>
+          <rect x="0" y="22" width="70" height="36" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="35" y="44" font-size="10" fill="#333" text-anchor="middle">利用者</text>
+          <line x1="70" y1="40" x2="105" y2="40" stroke="#333" stroke-width="1.5"/>
+          <rect x="105" y="22" width="140" height="36" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="175" y="44" font-size="10" fill="#1f9d55" text-anchor="middle" font-weight="bold">正規サイト(銀行等)</text>
+
+          <text x="0" y="92" font-size="10" fill="#7b8794" font-weight="bold">② 罠ページを開くと、③ Cookieが自動送信され不正操作が実行される</text>
+          <rect x="0" y="100" width="90" height="36" rx="6" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
+          <text x="45" y="122" font-size="9" fill="#d64545" text-anchor="middle" font-weight="bold">悪意あるサイト</text>
+          <line x1="90" y1="118" x2="125" y2="118" stroke="#333" stroke-width="1.5"/>
+          <rect x="125" y="100" width="100" height="36" rx="4" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <text x="175" y="122" font-size="9" fill="#333" text-anchor="middle">利用者のブラウザ</text>
+          <line x1="225" y1="118" x2="260" y2="118" stroke="#333" stroke-width="1.5"/>
+          <rect x="260" y="100" width="170" height="36" rx="6" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+          <text x="345" y="122" font-size="9" fill="#c9820a" text-anchor="middle" font-weight="bold">正規サイトへ不正リクエスト送信</text>
+        </svg>
+        <figcaption class="fig-caption">CSRF: 利用者が正規サイトにログインしたままの状態で罠ページを開くと、ブラウザが保持するCookieが自動的に付与されて正規サイトへリクエストが送られ、利用者の意図しない送金・設定変更などが実行されてしまう。攻撃者は利用者の情報を盗むのではなく、利用者になりすまして操作を「実行させる」点がXSSと異なる。</figcaption>
+      </figure>
+      <p>これらの攻撃はアプリケーションの実装(入力検証やエスケープ処理)を修正するのが根本対策だが、修正が完了するまでの間や、修正が困難な既存システムを保護する手段としてWAF(Web Application Firewall)がある。WAFはWebアプリケーション層の通信内容を検査し、SQLインジェクションのような既知の攻撃パターン(シグネチャ)を検知・遮断する。ネットワーク層の通信可否を判断するファイアウォールとは異なり、HTTPリクエストの中身まで踏み込んで検査する点が特徴である。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>SQLインジェクションは「サーバ側」のデータベースで、XSSは「閲覧者側」のブラウザで、それぞれ不正な処理が実行される。CSRFは情報を盗み出すのではなく、認証済みの利用者になりすまして「意図しない処理を実行させる」攻撃であり、情報窃取が目的のXSSと混同しないよう注意する。またWAFは「通信の中身(攻撃パターン)」を検査する仕組みであり、通信の許可・拒否をルールベースで判断するだけの一般的なファイアウォールとは検査対象の階層が異なる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>ゼロデイ攻撃と脆弱性の深刻度評価(CVE・CVSS)</h2>
+      <p>ソフトウェアの脆弱性は、発見されてから修正プログラム(パッチ)が提供され、利用者側で適用が完了するまでに一定の時間差がある。この「パッチが存在しない無防備な期間」を狙って行われる攻撃をゼロデイ攻撃と呼ぶ。ベンダーが対策を講じる猶予が「0日」しかない状態で攻撃を受けることが名前の由来である。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 130" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <line x1="10" y1="70" x2="430" y2="70" stroke="#7b8794" stroke-width="2"/>
+          <circle cx="60" cy="70" r="4" fill="#c9820a"/>
+          <text x="60" y="95" font-size="10" fill="#c9820a" text-anchor="middle">脆弱性の発見</text>
+
+          <rect x="60" y="40" width="230" height="26" rx="4" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
+          <text x="175" y="58" font-size="10" fill="#d64545" text-anchor="middle" font-weight="bold">無防備な期間(ゼロデイ攻撃が発生し得る)</text>
+
+          <circle cx="290" cy="70" r="4" fill="#1f9d55"/>
+          <text x="290" y="95" font-size="10" fill="#1f9d55" text-anchor="middle">パッチの公開</text>
+
+          <line x1="290" y1="70" x2="420" y2="70" stroke="#1f9d55" stroke-width="3"/>
+          <circle cx="420" cy="70" r="4" fill="#2f5fe0"/>
+          <text x="420" y="95" font-size="10" fill="#2f5fe0" text-anchor="middle">適用完了</text>
+        </svg>
+        <figcaption class="fig-caption">ゼロデイ攻撃のタイムライン: 脆弱性が発見されてからパッチが公開されるまでの期間は、正規の対策手段が存在しない。この期間中に脆弱性を悪用する攻撃がゼロデイ攻撃であり、利用者側はパッチが公開され次第、速やかに適用することが被害を最小化する鍵となる。</figcaption>
+      </figure>
+      <p>無数に発見される脆弱性に優先順位をつけて対応するため、共通の識別・評価の枠組みが整備されている。CVE(Common Vulnerabilities and Exposures)は個々の脆弱性に一意の識別番号を付与し「どの脆弱性か」を特定する仕組みであり、CVSS(Common Vulnerability Scoring System)は攻撃元区分・攻撃条件の複雑さ・必要な権限・影響範囲などの基準に基づき、脆弱性の深刻度を0.0〜10.0の共通尺度で数値化する指標である。CVEが脆弱性の「身分証明書」だとすれば、CVSSはその「危険度スコア」にあたる。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td>CVE</td><td>個々の脆弱性に一意の番号を付与し、世界共通で識別できるようにする仕組み</td></tr>
+          <tr><td>CVSS</td><td>脆弱性の深刻度を、攻撃元区分・攻撃条件の複雑さ・必要権限・影響範囲などから0.0〜10.0のスコアで評価する共通基準</td></tr>
+          <tr><td>CRYPTREC</td><td>電子政府推奨暗号リストなど、暗号技術の安全性を評価・監視する日本の政府プロジェクト</td></tr>
+          <tr><td>ISMS</td><td>情報セキュリティマネジメントシステム。技術的対策だけでなく組織の運用・管理体制全体をPDCAで管理する枠組み</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ゼロデイ攻撃は「脆弱性の公表・パッチ提供のタイミング」に着目した分類であり、特定の組織を狙う標的型攻撃(手口・対象に着目した分類)や、ハードウェアの物理的な特性を利用するサイドチャネル攻撃、パスワードによく使われる単語を試す辞書攻撃とは分類の軸が異なる。また、CVEは脆弱性を「識別」するための番号、CVSSはその「深刻度を評価」する指標であり、両者の役割を取り違えないようにする。CRYPTRECは暗号方式の安全性評価、ISMSは組織の管理体制という、脆弱性そのものの評価とは異なるレイヤーの仕組みである点も区別しておく。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>多要素認証(MFA)</h2>
+      <p>利用者認証に用いる情報は「知識情報(本人だけが知っている情報)」「所持情報(本人だけが持っている物)」「生体情報(本人の身体的特徴)」の3種類に大別される。このうち異なる種類の要素を2つ以上組み合わせて本人確認を行う方式を多要素認証(MFA)と呼び、いずれか1つの要素が漏えい・盗用されても、他の要素が破られない限りなりすましを防げる点に価値がある。</p>
+      <div class="gate-grid">
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="6" y="10" width="88" height="40" rx="8" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+            <text x="50" y="35" font-size="12" fill="#2f5fe0" text-anchor="middle" font-weight="bold">知識情報</text>
+          </svg>
+          <div class="gate-name">知識情報: パスワード・暗証番号など。フィッシングやキーロガーによる窃取のリスクがある</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="6" y="10" width="88" height="40" rx="8" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+            <text x="50" y="35" font-size="12" fill="#1f9d55" text-anchor="middle" font-weight="bold">所持情報</text>
+          </svg>
+          <div class="gate-name">所持情報: スマートフォン・ICカードなど。端末紛失やSIMスワップ(乗っ取り)のリスクがある</div>
+        </div>
+        <div class="gate-card">
+          <svg viewBox="0 0 100 60" width="100%" height="60">
+            <rect x="6" y="10" width="88" height="40" rx="8" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/>
+            <text x="50" y="35" font-size="12" fill="#c9820a" text-anchor="middle" font-weight="bold">生体情報</text>
+          </svg>
+          <div class="gate-name">生体情報: 指紋・顔・虹彩など。漏えい時に「変更」ができない点に注意が必要</div>
+        </div>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: SMSワンタイムコードだけでは万全でない理由</span>
+        <span>SMSで送られるワンタイムコードは「所持情報(スマートフォン)」に基づく認証要素であり、パスワード(知識情報)と組み合わせれば多要素認証になる。ただし、攻撃者が偽サイトでパスワードとその場でSMSコードの両方をリアルタイムに入力させて正規サイトへ中継する手口(リアルタイムフィッシング)や、携帯電話会社を欺いてSIMを乗っ取るSIMスワップ攻撃を使えば、SMSコードも突破されうる。そのため、より強固な認証として、認証アプリが生成するワンタイムパスワードや、フィッシングに強いハードウェアセキュリティキー(FIDO2など)の利用が推奨される場面もある。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>多要素認証は「異なる種類」の要素を組み合わせる方式であり、同じ種類の情報を2回聞く(例: パスワードと秘密の質問を両方使う)ことは多要素認証にはあたらない。また、シングルサインオン(一度の認証で複数サービスを使える仕組み)は認証の「利便性」を高めるものであり、認証の「強度」を高める多要素認証とは目的の軸が異なるため混同しないようにする。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../oyojoho/network.html"><small>‹ 前のジャンル</small>ネットワーク</a>
+      <a class="next" href="../oyojoho/system-development.html"><small>次のジャンル ›</small>システム開発技術</a>
+    </nav>
+  </main>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>システム戦略のまとめ | 応用情報技術者試験</title>
+  <link rel="stylesheet" href="../assets/study.css">
+</head>
+<body class="docs-page">
+  <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
+  <main class="docs-main">
+    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 応用情報技術者試験 › システム戦略</nav>
+
+    <!-- アプリでは、この article の中だけを取り出して表示する -->
+    <article class="genre-article" data-exam-type="oyojoho" data-genre-key="system-strategy" data-category="ストラテジ系">
+    <header class="genre-header">
+      <h1>システム戦略のまとめ</h1>
+      <p class="genre-description">情報システム戦略の全体最適化を担うEA・BPR・ERPの使い分け、システム調達で用いられるRFP等の文書の性質、SaaS・PaaS・IaaSといったクラウドサービスの提供形態と管理範囲など、応用情報技術者試験のシステム戦略分野で問われる実践的な判断のポイントを整理しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+    </header>
+
+    <section class="topic" id="topic-0">
+      <h2><span class="topic-no">1</span>情報システム戦略における全体最適化の手法(EA・BPR・ERP)</h2>
+      <p>情報システム戦略の実現に向けては、EA(エンタープライズアーキテクチャ)・BPR(業務プロセスリエンジニアリング)・ERP(統合基幹業務システム)という3つの手法が組み合わせて用いられる。いずれも「全体最適化」を志向する点は共通するが、扱う対象のレベルが「全社構造の設計指針」「業務プロセスそのものの改革」「業務を支えるシステム基盤」と異なるため、単なる用語の丸暗記ではなく、実務でどう連携して使われるかを理解しておく必要がある。</p>
+      <p>EAは、ビジネスアーキテクチャ・データアーキテクチャ・アプリケーションアーキテクチャ・テクノロジアーキテクチャという4つの観点(いわゆるBDAT)から、経営戦略とIT戦略を整合させながら組織全体の業務と情報システムの構造を体系的に設計する「指針・枠組み」である。この指針に基づいて個々の業務プロセスを抜本的に再設計する「改革の手法」がBPRであり、再設計された業務プロセスを実際に動かす「システム基盤」として導入されるのがERPである、という関係で整理すると覚えやすい。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>対象・レベル</th><th>ポイント</th></tr></thead>
+        <tbody>
+          <tr><td>エンタープライズアーキテクチャ(EA)</td><td>経営戦略とIT戦略の整合、全社の業務・情報システムの全体構造</td><td>ビジネス・データ・アプリケーション・テクノロジの4アーキテクチャ(BDAT)から体系的に設計する「指針・枠組み」</td></tr>
+          <tr><td>BPR(業務プロセスリエンジニアリング)</td><td>個別の業務プロセスそのもの</td><td>既存プロセスを部分改善にとどめず、組織構造や業務フローをゼロベースで抜本的に再設計する「改革の手法」</td></tr>
+          <tr><td>ERP(統合基幹業務システム)</td><td>会計・人事・生産・販売など基幹業務システム</td><td>経営資源(ヒト・モノ・カネ・情報)を統合管理し、再設計後の業務プロセスを実際に支える「システム基盤」</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: EA・BPR・ERPの適用順序</span>
+        <span>全社的な業務改革を進めるA社は、まず<strong>EA</strong>によって経営戦略とIT戦略を整合させ、全社の業務・システムの構造をビジネス・データ・アプリケーション・テクノロジの観点から整理した。次に、その指針に沿って重複・非効率な業務プロセスを<strong>BPR</strong>で抜本的に再設計し、最後に再設計後の業務を統合的に支えるシステムとして<strong>ERP</strong>パッケージを導入した。このように、EAが指針、BPRが改革、ERPが実装基盤という順序で連携する点が実務上のポイントである。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ERPは会計・人事・生産・販売など基幹業務全体を統合的に扱う点が特徴であり、特定の業務領域に特化したシステムとは対象範囲が異なる。たとえばSFA(営業支援システム)は営業活動、CRM(顧客関係管理)は顧客対応、SCM(供給連鎖管理)は調達・生産・物流の連鎖に特化しており、いずれもERPほど対象範囲が広くない。選択肢に紛らわしい略語が並ぶ場合は「全社の基幹業務全体を統合管理するか、特定の業務領域に特化しているか」で切り分ける。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-1">
+      <h2><span class="topic-no">2</span>システム調達における提案依頼と関連文書(RFP・RFI・RFQ・NDA)</h2>
+      <p>システムを外部ベンダーから調達する際は、検討段階に応じて性質の異なる文書を使い分ける。おおまかな流れは、①ベンダーの製品・技術・実績に関する情報を集めるRFI(情報提供依頼書)、②要件がある程度固まった段階で具体的な実現方法・体制・見積りを含む提案を依頼するRFP(提案依頼書)、③価格のみに絞って見積りを依頼するRFQ(見積依頼書)、という順に進む。また、機密情報を開示する前段階ではNDA(秘密保持契約書)を締結し、情報漏えいのリスクに備える。</p>
+      <table class="ref-table">
+        <thead><tr><th>文書</th><th>目的</th><th>タイミング</th></tr></thead>
+        <tbody>
+          <tr><td>RFI(情報提供依頼書)</td><td>ベンダーが持つ製品・技術・実績などの情報を収集する</td><td>調達検討の初期段階(要件がまだ固まっていない)</td></tr>
+          <tr><td>RFP(提案依頼書)</td><td>要件を提示し、実現方法・体制・見積りを含めた具体的な提案を依頼する</td><td>要件がある程度固まった段階</td></tr>
+          <tr><td>RFQ(見積依頼書)</td><td>提案内容ではなく、価格・見積りの提示のみを依頼する</td><td>ベンダーや調達仕様がほぼ確定した段階</td></tr>
+          <tr><td>NDA(秘密保持契約書)</td><td>提案・見積りの過程で開示する機密情報の取り扱いについて秘密保持を取り決める契約</td><td>RFI・RFPなどで機密情報を開示する前</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 調達フェーズと文書の対応</span>
+        <span>新システムの導入を検討するA社は、まず候補となる複数のベンダーに対して製品・実績に関する情報提供を依頼した(<strong>RFI</strong>)。要件がまとまった段階で、実現方法や体制、見積りを含む具体的な提案の提出を依頼し(<strong>RFP</strong>)、自社の機密性の高いデータを開示するにあたっては事前に秘密保持契約を締結した(<strong>NDA</strong>)。RFI・RFP・NDAはそれぞれ役割もタイミングも異なる文書である。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>RFPは「見積りの提出を依頼する」側面も持つため、見積りに関する文書=RFQと早合点しやすいが、RFPは見積りだけでなく実現方法や実施体制を含めた提案全体を依頼する文書である点で、価格提示のみに特化したRFQより対象範囲が広い。また、NDAは提案や見積りを依頼する文書ではなく、機密情報の取り扱いを取り決める契約文書である点も混同しやすいので注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-2">
+      <h2><span class="topic-no">3</span>クラウドサービスの提供形態と管理範囲(SaaS・PaaS・IaaS・DaaS)</h2>
+      <p>クラウドコンピューティングのサービス形態は、「インフラ」「OS・ミドルウェア」「アプリケーション」のうち、どこまでをクラウド事業者側が管理し、どこからを利用者側が構築・管理するかによって分類される。代表的な形態がIaaS・PaaS・SaaSであり、これに仮想デスクトップ環境を提供するDaaSが加わる。自社オンプレミス環境から右へ進むほど、利用者側が管理する範囲が狭くなる。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="50" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">オンプレミス</text>
+          <text x="155" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">IaaS</text>
+          <text x="260" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">PaaS</text>
+          <text x="365" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">SaaS</text>
+
+          <rect x="5" y="24" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="50" y="48" font-size="9" fill="#2f5fe0" text-anchor="middle">アプリ</text>
+          <rect x="5" y="66" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="50" y="90" font-size="9" fill="#2f5fe0" text-anchor="middle">OS/MW</text>
+          <rect x="5" y="108" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="50" y="132" font-size="9" fill="#2f5fe0" text-anchor="middle">インフラ</text>
+
+          <rect x="110" y="24" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="155" y="48" font-size="9" fill="#2f5fe0" text-anchor="middle">アプリ</text>
+          <rect x="110" y="66" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="155" y="90" font-size="9" fill="#2f5fe0" text-anchor="middle">OS/MW</text>
+          <rect x="110" y="108" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="155" y="132" font-size="9" fill="#1f9d55" text-anchor="middle">インフラ</text>
+
+          <rect x="215" y="24" width="90" height="38" rx="4" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="260" y="48" font-size="9" fill="#2f5fe0" text-anchor="middle">アプリ</text>
+          <rect x="215" y="66" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="260" y="90" font-size="9" fill="#1f9d55" text-anchor="middle">OS/MW</text>
+          <rect x="215" y="108" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="260" y="132" font-size="9" fill="#1f9d55" text-anchor="middle">インフラ</text>
+
+          <rect x="320" y="24" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="365" y="48" font-size="9" fill="#1f9d55" text-anchor="middle">アプリ</text>
+          <rect x="320" y="66" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="365" y="90" font-size="9" fill="#1f9d55" text-anchor="middle">OS/MW</text>
+          <rect x="320" y="108" width="90" height="38" rx="4" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="365" y="132" font-size="9" fill="#1f9d55" text-anchor="middle">インフラ</text>
+
+          <rect x="40" y="162" width="14" height="14" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/>
+          <text x="60" y="173" font-size="10" fill="#333">利用者側が管理</text>
+          <rect x="220" y="162" width="14" height="14" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="240" y="173" font-size="10" fill="#333">クラウド事業者側が管理</text>
+        </svg>
+        <figcaption class="fig-caption">IaaS・PaaS・SaaSでは、オンプレミスに比べてインフラ→OS・ミドルウェア→アプリケーションの順にクラウド事業者側が管理する範囲が広がり、利用者側が構築・管理すべき範囲が狭くなる。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>提供形態</th><th>提供される範囲</th><th>利用者が管理する範囲</th></tr></thead>
+        <tbody>
+          <tr><td>IaaS(Infrastructure as a Service)</td><td>サーバ・ストレージ・ネットワークなどインフラを仮想化されたリソースとして提供</td><td>OS・ミドルウェア・アプリケーションを利用者側で構築・管理する</td></tr>
+          <tr><td>PaaS(Platform as a Service)</td><td>インフラに加え、OS・ミドルウェアなどアプリケーションの実行環境を提供</td><td>アプリケーションのみを利用者側で開発・運用する</td></tr>
+          <tr><td>SaaS(Software as a Service)</td><td>インフラからアプリケーションまで、ソフトウェアの機能をサービスとして提供</td><td>利用者側での構築・管理は基本的に不要(設定・データ入力のみ)</td></tr>
+          <tr><td>DaaS(Desktop as a Service)</td><td>仮想デスクトップ環境そのものをサービスとして提供</td><td>デスクトップ上で使うアプリケーションやデータの管理</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 用途に応じたクラウドサービスの選択</span>
+        <span>自社でアプリケーションを開発したいが、OSやミドルウェアの構築・保守の手間は省きたい場合は<strong>PaaS</strong>を選ぶ。既存の会計ソフトをそのままインターネット経由で利用したいだけであれば<strong>SaaS</strong>を選ぶ。サーバのハードウェア調達や仮想化基盤の運用は外部化しつつ、OS以上は自社で柔軟に構築・運用したい場合は<strong>IaaS</strong>を選ぶ。このように、自社がどこまで管理したいかによって適切な提供形態を使い分ける。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>DaaSは仮想デスクトップ環境(利用者の操作画面そのもの)を提供するサービスであり、サーバ・ネットワークなどインフラのリソースを提供するIaaSとは提供対象が異なるため混同しないこと。また、SaaSは自社でサーバやソフトウェアを保有・運用する必要がない点が、ソフトウェアを自社に導入して運用するオンプレミスのパッケージソフトウェアとの本質的な違いである。</span>
+      </div>
+    </section>
+    </article>
+
+    <nav class="docs-genre-nav">
+      <a class="prev" href="../oyojoho/service-management.html"><small>‹ 前のジャンル</small>サービスマネジメント</a>
+      <a class="next" href="../oyojoho/business-strategy.html"><small>次のジャンル ›</small>経営戦略</a>
+    </nav>
+  </main>
+</body>
+</html>

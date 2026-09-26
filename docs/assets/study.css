@@ -1,0 +1,296 @@
+/*
+ * 資格学習のまとめ(docs/)の共通スタイル。
+ * - .genre-article: 本文。アプリ(ジャンル別まとめページ)でも同じスタイルで表示する
+ * - .docs-page: GitHub Pages などで単体表示するときの外枠(アプリでは使わない)
+ */
+
+/* ===== 本文 ===== */
+.genre-article {
+  --ga-text: #1f2937;
+  --ga-muted: #7b8794;
+  --ga-line: #e7ebf0;
+  --ga-card: #ffffff;
+  --ga-primary: #13a9df;
+  --ga-primary-dark: #078ec2;
+  color: var(--ga-text);
+  line-height: 1.7;
+}
+
+.genre-article .genre-header {
+  margin-bottom: 24px;
+}
+
+.genre-article .genre-header h1 {
+  font-size: 1.5rem;
+  margin: 0 0 8px;
+}
+
+.genre-article .genre-description {
+  color: var(--ga-muted);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.genre-article section.topic {
+  background: var(--ga-card);
+  border: 1px solid var(--ga-line);
+  border-radius: 14px;
+  padding: 24px 26px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  scroll-margin-top: 16px;
+}
+
+.genre-article section.topic h2 {
+  font-size: 1.08rem;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.genre-article .topic-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ga-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.genre-article section.topic p {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+}
+
+.genre-article section.topic p:last-child {
+  margin-bottom: 0;
+}
+
+.genre-article .fig {
+  margin: 14px 0;
+  text-align: center;
+}
+
+.genre-article .fig svg,
+.genre-article .gate-card svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.genre-article .fig-caption {
+  font-size: 0.78rem;
+  color: var(--ga-muted);
+  margin-top: 6px;
+}
+
+.genre-article table.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 0.85rem;
+}
+
+.genre-article table.ref-table th,
+.genre-article table.ref-table td {
+  border: 1px solid var(--ga-line);
+  padding: 7px 10px;
+  text-align: center;
+}
+
+.genre-article table.ref-table th {
+  background: #f7f9fb;
+  color: var(--ga-muted);
+  font-weight: 700;
+}
+
+.genre-article .formula-box,
+.genre-article .example-box,
+.genre-article .pitfall-box {
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 0.88rem;
+}
+
+.genre-article .formula-box {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  font-size: 0.9rem;
+}
+
+.genre-article .example-box {
+  background: #f7f9fb;
+  border: 1px dashed var(--ga-line);
+}
+
+.genre-article .pitfall-box {
+  background: #fff8e6;
+  border: 1px solid #f3dfa0;
+  color: #7a5c00;
+}
+
+.genre-article .formula-box .label,
+.genre-article .example-box .label,
+.genre-article .pitfall-box .label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.78rem;
+  margin-bottom: 4px;
+}
+
+.genre-article .formula-box .label {
+  color: #3a4a9f;
+}
+
+.genre-article .example-box .label {
+  color: var(--ga-primary-dark);
+  margin-bottom: 6px;
+}
+
+.genre-article .gate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.genre-article .gate-card {
+  border: 1px solid var(--ga-line);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.genre-article .gate-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+  .genre-article section.topic {
+    padding: 18px 16px;
+  }
+  .genre-article .gate-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== 単体表示用の外枠(GitHub Pages など) ===== */
+.docs-page {
+  margin: 0;
+  background: #f5f7fa;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.docs-header {
+  background: #6076e0;
+  padding: 14px 24px;
+}
+
+.docs-header a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.docs-main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+.docs-breadcrumb {
+  font-size: 12.5px;
+  color: #7b8794;
+  margin-bottom: 12px;
+}
+
+.docs-breadcrumb a,
+.docs-toc a {
+  color: #078ec2;
+  text-decoration: none;
+}
+
+.docs-genre-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.docs-genre-nav > * {
+  flex: 1;
+}
+
+.docs-genre-nav a {
+  background: #fff;
+  border: 1px solid #e7ebf0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #1f2937;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.docs-genre-nav a small {
+  display: block;
+  color: #7b8794;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.docs-genre-nav a.next {
+  text-align: right;
+  border-color: #13a9df;
+}
+
+.docs-toc h2 {
+  font-size: 1.1rem;
+  margin: 28px 0 8px;
+}
+
+.docs-toc h3 {
+  font-size: 0.8rem;
+  color: #7b8794;
+  margin: 14px 0 6px;
+}
+
+.docs-toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.docs-toc li a {
+  display: block;
+  background: #fff;
+  border: 1px solid #e7ebf0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.docs-toc li a:hover {
+  border-color: #13a9df;
+}
+
+@media (max-width: 480px) {
+  .docs-genre-nav {
+    flex-direction: column;
+  }
+}
