@@ -15,8 +15,8 @@ export interface TitleCondition {
 export interface TitleDefinition {
   level: number;
   name: string;
-  // 称号バッジ(丸い枠)の中で改行する位置。単語の途中で折り返さないよう行ごとに分ける
-  badgeLines: string[];
+  // 称号バッジの画像(public/ からのパス)
+  badgeImage: string;
   conditions: TitleCondition[];
 }
 
@@ -26,7 +26,7 @@ export const TITLES: TitleDefinition[] = [
   {
     level: 1,
     name: 'ジュニアエンジニア',
-    badgeLines: ['ジュニア', 'エンジニア'],
+    badgeImage: 'images/titles/junior.png',
     conditions: [
       { examType: 'kihonjoho', label: '基本情報(科目A)', recentCount: 10, minRate: 60 },
       { examType: 'kihonjoho-b', label: '基本情報(科目B)', recentCount: 10, minRate: 50 },
@@ -36,7 +36,7 @@ export const TITLES: TitleDefinition[] = [
   {
     level: 2,
     name: 'ミドルエンジニア',
-    badgeLines: ['ミドル', 'エンジニア'],
+    badgeImage: 'images/titles/middle.png',
     conditions: [
       { examType: 'kihonjoho', label: '基本情報(科目A)', recentCount: 10, minRate: 75 },
       { examType: 'kihonjoho-b', label: '基本情報(科目B)', recentCount: 10, minRate: 75 },
@@ -47,7 +47,7 @@ export const TITLES: TitleDefinition[] = [
   {
     level: 3,
     name: 'シニアエンジニア',
-    badgeLines: ['シニア', 'エンジニア'],
+    badgeImage: 'images/titles/senior.png',
     conditions: [
       { examType: 'oyojoho', label: '応用情報', recentCount: 5, minRate: 80 },
       { examType: ADVANCED_EXAM, label: '高度資格 いずれか1種', recentCount: 5, minRate: 60 }

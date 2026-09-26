@@ -62,9 +62,11 @@
   color: var(--muted);
 }
 
-.badge-line {
-  display: block;
-  white-space: nowrap;
+.title-badge-image {
+  width: 120px;
+  height: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(31, 41, 55, 0.12));
 }
 
 .title-badge .rank {
