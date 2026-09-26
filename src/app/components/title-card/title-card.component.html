@@ -1,0 +1,82 @@
+<section class="card">
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  } @else if (status(); as s) {
+    <div class="title-hero">
+      <div class="title-badge" [class.none]="!s.current">
+        <span class="rank">Lv.{{ s.current?.level ?? 0 }}</span>
+        @for (line of s.current?.badgeLines ?? ['称号なし']; track $index) {
+          <span class="badge-line">{{ line }}</span>
+        }
+      </div>
+      <div class="title-now">
+        <div class="label">現在の称号</div>
+        <div class="name">{{ s.current?.name ?? 'まだ称号はありません' }}</div>
+      </div>
+    </div>
+
+    @if (s.next; as next) {
+      @if (next.isComingSoon) {
+        <div class="next-goal coming-soon" [attr.aria-label]="'次の目標: ' + next.title.name + '（近日公開）'">
+          <div class="blurred" aria-hidden="true">
+            <div class="next-head">
+              <span class="small muted">次の目標</span>
+              <span class="goal-name">{{ next.title.name }}</span>
+              <span class="rate"><small>達成率</small>--%</span>
+            </div>
+            <div class="rate-bar"><div class="fill" style="width: 0"></div></div>
+            <div class="small muted">条件ごとの詳細を見る ▾</div>
+          </div>
+          <div class="soon-cover">
+            <span class="soon-label">COMING SOON</span>
+            <span class="soon-sub">高度資格の科目追加後に挑戦できます</span>
+          </div>
+        </div>
+      } @else {
+        <div class="next-goal">
+          <div class="next-head">
+            <span class="small muted">次の目標</span>
+            <span class="goal-name">{{ next.title.name }}</span>
+            <span class="rate"><small>達成率</small>{{ next.achievementRate }}%</span>
+          </div>
+          <div class="rate-bar"><div class="fill" [style.width.%]="next.achievementRate"></div></div>
+          <button type="button" class="toggle" [attr.aria-expanded]="isExpanded()" aria-controls="title-conditions" (click)="toggle()">
+            条件ごとの詳細を{{ isExpanded() ? '閉じる' : '見る' }} <span class="chev">▾</span>
+          </button>
+
+          @if (isExpanded()) {
+            <div class="cond-list" id="title-conditions">
+              @for (c of next.conditions; track c.condition.label) {
+                <div class="cond">
+                  <span class="cond-label">{{ c.condition.label }} 直近{{ c.condition.recentCount }}回平均 {{ c.condition.minRate }}%以上</span>
+                  <span class="cond-value" [class.ok]="c.met">
+                    @if (c.met) {
+                      ✓ {{ round(c.average) }}
+                    } @else if (c.average === null) {
+                      未受験
+                    } @else if (c.shortfall > 0) {
+                      {{ round(c.average) }}（あと{{ round(c.shortfall) }}）
+                    } @else {
+                      {{ round(c.average) }}
+                    }
+                  </span>
+                  <div class="meter">
+                    <div class="fill" [class.ok]="c.met" [style.width.%]="meterWidth(c)"></div>
+                    <div class="goal" [style.left.%]="c.condition.minRate"></div>
+                  </div>
+                  @if (c.attempts < c.condition.recentCount) {
+                    <span class="cond-foot">受験 {{ c.attempts }} / {{ c.condition.recentCount }}回</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <p class="all-done">最高の称号を取得しています。</p>
+    }
+  } @else {
+    <p class="hint">読み込み中...</p>
+  }
+</section>
