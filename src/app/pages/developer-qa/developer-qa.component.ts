@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { catchError, of } from 'rxjs';
+import { catchError, of, tap } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { QaService } from '../../services/qa.service';
 import { NotificationService } from '../../services/notification.service';
@@ -9,6 +9,7 @@ import { QaEntry, QaImage } from '../../models/qa.models';
 import { qaImageUrl } from '../../utils/qa-image';
 
 const MAX_QA_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const LOAD_ERROR_MESSAGE = 'Q&Aの取得に失敗しました';
 
 type Mode = 'list' | 'edit';
 
@@ -72,9 +73,11 @@ export class DeveloperQaPageComponent {
   private loadEntries(): void {
     this.isLoading.set(true);
     this.qaService.getEntries().pipe(
+      // 以前の取得失敗で出したエラーが残っていれば、取得できた時点で消す
+      tap(() => this.notificationService.dismiss(LOAD_ERROR_MESSAGE)),
       catchError((err) => {
         console.error('Failed to load Q&A entries:', err);
-        this.notificationService.showResult('Q&Aの取得に失敗しました', 'error', null);
+        this.notificationService.showResult(LOAD_ERROR_MESSAGE, 'error', null);
         return of([] as QaEntry[]);
       })
     ).subscribe((entries) => {
