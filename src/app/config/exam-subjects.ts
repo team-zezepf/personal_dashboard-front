@@ -5,6 +5,8 @@ export interface ExamSubjectMockExamConfig {
   questionCount: number;
   // 合格ボーダー(0〜1の割合)。合格に必要な正解数は Math.ceil(questionCount * passRatio) で求める
   passRatio: number;
+  // 1ページに表示する問題数
+  questionsPerPage: number;
 }
 
 export interface ExamSubjectPracticeConfig {
@@ -44,7 +46,7 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     path: '/study/kihonjoho',
     practice: DEFAULT_PRACTICE,
     pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
-    mockExam: { durationMinutes: 90, questionCount: 60, passRatio: 0.6 }
+    mockExam: { durationMinutes: 90, questionCount: 60, passRatio: 0.6, questionsPerPage: 2 }
   },
   {
     // 科目Bは1問が長いため、1問ずつ正誤・解説を確認できるようにしている
@@ -53,7 +55,8 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     description: '擬似言語のプログラムや情報セキュリティの問題を、1問ずつじっくり解いていきましょう。',
     path: '/study/kihonjoho-b',
     practice: { questionsPerSession: 5, questionsPerRound: 1 },
-    pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER
+    pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
+    mockExam: { durationMinutes: 100, questionCount: 20, passRatio: 0.6, questionsPerPage: 1 }
   },
   {
     key: 'boki3',
@@ -62,7 +65,7 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     path: '/study/boki3',
     practice: DEFAULT_PRACTICE,
     pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
-    mockExam: { durationMinutes: 60, questionCount: 100, passRatio: 0.7 }
+    mockExam: { durationMinutes: 60, questionCount: 100, passRatio: 0.7, questionsPerPage: 2 }
   },
   {
     key: 'oyojoho',
@@ -72,7 +75,7 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     practice: DEFAULT_PRACTICE,
     // 基本情報より難易度が高いため、1問あたりのポイントを多めにしている
     pointsPerCorrectAnswer: 20,
-    mockExam: { durationMinutes: 150, questionCount: 80, passRatio: 0.6 }
+    mockExam: { durationMinutes: 150, questionCount: 80, passRatio: 0.6, questionsPerPage: 2 }
   }
 ];
 
