@@ -1,0 +1,46 @@
+<section class="card">
+  <h2 class="card-title">ポイントの履歴</h2>
+  <div class="points-hero">
+    <span class="label">現在のポイント</span>
+    <span class="big">{{ formatPoints(points()) }}pt</span>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  } @else if (entries().length === 0) {
+    @if (isLoading()) {
+      <p class="hint">読み込み中...</p>
+    } @else {
+      <p class="hint">まだ履歴はありません。練習や模擬試験で正解すると、ここに記録されます。</p>
+    }
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="text">日時</th>
+            <th class="text">内容</th>
+            <th>ポイント</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of entries(); track e.id) {
+            <tr>
+              <td class="text date">{{ formatDate(e.createdAt) }}</td>
+              <td class="text reason">{{ e.reason }}</td>
+              <td class="plus">+{{ formatPoints(e.amount) }}pt</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (hasMore()) {
+      <div class="more">
+        <button type="button" class="btn-more" [disabled]="isLoading()" (click)="loadMore()">
+          {{ isLoading() ? '読み込み中...' : 'もっと見る' }}
+        </button>
+      </div>
+    }
+  }
+  <p class="hint">履歴は、履歴の記録を始めてから獲得した分を表示しています。</p>
+</section>

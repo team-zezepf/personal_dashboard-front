@@ -190,7 +190,7 @@ export class MockExamService {
     this.view.set('result');
 
     if (pointsEarned > 0) {
-      this.accountService.addPoints(pointsEarned).subscribe();
+      this.accountService.addPoints(pointsEarned, `模擬試験 ${subject.name} ${correctCount}問正解`).subscribe();
     }
 
     // 正答率の推移・分野別の正答率・称号の判定に使うため、不合格の回も含めて全ての回を、

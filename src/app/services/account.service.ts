@@ -6,6 +6,14 @@ import { GraphQLService } from './graphql.service';
 import { NotificationService } from './notification.service';
 import { environment } from '../../environments/environment';
 
+// ポイントの獲得履歴の1件
+export interface PointHistoryEntry {
+  id: string | number;
+  amount: number;
+  reason: string;
+  createdAt: string;
+}
+
 export interface AccountResponse {
   id: string | number;
   name: string;
@@ -80,22 +88,40 @@ export class AccountService {
 
   // ポイント獲得の演出(結果画面の表示など)は呼び出し元がクライアント側の計算で行うため、
   // ここではヘッダーのポイント表示を最新化するだけでよく、専用のトースト通知は出さない。
-  addPoints(amount: number): Observable<void> {
+  // reason はポイントの履歴に表示する内容(例: "練習 応用情報技術者試験 10問正解")
+  addPoints(amount: number, reason?: string): Observable<void> {
     const mutation = `
-      mutation AddPoints($amount: Int!) {
-        addPoints(amount: $amount) {
+      mutation AddPoints($amount: Int!, $reason: String) {
+        addPoints(amount: $amount, reason: $reason) {
           points
         }
       }
     `;
 
-    return this.graphql.mutation<{ addPoints: { points: number } }>(mutation, { amount }).pipe(
+    return this.graphql.mutation<{ addPoints: { points: number } }>(mutation, { amount, reason }).pipe(
       tap(res => this.authService.updateStoredUser({ points: res.addPoints.points })),
       map(() => undefined),
       catchError(err => {
         console.error('Failed to add points:', err);
         return of(undefined);
       })
+    );
+  }
+
+  // ログイン中のユーザーのポイント獲得履歴を、新しい順に offset 件目から limit 件取得する
+  getPointHistory(limit: number, offset = 0): Observable<PointHistoryEntry[]> {
+    const query = `
+      query GetPointHistory($limit: Int, $offset: Int) {
+        pointHistory(limit: $limit, offset: $offset) {
+          id
+          amount
+          reason
+          createdAt
+        }
+      }
+    `;
+    return this.graphql.query<{ pointHistory: PointHistoryEntry[] }>(query, { limit, offset }).pipe(
+      map((res) => res.pointHistory)
     );
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RecentMockExamsComponent } from '../../components/recent-mock-exams/recent-mock-exams.component';
+import { PointHistoryComponent } from '../../components/point-history/point-history.component';
 import { EXAM_SUBJECTS } from '../../config/exam-subjects';
 import { getGenreContentsForSubject } from '../../config/genre-content';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
@@ -11,7 +12,7 @@ import { catchError, of } from 'rxjs';
 @Component({
   selector: 'app-exam-subjects-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent, RecentMockExamsComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, RecentMockExamsComponent, PointHistoryComponent],
   templateUrl: './exam-subjects.component.html',
   styleUrl: './exam-subjects.component.css'
 })
