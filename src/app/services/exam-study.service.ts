@@ -3,7 +3,7 @@ import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService, EXAM_ACHIEVEMENT_RATIO } from './exam-achievements.service';
 import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
-import { ExamSubject } from '../config/exam-subjects';
+import { ExamSubject, findExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
 export type ExamStudyView = 'start' | 'quiz' | 'review' | 'result';
@@ -161,7 +161,8 @@ export class ExamStudyService {
   private awardPoints(): void {
     const amount = this.pointsEarned();
     if (amount <= 0) return;
-    this.accountService.addPoints(amount).subscribe();
+    const subjectName = findExamSubject(this.examType())?.name ?? '';
+    this.accountService.addPoints(amount, `練習 ${subjectName} ${this.correctCount()}問正解`).subscribe();
   }
 
   // 実績として記録するのに必要な正解数(出題数の7割以上。10問なら7問、5問なら4問)
