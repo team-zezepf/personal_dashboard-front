@@ -88,3 +88,35 @@ export function findGenreContent(examType: string, genreKey: string): GenreConte
 export function getGenreContentsForSubject(examType: string): GenreContent[] {
   return GENRE_CONTENTS.filter((c) => c.examType === examType);
 }
+
+export interface GenreCategoryGroup {
+  category: string;
+  genres: GenreContent[];
+}
+
+// 登録順を保ったまま、カテゴリ(テクノロジ系/マネジメント系/ストラテジ系など)ごとにまとめる
+export function groupGenresByCategory(examType: string): GenreCategoryGroup[] {
+  const groups: GenreCategoryGroup[] = [];
+  for (const genre of getGenreContentsForSubject(examType)) {
+    let group = groups.find((g) => g.category === genre.category);
+    if (!group) {
+      group = { category: genre.category, genres: [] };
+      groups.push(group);
+    }
+    group.genres.push(genre);
+  }
+  return groups;
+}
+
+// 科目の「学習する」で最初に開くジャンル(カテゴリごとにまとめたときの先頭)
+export function firstGenreOf(examType: string): GenreContent | undefined {
+  return groupGenresByCategory(examType)[0]?.genres[0];
+}
+
+// サイドバーと同じ並び(カテゴリごとにまとめた順)での前後のジャンル
+export function adjacentGenres(examType: string, genreKey: string): { prev?: GenreContent; next?: GenreContent } {
+  const ordered = groupGenresByCategory(examType).flatMap((g) => g.genres);
+  const index = ordered.findIndex((g) => g.genreKey === genreKey);
+  if (index < 0) return {};
+  return { prev: ordered[index - 1], next: ordered[index + 1] };
+}
