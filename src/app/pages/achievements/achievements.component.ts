@@ -130,7 +130,9 @@ export class AchievementsPageComponent {
       })
     ).subscribe((records) => {
       this.isLoading.set(false);
-      this.achievedDates.set(new Set(records.map((r) => r.date)));
+      // 模擬試験は不合格の回も記録されるため、合格した回の日付だけにドットを付ける
+      // (練習は7割以上の回だけを記録しているので、常に passed が true)
+      this.achievedDates.set(new Set(records.filter((r) => r.passed).map((r) => r.date)));
     });
   }
 }

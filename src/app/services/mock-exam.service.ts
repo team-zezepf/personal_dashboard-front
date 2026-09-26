@@ -3,6 +3,7 @@ import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService } from './exam-achievements.service';
 import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
+import { ExamAnswer } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 
@@ -192,15 +193,20 @@ export class MockExamService {
       this.accountService.addPoints(pointsEarned).subscribe();
     }
 
-    // 実績カレンダーには合格した受験のみ記録する(不合格の受験は記録を残さない)
-    if (passed) {
-      this.achievementsService.recordCompletion(subject.key, correctCount, totalCount, 'MOCK_EXAM').pipe(
-        catchError((err) => {
-          console.error('Failed to record mock exam achievement:', err);
-          return of(null);
-        })
-      ).subscribe();
-    }
+    // 正答率の推移・分野別の正答率・称号の判定に使うため、不合格の回も含めて全ての回を、
+    // 問題ごとの選択と正誤とともに記録する(実績カレンダーは passed で絞り込んで合格した日だけを表示する)。
+    // 棄権した回は finish() を通らないので記録されない。
+    const examAnswers: ExamAnswer[] = questions.map((q, i) => ({
+      questionId: q.id,
+      selected: answers[i] ?? [],
+      correct: isCorrectAnswer(q, answers[i] ?? [])
+    }));
+    this.achievementsService.recordCompletion(subject.key, correctCount, totalCount, 'MOCK_EXAM', passed, examAnswers).pipe(
+      catchError((err) => {
+        console.error('Failed to record mock exam:', err);
+        return of(null);
+      })
+    ).subscribe();
   }
 
   isCorrect(question: ExamQuestion, answer: number[] | undefined): boolean {

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { GraphQLService } from './graphql.service';
-import { ExamRecord, ExamRecordMode } from '../models/exam-record.models';
+import { ExamAnswer, ExamRecord, ExamRecordMode } from '../models/exam-record.models';
 import { Observable, map } from 'rxjs';
 
 // 資格学習(練習)で「実績」とみなす正解率のしきい値。科目によって1回の出題数が異なるため割合で持ち、
@@ -28,6 +28,7 @@ export class ExamAchievementsService {
           date
           correctCount
           totalCount
+          passed
           createdAt
         }
       }
@@ -39,10 +40,19 @@ export class ExamAchievementsService {
   }
 
   // mode省略時は練習(PRACTICE)として記録する(既存の呼び出し元との後方互換)。
-  recordCompletion(examType: string, correctCount: number, totalCount: number, mode: ExamRecordMode = 'PRACTICE'): Observable<ExamRecord> {
+  // 模擬試験は不合格の回も記録するため、合否(passed)と問題ごとの記録(answers)も渡す。
+  // 省略した場合は合格・問題の記録なしとして保存される。
+  recordCompletion(
+    examType: string,
+    correctCount: number,
+    totalCount: number,
+    mode: ExamRecordMode = 'PRACTICE',
+    passed = true,
+    answers: ExamAnswer[] = []
+  ): Observable<ExamRecord> {
     const mutation = `
-      mutation RecordExamCompletion($examType: String!, $correctCount: Int!, $totalCount: Int!, $mode: String) {
-        recordExamCompletion(examType: $examType, correctCount: $correctCount, totalCount: $totalCount, mode: $mode) {
+      mutation RecordExamCompletion($examType: String!, $correctCount: Int!, $totalCount: Int!, $mode: String, $passed: Boolean, $answers: [ExamAnswerInput!]) {
+        recordExamCompletion(examType: $examType, correctCount: $correctCount, totalCount: $totalCount, mode: $mode, passed: $passed, answers: $answers) {
           id
           userId
           examType
@@ -50,12 +60,13 @@ export class ExamAchievementsService {
           date
           correctCount
           totalCount
+          passed
           createdAt
         }
       }
     `;
 
-    return this.graphql.mutation<{ recordExamCompletion: ExamRecord }>(mutation, { examType, correctCount, totalCount, mode }).pipe(
+    return this.graphql.mutation<{ recordExamCompletion: ExamRecord }>(mutation, { examType, correctCount, totalCount, mode, passed, answers }).pipe(
       map((res) => res.recordExamCompletion)
     );
   }
