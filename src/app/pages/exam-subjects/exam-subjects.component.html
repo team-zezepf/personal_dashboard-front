@@ -26,6 +26,13 @@
             <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
           }
         </div>
+        <div class="stamp-slot">
+          @if (passCount(subject.key) > 0) {
+            <div class="stamp" [title]="'模擬試験に合格済み（' + passCount(subject.key) + '回）'" [attr.aria-label]="'模擬試験に合格済み（' + passCount(subject.key) + '回）'">
+              <small>模擬試験</small>合格
+            </div>
+          }
+        </div>
       </div>
     }
   </div>
