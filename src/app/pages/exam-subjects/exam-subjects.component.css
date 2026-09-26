@@ -3,7 +3,8 @@
 }
 
 .page {
-  max-width: 640px;
+  /* ボタン3つと合格スタンプを並べても科目名が窮屈にならないよう、他の画面より少し広くしている */
+  max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px 64px;
 }
@@ -26,8 +27,9 @@
 }
 
 .subject-card {
+  position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   background: var(--card);
@@ -39,6 +41,8 @@
 }
 
 .subject-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -63,6 +67,37 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* 合格スタンプ。未合格の科目も同じ幅を取り、ボタンの位置が科目によってずれないようにする */
+.stamp-slot {
+  width: 64px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.stamp {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px double #c73a3a;
+  color: #c73a3a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1.1;
+  transform: rotate(-14deg);
+  opacity: 0.85;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.stamp small {
+  font-size: 8.5px;
+  font-weight: 700;
 }
 
 .btn {
@@ -99,9 +134,19 @@
   .subject-card {
     flex-wrap: wrap;
   }
+  /* 右上のスタンプと科目名が重ならないよう、科目名の右側だけ空ける */
+  .subject-info {
+    padding-right: 64px;
+  }
+  .stamp-slot {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+  }
   .subject-actions {
     width: 100%;
     flex-direction: column;
+    order: 3;
   }
   .subject-actions .btn {
     text-align: center;
