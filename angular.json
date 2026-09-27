@@ -60,6 +60,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "sandbox": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.sandbox.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -72,6 +83,10 @@
             },
             "development": {
               "buildTarget": "personal_dashboard-front:build:development"
+            },
+            "sandbox": {
+              "buildTarget": "personal_dashboard-front:build:sandbox",
+              "port": 4201
             }
           },
           "defaultConfiguration": "development"
