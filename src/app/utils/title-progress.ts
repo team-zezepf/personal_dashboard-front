@@ -1,13 +1,14 @@
 import { ExamRecord } from '../models/exam-record.models';
 import { ADVANCED_EXAM, ADVANCED_EXAM_TYPES, TITLES, TitleCondition, TitleDefinition } from '../config/titles';
-import { averagePercent, recentAttempts } from './mock-exam-stats';
+import { recentAttempts, scorePercent } from './mock-exam-stats';
 
 export interface ConditionProgress {
   condition: TitleCondition;
   // 高度資格の科目がまだないなど、挑戦できない条件
   isComingSoon: boolean;
   attempts: number;
-  // 直近N回(受験回数が足りない場合は受験した全ての回)の平均正答率。未受験なら null
+  // 直近N回の平均正答率。受験回数がN回に満たない分は0%として数える(1回だけ高得点を取っても条件を満たさないように)。
+  // 一度も受験していなければ null
   average: number | null;
   // 目標までの不足分(%)。達成済みなら0
   shortfall: number;
@@ -19,7 +20,7 @@ export interface TitleProgress {
   conditions: ConditionProgress[];
   isComingSoon: boolean;
   met: boolean;
-  // 100 −(各条件の不足分の合計)。挑戦できない条件は計算に含めない。受験回数が足りない条件がある間は最大99
+  // 100 −(各条件の不足分の合計)。挑戦できない条件は計算に含めない
   achievementRate: number;
 }
 
@@ -33,8 +34,10 @@ function conditionProgress(condition: TitleCondition, mockRecords: ExamRecord[])
   const candidates = examTypes.map((examType) => {
     const records = mockRecords.filter((r) => r.examType === examType);
     const recent = recentAttempts(records, condition.recentCount);
-    const average = recent.length > 0 ? averagePercent(recent) : null;
-    const met = records.length >= condition.recentCount && average !== null && average >= condition.minRate;
+    const average = recent.length > 0
+      ? recent.reduce((sum, r) => sum + scorePercent(r), 0) / condition.recentCount
+      : null;
+    const met = average !== null && average >= condition.minRate;
     return { attempts: records.length, average, met };
   });
   const best = candidates.find((c) => c.met)
@@ -56,9 +59,7 @@ export function titleProgress(title: TitleDefinition, mockRecords: ExamRecord[])
   const isComingSoon = conditions.some((c) => c.isComingSoon);
   const met = !isComingSoon && conditions.every((c) => c.met);
 
-  let rate = 100 - active.reduce((sum, c) => sum + c.shortfall, 0);
-  // 平均は足りていても受験回数が足りない条件がある場合、100%にはしない
-  if (!met) rate = Math.min(rate, 99);
+  const rate = 100 - active.reduce((sum, c) => sum + c.shortfall, 0);
   return { title, conditions, isComingSoon, met, achievementRate: Math.max(0, Math.round(rate)) };
 }
 
