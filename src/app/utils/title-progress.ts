@@ -20,7 +20,7 @@ export interface TitleProgress {
   conditions: ConditionProgress[];
   isComingSoon: boolean;
   met: boolean;
-  // 100 −(各条件の不足分の合計)。挑戦できない条件は計算に含めない
+  // 100 −(各条件の不足分の合計)。挑戦できない条件は計算に含めない。受験回数が足りない条件がある間は最大99
   achievementRate: number;
 }
 
@@ -37,7 +37,8 @@ function conditionProgress(condition: TitleCondition, mockRecords: ExamRecord[])
     const average = recent.length > 0
       ? recent.reduce((sum, r) => sum + scorePercent(r), 0) / condition.recentCount
       : null;
-    const met = average !== null && average >= condition.minRate;
+    // 条件を満たすには、N回以上受験していることも必要(未受験を0%とするのは進捗の表示のため)
+    const met = records.length >= condition.recentCount && average !== null && average >= condition.minRate;
     return { attempts: records.length, average, met };
   });
   const best = candidates.find((c) => c.met)
@@ -59,7 +60,9 @@ export function titleProgress(title: TitleDefinition, mockRecords: ExamRecord[])
   const isComingSoon = conditions.some((c) => c.isComingSoon);
   const met = !isComingSoon && conditions.every((c) => c.met);
 
-  const rate = 100 - active.reduce((sum, c) => sum + c.shortfall, 0);
+  let rate = 100 - active.reduce((sum, c) => sum + c.shortfall, 0);
+  // 平均は目標に届いていても受験回数が足りない条件がある場合(例: 10回平均50%の条件で100%を5回)、100%にはしない
+  if (!met) rate = Math.min(rate, 99);
   return { title, conditions, isComingSoon, met, achievementRate: Math.max(0, Math.round(rate)) };
 }
 
