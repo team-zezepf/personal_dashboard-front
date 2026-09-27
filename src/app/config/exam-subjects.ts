@@ -69,13 +69,22 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
   },
   {
     key: 'oyojoho',
-    name: '応用情報技術者試験',
-    description: '応用情報技術者試験の対策問題を、2問ずつ解いていきましょう。',
+    name: '応用情報技術者試験（午前）',
+    description: '応用情報技術者試験 午前の対策問題を、2問ずつ解いていきましょう。',
     path: '/study/oyojoho',
     practice: DEFAULT_PRACTICE,
     // 基本情報より難易度が高いため、1問あたりのポイントを多めにしている
     pointsPerCorrectAnswer: 20,
     mockExam: { durationMinutes: 150, questionCount: 80, passRatio: 0.6, questionsPerPage: 2 }
+  },
+  {
+    // 本番の午後は記述式だが、アプリでは事例を読んで選択肢で答える形にしている。1問が長いため1問ずつ出題する
+    key: 'oyojoho-pm',
+    name: '応用情報技術者試験（午後）',
+    description: '事例を読んで答える午後の問題を、1問ずつじっくり解いていきましょう。',
+    path: '/study/oyojoho-pm',
+    practice: { questionsPerSession: 5, questionsPerRound: 1 },
+    pointsPerCorrectAnswer: 20
   }
 ];
 
