@@ -21,7 +21,6 @@ export const GENRES: GenreEntry[] = [
   { examType: 'kihonjoho', genreKey: 'human-interface', genreName: 'ヒューマンインタフェース', category: 'テクノロジ系' },
   { examType: 'kihonjoho', genreKey: 'multimedia', genreName: 'マルチメディア', category: 'テクノロジ系' },
   { examType: 'kihonjoho', genreKey: 'system-development', genreName: 'システム開発技術', category: 'テクノロジ系' },
-  { examType: 'kihonjoho', genreKey: 'sw-development-technique', genreName: 'ソフトウェア開発技術', category: 'テクノロジ系' },
   { examType: 'kihonjoho', genreKey: 'project-management', genreName: 'プロジェクトマネジメント', category: 'マネジメント系' },
   { examType: 'kihonjoho', genreKey: 'service-management', genreName: 'サービスマネジメント', category: 'マネジメント系' },
   { examType: 'kihonjoho', genreKey: 'business-strategy', genreName: '経営戦略', category: 'ストラテジ系' },
