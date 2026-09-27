@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="computer-components" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>コンピュータ構成要素のまとめ</h1>
-      <p class="genre-description">CPUの仕組み・記憶階層・補助記憶装置・システムの信頼性設計など、コンピュータ構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">コンピュータの5大装置・CPUの仕組み・記憶階層・補助記憶装置と入出力インタフェースなど、コンピュータ構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -166,50 +166,6 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SSDは半導体メモリを用いるため、HDDのような磁気ヘッドは持たない(磁気ヘッドを使うのはHDDの特徴)。「可動部品がない」= 衝撃・振動に強いという因果関係もあわせて押さえる。</span>
-      </div>
-    </section>
-
-    <section class="topic" id="topic-4">
-      <h2><span class="topic-no">5</span>システムの信頼性設計(高信頼化構成と稼働率)</h2>
-      <p>システムの信頼性を高める代表的な構成として、デュアルシステムとデュプレックスシステムがある。両者は名称が似ているため、構成の違いを図でイメージして区別するとよい。</p>
-      <figure class="fig">
-        <svg viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
-          <text x="95" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">デュアルシステム</text>
-          <rect x="20" y="30" width="70" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
-          <text x="55" y="54" font-size="10" fill="#1f9d55" text-anchor="middle">系統A(稼働)</text>
-          <rect x="100" y="30" width="70" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
-          <text x="135" y="54" font-size="10" fill="#1f9d55" text-anchor="middle">系統B(稼働)</text>
-          <line x1="90" y1="50" x2="100" y2="50" stroke="#333" stroke-width="2"/>
-          <text x="95" y="88" font-size="9" fill="#7b8794" text-anchor="middle">両系統で同じ処理をし常に結果を照合</text>
-
-          <text x="325" y="16" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">デュプレックスシステム</text>
-          <rect x="250" y="30" width="70" height="40" rx="6" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
-          <text x="285" y="54" font-size="10" fill="#1f9d55" text-anchor="middle">主系(稼働)</text>
-          <rect x="330" y="30" width="70" height="40" rx="6" fill="#f7f9fb" stroke="#c7cdd6" stroke-width="2" stroke-dasharray="4,3"/>
-          <text x="365" y="54" font-size="10" fill="#333" text-anchor="middle">従系(待機)</text>
-          <line x1="320" y1="50" x2="330" y2="50" stroke="#333" stroke-width="2"/>
-          <text x="325" y="88" font-size="9" fill="#7b8794" text-anchor="middle">障害発生時に主系→従系へ切替</text>
-        </svg>
-        <figcaption class="fig-caption">デュアルシステムは2系統が常に同じ処理を行い相互に照合する構成。デュプレックスシステムは主系のみが稼働し、障害時に従系へ切り替える構成。</figcaption>
-      </figure>
-      <table class="ref-table">
-        <thead><tr><th>指標</th><th>意味</th></tr></thead>
-        <tbody>
-          <tr><td>MTBF(平均故障間隔)</td><td>故障してから次に故障するまでの平均動作時間。大きいほど故障しにくい</td></tr>
-          <tr><td>MTTR(平均修理時間)</td><td>故障してから修理・復旧が完了するまでの平均時間。小さいほど早く復旧する</td></tr>
-        </tbody>
-      </table>
-      <div class="formula-box">
-        <span class="label">稼働率の求め方</span>
-        <span>稼働率 = MTBF ÷ (MTBF + MTTR)</span>
-      </div>
-      <div class="example-box">
-        <span class="label">例題: MTBF270時間、MTTR30時間のシステムの稼働率</span>
-        <span>稼働率 = 270 ÷ (270 + 30) = 270 ÷ 300 = 0.9 = <strong>90%</strong></span>
-      </div>
-      <div class="pitfall-box">
-        <span class="label">つまずきやすいポイント</span>
-        <span>MTBF(動いている時間の平均=長いほど良い)とMTTR(直している時間の平均=短いほど良い)を取り違えない。またデュアルシステム(2系統とも稼働して相互照合)とデュプレックスシステム(主系のみ稼働し従系は待機)の違いを混同しない。</span>
       </div>
     </section>
     </article>
