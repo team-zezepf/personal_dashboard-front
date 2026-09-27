@@ -30,7 +30,7 @@ export const TITLES: TitleDefinition[] = [
     conditions: [
       { examType: 'kihonjoho', label: '基本情報(科目A)', recentCount: 10, minRate: 60 },
       { examType: 'kihonjoho-b', label: '基本情報(科目B)', recentCount: 10, minRate: 50 },
-      { examType: 'oyojoho', label: '応用情報', recentCount: 10, minRate: 50 }
+      { examType: 'oyojoho', label: '応用情報(午前)', recentCount: 10, minRate: 50 }
     ]
   },
   {
@@ -40,7 +40,7 @@ export const TITLES: TitleDefinition[] = [
     conditions: [
       { examType: 'kihonjoho', label: '基本情報(科目A)', recentCount: 10, minRate: 75 },
       { examType: 'kihonjoho-b', label: '基本情報(科目B)', recentCount: 10, minRate: 75 },
-      { examType: 'oyojoho', label: '応用情報', recentCount: 5, minRate: 60 },
+      { examType: 'oyojoho', label: '応用情報(午前)', recentCount: 5, minRate: 60 },
       { examType: ADVANCED_EXAM, label: '高度資格 いずれか1種', recentCount: 5, minRate: 50 }
     ]
   },
@@ -49,7 +49,7 @@ export const TITLES: TitleDefinition[] = [
     name: 'シニアエンジニア',
     badgeImage: 'images/titles/senior.png',
     conditions: [
-      { examType: 'oyojoho', label: '応用情報', recentCount: 5, minRate: 80 },
+      { examType: 'oyojoho', label: '応用情報(午前)', recentCount: 5, minRate: 80 },
       { examType: ADVANCED_EXAM, label: '高度資格 いずれか1種', recentCount: 5, minRate: 60 }
     ]
   }
