@@ -7,6 +7,19 @@ export interface ExamSubjectMockExamConfig {
   passRatio: number;
   // 1ページに表示する問題数
   questionsPerPage: number;
+  // 分野ごとの出題数。省略した科目は、全ての問題からランダムに questionCount 問を出題する
+  composition?: MockExamComposition;
+}
+
+/**
+ * 模擬試験の出題構成。応用情報(午後)の本番のように、必須の分野と、受験者が選ぶ分野からなる。
+ * required と elective の出題数の合計は questionCount と一致させる。
+ */
+export interface MockExamComposition {
+  // 必ず出題する分野(問題の subCategory)と出題数
+  required: { genre: string; count: number }[];
+  // 受験者が開始画面で選ぶ分野の候補、選ぶ数、選んだ1分野当たりの出題数
+  elective: { genres: string[]; pickCount: number; countPerGenre: number };
 }
 
 export interface ExamSubjectPracticeConfig {
@@ -84,7 +97,25 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     description: '事例を読んで答える午後の問題を、1問ずつじっくり解いていきましょう。',
     path: '/study/oyojoho-pm',
     practice: { questionsPerSession: 5, questionsPerRound: 1 },
-    pointsPerCorrectAnswer: 20
+    pointsPerCorrectAnswer: 20,
+    // 本番と同じく、情報セキュリティは必須で、ほかの10分野から4分野を選んで解答する
+    mockExam: {
+      durationMinutes: 150,
+      questionCount: 25,
+      passRatio: 0.6,
+      questionsPerPage: 1,
+      composition: {
+        required: [{ genre: '情報セキュリティ', count: 5 }],
+        elective: {
+          genres: [
+            '経営戦略', 'プログラミング', 'システムアーキテクチャ', 'ネットワーク', 'データベース',
+            '組込みシステム開発', '情報システム開発', 'プロジェクトマネジメント', 'サービスマネジメント', 'システム監査'
+          ],
+          pickCount: 4,
+          countPerGenre: 5
+        }
+      }
+    }
   }
 ];
 

@@ -12,14 +12,53 @@
           <li>制限時間: {{ subject.mockExam.durationMinutes }}分</li>
           <li>出題数: {{ subject.mockExam.questionCount }}問({{ subject.mockExam.questionsPerPage }}問ずつ表示されます)</li>
           <li>合格ボーダー: 正解数が全体の{{ subject.mockExam.passRatio * 100 }}%以上</li>
+          @if (mockExam.composition(); as composition) {
+            <li>出題構成: {{ requiredText(composition) }}、選んだ{{ composition.elective.pickCount }}分野から{{ composition.elective.countPerGenre }}問ずつ</li>
+          }
           <li>正誤は終了後にまとめて確認できます(回答中は表示されません)</li>
           <li>残り時間が0になると、自動的に終了して採点されます</li>
           <li>「棄権する」を選ぶと記録は残らず、結果を見ることもできません</li>
         </ul>
+
+        @if (mockExam.composition(); as composition) {
+          <section class="genre-select" aria-labelledby="genre-select-title">
+            <h2 id="genre-select-title" class="genre-select-title">解答する分野を選ぶ</h2>
+            <p class="genre-select-hint">
+              本番と同じく、{{ requiredGenresText(composition) }}は必須です。ほかの{{ composition.elective.genres.length }}分野から{{ composition.elective.pickCount }}分野を選んでください。前回選んだ分野が最初から選ばれています。
+            </p>
+            @for (r of composition.required; track r.genre) {
+              <div class="genre-fixed">
+                <span>{{ r.genre }}</span>
+                <span class="genre-badge">必須</span>
+                <span class="genre-count">{{ r.count }}問</span>
+              </div>
+            }
+            <div class="genre-choices">
+              @for (genre of composition.elective.genres; track genre) {
+                <button
+                  type="button"
+                  class="genre-choice"
+                  [class.selected]="mockExam.isGenreSelected(genre)"
+                  [disabled]="!mockExam.isGenreSelected(genre) && mockExam.selectedGenres().length >= composition.elective.pickCount"
+                  [attr.aria-pressed]="mockExam.isGenreSelected(genre)"
+                  (click)="mockExam.toggleGenre(genre)"
+                >
+                  <span class="genre-check" aria-hidden="true">{{ mockExam.isGenreSelected(genre) ? '✓' : '' }}</span>
+                  <span class="genre-name">{{ genre }}</span>
+                  <span class="genre-count">{{ composition.elective.countPerGenre }}問</span>
+                </button>
+              }
+            </div>
+            <p class="genre-status" [class.complete]="mockExam.canStart()">
+              選択中: {{ mockExam.selectedGenres().length }} / {{ composition.elective.pickCount }} 分野
+            </p>
+          </section>
+        }
+
         @if (mockExam.errorMessage()) {
           <p class="error-message">{{ mockExam.errorMessage() }}</p>
         }
-        <button class="btn btn-primary" [disabled]="mockExam.isLoading()" (click)="start()">
+        <button class="btn btn-primary" [disabled]="mockExam.isLoading() || !mockExam.canStart()" (click)="start()">
           {{ mockExam.isLoading() ? '準備中...' : '模擬試験を開始する' }}
         </button>
         <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
