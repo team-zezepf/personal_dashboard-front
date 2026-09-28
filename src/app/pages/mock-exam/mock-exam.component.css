@@ -42,6 +42,110 @@
   margin-bottom: 6px;
 }
 
+/* 解答する分野の選択(応用情報 午後のように、出題構成に選択分野がある科目だけ) */
+.genre-select {
+  margin-bottom: 24px;
+}
+
+.genre-select-title {
+  font-size: 0.98rem;
+  margin: 0 0 4px;
+}
+
+.genre-select-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.genre-fixed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px solid #9dd9f2;
+  background: #eef9ff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+}
+
+.genre-badge {
+  font-size: 11px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+}
+
+.genre-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.genre-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.genre-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.genre-choice.selected {
+  border-color: var(--primary);
+  background: #eef9ff;
+}
+
+.genre-choice:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.genre-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+}
+
+.genre-choice.selected .genre-check {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.genre-status {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+}
+
+.genre-status.complete {
+  color: var(--green);
+  font-weight: 700;
+}
+
 .error-message {
   background: #fdecec;
   color: var(--red);

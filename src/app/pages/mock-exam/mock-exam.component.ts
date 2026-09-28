@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { CodeBlockComponent } from '../../components/code-block/code-block.component';
 import { MockExamService } from '../../services/mock-exam.service';
-import { findExamSubject, hasMockExam } from '../../config/exam-subjects';
+import { MockExamComposition, findExamSubject, hasMockExam } from '../../config/exam-subjects';
 
 @Component({
   selector: 'app-mock-exam-page',
@@ -68,6 +68,15 @@ export class MockExamPageComponent implements OnDestroy {
 
   start(): void {
     this.mockExam.start();
+  }
+
+  // 例: 「情報セキュリティから5問(必須)」
+  requiredText(composition: MockExamComposition): string {
+    return composition.required.map((r) => `${r.genre}から${r.count}問(必須)`).join('、');
+  }
+
+  requiredGenresText(composition: MockExamComposition): string {
+    return composition.required.map((r) => r.genre).join('・');
   }
 
   globalIndex(indexInRound: number): number {
