@@ -86,6 +86,11 @@ td.reason {
   font-weight: 700;
 }
 
+.minus {
+  color: var(--red-text);
+  font-weight: 700;
+}
+
 .more {
   display: flex;
   justify-content: center;

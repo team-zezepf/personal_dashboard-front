@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 const PAGE_SIZE = 10;
 
 /**
- * 資格学習の科目一覧の画面に表示する、ポイントの獲得履歴(新しい順)。
+ * 資格学習の科目一覧の画面に表示する、ポイントの獲得・使用の履歴(新しい順)。
  * 最初は PAGE_SIZE 件を表示し、「もっと見る」で続きを読み込む。
  */
 @Component({
@@ -55,5 +55,10 @@ export class PointHistoryComponent implements OnInit {
 
   formatPoints(value: number): string {
     return value.toLocaleString('ja-JP');
+  }
+
+  // 履歴の額。獲得は「+」、使った分(カードパックなど)は「-」を付ける
+  formatSignedPoints(value: number): string {
+    return (value >= 0 ? '+' : '-') + this.formatPoints(Math.abs(value));
   }
 }

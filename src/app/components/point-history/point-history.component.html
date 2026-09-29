@@ -28,7 +28,7 @@
             <tr>
               <td class="text date">{{ formatDate(e.createdAt) }}</td>
               <td class="text reason">{{ e.reason }}</td>
-              <td class="plus">+{{ formatPoints(e.amount) }}pt</td>
+              <td [class.plus]="e.amount >= 0" [class.minus]="e.amount < 0">{{ formatSignedPoints(e.amount) }}pt</td>
             </tr>
           }
         </tbody>
@@ -42,5 +42,5 @@
       </div>
     }
   }
-  <p class="hint">履歴は、履歴の記録を始めてから獲得した分を表示しています。</p>
+  <p class="hint">履歴は、履歴の記録を始めてから獲得した分と、カードパックなどで使った分を表示しています。</p>
 </section>
