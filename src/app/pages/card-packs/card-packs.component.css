@@ -132,6 +132,165 @@
   overflow-y: auto;
 }
 
+/* ===== パックの上部を切り開く演出 ===== */
+/* 切り取り線の高さ(パックの上からの割合)。pack-top / pack-body の切り抜きと線の位置で共通 */
+.tear-stage {
+  --cut-y: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: white;
+  animation: stage-appear 0.35s ease-out;
+}
+
+@keyframes stage-appear {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+.pack-cut-area {
+  position: relative;
+  width: 130px;
+  height: 180px;
+  /* パックを大きく見せる。拡大した分(180px × 0.6)だけ下を空ける */
+  transform: scale(1.6);
+  transform-origin: top center;
+  margin-bottom: 108px;
+  /* なぞる操作で画面がスクロールしたり、文字が選択されたりしないようにする */
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.pack-part {
+  position: absolute;
+  inset: 0;
+}
+
+.pack-top {
+  clip-path: inset(0 0 calc(100% - var(--cut-y)) 0);
+  transform-origin: right center;
+}
+
+.pack-body {
+  clip-path: inset(var(--cut-y) 0 0 0);
+}
+
+.cut-guide {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: var(--cut-y);
+  border-top: 2px dashed rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  animation: guide-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes guide-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.cut-line {
+  position: absolute;
+  top: calc(var(--cut-y) - 1px);
+  height: 3px;
+  background: white;
+  box-shadow: 0 0 8px 2px rgba(255, 236, 170, 0.9);
+  pointer-events: none;
+}
+
+.scissors {
+  position: absolute;
+  top: calc(var(--cut-y) - 11px);
+  transform: translateX(-50%);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.cut-line.auto {
+  transition: width 0.3s ease-out;
+}
+
+.scissors.auto {
+  transition: left 0.3s ease-out;
+}
+
+.light {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: calc(var(--cut-y) - 30px);
+  height: 60px;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 245, 200, 0.95), rgba(255, 220, 120, 0) 70%);
+}
+
+/* 切れた上部が飛んでいき、切り口から光が漏れ、パックが沈む(合計 TEAR_MS = 0.9秒) */
+.torn .pack-top {
+  animation: tear-off 0.7s ease-in forwards;
+}
+
+@keyframes tear-off {
+  to {
+    transform: translate(70px, -90px) rotate(35deg);
+    opacity: 0;
+  }
+}
+
+.torn .light {
+  animation: light-burst 0.9s ease-out forwards;
+}
+
+@keyframes light-burst {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+  40% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1.8);
+  }
+}
+
+.torn .pack-body {
+  animation: pack-sink 0.5s ease-in 0.4s forwards;
+}
+
+@keyframes pack-sink {
+  to {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+}
+
+.torn .cut-guide,
+.torn .cut-line,
+.torn .scissors {
+  opacity: 0;
+}
+
+/* カードがパックから1枚ずつ出てくる(遅れは HTML 側で位置ごとに指定) */
+.slot {
+  animation: rise-from-pack 0.45s ease-out backwards;
+}
+
+@keyframes rise-from-pack {
+  from {
+    transform: translateY(80px) scale(0.85);
+    opacity: 0;
+  }
+}
+
 .opening {
   width: 100%;
   max-width: 760px;
@@ -212,6 +371,29 @@
   font-weight: bold;
   cursor: pointer;
   text-decoration: none;
+}
+
+.sub-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 「視差効果を減らす」設定のときは動きを省く(次の段階へはタイマーを待たずに進む) */
+@media (prefers-reduced-motion: reduce) {
+  .tear-stage,
+  .cut-guide,
+  .torn .pack-top,
+  .torn .light,
+  .torn .pack-body,
+  .slot,
+  .revealed {
+    animation: none;
+  }
+
+  .cut-line.auto,
+  .scissors.auto {
+    transition: none;
+  }
 }
 
 @media (max-width: 600px) {

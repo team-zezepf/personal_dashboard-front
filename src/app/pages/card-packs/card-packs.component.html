@@ -48,51 +48,83 @@
 
 @if (openedPack(); as pack) {
   <div class="overlay">
-    <div class="opening">
-      <div class="opening-head">
-        <span>第{{ pack.seriesNumber }}弾 {{ pack.name }} を開けました（{{ revealed().size }} / {{ openedCards().length }} 枚めくった）</span>
-        @if (!allRevealed()) {
-          <button type="button" class="sub-button" (click)="revealAll()">全部めくる</button>
-        }
-      </div>
-
-      <div class="open-row">
-        @for (opened of openedCards(); track $index) {
-          @if (revealed().has($index)) {
-            <div class="revealed">
-              <app-card-tile
-                [card]="opened.card"
-                [isNew]="opened.isNew"
-                [shine]="opened.card.rarity >= 3"
-              />
-            </div>
-          } @else {
-            <button
-              type="button"
-              class="back"
-              [class.hint]="isGuaranteedSlot($index)"
-              [attr.aria-label]="($index + 1) + '枚目をめくる'"
-              (click)="reveal($index)"
-            >？</button>
-          }
-        }
-      </div>
-
-      @if (allRevealed()) {
-        <div class="opening-actions">
-          <button type="button" class="open-button" [disabled]="shortage(pack) > 0" (click)="openAgain()">
-            もう1パック開ける
-            <small>
-              {{ pack.price }} pt
-              @if (shortage(pack) > 0) {（あと{{ shortage(pack) }}pt）}
-            </small>
-          </button>
-          <a class="sub-button" routerLink="/cards">コレクションを見る</a>
-          <button type="button" class="sub-button" (click)="closeOpening()">閉じる</button>
+    @if (stage() !== 'cards') {
+      <div class="tear-stage" [class.torn]="stage() === 'torn'">
+        <div
+          class="pack-cut-area"
+          (pointerdown)="onCutStart($event)"
+          (pointermove)="onCutMove($event)"
+          (pointerup)="onCutEnd()"
+          (pointercancel)="onCutEnd()"
+        >
+          <!-- 同じパックを2枚重ね、切り取り線より上(pack-top)と下(pack-body)を切り抜いて表示する -->
+          <div class="pack-part pack-body"><app-card-pack-view [pack]="pack" /></div>
+          <div class="pack-part pack-top"><app-card-pack-view [pack]="pack" /></div>
+          <div class="cut-guide"></div>
+          <div
+            class="cut-line"
+            [class.auto]="isAutoCutting()"
+            [style.left.%]="cutLineLeft()"
+            [style.width.%]="cutProgress() * 100"
+          ></div>
+          <span class="scissors" [class.auto]="isAutoCutting()" [style.left.%]="scissorsLeft()">✂️</span>
+          <div class="light"></div>
         </div>
-      } @else {
-        <p class="caption">カードを押すと1枚ずつめくれます。光っている{{ cardsPerPack }}枚目は★★以上が確定です。</p>
-      }
-    </div>
+        @if (stage() === 'sealed') {
+          <p class="caption">上の点線を、指やマウスで横になぞって開けよう</p>
+          <button type="button" class="sub-button" [disabled]="isAutoCutting()" (click)="cutByTap()">タップで開ける</button>
+        }
+      </div>
+    } @else {
+      <div class="opening">
+        <div class="opening-head">
+          <span>第{{ pack.seriesNumber }}弾 {{ pack.name }} を開けました（{{ revealed().size }} / {{ openedCards().length }} 枚めくった）</span>
+          @if (!allRevealed()) {
+            <button type="button" class="sub-button" (click)="revealAll()">全部めくる</button>
+          }
+        </div>
+
+        <div class="open-row">
+          @for (opened of openedCards(); track $index) {
+            <!-- パックから1枚ずつ順に出てくるよう、位置ごとに少しずつ遅らせる -->
+            <div class="slot" [style.animation-delay.ms]="$index * 90">
+              @if (revealed().has($index)) {
+                <div class="revealed">
+                  <app-card-tile
+                    [card]="opened.card"
+                    [isNew]="opened.isNew"
+                    [shine]="opened.card.rarity >= 3"
+                  />
+                </div>
+              } @else {
+                <button
+                  type="button"
+                  class="back"
+                  [class.hint]="isGuaranteedSlot($index)"
+                  [attr.aria-label]="($index + 1) + '枚目をめくる'"
+                  (click)="reveal($index)"
+                >？</button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (allRevealed()) {
+          <div class="opening-actions">
+            <button type="button" class="open-button" [disabled]="shortage(pack) > 0" (click)="openAgain()">
+              もう1パック開ける
+              <small>
+                {{ pack.price }} pt
+                @if (shortage(pack) > 0) {（あと{{ shortage(pack) }}pt）}
+              </small>
+            </button>
+            <a class="sub-button" routerLink="/cards">コレクションを見る</a>
+            <button type="button" class="sub-button" (click)="closeOpening()">閉じる</button>
+          </div>
+        } @else {
+          <p class="caption">カードを押すと1枚ずつめくれます。光っている{{ cardsPerPack }}枚目は★★以上が確定です。</p>
+        }
+      </div>
+    }
   </div>
 }
