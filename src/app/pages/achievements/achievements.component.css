@@ -42,7 +42,7 @@
 
 .tab-switch button.active {
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
 }
 
 .card {
@@ -96,11 +96,11 @@
 
 .nav button {
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
   border-radius: 6px;
   width: 28px;
   height: 28px;
-  color: #66727f;
+  color: var(--text-sub);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -135,7 +135,7 @@
 }
 
 .day.muted {
-  color: #c4cbd2;
+  color: var(--text-faint);
 }
 
 .day.today {

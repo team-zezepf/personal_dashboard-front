@@ -11,17 +11,17 @@
 .time-select select {
   flex: 1;
   min-width: 0;
-  border: 1px solid #dce3e8;
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 9px 6px;
   font: inherit;
   font-size: 12px;
-  background: white;
+  background: var(--card);
   outline: none;
 }
 
 .time-select select:focus {
-  border-color: #8ed6ec;
+  border-color: var(--primary-border);
   box-shadow: 0 0 0 3px rgba(19, 169, 223, 0.08);
 }
 

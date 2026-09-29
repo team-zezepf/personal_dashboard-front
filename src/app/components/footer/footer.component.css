@@ -45,6 +45,6 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--orange, #f59e0b);
+  background: var(--orange, var(--orange));
   flex: 0 0 auto;
 }

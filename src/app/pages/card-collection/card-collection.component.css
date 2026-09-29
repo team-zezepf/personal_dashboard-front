@@ -73,7 +73,7 @@
 .pack-tab {
   border: 2px solid var(--pack-color);
   color: var(--pack-color);
-  background: white;
+  background: var(--card);
   border-radius: 10px;
   padding: 6px 12px;
   font-size: 13px;
@@ -116,7 +116,7 @@
   flex: 1;
   min-width: 180px;
   height: 10px;
-  background: #edf1f5;
+  background: var(--surface-2);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -136,7 +136,7 @@
 
 .chip {
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
   border-radius: 999px;
   padding: 5px 12px;
   font-size: 12px;
@@ -190,7 +190,7 @@
 
 .close-button {
   border: none;
-  background: white;
+  background: var(--card);
   color: var(--text);
   border-radius: 999px;
   padding: 8px 24px;

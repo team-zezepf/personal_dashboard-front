@@ -43,7 +43,7 @@
 }
 
 .topic-arrow {
-  color: #a6b0b9;
+  color: var(--text-faint);
   font-size: 16px;
 }
 

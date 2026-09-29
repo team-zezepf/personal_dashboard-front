@@ -25,7 +25,7 @@
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: var(--text);
   font-size: 14px;
   outline: none;
@@ -43,7 +43,7 @@
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: var(--text);
   font-size: 14px;
   outline: none;
@@ -54,7 +54,7 @@
   padding: 0 20px;
   border: none;
   border-radius: 8px;
-  background: #eef2f6;
+  background: var(--surface-2);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
@@ -62,7 +62,7 @@
 }
 
 .search-button:hover {
-  background: #e5e9ee;
+  background: var(--surface-2);
 }
 
 /* User table */
@@ -113,7 +113,7 @@ td {
 
 th {
   height: 46px;
-  background: #fafbfc;
+  background: var(--surface);
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
@@ -159,18 +159,18 @@ tr:last-child td {
 }
 
 .role-general {
-  background: #eef2f6;
-  color: #596575;
+  background: var(--surface-2);
+  color: var(--text-sub);
 }
 
 .role-admin {
-  background: #fff4df;
-  color: #c27a00;
+  background: var(--orange-soft);
+  color: var(--orange-text);
 }
 
 .role-developer {
-  background: #e5f7ef;
-  color: #16875a;
+  background: var(--green-soft);
+  color: var(--green-text);
 }
 
 .date {
@@ -182,7 +182,7 @@ tr:last-child td {
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   color: var(--primary-dark);
   font-size: 12px;
   font-weight: 600;
@@ -190,7 +190,7 @@ tr:last-child td {
 }
 
 .action-button:hover {
-  background: #f5fbfe;
+  background: var(--primary-soft);
   border-color: var(--primary);
 }
 
@@ -208,7 +208,7 @@ tr:last-child td {
   height: 34px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   color: var(--text);
   font-size: 12px;
   cursor: pointer;
@@ -221,7 +221,7 @@ tr:last-child td {
 .page-button.active {
   border-color: var(--primary);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 /* Role edit modal */
@@ -238,7 +238,7 @@ tr:last-child td {
 
 .role-modal-card {
   width: min(380px, 100%);
-  background: #fff;
+  background: var(--card);
   border-radius: 14px;
   box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
   overflow: hidden;
@@ -261,8 +261,8 @@ tr:last-child td {
   height: 30px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: white;
-  color: #66727f;
+  background: var(--card);
+  color: var(--text-sub);
   cursor: pointer;
   font-size: 17px;
 }
@@ -316,14 +316,14 @@ tr:last-child td {
 
 .cancel-button {
   border: 1px solid var(--line);
-  background: white;
-  color: #66727f;
+  background: var(--card);
+  color: var(--text-sub);
 }
 
 .role-modal-footer .save-button {
   border: 0;
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
 }
 
 .role-modal-footer .save-button:disabled {

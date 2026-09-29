@@ -2,17 +2,53 @@
   box-sizing: border-box;
 }
 
+/*
+ * 配色はすべてここの変数で指定する(各画面のCSSに色を直接書かない)。
+ * 下の値は標準(ライト)テーマの色で、テーマ設定で別のテーマを選ぶと、ThemeService が
+ * 背景色・文字色・ヘッダー色・ボタン色とそこから計算した色(--card など)を :root に上書きする。
+ */
 :root {
+  /* テーマで選ぶ4色 */
   --bg: #f5f7fa;
-  --card: #ffffff;
   --text: #1f2937;
+  --header: #6076e0;
+  --primary: #13a9df;
+
+  /* 4色から計算する色(ThemeService の deriveThemeColors と対応させる) */
+  --card: #ffffff;
   --muted: #7b8794;
   --line: #e7ebf0;
-  --primary: #13a9df;
   --primary-dark: #078ec2;
+  --on-primary: #ffffff;
+  --header-text: #ffffff;
+
+  /* テーマに関係なく固定の色(成功・警告・エラー、称号などのアクセント) */
   --green: #22b573;
   --orange: #f59e0b;
   --red: #ef5b5b;
+  --indigo: #6076e0;
+
+  /*
+   * 上の変数から作る中間の色。ライトテーマでは、置き換える前に各画面で直接書いていた色とほぼ同じになる。
+   * ダークテーマでは、パネルの色(--card)と文字色(--text)が変わるので、自動で暗い配色になる
+   */
+  --surface: color-mix(in srgb, var(--text) 3%, var(--card));
+  --surface-2: color-mix(in srgb, var(--text) 6%, var(--card));
+  --line-strong: color-mix(in srgb, var(--text) 15%, var(--card));
+  --text-sub: color-mix(in srgb, var(--text) 68%, var(--card));
+  --text-faint: color-mix(in srgb, var(--text) 38%, var(--card));
+  --primary-soft: color-mix(in srgb, var(--primary) 9%, var(--card));
+  --primary-border: color-mix(in srgb, var(--primary) 32%, var(--card));
+  --red-soft: color-mix(in srgb, var(--red) 11%, var(--card));
+  --red-border: color-mix(in srgb, var(--red) 32%, var(--card));
+  --red-text: color-mix(in srgb, var(--red) 78%, var(--text));
+  --green-soft: color-mix(in srgb, var(--green) 11%, var(--card));
+  --green-text: color-mix(in srgb, var(--green) 72%, var(--text));
+  --orange-soft: color-mix(in srgb, var(--orange) 12%, var(--card));
+  --orange-border: color-mix(in srgb, var(--orange) 45%, var(--card));
+  --orange-text: color-mix(in srgb, var(--orange) 62%, var(--text));
+  --indigo-soft: color-mix(in srgb, var(--indigo) 11%, var(--card));
+  --indigo-text: color-mix(in srgb, var(--indigo) 62%, var(--text));
 }
 
 body {
@@ -27,4 +63,12 @@ body {
 
 button {
   font-family: inherit;
+}
+
+/* 背景色を指定していない入力欄も、テーマの色に合わせる(各画面のCSSで指定したものが優先される) */
+input,
+select,
+textarea {
+  background-color: var(--card);
+  color: var(--text);
 }

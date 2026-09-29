@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { UserTheme } from '../config/theme';
 
 export interface AuthUser {
   id: string | number;
@@ -12,6 +13,8 @@ export interface AuthUser {
   avatarFilename?: string | null;
   favoriteTools?: string[];
   points?: number;
+  // デザインテーマ(未設定は null で標準のライト)
+  theme?: UserTheme | null;
 }
 
 interface LoginResponse {
