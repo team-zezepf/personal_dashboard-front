@@ -1,0 +1,181 @@
+<app-header [pageTitle]="(subject?.name ?? '資格学習') + ' - 間違えた問題の復習'"></app-header>
+
+<main class="page">
+  @if (subject) {
+
+    @if (review.view() !== 'start') {
+      <div class="progress-row">
+        <span>全 {{ review.sessionItems().length }} 問</span>
+        <span>正解 {{ review.correctCount() }} / {{ review.answeredCount() }}</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" [style.width.%]="review.view() === 'result' ? 100 : review.progressPercent()"></div>
+      </div>
+    }
+
+    @if (review.errorMessage()) {
+      <div class="card error-card">{{ review.errorMessage() }}</div>
+    }
+
+    <!-- 開始画面 -->
+    @if (review.view() === 'start') {
+      <section class="card intro-card">
+        <h1 class="page-title">{{ subject.name }} 間違えた問題の復習</h1>
+
+        @if (review.isLoading()) {
+          <p class="hint">読み込み中...</p>
+        } @else if (!review.errorMessage() && review.items().length === 0) {
+          <p class="empty">
+            復習する問題はありません 🎉<br>
+            直近{{ recentCount }}回の模擬試験で間違えた問題は、全て次の回で正解しています。
+          </p>
+          <div class="intro-actions">
+            <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+          </div>
+        } @else if (review.items().length > 0) {
+          <ul class="intro-list">
+            <li>直近{{ recentCount }}回の模擬試験で、最後に解いたときに間違えた問題が <b>{{ review.items().length }}問</b> あります</li>
+            <li>{{ review.questionsPerRound() }}問ずつ出題し、答えるとすぐに正誤と解説を確認できます（時間制限なし）</li>
+            <li>次の模擬試験で正解すると、その問題は復習の対象から外れます</li>
+            <li>復習ではポイントは獲得できません</li>
+          </ul>
+
+          <h2 class="genre-select-title">復習する分野</h2>
+          <div class="genre-chips">
+            @for (g of review.genres(); track g.genre) {
+              <button
+                type="button"
+                class="chip"
+                [class.selected]="review.isGenreSelected(g.genre)"
+                [attr.aria-pressed]="review.isGenreSelected(g.genre)"
+                (click)="review.toggleGenre(g.genre)"
+              >{{ g.genre }}<small>{{ g.count }}問</small></button>
+            }
+          </div>
+          <p class="genre-status">選択中: {{ review.selectedItems().length }}問（出題順はランダム）</p>
+
+          <div class="intro-actions">
+            <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+            <button class="btn btn-primary" type="button" [disabled]="review.selectedItems().length === 0" (click)="start()">復習を始める</button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 出題画面 -->
+    @if (review.view() === 'quiz') {
+      <section>
+        @for (item of review.roundItems(); track item.question.id) {
+          <div class="question-card">
+            <div class="question-meta">
+              <span class="badge">{{ item.question.category }}: {{ item.question.subCategory }}</span>
+              <span class="question-number">第 {{ globalIndex($index) + 1 }} 問 / 全 {{ review.sessionItems().length }} 問</span>
+              <span class="missed">{{ missedText(item) }}</span>
+            </div>
+            <p class="question-text">{{ item.question.question }}</p>
+            @if (item.question.code) {
+              <app-code-block [code]="item.question.code"></app-code-block>
+            }
+            @if (item.question.image) {
+              <div class="question-image-wrap" [innerHTML]="trustedImage(item.question.image)"></div>
+            }
+            <ul class="choice-list">
+              @for (choice of item.question.choices; track $index) {
+                <li class="choice-item" [class.selected]="isSelected(item.question, $index)" (click)="toggleChoice(item.question, $index)">
+                  <label>
+                    <input
+                      [type]="item.question.type === 'multi' ? 'checkbox' : 'radio'"
+                      [checked]="isSelected(item.question, $index)"
+                      (click)="$event.preventDefault()"
+                    >
+                    <span>{{ choice }}</span>
+                  </label>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        <div class="quiz-actions">
+          <button class="btn btn-ghost" type="button" (click)="backToStart()">やめる</button>
+          <button class="btn btn-primary" type="button" [disabled]="!canSubmitRound()" (click)="submitRound()">答え合わせ</button>
+        </div>
+      </section>
+    }
+
+    <!-- 正誤・解説画面 -->
+    @if (review.view() === 'review') {
+      <section>
+        @for (item of review.roundItems(); track item.question.id; let i = $index) {
+          <div class="review-card" [class.is-correct]="resultFor(globalIndex(i))" [class.is-incorrect]="!resultFor(globalIndex(i))">
+            <div class="question-meta">
+              <span class="badge">{{ item.question.category }}: {{ item.question.subCategory }}</span>
+              <span class="question-number">第 {{ globalIndex(i) + 1 }} 問 / 全 {{ review.sessionItems().length }} 問</span>
+              <span class="missed">{{ missedText(item) }}</span>
+            </div>
+            <div class="review-result-label" [class.is-correct]="resultFor(globalIndex(i))" [class.is-incorrect]="!resultFor(globalIndex(i))">
+              {{ resultFor(globalIndex(i)) ? '○ 正解' : '✕ 不正解' }}
+            </div>
+            <p class="review-question-text">{{ item.question.question }}</p>
+            @if (item.question.code) {
+              <app-code-block [code]="item.question.code"></app-code-block>
+            }
+            @if (item.question.image) {
+              <div class="question-image-wrap" [innerHTML]="trustedImage(item.question.image)"></div>
+            }
+            <ul class="answer-choices">
+              @for (choice of item.question.choices; track $index) {
+                <li [class.correct]="isCorrectChoice(item.question, $index)" [class.wrong]="!isCorrectChoice(item.question, $index) && (answerFor(globalIndex(i)).includes($index) || item.lastSelected.includes($index))">
+                  <span>{{ choice }}</span>
+                  @if (isCorrectChoice(item.question, $index)) {<span class="tag ok">正解</span>}
+                  @if (answerFor(globalIndex(i)).includes($index)) {<span class="tag you">あなたの回答</span>}
+                  @if (item.lastSelected.includes($index)) {<span class="tag prev">前回の回答</span>}
+                </li>
+              }
+            </ul>
+            @if (item.lastSelected.length === 0) {
+              <p class="review-line"><span class="label">前回の回答：</span>未回答</p>
+            }
+            <div class="explanation-box">
+              <span class="label">解説</span>
+              <p class="explanation-text">{{ item.question.explanation }}</p>
+            </div>
+          </div>
+        }
+        <div class="quiz-actions">
+          <button class="btn btn-primary" type="button" (click)="nextRound()">
+            {{ review.isLastRound() ? '結果を見る' : '次の問題へ' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- 結果画面 -->
+    @if (review.view() === 'result') {
+      <section class="card result-card">
+        <p class="final-score">{{ review.sessionItems().length }}問中 {{ review.correctCount() }}問 正解</p>
+        @if (review.wrongItems().length > 0) {
+          <p class="result-sub">今回も間違えた問題 {{ review.wrongItems().length }}問は、次の模擬試験で正解するまで復習の対象に残ります。</p>
+        } @else {
+          <p class="result-sub">全問正解です！次の模擬試験で正解すると、復習の対象から外れます。</p>
+        }
+        <ul class="result-list">
+          @for (item of review.sessionItems(); track item.question.id; let i = $index) {
+            <li>
+              <span class="mark" [class.ok]="review.results()[i]" [class.ng]="!review.results()[i]">{{ review.results()[i] ? '○' : '✕' }}</span>
+              <span class="badge">{{ item.question.subCategory }}</span>
+              <span class="result-text">{{ item.question.question }}</span>
+            </li>
+          }
+        </ul>
+        <div class="result-actions">
+          <a class="btn btn-ghost" routerLink="/study">科目一覧に戻る</a>
+          @if (review.wrongItems().length > 0) {
+            <button class="btn btn-review" type="button" (click)="retryWrong()">間違えた{{ review.wrongItems().length }}問をもう一度</button>
+          } @else {
+            <button class="btn btn-primary" type="button" (click)="backToStart()">分野を選び直す</button>
+          }
+        </div>
+      </section>
+    }
+  }
+</main>

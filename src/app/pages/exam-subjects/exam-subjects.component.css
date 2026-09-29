@@ -127,6 +127,29 @@
   border: 1px solid var(--line);
 }
 
+.btn-review {
+  background: var(--red-soft);
+  color: var(--red-text);
+  border: 1px solid var(--red-border);
+}
+
+.btn-review:hover {
+  border-color: var(--red);
+}
+
+.btn-review .count {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 18px;
+  text-align: center;
+}
+
 @media (max-width: 480px) {
   .page {
     padding: 18px 12px 48px;

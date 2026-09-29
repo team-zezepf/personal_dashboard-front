@@ -22,6 +22,11 @@
             <a class="btn btn-ghost" [routerLink]="[subject.path, 'genre', genreKey]">学習する</a>
           }
           <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
+          @if (subject.mockExam && reviewCount(subject.key) > 0) {
+            <a class="btn btn-review" [routerLink]="[subject.path, 'review']" [attr.aria-label]="'模擬試験で間違えた問題を復習（' + reviewCount(subject.key) + '問）'">
+              間違えた問題を復習<span class="count">{{ reviewCount(subject.key) }}</span>
+            </a>
+          }
           @if (subject.mockExam) {
             <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
           }

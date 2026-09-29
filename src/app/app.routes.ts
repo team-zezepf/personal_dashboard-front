@@ -14,6 +14,7 @@ import { ExamStudyPageComponent } from './pages/exam-study/exam-study.component'
 import { AchievementsPageComponent } from './pages/achievements/achievements.component';
 import { DeveloperQaPageComponent } from './pages/developer-qa/developer-qa.component';
 import { MockExamPageComponent } from './pages/mock-exam/mock-exam.component';
+import { MistakeReviewPageComponent } from './pages/mistake-review/mistake-review.component';
 import { GenreStudyPageComponent } from './pages/genre-study/genre-study.component';
 import { CardCollectionPageComponent } from './pages/card-collection/card-collection.component';
 import { CardPacksPageComponent } from './pages/card-packs/card-packs.component';
@@ -32,6 +33,7 @@ export const routes: Routes = [
   { path: 'study', component: ExamSubjectsPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType', component: ExamStudyPageComponent, canActivate: [authGuard] },
   { path: 'study/:examType/mock-exam', component: MockExamPageComponent, canActivate: [authGuard] },
+  { path: 'study/:examType/review', component: MistakeReviewPageComponent, canActivate: [authGuard] },
   // ジャンル選択画面はなくし、まとめページのサイドバーでジャンルを切り替える。以前のURLは先頭のジャンルへ転送する
   {
     path: 'study/:examType/genres',

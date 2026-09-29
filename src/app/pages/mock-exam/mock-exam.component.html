@@ -178,6 +178,11 @@
       }
 
       <div class="result-footer">
+        @if (mockExam.reviewCount() > 0) {
+          <a class="btn btn-review" [routerLink]="[subject.path, 'review']">
+            間違えた問題を復習する<span class="count">{{ mockExam.reviewCount() }}</span>
+          </a>
+        }
         <button class="btn btn-primary" (click)="backToSubjects()">科目一覧に戻る</button>
       </div>
     }
