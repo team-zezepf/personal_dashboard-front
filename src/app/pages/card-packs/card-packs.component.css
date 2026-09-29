@@ -204,20 +204,8 @@
   pointer-events: none;
 }
 
-.scissors {
-  position: absolute;
-  top: calc(var(--cut-y) - 11px);
-  transform: translateX(-50%);
-  font-size: 16px;
-  pointer-events: none;
-}
-
 .cut-line.auto {
   transition: width 0.3s ease-out;
-}
-
-.scissors.auto {
-  transition: left 0.3s ease-out;
 }
 
 .light {
@@ -274,13 +262,14 @@
 }
 
 .torn .cut-guide,
-.torn .cut-line,
-.torn .scissors {
+.torn .cut-line {
   opacity: 0;
 }
 
-/* カードがパックから1枚ずつ出てくる(遅れは HTML 側で位置ごとに指定) */
+/* カードがパックから1枚ずつ出てくる(遅れは HTML 側で位置ごとに指定)。
+   中のカード裏(ボタン)・めくったカードが列の幅いっぱいに広がるよう、grid にして引き伸ばす */
 .slot {
+  display: grid;
   animation: rise-from-pack 0.45s ease-out backwards;
 }
 
@@ -327,6 +316,7 @@
 }
 
 .back {
+  width: 100%;
   border-radius: 12px;
   border: 3px solid #d9c49a;
   min-height: 170px;
@@ -390,8 +380,7 @@
     animation: none;
   }
 
-  .cut-line.auto,
-  .scissors.auto {
+  .cut-line.auto {
     transition: none;
   }
 }

@@ -67,7 +67,6 @@
             [style.left.%]="cutLineLeft()"
             [style.width.%]="cutProgress() * 100"
           ></div>
-          <span class="scissors" [class.auto]="isAutoCutting()" [style.left.%]="scissorsLeft()">✂️</span>
           <div class="light"></div>
         </div>
         @if (stage() === 'sealed') {

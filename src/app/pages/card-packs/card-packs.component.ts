@@ -78,9 +78,6 @@ export class CardPacksPageComponent {
 
   // 切り口の線の位置(右から左になぞったときは右端から伸ばす)
   readonly cutLineLeft = computed(() => (this.cutDirection() === 1 ? 0 : (1 - this.cutProgress()) * 100));
-  readonly scissorsLeft = computed(() =>
-    this.cutDirection() === 1 ? this.cutProgress() * 100 : (1 - this.cutProgress()) * 100
-  );
 
   constructor() {
     this.loadCollection();
