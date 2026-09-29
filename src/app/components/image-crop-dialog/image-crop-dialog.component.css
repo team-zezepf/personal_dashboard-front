@@ -1,0 +1,120 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 41, 55, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 200;
+  overflow-y: auto;
+}
+
+.dialog {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 100%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.title {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 14px;
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+.error {
+  color: var(--red);
+  font-size: 13px;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  background: #1f2937;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.frame {
+  position: relative;
+  /* 画像は枠の外にもはみ出して見せ、枠の外側は frame-border の影で暗くする */
+  overflow: visible;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.frame:active {
+  cursor: grabbing;
+}
+
+.image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.frame-border {
+  position: absolute;
+  inset: 0;
+  border: 2px solid white;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.zoom input {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-outline {
+  background: white;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary);
+}
+
+.btn:disabled {
+  background: #d5dbe3;
+  color: #8a96a3;
+  cursor: not-allowed;
+}

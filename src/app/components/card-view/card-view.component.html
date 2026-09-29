@@ -1,0 +1,37 @@
+<div class="bigcard">
+  <div class="head">
+    <div class="icon">{{ emblemLabel() }}</div>
+    <div class="title">
+      <div class="name">{{ card().name || '（名前）' }}</div>
+      <div class="number">{{ numberLabel() }}</div>
+    </div>
+    <div class="right">
+      <div class="stars">{{ stars() }}</div>
+      @if (card().typeLabel) {
+        <span class="type">{{ card().typeLabel }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="art">
+    @if (imageUrl(); as url) {
+      <img [src]="url" [alt]="card().name" />
+    } @else {
+      <span class="no-image">イラストなし</span>
+    }
+  </div>
+
+  <div class="rows">
+    <div class="row"><span class="key">🌲 生息地</span><span>{{ card().habitat || '—' }}</span></div>
+    <div class="row"><span class="key">🍎 好物</span><span>{{ card().favoriteFood || '—' }}</span></div>
+    <div class="row"><span class="key">❤️ 性格</span><span>{{ card().personality || '—' }}</span></div>
+  </div>
+
+  @if (card().quote) {
+    <div class="quote">「{{ card().quote }}」</div>
+  }
+
+  @if (footnote()) {
+    <div class="footnote">{{ footnote() }}</div>
+  }
+</div>

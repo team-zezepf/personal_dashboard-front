@@ -15,6 +15,9 @@ import { AchievementsPageComponent } from './pages/achievements/achievements.com
 import { DeveloperQaPageComponent } from './pages/developer-qa/developer-qa.component';
 import { MockExamPageComponent } from './pages/mock-exam/mock-exam.component';
 import { GenreStudyPageComponent } from './pages/genre-study/genre-study.component';
+import { CardCollectionPageComponent } from './pages/card-collection/card-collection.component';
+import { CardPacksPageComponent } from './pages/card-packs/card-packs.component';
+import { CardAdminPageComponent } from './pages/card-admin/card-admin.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -39,5 +42,8 @@ export const routes: Routes = [
   { path: 'study/:examType/genre/:genreKey', component: GenreStudyPageComponent, canActivate: [authGuard] },
   { path: 'achievements', component: AchievementsPageComponent, canActivate: [authGuard] },
   { path: 'developer-qa', component: DeveloperQaPageComponent, canActivate: [authGuard] },
+  { path: 'cards', component: CardCollectionPageComponent, canActivate: [authGuard] },
+  { path: 'cards/packs', component: CardPacksPageComponent, canActivate: [authGuard] },
+  { path: 'cards/admin', component: CardAdminPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

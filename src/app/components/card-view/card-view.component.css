@@ -1,0 +1,131 @@
+:host {
+  display: block;
+  width: 300px;
+  max-width: 100%;
+}
+
+.bigcard {
+  background: #fbf3e2;
+  border: 6px solid #8a6a44;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  color: #1f2937;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #4c8a3a;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.number {
+  font-size: 11px;
+  color: #9b8466;
+}
+
+.right {
+  text-align: right;
+}
+
+.stars {
+  color: #f2b01e;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.type {
+  display: inline-block;
+  background: #6b4e2e;
+  color: white;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 2px 10px;
+  margin-top: 2px;
+}
+
+.art {
+  /* アップロード時の切り抜き(CARD_IMAGE_SIZE)と同じ 4:3 */
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  margin: 10px 0;
+  border: 2px solid #efe0bf;
+  background: #dcecf2;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  font-size: 12px;
+  color: #7b8794;
+}
+
+.rows {
+  background: white;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #efe0bf;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.key {
+  width: 64px;
+  flex-shrink: 0;
+  color: #8a6a44;
+  font-weight: bold;
+}
+
+.quote {
+  margin-top: 8px;
+  background: white;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.footnote {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #8a6a44;
+  text-align: right;
+}
