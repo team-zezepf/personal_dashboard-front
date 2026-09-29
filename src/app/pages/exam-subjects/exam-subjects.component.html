@@ -7,29 +7,34 @@
   <div class="subject-list">
     @for (subject of subjects; track subject.key) {
       <div class="subject-card">
-        <div class="subject-info">
-          <span class="subject-name">{{ subject.name }}</span>
-          @if (subject.mockExam; as mockExam) {
-            <span class="subject-mock-desc">
-              模擬試験: {{ mockExam.durationMinutes }}分・{{ mockExam.questionCount }}問・合格ボーダー{{ mockExam.passRatio * 100 }}%
-            </span>
-          } @else {
-            <span class="subject-mock-desc is-muted">{{ subject.description }}</span>
-          }
-        </div>
-        <div class="subject-actions">
-          @if (firstGenreKey(subject.key); as genreKey) {
-            <a class="btn btn-ghost" [routerLink]="[subject.path, 'genre', genreKey]">学習する</a>
-          }
-          <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
-          @if (subject.mockExam && reviewCount(subject.key) > 0) {
-            <a class="btn btn-review" [routerLink]="[subject.path, 'review']" [attr.aria-label]="'模擬試験で間違えた問題を復習（' + reviewCount(subject.key) + '問）'">
-              間違えた問題を復習<span class="count">{{ reviewCount(subject.key) }}</span>
-            </a>
-          }
-          @if (subject.mockExam) {
-            <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験を受ける</a>
-          }
+        <div class="subject-main">
+          <div class="subject-info">
+            <span class="subject-name">{{ subject.name }}</span>
+            @if (subject.mockExam; as mockExam) {
+              <span class="subject-mock-desc">
+                模擬試験: {{ mockExam.durationMinutes }}分・{{ mockExam.questionCount }}問・合格ボーダー{{ mockExam.passRatio * 100 }}%
+              </span>
+            } @else {
+              <span class="subject-mock-desc is-muted">{{ subject.description }}</span>
+            }
+          </div>
+          <div class="subject-actions">
+            @if (firstGenreKey(subject.key); as genreKey) {
+              <a class="btn btn-ghost" [routerLink]="[subject.path, 'genre', genreKey]">学習する</a>
+            }
+            <a class="btn btn-ghost" [routerLink]="subject.path">練習する</a>
+            @if (subject.mockExam && reviewCount(subject.key) > 0) {
+              <a
+                class="btn btn-review"
+                [routerLink]="[subject.path, 'review']"
+                [title]="'模擬試験で間違えた問題を復習（' + reviewCount(subject.key) + '問）'"
+                [attr.aria-label]="'模擬試験で間違えた問題を復習（' + reviewCount(subject.key) + '問）'"
+              >復習<span class="count">{{ reviewCount(subject.key) }}</span></a>
+            }
+            @if (subject.mockExam) {
+              <a class="btn btn-primary" [routerLink]="[subject.path, 'mock-exam']">模擬試験</a>
+            }
+          </div>
         </div>
         <div class="stamp-slot">
           @if (passCount(subject.key) > 0) {

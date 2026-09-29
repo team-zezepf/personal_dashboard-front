@@ -3,7 +3,7 @@
 }
 
 .page {
-  /* ボタン3つと合格スタンプを並べても科目名が窮屈にならないよう、他の画面より少し広くしている */
+  /* ボタン4つと合格スタンプを並べても科目名が窮屈にならないよう、他の画面より少し広くしている */
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px 64px;
@@ -40,9 +40,16 @@
   color: var(--text);
 }
 
-.subject-info {
+/* 科目名・説明の下にボタンを並べる。右側は合格スタンプ */
+.subject-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subject-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -63,10 +70,17 @@
   color: var(--muted);
 }
 
+/* ボタンの幅は4文字分に揃え、科目が違っても同じ位置に並ぶようにする */
 .subject-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  flex-shrink: 0;
+}
+
+.subject-actions .btn {
+  box-sizing: border-box;
+  width: 7.5em;
+  text-align: center;
 }
 
 /* 合格スタンプ。未合格の科目も同じ幅を取り、ボタンの位置が科目によってずれないようにする */
@@ -154,9 +168,6 @@
   .page {
     padding: 18px 12px 48px;
   }
-  .subject-card {
-    flex-wrap: wrap;
-  }
   /* 右上のスタンプと科目名が重ならないよう、科目名の右側だけ空ける */
   .subject-info {
     padding-right: 64px;
@@ -166,12 +177,12 @@
     right: 14px;
     top: 14px;
   }
+  /* ボタンは幅いっぱいの2列で並べる */
   .subject-actions {
-    width: 100%;
-    flex-direction: column;
-    order: 3;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .subject-actions .btn {
-    text-align: center;
+    width: auto;
   }
 }
