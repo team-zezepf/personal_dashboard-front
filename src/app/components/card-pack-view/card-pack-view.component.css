@@ -4,7 +4,8 @@
 
 .pack {
   position: relative;
-  width: 130px;
+  /* アップロード時の切り抜き(PACK_IMAGE_SIZE)と同じ 3:4 */
+  width: 135px;
   height: 180px;
   margin: 0 auto;
   border-radius: 10px;

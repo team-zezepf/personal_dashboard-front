@@ -106,7 +106,7 @@
                   <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden
                     [disabled]="isUploadingImage()" (change)="onImageSelected($event, 'cards')" />
                 </label>
-                <span class="muted">PNG / JPG / WebP / GIF・5MBまで。横長がおすすめです。</span>
+                <span class="muted">選んだ画像は横長 4:3 に切り抜き、{{ cardImageSize.width }}×{{ cardImageSize.height }}px にそろえて保存します。</span>
               </div>
             </div>
           </div>
@@ -205,7 +205,7 @@
                 @if (form.imageFilename) {
                   <button type="button" class="link-button" (click)="patchPack({ imageFilename: null })">画像を外す</button>
                 }
-                <span class="muted">縦長（縦:横 = 4:3くらい）がおすすめです。登録しないときは色とマークで表示します。</span>
+                <span class="muted">選んだ画像は縦長 3:4 に切り抜き、{{ packImageSize.width }}×{{ packImageSize.height }}px にそろえて保存します。登録しないときは色とマークで表示します。</span>
               </div>
             </div>
             <p class="full muted">★★以上の公開カードが1枚もないパックは、5枚目の確定枠を用意できないため公開できません。</p>
@@ -233,3 +233,14 @@
     }
   }
 </main>
+
+@if (cropRequest(); as request) {
+  <app-image-crop-dialog
+    [file]="request.file"
+    [outputWidth]="request.target === 'cards' ? cardImageSize.width : packImageSize.width"
+    [outputHeight]="request.target === 'cards' ? cardImageSize.height : packImageSize.height"
+    [title]="request.target === 'cards' ? 'カードのイラストを切り抜く' : 'パックのイラストを切り抜く'"
+    (cropped)="onCropped($event)"
+    (cancelled)="onCropCancelled()"
+  />
+}

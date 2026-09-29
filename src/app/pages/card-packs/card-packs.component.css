@@ -153,7 +153,8 @@
 
 .pack-cut-area {
   position: relative;
-  width: 130px;
+  /* card-pack-view の大きさと合わせる */
+  width: 135px;
   height: 180px;
   /* パックを大きく見せる。拡大した分(180px × 0.6)だけ下を空ける */
   transform: scale(1.6);

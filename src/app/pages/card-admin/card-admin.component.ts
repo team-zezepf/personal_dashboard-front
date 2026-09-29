@@ -7,8 +7,11 @@ import { CardPackViewComponent } from '../../components/card-pack-view/card-pack
 import { CardService } from '../../services/card.service';
 import { NotificationService } from '../../services/notification.service';
 import { Card, CardInput, CardPack, CardPackInput } from '../../models/card.models';
+import { ImageCropDialogComponent } from '../../components/image-crop-dialog/image-crop-dialog.component';
 import {
+  CARD_IMAGE_SIZE,
   CARD_RARITIES,
+  PACK_IMAGE_SIZE,
   DEFAULT_PACK_COLOR,
   DEFAULT_PACK_EMBLEM,
   formatCardNumber,
@@ -28,7 +31,7 @@ function errorMessageOf(err: unknown, fallback: string): string {
 @Component({
   selector: 'app-card-admin-page',
   standalone: true,
-  imports: [FormsModule, HeaderComponent, CardViewComponent, CardPackViewComponent],
+  imports: [FormsModule, HeaderComponent, CardViewComponent, CardPackViewComponent, ImageCropDialogComponent],
   templateUrl: './card-admin.component.html',
   styleUrl: './card-admin.component.css'
 })
@@ -47,6 +50,10 @@ export class CardAdminPageComponent {
   readonly errorMessage = signal('');
   readonly isSubmitting = signal(false);
   readonly isUploadingImage = signal(false);
+  // 切り抜きダイアログで切り抜き中の画像と、切り抜いた後にどちら(カード/パック)の画像にするか
+  readonly cropRequest = signal<{ file: File; target: AdminTab } | null>(null);
+  readonly cardImageSize = CARD_IMAGE_SIZE;
+  readonly packImageSize = PACK_IMAGE_SIZE;
 
   // 編集中のカード・パック。editing*Id が null で form が入っていれば新規作成
   readonly editingCardId = signal<string | null>(null);
@@ -215,12 +222,28 @@ export class CardAdminPageComponent {
 
   // ===== 共通 =====
 
+  // 画像を選んだら、すぐにはアップロードせず切り抜きダイアログを開く
   onImageSelected(event: Event, target: AdminTab): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     input.value = '';
     if (!file) return;
+    this.errorMessage.set('');
+    this.cropRequest.set({ file, target });
+  }
 
+  onCropped(file: File): void {
+    const request = this.cropRequest();
+    this.cropRequest.set(null);
+    if (request) this.uploadImage(file, request.target);
+  }
+
+  onCropCancelled(): void {
+    this.cropRequest.set(null);
+  }
+
+  // 切り抜いて縮めた後の画像をアップロードする(元の画像が大きくても、ここでは数百KB程度になる)
+  private uploadImage(file: File, target: AdminTab): void {
     if (file.size > MAX_CARD_IMAGE_SIZE_BYTES) {
       this.errorMessage.set('画像ファイルは5MB以下にしてください');
       return;

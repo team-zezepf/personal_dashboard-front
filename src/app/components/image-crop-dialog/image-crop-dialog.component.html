@@ -1,0 +1,59 @@
+<div class="overlay">
+  <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="title()">
+    <h2 class="title">{{ title() }}</h2>
+    <p class="hint">
+      枠の中をドラッグして位置を、下のバー（またはマウスホイール）で大きさを合わせてください。
+      {{ outputWidth() }}×{{ outputHeight() }}px で保存します。
+    </p>
+
+    @if (loadError()) {
+      <p class="error">画像を読み込めませんでした。別の画像を選んでください。</p>
+    } @else {
+      <!-- 枠の外側も少し見えるように、枠の周りに余白を取り、外側は暗くする -->
+      <div class="stage" [style.padding.px]="frameMargin">
+        <div
+          class="frame"
+          [style.width.px]="frameSize().width"
+          [style.height.px]="frameSize().height"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp()"
+          (pointercancel)="onPointerUp()"
+          (wheel)="onWheel($event)"
+        >
+          @if (imageUrl(); as url) {
+            <img
+              class="image"
+              [src]="url"
+              alt=""
+              draggable="false"
+              [style.transform]="'translate(' + offset().x + 'px, ' + offset().y + 'px) scale(' + scale() + ')'"
+            />
+          }
+          <div class="frame-border"></div>
+        </div>
+      </div>
+
+      <label class="zoom">
+        <span>縮小</span>
+        <input
+          type="range"
+          min="1"
+          [max]="maxZoom"
+          step="0.01"
+          [value]="zoom()"
+          [disabled]="!imageUrl()"
+          (input)="onZoomInput($event)"
+        />
+        <span>拡大</span>
+      </label>
+    }
+
+    <div class="actions">
+      <button type="button" class="btn btn-outline" (click)="cancel()">キャンセル</button>
+      <button type="button" class="btn btn-primary" [disabled]="!imageUrl() || isSaving()" (click)="confirm()">
+        {{ isSaving() ? '処理中…' : '決定' }}
+      </button>
+    </div>
+  </div>
+</div>
