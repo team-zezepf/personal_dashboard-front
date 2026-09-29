@@ -6,7 +6,8 @@ import { ExamQuestion } from '../models/exam-question.models';
 import { ExamAnswer } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
 import { pickByComposition, shuffle } from '../utils/mock-exam-composition';
-import { catchError, of } from 'rxjs';
+import { reviewTargets } from '../utils/mistake-review';
+import { catchError, of, switchMap } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
 
@@ -45,6 +46,8 @@ export class MockExamService {
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
   readonly result = signal<{ correctCount: number; totalCount: number; passBorder: number; passed: boolean; pointsEarned: number } | null>(null);
+  // 結果画面に表示する、間違えた問題の復習の対象数(今回の回を記録した後の、直近の回全体での数)
+  readonly reviewCount = signal(0);
 
   // 1ページに表示する問題数(科目ごとの設定)
   readonly questionsPerPage = computed(() => this.subject()?.mockExam.questionsPerPage ?? 2);
@@ -74,6 +77,7 @@ export class MockExamService {
     this.answers.set([]);
     this.round.set(0);
     this.result.set(null);
+    this.reviewCount.set(0);
     this.remainingSeconds.set(subject.mockExam.durationMinutes * 60);
     this.selectedGenres.set(this.loadSelectedGenres(subject));
   }
@@ -247,12 +251,16 @@ export class MockExamService {
       selected: answers[i] ?? [],
       correct: isCorrectAnswer(q, answers[i] ?? [])
     }));
+    // 記録できたら、今回の回を含めた復習の対象数を取り直して結果画面の復習ボタンに表示する
     this.achievementsService.recordCompletion(subject.key, correctCount, totalCount, 'MOCK_EXAM', passed, examAnswers).pipe(
+      switchMap(() => this.achievementsService.getMockExamRecords()),
       catchError((err) => {
-        console.error('Failed to record mock exam:', err);
+        console.error('Failed to record mock exam or reload records:', err);
         return of(null);
       })
-    ).subscribe();
+    ).subscribe((records) => {
+      if (records) this.reviewCount.set(reviewTargets(records, subject.key).length);
+    });
   }
 
   isCorrect(question: ExamQuestion, answer: number[] | undefined): boolean {
