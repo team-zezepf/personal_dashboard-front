@@ -1,0 +1,84 @@
+<app-header pageTitle="カードコレクション"></app-header>
+
+<main class="page">
+  <div class="page-head">
+    <h1 class="page-title">カードコレクション</h1>
+    <a class="open-pack-button" routerLink="/cards/packs">🎁 パックを開ける</a>
+  </div>
+  <p class="page-desc">資格学習でたまったポイントでパックを開けて、カードを集めましょう。</p>
+
+  @if (errorMessage()) {
+    <div class="card error-card">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <p class="empty">読み込み中…</p>
+  } @else if (packs().length === 0) {
+    <div class="card empty-card">まだ公開中のパックがありません。</div>
+  } @else {
+    <div class="pack-tabs">
+      @for (pack of packs(); track pack.id) {
+        <button
+          type="button"
+          class="pack-tab"
+          [class.active]="pack.id === selectedPack()?.id"
+          [style.--pack-color]="pack.color || '#4c8a3a'"
+          (click)="selectPack(pack.id)"
+        >
+          第{{ pack.seriesNumber }}弾 {{ pack.name }}
+          <em>{{ progressByPack().get(pack.id)?.owned ?? 0 }} / {{ progressByPack().get(pack.id)?.total ?? 0 }}</em>
+        </button>
+      }
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-label">
+        集めたカード <strong>{{ selectedProgress().owned }}</strong> / {{ selectedProgress().total }} 枚
+      </div>
+      <div class="progress-bar"><span [style.width.%]="progressPercent()"></span></div>
+      <div class="filters">
+        <button type="button" class="chip" [class.active]="rarityFilter() === null && ownershipFilter() === 'all'"
+          (click)="rarityFilter.set(null); ownershipFilter.set('all')">すべて</button>
+        @for (rarity of rarities; track rarity) {
+          <button type="button" class="chip" [class.active]="rarityFilter() === rarity" (click)="toggleRarity(rarity)">
+            {{ rarityStars(rarity) }}
+          </button>
+        }
+        <button type="button" class="chip" [class.active]="ownershipFilter() === 'owned'"
+          (click)="ownershipFilter.set(ownershipFilter() === 'owned' ? 'all' : 'owned')">持っている</button>
+      </div>
+    </div>
+
+    @if (visibleCards().length === 0) {
+      <p class="empty">条件に合うカードがありません。</p>
+    } @else {
+      <div class="grid">
+        @for (item of visibleCards(); track item.card.id) {
+          <button
+            type="button"
+            class="tile-button"
+            [disabled]="item.count === 0"
+            [attr.aria-label]="item.count === 0 ? 'まだ持っていないカード' : item.card.name"
+            (click)="openDetail(item)"
+          >
+            <app-card-tile
+              [card]="item.card"
+              [locked]="item.count === 0"
+              [count]="item.count"
+              [isNew]="!item.seen"
+            />
+          </button>
+        }
+      </div>
+    }
+  }
+</main>
+
+@if (selected(); as item) {
+  <div class="overlay" (click)="closeDetail()">
+    <div class="overlay-body" (click)="$event.stopPropagation()">
+      <app-card-view [card]="item.card" [emblem]="selectedEmblem()" [footnote]="selectedFootnote()" />
+      <button type="button" class="close-button" (click)="closeDetail()">閉じる</button>
+    </div>
+  </div>
+}

@@ -1,0 +1,16 @@
+<div class="tile" [class.locked]="locked()" [class.shine]="shine()">
+  @if (isNew() && !locked()) {
+    <span class="new">NEW</span>
+  }
+  <div class="number">{{ numberLabel() }}</div>
+  <div class="art">
+    @if (imageUrl(); as url) {
+      <img [src]="url" [alt]="locked() ? '' : card().name" />
+    }
+  </div>
+  <div class="name">{{ locked() ? '？？？' : card().name }}</div>
+  <div class="stars">{{ stars() }}</div>
+  @if (count() > 0) {
+    <div class="count">×{{ count() }}</div>
+  }
+</div>

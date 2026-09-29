@@ -1,0 +1,98 @@
+<app-header pageTitle="パックを開ける"></app-header>
+
+<main class="page">
+  <div class="page-head">
+    <h1 class="page-title">パックを開ける</h1>
+    <a class="back-link" routerLink="/cards">← コレクションへ</a>
+  </div>
+  <p class="page-desc">所持ポイント <strong>{{ points() }}</strong> pt</p>
+
+  @if (errorMessage()) {
+    <div class="card error-card">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <p class="empty">読み込み中…</p>
+  } @else if (packs().length === 0) {
+    <div class="card empty-card">まだ公開中のパックがありません。</div>
+  } @else {
+    <div class="pack-list">
+      @for (pack of packs(); track pack.id) {
+        <div class="pack-item">
+          <app-card-pack-view [pack]="pack" />
+          <div class="meta">
+            1パック{{ cardsPerPack }}枚・★★以上1枚確定<br />
+            全{{ progressByPack().get(pack.id)?.total ?? 0 }}種 ・ 集めた {{ progressByPack().get(pack.id)?.owned ?? 0 }}種
+          </div>
+          <button
+            type="button"
+            class="open-button"
+            [disabled]="shortage(pack) > 0 || openingPackId() !== null"
+            (click)="openPack(pack)"
+          >
+            {{ openingPackId() === pack.id ? '開けています…' : '開ける' }}
+            <small>
+              {{ pack.price }} pt
+              @if (shortage(pack) > 0) {（あと{{ shortage(pack) }}pt）}
+            </small>
+          </button>
+        </div>
+      }
+    </div>
+    <p class="rates">
+      1〜{{ cardsPerPack - 1 }}枚目の出現率：{{ normalRatesLabel }}　{{ cardsPerPack }}枚目：{{ guaranteedRatesLabel }}<br />
+      パックに入っているカードの中から抽選します。同じカードが出たら所持枚数が増えます。
+    </p>
+  }
+</main>
+
+@if (openedPack(); as pack) {
+  <div class="overlay">
+    <div class="opening">
+      <div class="opening-head">
+        <span>第{{ pack.seriesNumber }}弾 {{ pack.name }} を開けました（{{ revealed().size }} / {{ openedCards().length }} 枚めくった）</span>
+        @if (!allRevealed()) {
+          <button type="button" class="sub-button" (click)="revealAll()">全部めくる</button>
+        }
+      </div>
+
+      <div class="open-row">
+        @for (opened of openedCards(); track $index) {
+          @if (revealed().has($index)) {
+            <div class="revealed">
+              <app-card-tile
+                [card]="opened.card"
+                [isNew]="opened.isNew"
+                [shine]="opened.card.rarity >= 3"
+              />
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="back"
+              [class.hint]="isGuaranteedSlot($index)"
+              [attr.aria-label]="($index + 1) + '枚目をめくる'"
+              (click)="reveal($index)"
+            >？</button>
+          }
+        }
+      </div>
+
+      @if (allRevealed()) {
+        <div class="opening-actions">
+          <button type="button" class="open-button" [disabled]="shortage(pack) > 0" (click)="openAgain()">
+            もう1パック開ける
+            <small>
+              {{ pack.price }} pt
+              @if (shortage(pack) > 0) {（あと{{ shortage(pack) }}pt）}
+            </small>
+          </button>
+          <a class="sub-button" routerLink="/cards">コレクションを見る</a>
+          <button type="button" class="sub-button" (click)="closeOpening()">閉じる</button>
+        </div>
+      } @else {
+        <p class="caption">カードを押すと1枚ずつめくれます。光っている{{ cardsPerPack }}枚目は★★以上が確定です。</p>
+      }
+    </div>
+  </div>
+}

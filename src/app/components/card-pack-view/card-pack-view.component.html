@@ -1,0 +1,13 @@
+<div class="pack" [style.--pack-color]="color()" [class.has-image]="imageUrl()">
+  @if (imageUrl(); as url) {
+    <img class="pack-image" [src]="url" alt="" />
+    <div class="label">
+      <div class="series">第{{ pack().seriesNumber }}弾</div>
+      <div class="name">{{ pack().name }}</div>
+    </div>
+  } @else {
+    <div class="series">第{{ pack().seriesNumber }}弾</div>
+    <div class="emblem">{{ emblem() }}</div>
+    <div class="name">{{ pack().name }}</div>
+  }
+</div>

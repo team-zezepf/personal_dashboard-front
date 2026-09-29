@@ -1,0 +1,235 @@
+<app-header pageTitle="カード登録"></app-header>
+
+<main class="page">
+  <div class="page-head">
+    <h1 class="page-title">カード登録</h1>
+    @if (tab() === 'cards') {
+      <button type="button" class="btn btn-primary" [disabled]="packs().length === 0" (click)="newCard()">＋ 新しいカード</button>
+    } @else {
+      <button type="button" class="btn btn-primary" (click)="newPack()">＋ 新しいパック</button>
+    }
+  </div>
+
+  <div class="admin-tabs">
+    <button type="button" [class.active]="tab() === 'cards'" (click)="switchTab('cards')">カード</button>
+    <button type="button" [class.active]="tab() === 'packs'" (click)="switchTab('packs')">パック</button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-box">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <p class="muted">読み込み中…</p>
+  } @else if (tab() === 'cards') {
+    <!-- ===== カード ===== -->
+    @if (packs().length === 0) {
+      <p class="muted">先に「パック」タブでパックを登録してください。</p>
+    } @else if (cards().length === 0) {
+      <p class="muted">まだカードがありません。「＋ 新しいカード」から登録してください。</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>No.</th><th>名前</th><th>パック</th><th>レア度</th><th>属性</th><th>状態</th><th>持っている人</th></tr>
+          </thead>
+          <tbody>
+            @for (card of cards(); track card.id) {
+              <tr [class.selected]="card.id === editingCardId()" (click)="editCard(card)">
+                <td>{{ formatCardNumber(card.number) }}</td>
+                <td>{{ card.name }}</td>
+                <td>{{ packLabel(card.packId) }}</td>
+                <td class="stars">{{ rarityStars(card.rarity) }}</td>
+                <td>{{ card.typeLabel || '—' }}</td>
+                <td>
+                  <span class="badge" [class.pub]="card.published">{{ card.published ? '公開' : '非公開' }}</span>
+                </td>
+                <td>{{ card.ownerCount ?? 0 }}人</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (cardForm(); as form) {
+      <div class="editor">
+        <div>
+          <h2 class="editor-title">{{ editingCardId() === null ? '新しいカード' : 'カードを編集' }}</h2>
+          <div class="form">
+            <label>図鑑番号
+              <input type="number" min="1" [ngModel]="form.number" (ngModelChange)="patchCard({ number: $event })" />
+            </label>
+            <label>名前
+              <input [ngModel]="form.name" (ngModelChange)="patchCard({ name: $event })" />
+            </label>
+            <label class="full">収録パック
+              <select [ngModel]="form.packId" (ngModelChange)="patchCard({ packId: $event })">
+                @for (pack of packs(); track pack.id) {
+                  <option [value]="pack.id">第{{ pack.seriesNumber }}弾 {{ pack.name }}{{ pack.published ? '' : '（非公開）' }}</option>
+                }
+              </select>
+            </label>
+            <label>レア度
+              <select [ngModel]="form.rarity" (ngModelChange)="patchCard({ rarity: +$event })">
+                @for (rarity of rarities; track rarity) {
+                  <option [ngValue]="rarity">{{ rarityStars(rarity) }}</option>
+                }
+              </select>
+            </label>
+            <label>属性ラベル
+              <input [ngModel]="form.typeLabel" (ngModelChange)="patchCard({ typeLabel: $event })" placeholder="ノーマル" />
+            </label>
+            <label>生息地
+              <input [ngModel]="form.habitat" (ngModelChange)="patchCard({ habitat: $event })" />
+            </label>
+            <label>好物
+              <input [ngModel]="form.favoriteFood" (ngModelChange)="patchCard({ favoriteFood: $event })" />
+            </label>
+            <label>性格
+              <input [ngModel]="form.personality" (ngModelChange)="patchCard({ personality: $event })" />
+            </label>
+            <label>公開状態
+              <select [ngModel]="form.published" (ngModelChange)="patchCard({ published: $event })">
+                <option [ngValue]="true">公開（パックに入る）</option>
+                <option [ngValue]="false">非公開</option>
+              </select>
+            </label>
+            <label class="full">セリフ
+              <input [ngModel]="form.quote" (ngModelChange)="patchCard({ quote: $event })" />
+            </label>
+            <div class="full">
+              <span class="label-text">イラスト</span>
+              <div class="upload">
+                <label class="btn btn-outline">
+                  {{ isUploadingImage() ? 'アップロード中…' : '画像を選ぶ' }}
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden
+                    [disabled]="isUploadingImage()" (change)="onImageSelected($event, 'cards')" />
+                </label>
+                <span class="muted">PNG / JPG / WebP / GIF・5MBまで。横長がおすすめです。</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            @if (editingCardId() !== null) {
+              <button type="button" class="btn btn-danger" [disabled]="!canDeleteCard() || isSubmitting()"
+                [title]="canDeleteCard() ? '' : '持っている人がいるため削除できません。非公開にしてください。'"
+                (click)="deleteCard()">削除</button>
+            } @else {
+              <span></span>
+            }
+            <button type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="saveCard()">
+              {{ isSubmitting() ? '保存中…' : '保存' }}
+            </button>
+          </div>
+          @if (editingCardId() !== null && !canDeleteCard()) {
+            <p class="muted">持っている人がいるカードは削除できません。非公開にするとパックとコレクションから外れます。</p>
+          }
+        </div>
+
+        <div>
+          <div class="preview-label">プレビュー（入力するとすぐ反映）</div>
+          <app-card-view [card]="form" [emblem]="cardPreviewEmblem()" />
+        </div>
+      </div>
+    }
+  } @else {
+    <!-- ===== パック ===== -->
+    @if (packs().length === 0) {
+      <p class="muted">まだパックがありません。「＋ 新しいパック」から登録してください。</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>弾</th><th>パック名</th><th>画像</th><th>値段</th><th>収録カード</th><th>状態</th></tr>
+          </thead>
+          <tbody>
+            @for (pack of packs(); track pack.id) {
+              <tr [class.selected]="pack.id === editingPackId()" (click)="editPack(pack)">
+                <td>{{ pack.seriesNumber }}</td>
+                <td>{{ pack.emblem }} {{ pack.name }}</td>
+                <td>{{ pack.imageFilename ? 'あり' : 'なし' }}</td>
+                <td>{{ pack.price }} pt</td>
+                <td>
+                  @if (rarityCountsByPack().get(pack.id); as counts) {
+                    {{ counts[0] + counts[1] + counts[2] }}種（★{{ counts[0] }} / ★★{{ counts[1] }} / ★★★{{ counts[2] }}）
+                  } @else {
+                    0種
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class.pub]="pack.published">{{ pack.published ? '公開' : '非公開' }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (packForm(); as form) {
+      <div class="editor">
+        <div>
+          <h2 class="editor-title">{{ editingPackId() === null ? '新しいパック' : 'パックを編集' }}</h2>
+          <div class="form">
+            <label>弾
+              <input type="number" min="1" [ngModel]="form.seriesNumber" (ngModelChange)="patchPack({ seriesNumber: $event })" />
+            </label>
+            <label>パック名
+              <input [ngModel]="form.name" (ngModelChange)="patchPack({ name: $event })" placeholder="もりのなかまたち" />
+            </label>
+            <label>値段（pt）
+              <input type="number" min="0" [ngModel]="form.price" (ngModelChange)="patchPack({ price: $event })" />
+            </label>
+            <label>公開状態
+              <select [ngModel]="form.published" (ngModelChange)="patchPack({ published: $event })">
+                <option [ngValue]="true">公開（開けられる）</option>
+                <option [ngValue]="false">非公開</option>
+              </select>
+            </label>
+            <label>マーク（絵文字）
+              <input [ngModel]="form.emblem" (ngModelChange)="patchPack({ emblem: $event })" />
+            </label>
+            <label>パックの色
+              <input type="color" [ngModel]="form.color" (ngModelChange)="patchPack({ color: $event })" />
+            </label>
+            <div class="full">
+              <span class="label-text">パックのイラスト（任意）</span>
+              <div class="upload">
+                <label class="btn btn-outline">
+                  {{ isUploadingImage() ? 'アップロード中…' : '画像を選ぶ' }}
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden
+                    [disabled]="isUploadingImage()" (change)="onImageSelected($event, 'packs')" />
+                </label>
+                @if (form.imageFilename) {
+                  <button type="button" class="link-button" (click)="patchPack({ imageFilename: null })">画像を外す</button>
+                }
+                <span class="muted">縦長（縦:横 = 4:3くらい）がおすすめです。登録しないときは色とマークで表示します。</span>
+              </div>
+            </div>
+            <p class="full muted">★★以上の公開カードが1枚もないパックは、5枚目の確定枠を用意できないため公開できません。</p>
+          </div>
+
+          <div class="form-actions">
+            @if (editingPackId() !== null) {
+              <button type="button" class="btn btn-danger" [disabled]="!canDeletePack() || isSubmitting()"
+                [title]="canDeletePack() ? '' : 'カードが入っているため削除できません。非公開にしてください。'"
+                (click)="deletePack()">削除</button>
+            } @else {
+              <span></span>
+            }
+            <button type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="savePack()">
+              {{ isSubmitting() ? '保存中…' : '保存' }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="preview-label">プレビュー</div>
+          <app-card-pack-view [pack]="form" />
+        </div>
+      </div>
+    }
+  }
+</main>
