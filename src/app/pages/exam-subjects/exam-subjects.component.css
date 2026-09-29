@@ -81,8 +81,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 3px double #c73a3a;
-  color: #c73a3a;
+  border: 3px double var(--red);
+  color: var(--red-text);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,7 +92,7 @@
   line-height: 1.1;
   transform: rotate(-14deg);
   opacity: 0.85;
-  background: rgba(255, 255, 255, 0.6);
+  background: color-mix(in srgb, var(--card) 60%, transparent);
 }
 
 .stamp small {
@@ -114,7 +114,7 @@
 
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .btn-primary:hover {

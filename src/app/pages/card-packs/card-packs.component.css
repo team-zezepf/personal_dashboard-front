@@ -40,7 +40,7 @@
   font-size: 13px;
   font-weight: bold;
   text-decoration: none;
-  background: white;
+  background: var(--card);
 }
 
 .card {
@@ -108,8 +108,8 @@
 }
 
 .open-button:disabled {
-  background: #d5dbe3;
-  color: #8a96a3;
+  background: var(--line-strong);
+  color: var(--text-faint);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -200,7 +200,7 @@
   position: absolute;
   top: calc(var(--cut-y) - 1px);
   height: 3px;
-  background: white;
+  background: var(--card);
   box-shadow: 0 0 8px 2px rgba(255, 236, 170, 0.9);
   pointer-events: none;
 }

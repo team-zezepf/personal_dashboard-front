@@ -18,6 +18,7 @@ import { GenreStudyPageComponent } from './pages/genre-study/genre-study.compone
 import { CardCollectionPageComponent } from './pages/card-collection/card-collection.component';
 import { CardPacksPageComponent } from './pages/card-packs/card-packs.component';
 import { CardAdminPageComponent } from './pages/card-admin/card-admin.component';
+import { ThemeSettingsPageComponent } from './pages/theme-settings/theme-settings.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -45,5 +46,6 @@ export const routes: Routes = [
   { path: 'cards', component: CardCollectionPageComponent, canActivate: [authGuard] },
   { path: 'cards/packs', component: CardPacksPageComponent, canActivate: [authGuard] },
   { path: 'cards/admin', component: CardAdminPageComponent, canActivate: [authGuard] },
+  { path: 'settings/theme', component: ThemeSettingsPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

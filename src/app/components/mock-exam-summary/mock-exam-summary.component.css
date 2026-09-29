@@ -75,7 +75,7 @@ th.text, td.text {
 .btn-detail {
   border: 1px solid var(--primary);
   color: var(--primary-dark);
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   padding: 3px 10px;
   font-size: 12px;
@@ -84,7 +84,7 @@ th.text, td.text {
 }
 
 .btn-detail:hover:not(:disabled) {
-  background: #eaf7fd;
+  background: var(--primary-soft);
 }
 
 .btn-detail:disabled {
@@ -115,7 +115,7 @@ th.text, td.text {
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--card);
   z-index: 3;
 }
 
@@ -127,7 +127,7 @@ th.text, td.text {
 .modal-close {
   margin-left: auto;
   border: none;
-  background: #f1f3f6;
+  background: var(--surface-2);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -185,7 +185,7 @@ select {
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
 }
 
 .stat-row {
@@ -226,7 +226,7 @@ select {
 
 .genre-row:hover,
 .genre-row.active {
-  background: #f3f8fb;
+  background: var(--surface);
 }
 
 .genre-bar {
@@ -248,7 +248,7 @@ select {
 }
 
 .genre-bar .fill.few {
-  background: #c3cad4;
+  background: var(--line-strong);
 }
 
 .genre-val {
@@ -265,8 +265,8 @@ select {
 .weak-tag {
   font-size: 10.5px;
   font-weight: 700;
-  color: #c73a3a;
-  background: #fdecec;
+  color: var(--red-text);
+  background: var(--red-soft);
   border-radius: 4px;
   padding: 0 5px;
   margin-left: 4px;

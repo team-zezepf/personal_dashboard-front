@@ -1,0 +1,92 @@
+<app-header pageTitle="テーマ設定"></app-header>
+
+<main class="page">
+  <h1 class="page-title">テーマ設定</h1>
+  <p class="page-desc">画面の配色を変更できます。テーマはアカウントごとに保存され、どの端末でログインしても同じ配色になります。</p>
+
+  <section class="card">
+    <h2 class="card-title">テーマを選ぶ</h2>
+    <div class="presets">
+      @for (preset of presets; track preset.preset) {
+        <button
+          type="button"
+          class="preset"
+          [class.selected]="selected().preset === preset.preset"
+          [attr.aria-pressed]="selected().preset === preset.preset"
+          (click)="selectPreset(preset)"
+        >
+          <div class="thumb" [style.background]="preset.colors['--bg']">
+            <div class="thumb-header" [style.background]="preset.colors['--header']"></div>
+            <div class="thumb-body">
+              <div class="thumb-line" [style.background]="preset.colors['--text']" style="width: 70%"></div>
+              <div class="thumb-line" [style.background]="preset.colors['--muted']" style="width: 50%"></div>
+              <div class="thumb-button" [style.background]="preset.colors['--primary']"></div>
+            </div>
+          </div>
+          <div class="preset-name">{{ preset.name }}<span class="check">✓</span></div>
+        </button>
+      }
+      <button
+        type="button"
+        class="preset"
+        [class.selected]="selected().preset === 'custom'"
+        [attr.aria-pressed]="selected().preset === 'custom'"
+        (click)="selectCustom()"
+      >
+        <div class="thumb thumb-custom"></div>
+        <div class="preset-name">カスタム<span class="check">✓</span></div>
+      </button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">カスタム</h2>
+    <div class="custom">
+      <div>
+        @for (field of fields; track field.key) {
+          <div class="color-row">
+            <label [for]="'theme-' + field.key">{{ field.label }}</label>
+            <span class="where">{{ field.where }}</span>
+            <code>{{ selected()[field.key] }}</code>
+            <input type="color" [id]="'theme-' + field.key" [value]="selected()[field.key]" (input)="onColorInput(field.key, $event)" />
+          </div>
+        }
+        <div class="contrast" [class.bad]="isLowContrast()">
+          文字色と背景色のコントラスト比 <strong>{{ contrast().toFixed(1) }}</strong> : 1
+          @if (isLowContrast()) {
+            ⚠ 文字が読みにくい組合せです（{{ minContrast }} 以上がおすすめ）
+          } @else {
+            ✓ 読みやすい組合せです
+          }
+        </div>
+        <p class="auto-note">
+          色を変えると、テーマは自動で「カスタム」になります。パネルの色・罫線・薄い文字色などは、4色から自動で決まります。<br />
+          成功・警告・エラーの色（緑・橙・赤）と、カードゲームのカードの色は、テーマに関係なく同じです。
+        </p>
+      </div>
+      <div>
+        <div class="preview-label">プレビュー</div>
+        <div class="preview">
+          <div class="preview-header">Personal Dashboard</div>
+          <div class="preview-body">
+            <div class="preview-card">
+              <div class="preview-title">資格学習の実績</div>
+              <div class="preview-desc">今月の学習記録です。</div>
+              <div class="preview-tabs"><span class="on">学習</span><span>模擬試験</span></div>
+              <div class="preview-row"><span>基本情報技術者試験</span><span class="ok">合格</span></div>
+              <div class="preview-row"><span>応用情報技術者試験</span><span class="ng">不合格</span></div>
+              <button type="button" class="btn btn-primary btn-small" tabindex="-1">学習を始める</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button type="button" class="btn btn-outline" [disabled]="!isChanged() || isSaving()" (click)="reset()">元に戻す</button>
+    <button type="button" class="btn btn-primary" [disabled]="!isChanged() || isSaving()" (click)="save()">
+      {{ isSaving() ? '保存中…' : '保存' }}
+    </button>
+  </div>
+</main>

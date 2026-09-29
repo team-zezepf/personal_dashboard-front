@@ -68,7 +68,7 @@
 .frame-border {
   position: absolute;
   inset: 0;
-  border: 2px solid white;
+  border: 2px solid var(--card);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   pointer-events: none;
 }
@@ -104,17 +104,17 @@
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
 }
 
 .btn-outline {
-  background: white;
+  background: var(--card);
   color: var(--primary-dark);
   border: 1px solid var(--primary);
 }
 
 .btn:disabled {
-  background: #d5dbe3;
-  color: #8a96a3;
+  background: var(--line-strong);
+  color: var(--text-faint);
   cursor: not-allowed;
 }

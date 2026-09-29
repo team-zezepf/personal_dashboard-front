@@ -36,14 +36,14 @@ svg {
 
 .point {
   fill: var(--primary-dark);
-  stroke: #fff;
+  stroke: var(--card);
   stroke-width: 2;
 }
 
 .point.active {
   stroke: var(--primary-dark);
   stroke-width: 3;
-  fill: #fff;
+  fill: var(--card);
 }
 
 .last-label {
@@ -61,7 +61,7 @@ svg {
   position: absolute;
   pointer-events: none;
   transform: translate(-50%, calc(-100% - 12px));
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);

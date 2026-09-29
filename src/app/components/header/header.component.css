@@ -1,7 +1,7 @@
 .topbar {
   height: 64px;
-  background: #6076e0;
-  color: white;
+  background: var(--header);
+  color: var(--header-text);
   display: flex;
   align-items: center;
   padding: 0 32px;
@@ -21,7 +21,7 @@
   border: none;
   border-radius: 8px;
   background: none;
-  color: white;
+  color: var(--header-text);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -42,7 +42,7 @@
   left: 0;
   min-width: 180px;
   padding: 6px;
-  background: white;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(31, 41, 55, 0.18);
@@ -69,7 +69,7 @@
 }
 
 .title-menu-item:hover {
-  background: #f2f6f9;
+  background: var(--surface);
 }
 
 .title-menu-item-icon {
@@ -79,7 +79,7 @@
 
 .title-menu-item.active {
   color: var(--primary-dark);
-  background: #eaf8fd;
+  background: var(--primary-soft);
 }
 
 .title-menu-divider {
@@ -103,7 +103,7 @@
   font-size: 14px;
   line-height: 1;
   padding: 2px 4px;
-  color: #c9d2db;
+  color: var(--text-faint);
 }
 
 .fav-star-btn:hover {
@@ -111,7 +111,7 @@
 }
 
 .fav-star-btn.is-favorite {
-  color: var(--orange, #f59e0b);
+  color: var(--orange, var(--orange));
 }
 
 .fav-star-btn:disabled {
@@ -167,7 +167,7 @@
 }
 
 .avatar-button:hover .user-avatar {
-  border-color: white;
+  border-color: var(--card);
 }
 
 .avatar-menu {
@@ -176,7 +176,7 @@
   right: 0;
   min-width: 190px;
   padding: 6px;
-  background: white;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(31, 41, 55, 0.18);
@@ -200,7 +200,7 @@
 }
 
 .avatar-menu-item:hover {
-  background: #f2f6f9;
+  background: var(--surface);
 }
 
 @media (max-width: 700px) {

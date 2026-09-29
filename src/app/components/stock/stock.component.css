@@ -48,7 +48,7 @@
   position: relative;
   overflow: hidden;
   border-top: 1px solid var(--line);
-  background: linear-gradient(to bottom, transparent 49%, #f0f3f5 50%, transparent 51%);
+  background: linear-gradient(to bottom, transparent 49%, var(--surface-2) 50%, transparent 51%);
 }
 
 .mini-chart svg {

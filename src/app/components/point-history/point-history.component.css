@@ -82,7 +82,7 @@ td.reason {
 }
 
 .plus {
-  color: #178a55;
+  color: var(--green-text);
   font-weight: 700;
 }
 
@@ -94,7 +94,7 @@ td.reason {
 
 .btn-more {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   color: var(--primary-dark);
   font-weight: 700;
   font-size: 12.5px;

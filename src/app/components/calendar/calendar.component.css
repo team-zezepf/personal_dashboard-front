@@ -33,7 +33,7 @@
   padding: 3px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f6f8fa;
+  background: var(--surface);
 }
 
 .calendar-view-button {
@@ -50,7 +50,7 @@
 }
 
 .calendar-view-button.active {
-  background: white;
+  background: var(--card);
   color: var(--primary-dark);
   box-shadow: 0 1px 4px rgba(31, 41, 55, 0.10);
 }
@@ -74,11 +74,11 @@
 
 .nav button {
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
   border-radius: 6px;
   width: 28px;
   height: 28px;
-  color: #66727f;
+  color: var(--text-sub);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -110,11 +110,11 @@
 }
 
 .day:hover {
-  background: #f5f8fa;
+  background: var(--surface);
 }
 
 .day.muted {
-  color: #c4cbd2;
+  color: var(--text-faint);
 }
 
 .day.today {
@@ -127,7 +127,7 @@
 .day.selected {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: var(--on-primary);
   font-weight: 700;
 }
 
@@ -155,7 +155,7 @@
 }
 
 .day.selected .dot {
-  background: white;
+  background: var(--card);
 }
 
 /* 週表示 */
@@ -179,7 +179,7 @@
   padding: 7px 2px;
   text-align: center;
   font-size: 10px;
-  background: #fafbfc;
+  background: var(--surface);
 }
 
 .week-day-header strong {
@@ -188,7 +188,7 @@
 }
 
 .week-day-header.today {
-  background: #eaf8fd;
+  background: var(--primary-soft);
   color: var(--primary-dark);
 }
 
@@ -199,29 +199,29 @@
   line-height: 14px;
   color: var(--muted);
   font-size: 10px;
-  background: #fafbfc;
+  background: var(--surface);
 }
 
 .week-cell {
   min-height: 26px;
   padding: 2px;
-  background: #fff;
+  background: var(--card);
   cursor: pointer;
 }
 
 .week-cell:hover {
-  background: #f5f8fa;
+  background: var(--surface);
 }
 
 .week-event {
   position: relative;
   width: 100%;
   height: 100%;
-  border: 1px solid #bce7f5;
-  border-right: 1px solid #bce7f5;
-  border-bottom: 1px solid #bce7f5;
+  border: 1px solid var(--primary-border);
+  border-right: 1px solid var(--primary-border);
+  border-bottom: 1px solid var(--primary-border);
   border-radius: 6px;
-  background: #eaf8fd;
+  background: var(--primary-soft);
   color: var(--primary-dark);
   font-size: 10px;
   line-height: 14px;
@@ -326,8 +326,8 @@
   padding: 0 6px;
   border-radius: 6px;
   border: 1px solid var(--orange);
-  background: #fff3e0;
-  color: #8a5a00;
+  background: var(--orange-soft);
+  color: var(--orange-text);
   font-size: 10px;
   line-height: 1;
   white-space: nowrap;
@@ -374,7 +374,7 @@
   padding: 10px 11px;
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: #fafbfc;
+  background: var(--surface);
   margin-bottom: 8px;
 }
 
@@ -410,24 +410,24 @@
   padding: 0 9px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: white;
-  color: #66727f;
+  background: var(--card);
+  color: var(--text-sub);
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .calendar-event-action:hover {
-  background: #f5f8fa;
+  background: var(--surface);
 }
 
 .calendar-event-action.delete {
-  color: #d05a5a;
+  color: var(--red-text);
 }
 
 .calendar-event-action.delete:hover {
-  background: #fff4f4;
-  border-color: #f0c5c5;
+  background: var(--red-soft);
+  border-color: var(--red-border);
 }
 
 .calendar-details-empty {
@@ -444,7 +444,7 @@
   border: 0;
   border-radius: 8px;
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -477,7 +477,7 @@
 
 .schedule-modal-card {
   width: min(500px, 100%);
-  background: white;
+  background: var(--card);
   border-radius: 14px;
   box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
   overflow: hidden;
@@ -500,8 +500,8 @@
   height: 30px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: white;
-  color: #66727f;
+  background: var(--card);
+  color: var(--text-sub);
   cursor: pointer;
   font-size: 17px;
 }
@@ -527,19 +527,19 @@
 .schedule-form-group textarea,
 .schedule-form-group select {
   width: 100%;
-  border: 1px solid #dce3e8;
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 9px 10px;
   font: inherit;
   font-size: 12px;
   outline: none;
-  background: white;
+  background: var(--card);
 }
 
 .schedule-form-group input:focus,
 .schedule-form-group textarea:focus,
 .schedule-form-group select:focus {
-  border-color: #8ed6ec;
+  border-color: var(--primary-border);
   box-shadow: 0 0 0 3px rgba(19, 169, 223, 0.08);
 }
 
@@ -571,7 +571,7 @@
   height: 40px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -579,8 +579,8 @@
 
 .schedule-type-option input:checked + span {
   color: var(--primary-dark);
-  border-color: #8ed6ec;
-  background: #eaf8fd;
+  border-color: var(--primary-border);
+  background: var(--primary-soft);
   font-weight: 700;
 }
 
@@ -609,7 +609,7 @@
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 12px;
-  background: #fafbfc;
+  background: var(--surface);
 }
 
 .repeat-toggle {
@@ -655,15 +655,15 @@
   padding: 8px 4px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: #fff;
+  background: var(--card);
   font-size: 10px;
   cursor: pointer;
 }
 
 .repeat-frequency input:checked + span {
   color: var(--primary-dark);
-  border-color: #8ed6ec;
-  background: #eaf8fd;
+  border-color: var(--primary-border);
+  background: var(--primary-soft);
   font-weight: 700;
 }
 
@@ -678,12 +678,12 @@
 .repeat-option-row select,
 .repeat-option-row input {
   height: 34px;
-  border: 1px solid #dce3e8;
+  border: 1px solid var(--line-strong);
   border-radius: 7px;
   padding: 6px 8px;
   font: inherit;
   font-size: 11px;
-  background: #fff;
+  background: var(--card);
 }
 
 .repeat-weekdays {
@@ -709,15 +709,15 @@
   height: 30px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   font-size: 10px;
   cursor: pointer;
 }
 
 .repeat-weekdays input:checked + span {
   color: var(--primary-dark);
-  border-color: #8ed6ec;
-  background: #eaf8fd;
+  border-color: var(--primary-border);
+  background: var(--primary-soft);
   font-weight: 700;
 }
 
@@ -765,25 +765,25 @@
 .schedule-delete {
   margin-right: auto;
   border: 1px solid var(--line);
-  background: white;
-  color: #d05a5a;
+  background: var(--card);
+  color: var(--red-text);
 }
 
 .schedule-delete:hover {
-  background: #fff4f4;
-  border-color: #f0c5c5;
+  background: var(--red-soft);
+  border-color: var(--red-border);
 }
 
 .schedule-cancel {
   border: 1px solid var(--line);
-  background: white;
-  color: #66727f;
+  background: var(--card);
+  color: var(--text-sub);
 }
 
 .schedule-register {
   border: 0;
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
 }
 
 /* 繰り返し予定の削除確認モーダル */
@@ -804,7 +804,7 @@
 
 .delete-confirm-card {
   width: min(360px, 100%);
-  background: white;
+  background: var(--card);
   border-radius: 14px;
   box-shadow: 0 16px 50px rgba(31, 41, 55, 0.22);
   padding: 20px;
@@ -831,21 +831,21 @@
 
 .delete-confirm-option {
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
   color: var(--text);
 }
 
 .delete-confirm-option:hover {
-  background: #f5f8fa;
+  background: var(--surface);
 }
 
 .delete-confirm-option.all {
-  border-color: #f0c5c5;
-  color: #d05a5a;
+  border-color: var(--red-border);
+  color: var(--red-text);
 }
 
 .delete-confirm-option.all:hover {
-  background: #fff4f4;
+  background: var(--red-soft);
 }
 
 .delete-confirm-cancel {

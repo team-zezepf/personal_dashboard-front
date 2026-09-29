@@ -15,7 +15,7 @@
 .code-block {
   margin: 4px 0 18px;
   padding: 10px 0;
-  background: #f7f9fc;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow-x: auto;
@@ -34,7 +34,7 @@
   width: 3em;
   padding-right: 12px;
   text-align: right;
-  color: #a3adb9;
+  color: var(--text-faint);
   border-right: 1px solid var(--line);
   user-select: none;
 }
@@ -50,8 +50,8 @@
   text-align: center;
   line-height: 1.35;
   font-weight: 700;
-  color: #b45309;
-  background: #fff7e8;
+  color: var(--orange-text);
+  background: var(--orange-soft);
   border: 1.5px solid var(--orange);
   border-radius: 4px;
 }

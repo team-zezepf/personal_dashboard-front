@@ -26,7 +26,7 @@
 }
 
 .tool-table th {
-  background: #fafbfc;
+  background: var(--surface);
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
@@ -37,7 +37,7 @@
 }
 
 .tool-table tbody tr:hover {
-  background: #fafcff;
+  background: var(--surface);
 }
 
 .tool-link {
@@ -67,24 +67,24 @@
 }
 
 .role-general {
-  background: #eef2f6;
-  color: #52606d;
+  background: var(--surface-2);
+  color: var(--text-sub);
 }
 
 .role-admin {
-  background: #fff3d6;
-  color: #9a6700;
+  background: var(--orange-soft);
+  color: var(--orange-text);
 }
 
 .role-developer {
-  background: #e6f6ed;
-  color: #18794e;
+  background: var(--green-soft);
+  color: var(--green-text);
 }
 
 .role-disabled {
   background: transparent;
   border: 1px dashed var(--line);
-  color: #c4cbd2;
+  color: var(--text-faint);
 }
 
 .col-fav {
@@ -99,7 +99,7 @@
   font-size: 22px;
   line-height: 1;
   padding: 4px;
-  color: #c9d2db;
+  color: var(--text-faint);
   transition: transform 0.1s ease, color 0.15s ease;
 }
 
@@ -108,7 +108,7 @@
 }
 
 .fav-btn.is-favorite {
-  color: var(--orange, #f59e0b);
+  color: var(--orange, var(--orange));
 }
 
 .fav-btn:disabled {
