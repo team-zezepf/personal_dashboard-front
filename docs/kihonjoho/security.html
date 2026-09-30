@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="security" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>セキュリティのまとめ</h1>
-      <p class="genre-description">暗号方式・認証技術・代表的なサイバー攻撃とその対策など、セキュリティで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">暗号方式・認証技術・代表的なサイバー攻撃とその対策、情報セキュリティ管理・PKI・ネットワークの防御など、セキュリティで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -230,7 +230,7 @@
       <h2><span class="topic-no">5</span>Webアプリケーションへの攻撃</h2>
       <p>Webアプリケーションの入力欄に対するチェックが不十分だと、攻撃者が想定外のデータを送り込むことでシステムを不正に操作できてしまう。代表的な攻撃としてSQLインジェクションとクロスサイトスクリプティング(XSS)がある。</p>
       <figure class="fig">
-        <svg viewBox="0 0 440 130" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+        <svg viewBox="0 35 440 95" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
           <rect x="0" y="45" width="80" height="44" rx="6" fill="#fdeaea" stroke="#d64545" stroke-width="2"/>
           <text x="40" y="72" font-size="12" fill="#d64545" text-anchor="middle" font-weight="bold">攻撃者</text>
           <line x1="80" y1="67" x2="120" y2="67" stroke="#333" stroke-width="1.5"/>
@@ -354,6 +354,116 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ファイアウォールは「通信の可否」をルールに基づいて判断する仕組みであり、マルウェア自体を検知するものではない。マルウェアの検知・駆除にはウイルス対策ソフト(ウイルス定義ファイルとの照合)が必要であり、両者は役割が異なる。また、ファイアウォール自体はランサムウェアやワームのような「マルウェア」には分類されない点にも注意する。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>情報セキュリティ管理(CIA・リスクマネジメント・ISMS・CSIRT)</h2>
+      <p>情報セキュリティとは、情報の機密性・完全性・可用性の3つ(頭文字をとってCIA)を維持することである。技術的な対策だけでなく、組織としてリスクを管理する仕組みも問われる。</p>
+      <table class="ref-table">
+        <thead><tr><th>要素</th><th>意味</th><th>損なわれる例</th></tr></thead>
+        <tbody>
+          <tr><td>機密性(Confidentiality)</td><td>許可された人だけが情報にアクセスできる</td><td>情報漏えい、盗み見</td></tr>
+          <tr><td>完全性(Integrity)</td><td>情報が正確で、改ざんされていない</td><td>Webページの改ざん、データの破損</td></tr>
+          <tr><td>可用性(Availability)</td><td>必要なときに情報やシステムを使える</td><td>DoS攻撃によるサービス停止、ランサムウェア</td></tr>
+        </tbody>
+      </table>
+      <p>組織のリスクへの取り組みは、リスクを洗い出し(特定)、大きさを見積もり(分析)、対応の優先度を決める(評価)というリスクアセスメントから始め、そのあとリスク対応を選ぶ。</p>
+      <table class="ref-table">
+        <thead><tr><th>リスク対応</th><th>内容</th><th>例</th></tr></thead>
+        <tbody>
+          <tr><td>リスク回避</td><td>リスクの原因となる活動そのものをやめる</td><td>個人情報を扱う事業から撤退する</td></tr>
+          <tr><td>リスク低減</td><td>対策をして、発生確率や影響を小さくする</td><td>ウイルス対策ソフトの導入、暗号化</td></tr>
+          <tr><td>リスク移転(共有)</td><td>損失を他者と分け合う</td><td>サイバー保険への加入、業務の外部委託</td></tr>
+          <tr><td>リスク保有(受容)</td><td>対策をせず、損失を受け入れる</td><td>影響が小さいリスクをそのままにする</td></tr>
+        </tbody>
+      </table>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>ISMS(情報セキュリティマネジメントシステム)</td><td>組織が情報セキュリティをPDCAサイクルで継続的に管理・改善する仕組み。JIS Q 27001(ISO/IEC 27001)で要求事項が定められ、認証制度がある</td></tr>
+          <tr><td>情報セキュリティポリシー</td><td>組織の情報セキュリティへの取り組みを示す文書。経営陣が定める「基本方針」、具体的な規則を定めた「対策基準」、手順を示す「実施手順」からなる</td></tr>
+          <tr><td>CSIRT(シーサート)</td><td>セキュリティインシデントが起きたときに、報告を受け付けて調査・対応を行う組織内のチーム</td></tr>
+          <tr><td>SOC(ソック)</td><td>ネットワークや機器を24時間監視し、攻撃の検知・分析を行う組織</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>保険をかけるのは損失を他者に負担してもらう「移転」であり、「低減」ではない。また、情報セキュリティポリシーの基本方針は経営陣(トップ)が定めて組織全体に示すものであり、情報システム部門だけで決めるものではない。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>ネットワークの防御(DMZ・IDS/IPS・WAF)</h2>
+      <p>ファイアウォールだけでは防げない攻撃に備えて、複数の仕組みを組み合わせて守る。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 130" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="11" text-anchor="middle">
+          <rect x="0" y="45" width="110" height="40" rx="8" fill="#fdeaea" stroke="#d64545" stroke-width="2"/><text x="55" y="69" fill="#d64545">インターネット</text>
+          <rect x="165" y="40" width="40" height="50" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/><text x="185" y="62" fill="#c9820a">FW</text>
+          <line x1="110" y1="65" x2="165" y2="65" stroke="#7b8794" stroke-width="2"/>
+          <line x1="205" y1="65" x2="305" y2="65" stroke="#7b8794" stroke-width="2"/>
+          <line x1="185" y1="90" x2="185" y2="100" stroke="#7b8794" stroke-width="2"/>
+          <rect x="90" y="100" width="190" height="26" rx="6" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/><text x="185" y="118" fill="#2f5fe0">DMZ(Web・メールサーバ)</text>
+          <rect x="305" y="45" width="130" height="40" rx="8" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/><text x="370" y="69" fill="#1f9d55">内部ネットワーク</text>
+        </svg>
+        <figcaption class="fig-caption">外部に公開するサーバはDMZに置く。DMZのサーバが乗っ取られても、ファイアウォールが内部ネットワークへの通信を遮断する。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>仕組み</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td>DMZ(非武装地帯)</td><td>インターネットと内部ネットワークの間に設ける区域。外部に公開するWebサーバなどを置き、内部ネットワークと切り離す</td></tr>
+          <tr><td>IDS(侵入検知システム)</td><td>通信を監視し、不正な侵入の兆候を<strong>検知して管理者に通知</strong>する</td></tr>
+          <tr><td>IPS(侵入防止システム)</td><td>不正な通信を検知したうえで、その通信を<strong>遮断する</strong>ところまで行う</td></tr>
+          <tr><td>WAF(Webアプリケーションファイアウォール)</td><td>Webアプリケーションへの通信の中身を検査し、SQLインジェクションやXSSなどの攻撃を防ぐ</td></tr>
+          <tr><td>リバースプロキシ</td><td>外部からのアクセスを受け付けてWebサーバに中継する。Webサーバを直接外部にさらさずに済む</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>IDSは「見つけて知らせる」まで、IPSは「見つけて止める」まで行う。一般的なファイアウォールはIPアドレスやポート番号で通信を許可・拒否するため、正規のポート(HTTPSの443番など)を通るWebアプリケーションへの攻撃は防げない。それを防ぐのがWAFである。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-8">
+      <h2><span class="topic-no">9</span>PKIとデジタル証明書</h2>
+      <p>公開鍵暗号やデジタル署名では、「その公開鍵が本当に本人のものか」を確かめる必要がある。信頼できる第三者機関である認証局(CA)が、公開鍵とその持ち主を結び付けるデジタル証明書(電子証明書)を発行して保証する仕組みをPKI(公開鍵基盤)という。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>認証局(CA)</td><td>本人確認をしたうえで、デジタル証明書を発行・失効させる機関</td></tr>
+          <tr><td>デジタル証明書</td><td>持ち主の情報・公開鍵・有効期限などに、認証局がデジタル署名をしたもの(サーバ証明書、クライアント証明書など)</td></tr>
+          <tr><td>CRL(証明書失効リスト)</td><td>有効期限前に失効させた証明書の一覧。秘密鍵が漏えいした場合などに失効させる</td></tr>
+          <tr><td>ルート証明書</td><td>認証局自身の証明書。ブラウザやOSにあらかじめ組み込まれており、他の証明書の検証の起点になる</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例: HTTPSでのサーバ証明書の検証</span>
+        <span>ブラウザはWebサーバから受け取ったサーバ証明書の署名を、認証局の公開鍵(ルート証明書)で検証する。検証に成功すれば、接続先が本物のサーバであり、証明書に含まれる公開鍵が本物であると確認できる。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>デジタル証明書に含まれるのは<strong>公開鍵</strong>であり、秘密鍵は含まれない。デジタル証明書は「公開鍵の持ち主が誰か」を保証するもので、通信内容を暗号化するもの自体ではない。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-9">
+      <h2><span class="topic-no">10</span>メールのセキュリティとセキュリティ対策の技術</h2>
+      <p>送信元を偽ったなりすましメールへの対策や、マルウェアや脆弱性を調べるための技術も問われる。</p>
+      <table class="ref-table">
+        <thead><tr><th>技術</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>SPF</td><td>送信元ドメインが、正規のメールサーバのIPアドレスをDNSに登録しておき、受信側が送信元サーバのIPアドレスと照合してなりすましを見抜く</td></tr>
+          <tr><td>DKIM</td><td>送信側のメールサーバがメールにデジタル署名を付け、受信側がDNSに公開された公開鍵で検証する。送信元の正当性と改ざんの有無を確認できる</td></tr>
+          <tr><td>S/MIME</td><td>電子メールの暗号化とデジタル署名を行う規格</td></tr>
+          <tr><td>サンドボックス</td><td>隔離された仮想環境で不審なプログラムを実際に動かし、挙動を観察してマルウェアかどうかを判定する</td></tr>
+          <tr><td>ペネトレーションテスト</td><td>攻撃者の立場で実際にシステムに侵入を試み、脆弱性がないかを検査する</td></tr>
+          <tr><td>ファジング</td><td>予測できないデータ(ファズ)を大量に入力して、ソフトウェアの脆弱性を見つける</td></tr>
+          <tr><td>デジタルフォレンジックス</td><td>インシデント発生後に、ログや記録媒体を証拠として保全・分析し、原因や被害を調べる</td></tr>
+          <tr><td>ハニーポット</td><td>わざと侵入しやすくしたおとりのシステムを置き、攻撃の手口を観察・記録する</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>SPFは「送信元<strong>サーバのIPアドレス</strong>」で、DKIMは「<strong>デジタル署名</strong>」で送信元を確認する。サンドボックスは「実際に動かして調べる」、ファジングは「異常なデータを入力して調べる」点で区別する。</span>
       </div>
     </section>
     </article>

@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="kiso-riron" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>基礎理論のまとめ</h1>
-      <p class="genre-description">2進数・論理演算・数値表現など、基礎理論で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">2進数・論理演算・数値表現・シフト演算・誤差・確率統計・待ち行列・形式言語・AIなど、基礎理論で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -189,6 +189,15 @@
         <span class="label">つまずきやすいポイント</span>
         <span>パリティビットで分かるのは「誤りが起きたこと」だけで、「どのビットが化けたか」は特定できない。また2ビット同時に反転すると1の個数の偶奇が元に戻ってしまい、誤りを検出できない(パリティチェックの限界)。</span>
       </div>
+      <p>パリティチェックの弱点を補う方式として、次のものもある。</p>
+      <table class="ref-table">
+        <thead><tr><th>方式</th><th>できること</th><th>しくみ</th></tr></thead>
+        <tbody>
+          <tr><td>パリティチェック</td><td>1ビットの誤りの検出</td><td>1の個数を偶数(奇数)にそろえる1ビットを付加する</td></tr>
+          <tr><td>CRC(巡回冗長検査)</td><td>連続した複数ビットの誤り(バースト誤り)の検出</td><td>データを生成多項式で割った余りを検査用のビットとして付加する。通信で広く使われる</td></tr>
+          <tr><td>ハミング符号</td><td>1ビットの誤りの検出と<strong>訂正</strong>(2ビットの誤りは検出のみ)</td><td>複数の検査ビットを付加し、どのビットが誤っているかを特定する。ECCメモリなどで使われる</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section class="topic" id="topic-4">
@@ -202,6 +211,183 @@
           <tr><td>EBCDIC</td><td>主にIBM系大型機で使われてきた文字コード</td></tr>
         </tbody>
       </table>
+    </section>
+    <section class="topic" id="topic-5">
+      <h2><span class="topic-no">6</span>シフト演算</h2>
+      <p>2進数のビット列を左右にずらす演算をシフト演算という。左に1ビットずらすと値は2倍、右に1ビットずらすと値は1/2になる(nビットなら2ⁿ倍・1/2ⁿ)。乗算・除算を高速に行うためによく使われる。</p>
+      <table class="ref-table">
+        <thead><tr><th>種類</th><th>扱う数</th><th>ずらしたときの動き</th></tr></thead>
+        <tbody>
+          <tr><td>論理シフト</td><td>符号なしの数</td><td>全ビットをずらし、空いたビットには0を入れる</td></tr>
+          <tr><td>算術シフト</td><td>符号付きの数(2の補数)</td><td>先頭の符号ビットは動かさずに残りをずらす。右シフトでは空いたビットに符号ビットと同じ値を入れる</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 00010110(22)を論理シフトする</span>
+        <span>左に2ビット: 01011000 = 88(22 × 2² = 88)<br>右に1ビット: 00001011 = 11(22 ÷ 2 = 11)</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: シフトと加算で10倍にする</span>
+        <span>x を10倍するには「x を左に3ビットシフト(8倍)」+「x を左に1ビットシフト(2倍)」を足せばよい(8x + 2x = 10x)。「左に2ビットシフトして元の数を足し、さらに左に1ビットシフトする」((4x + x) × 2 = 10x)という形でも出題される。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>負の数(例: 11110000 = -16)を右に1ビット論理シフトすると先頭に0が入り、正の数になってしまう。算術シフトなら先頭に1が入って 11111000 = -8 となり、正しく1/2になる。また、左シフトではみ出したビットは失われる(あふれ=オーバフロー)点にも注意する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>誤差(丸め誤差・打切り誤差・桁落ち・情報落ち)</h2>
+      <p>コンピュータは有限の桁数で数値を表すため、計算結果に誤差が生じることがある。10進数の0.1のように、2進数では有限の桁で表せない(循環小数になる)値もある。誤差の種類は、どんな計算のときに起きるかで区別する。</p>
+      <table class="ref-table">
+        <thead><tr><th>誤差</th><th>起きる場面</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>丸め誤差</td><td>表せる桁数を超えたとき</td><td>最小の桁より下を四捨五入・切捨て・切上げしたことで生じる誤差</td></tr>
+          <tr><td>打切り誤差</td><td>無限に続く計算を途中でやめたとき</td><td>計算を規定の回数で打ち切ったことで生じる誤差</td></tr>
+          <tr><td>桁落ち</td><td>値がほぼ等しい数どうしの減算</td><td>上位の桁が打ち消し合って消え、有効数字の桁数が大きく減る</td></tr>
+          <tr><td>情報落ち</td><td>絶対値が大きく異なる数どうしの加減算</td><td>小さいほうの数が、大きいほうの数の有効桁に収まらず結果に反映されない</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例: 桁落ちと情報落ち(有効数字4桁の場合)</span>
+        <span>桁落ち: 1.235 − 1.234 = 0.001 → 有効数字が4桁から1桁に減ってしまう。<br>情報落ち: 1234 + 0.1 = 1234.1 → 有効数字4桁では 1234 となり、0.1 が結果から消える。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「桁落ち」は近い値の<strong>引き算</strong>、「情報落ち」は大きさが極端に違う値の<strong>足し算・引き算</strong>で起きる。情報落ちを防ぐには、絶対値の小さい数から順に足していくとよい。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>集合・確率・統計</h2>
+      <p>集合の関係はベン図で表すと整理しやすい。確率・統計では、場合の数(順列・組合せ)、期待値、データのばらつき(分散・標準偏差)がよく問われる。</p>
+      <figure class="fig">
+        <svg viewBox="-70 0 440 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <rect x="5" y="5" width="290" height="140" rx="6" fill="#f7f9fb" stroke="#c7cdd6"/>
+          <circle cx="120" cy="78" r="52" fill="#2f5fe0" fill-opacity="0.18" stroke="#2f5fe0" stroke-width="2"/>
+          <circle cx="180" cy="78" r="52" fill="#1f9d55" fill-opacity="0.18" stroke="#1f9d55" stroke-width="2"/>
+          <text x="95" y="82" font-size="14" fill="#2f5fe0" text-anchor="middle">A</text>
+          <text x="205" y="82" font-size="14" fill="#1f9d55" text-anchor="middle">B</text>
+          <text x="150" y="82" font-size="11" fill="#333" text-anchor="middle">A∩B</text>
+          <text x="20" y="22" font-size="11" fill="#7b8794">全体集合 U</text>
+        </svg>
+        <figcaption class="fig-caption">ベン図: 2つの円の重なりが A∩B(積集合)、2つの円全体が A∪B(和集合)。円の外側が補集合。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>記号・式</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>和集合</td><td>A∪B</td><td>AまたはBに属する要素全体(論理和 OR に対応)</td></tr>
+          <tr><td>積集合</td><td>A∩B</td><td>AとBの両方に属する要素(論理積 AND に対応)</td></tr>
+          <tr><td>補集合</td><td>Ā</td><td>Aに属さない要素(否定 NOT に対応)</td></tr>
+          <tr><td>和集合の要素数</td><td>n(A∪B) = n(A) + n(B) − n(A∩B)</td><td>重なりを二重に数えないよう1回引く</td></tr>
+          <tr><td>順列</td><td>nPr = n! ÷ (n−r)!</td><td>n個からr個を選んで<strong>並べる</strong>場合の数</td></tr>
+          <tr><td>組合せ</td><td>nCr = n! ÷ (r!(n−r)!)</td><td>n個からr個を<strong>選ぶだけ</strong>(順番は問わない)場合の数</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 順列と組合せ</span>
+        <span>5人から委員長と副委員長を1人ずつ選ぶ(役割がある=並べる): 5P2 = 5 × 4 = <strong>20通り</strong><br>5人から委員を2人選ぶ(役割なし=選ぶだけ): 5C2 = (5 × 4) ÷ (2 × 1) = <strong>10通り</strong></span>
+      </div>
+      <div class="formula-box">
+        <span class="label">期待値・分散・標準偏差</span>
+        <span>期待値 = Σ(値 × その値が出る確率)<br>分散 = 各データと平均の差を2乗したものの平均<br>標準偏差 = √分散(データのばらつきの大きさ。大きいほど平均から散らばっている)</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 期待値</span>
+        <span>確率0.2で100円、確率0.5で40円、確率0.3で0円もらえるくじの期待値は、100 × 0.2 + 40 × 0.5 + 0 × 0.3 = 20 + 20 + 0 = <strong>40円</strong>。</span>
+      </div>
+      <p>自然界や測定値のばらつきによく現れる、平均を中心とした左右対称の釣鐘型の分布を正規分布という。平均±1標準偏差の範囲に全体の約68%、±2標準偏差の範囲に約95%、±3標準偏差の範囲に約99.7%が含まれる。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「選んだものに順番や役割があるか」で順列(P)と組合せ(C)を使い分ける。また、平均値が同じでも標準偏差が大きいほどデータは広く散らばっている。平均値だけ・標準偏差だけで分布を判断しないこと。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-8">
+      <h2><span class="topic-no">9</span>待ち行列理論(M/M/1モデル)</h2>
+      <p>窓口が1つで、客が不規則に到着し、先着順にサービスを受けるモデルをM/M/1モデルという。銀行のATMやサーバへの処理要求など、待ち時間の見積りに使う。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 420 90" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+          <text x="10" y="50" font-size="12" fill="#333">到着 →</text>
+          <g fill="#eef2ff" stroke="#2f5fe0" stroke-width="1.5">
+            <circle cx="90" cy="45" r="13"/><circle cx="125" cy="45" r="13"/><circle cx="160" cy="45" r="13"/>
+          </g>
+          <text x="125" y="82" font-size="11" fill="#2f5fe0" text-anchor="middle">待ち行列(待ち時間)</text>
+          <rect x="210" y="20" width="110" height="50" rx="8" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/>
+          <text x="265" y="42" font-size="12" fill="#1f9d55" text-anchor="middle">窓口(1つ)</text>
+          <text x="265" y="60" font-size="11" fill="#1f9d55" text-anchor="middle">サービス時間</text>
+          <text x="335" y="50" font-size="12" fill="#333">→ 退出</text>
+        </svg>
+        <figcaption class="fig-caption">客は行列に並んで待ち(待ち時間)、窓口でサービスを受けて出ていく。待ち時間+サービス時間が応答時間になる。</figcaption>
+      </figure>
+      <div class="formula-box">
+        <span class="label">M/M/1モデルの公式</span>
+        <span>利用率 ρ = 平均到着率 × 平均サービス時間(窓口がふさがっている割合。1未満)<br>平均待ち時間 = ρ ÷ (1 − ρ) × 平均サービス時間<br>平均応答時間 = 平均待ち時間 + 平均サービス時間</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: ATMの平均待ち時間</span>
+        <span>1分間に平均0.5人が到着し、1人あたりの平均利用時間が1分のATMがある。<br>利用率 ρ = 0.5 × 1 = 0.5<br>平均待ち時間 = 0.5 ÷ (1 − 0.5) × 1分 = <strong>1分</strong>(平均応答時間は 1 + 1 = 2分)</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>利用率が高くなると、待ち時間は比例ではなく急激に増える。ρ = 0.5 なら待ち時間はサービス時間の1倍だが、ρ = 0.8 なら 0.8 ÷ 0.2 = 4倍、ρ = 0.9 なら9倍になる。「到着率が2倍になったら待ち時間も2倍」とはならない。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-9">
+      <h2><span class="topic-no">10</span>形式言語(逆ポーランド記法・BNF・正規表現・オートマトン)</h2>
+      <p>プログラム言語の文法や、コンピュータで計算しやすい式の書き方を表すための記法がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>記法</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>逆ポーランド記法(後置記法)</td><td>演算子を被演算子の後ろに書く記法。括弧が不要で、スタックを使って左から順に計算できる。例: (A + B) × C → AB+C×</td></tr>
+          <tr><td>BNF(バッカス・ナウア記法)</td><td>プログラム言語などの文法(構文)を定義する記法。「::=」で定義し、「|」で「または」を表す</td></tr>
+          <tr><td>正規表現</td><td>文字列のパターンを表す記法。例: [0-9]+ は「数字の1回以上の繰返し」、* は直前の0回以上の繰返しを表す</td></tr>
+          <tr><td>有限オートマトン</td><td>有限個の状態と、入力による状態の遷移で表すモデル。入力を読み終えたときに受理状態にいれば、その文字列を受理する</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 中置記法を逆ポーランド記法に変える</span>
+        <span>(A + B) × (C − D) → 先に計算する括弧の中から「AB+」「CD−」とし、最後に×を後ろに置く → <strong>AB+CD−×</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 逆ポーランド記法の式をスタックで計算する</span>
+        <span>「3 4 + 5 ×」を左から読む。数値ならスタックに積み、演算子なら上から2つ取り出して計算し、結果を積む。<br>3を積む → 4を積む → +: 3+4=7を積む → 5を積む → ×: 7×5=<strong>35</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例: BNFによる定義</span>
+        <span>&lt;数字&gt; ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9<br>&lt;数&gt; ::= &lt;数字&gt; | &lt;数&gt;&lt;数字&gt;<br>2行目は「数とは、数字1つ、または数の後ろに数字を1つ付けたもの」という再帰的な定義で、1桁以上の数字の並びを表す。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>逆ポーランド記法では、スタックから取り出した2つの値の順序に注意する。「A B −」は A − B であり、先に取り出した値(B)が演算子の<strong>右側</strong>になる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-10">
+      <h2><span class="topic-no">11</span>AI(人工知能)と機械学習</h2>
+      <p>機械学習は、大量のデータからコンピュータ自身が規則性を学び、予測や判断を行えるようにするAIの技術である。学習のさせ方によって3つに分類される。</p>
+      <table class="ref-table">
+        <thead><tr><th>学習方法</th><th>内容</th><th>用途の例</th></tr></thead>
+        <tbody>
+          <tr><td>教師あり学習</td><td>入力データと正解(ラベル)の組を与えて学習させる</td><td>迷惑メールの判定、画像の分類、売上の予測</td></tr>
+          <tr><td>教師なし学習</td><td>正解を与えず、データの中から共通する特徴や構造を見つけさせる</td><td>顧客のグループ分け(クラスタリング)</td></tr>
+          <tr><td>強化学習</td><td>試行錯誤させ、良い行動に報酬を与えて、報酬が最大になる行動を学ばせる</td><td>ゲームの攻略、ロボットの動作制御</td></tr>
+        </tbody>
+      </table>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>ニューラルネットワーク</td><td>人間の脳の神経細胞のつながりをまねた、入力層・中間層・出力層からなる学習モデル</td></tr>
+          <tr><td>ディープラーニング(深層学習)</td><td>中間層を多層にしたニューラルネットワークで学習する手法。特徴量(どこに注目するか)も自動で学習できる</td></tr>
+          <tr><td>生成AI</td><td>学習したデータをもとに、文章・画像・音声などを新たに生成するAI</td></tr>
+          <tr><td>過学習</td><td>学習データに合わせすぎて、未知のデータに対する予測精度が下がる状態</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「正解データを与えるか」で教師あり/なしを、「報酬」というキーワードで強化学習を見分ける。また、ディープラーニングは機械学習の一種であり、機械学習はAIを実現する技術の一種である(AI ⊃ 機械学習 ⊃ ディープラーニング)。</span>
+      </div>
     </section>
     </article>
 

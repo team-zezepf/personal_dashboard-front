@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="system-strategy" data-category="ストラテジ系">
     <header class="genre-header">
       <h1>システム戦略のまとめ</h1>
-      <p class="genre-description">情報システム戦略の考え方から、EA・BPR・ERPによる業務最適化、システム調達で使われるRFP/RFI、情報活用を支える仕組み、IoT・AI・DXといった動向まで、システム戦略で問われる要点を整理しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">情報システム戦略の考え方から、EA・BPR・ERPによる業務最適化、システム調達で使われるRFP/RFI、情報活用を支える仕組み、業務プロセスの改善、e-ビジネス、ソリューションビジネス、IoT・AI・DXといった動向まで、システム戦略で問われる要点を整理しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -137,6 +137,74 @@
       <div class="example-box">
         <span class="label">例題: IoT・機械学習からDXへ</span>
         <span>工場の設備にセンサを取り付けて稼働データを収集し(<strong>IoT</strong>)、蓄積したデータを<strong>機械学習</strong>で分析して故障の予兆を検知できるようにした。これにより保守業務の在り方そのものを見直すことができれば、それは<strong>DX</strong>の一例といえる。IoT・機械学習は手段、DXはそれによってもたらされる事業・組織の変革である。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>業務プロセスの可視化と改善(BPMN・BPM・RPA)</h2>
+      <p>業務を改善するには、まず現状の業務の流れを図にして(可視化して)問題点を見つけ、改善し続ける仕組みを回していく。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>BPMN</td><td>業務プロセスの流れを、イベント(丸)・アクティビティ(角丸の四角)・分岐(ひし形)などの記号で表す表記法</td></tr>
+          <tr><td>BPM(ビジネスプロセスマネジメント)</td><td>業務プロセスを分析・設計・実行・評価するPDCAサイクルを回し、継続的に改善していく管理手法(一度に抜本的に作り直すBPRとの違いに注意)</td></tr>
+          <tr><td>RPA</td><td>人がPCで行っている定型的な事務作業(データの転記・集計など)を、ソフトウェアのロボットで自動化する</td></tr>
+          <tr><td>SFA(営業支援システム)</td><td>営業担当者の活動や商談の進み具合を記録・共有し、営業活動を効率化する</td></tr>
+          <tr><td>ワークフローシステム</td><td>申請・承認などの手続きを電子化し、決められた経路で書類を回す</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>RPAは「人が行う定型的なPC操作をそのまま自動化する」もので、業務プロセス自体を見直すBPRとは異なる。またBPMは「継続的な改善」、BPRは「抜本的な改革」と対比して覚える。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-5">
+      <h2><span class="topic-no">6</span>e-ビジネス(電子商取引・EDI・ロングテール)</h2>
+      <p>インターネットを使った商取引(電子商取引、EC)は、取引の当事者の組み合わせで分類される。</p>
+      <table class="ref-table">
+        <thead><tr><th>分類</th><th>取引の当事者</th><th>例</th></tr></thead>
+        <tbody>
+          <tr><td>BtoB</td><td>企業と企業</td><td>企業間の部品の受発注、電子調達</td></tr>
+          <tr><td>BtoC</td><td>企業と消費者</td><td>ネットショッピング、オンラインバンキング</td></tr>
+          <tr><td>CtoC</td><td>消費者と消費者</td><td>ネットオークション、フリマアプリ</td></tr>
+          <tr><td>BtoE / GtoC</td><td>企業と従業員 / 行政と市民</td><td>社員向け販売 / 電子申請</td></tr>
+        </tbody>
+      </table>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>EDI(電子データ交換)</td><td>企業間の受発注などの取引データを、決められた形式(標準の規約)で通信回線を通じて交換する</td></tr>
+          <tr><td>ロングテール</td><td>ネット販売では在庫や陳列の制約が小さいため、個々の売上は少ないニッチ商品の売上を積み重ねることで大きな売上を得られるという考え方</td></tr>
+          <tr><td>O2O(Online to Offline)</td><td>クーポン配信など、ネット上(オンライン)の情報で実店舗(オフライン)への来店や購買を促す</td></tr>
+          <tr><td>オムニチャネル</td><td>実店舗・ECサイト・アプリなど、あらゆる販売経路を統合して、どこからでも同じように購入できるようにする</td></tr>
+          <tr><td>エスクローサービス</td><td>売り手と買い手の間に第三者が入り、代金を一時的に預かって、商品が届いてから売り手に支払う仕組み</td></tr>
+          <tr><td>フィンテック(FinTech)</td><td>金融(Finance)と技術(Technology)を組み合わせた新しい金融サービス(スマホ決済など)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ロングテールは「売れ筋商品(ヘッド)ではなく、少しずつしか売れない多数の商品(テール)の合計が大きくなる」という話である。パレートの法則(売上の大部分は一部の商品が生む)とは逆の見方になる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>ソリューションビジネスと情報システム化計画</h2>
+      <p>顧客の経営課題を解決するため、ハードウェア・ソフトウェア・サービスを組み合わせて提供するビジネスをソリューションビジネスという。自社でシステムを持たず、外部のサービスや資源を利用する形態も増えている。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>SOA(サービス指向アーキテクチャ)</td><td>業務の機能を「サービス」という部品として作り、それらを組み合わせてシステムを構築する考え方</td></tr>
+          <tr><td>アウトソーシング</td><td>業務の一部または全部を外部の専門業者に委託する</td></tr>
+          <tr><td>BPO(ビジネスプロセスアウトソーシング)</td><td>経理・人事などの業務プロセスをまるごと外部に委託する</td></tr>
+          <tr><td>ハウジングサービス</td><td>事業者の施設に、<strong>利用者が自分のサーバ</strong>を設置させてもらう</td></tr>
+          <tr><td>ホスティングサービス</td><td><strong>事業者が用意したサーバ</strong>を、利用者が借りて使う</td></tr>
+          <tr><td>オンプレミス</td><td>サーバやソフトウェアを自社の設備内に設置・運用する(クラウドとの対比で使う)</td></tr>
+        </tbody>
+      </table>
+      <p>システム化を進める際は、経営戦略に基づいて情報システム戦略を立て、それを実現するために個々のシステムの「情報システム化計画」を作る。計画では、システム化の目的・範囲・スケジュール・費用と、導入によって得られる効果(投資対効果)を明らかにする。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ハウジングとホスティングは「サーバが誰のものか」で区別する。ハウジングは場所(設備)だけを借り、サーバは自分で持ち込む。ホスティングはサーバごと借りる。</span>
       </div>
     </section>
     </article>
