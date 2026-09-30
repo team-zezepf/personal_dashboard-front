@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="network" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>ネットワークのまとめ</h1>
-      <p class="genre-description">LAN/WANの基礎からTCP/IPの階層構造、IPアドレスとサブネット、代表的なプロトコル、ネットワーク機器、セキュリティまで、ネットワークで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">LAN/WANの基礎からTCP/IPの階層構造、IPアドレスとサブネット、代表的なプロトコル(電子メールを含む)、伝送時間の計算、IoTの無線通信、ネットワーク機器、セキュリティまで、ネットワークで問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -266,6 +266,67 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>AES・DESは「共通鍵暗号方式」、RSA・楕円曲線暗号(ECC)は「公開鍵暗号方式」に分類される。名称だけで覚えるのではなく、鍵が1つ(共通)か2つ(公開鍵・秘密鍵)かという構造で整理すると区別しやすい。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>電子メールのプロトコル</h2>
+      <p>電子メールは、送信と受信で使うプロトコルが異なる。送信側のメールサーバから相手のメールサーバへの転送にはSMTPを使い、受信者は自分のメールサーバからPOPまたはIMAPでメールを取り出す。</p>
+      <table class="ref-table">
+        <thead><tr><th>プロトコル</th><th>用途</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>SMTP</td><td>送信・サーバ間の転送</td><td>メールをメールサーバへ送る。送信時に利用者を認証する仕組みを SMTP-AUTH という</td></tr>
+          <tr><td>POP3</td><td>受信</td><td>メールを端末にダウンロードして読む(基本的にサーバからは削除される)</td></tr>
+          <tr><td>IMAP4</td><td>受信</td><td>メールをサーバ上に置いたまま読む・管理する。複数の端末から同じメールを扱える</td></tr>
+          <tr><td>MIME</td><td>形式の拡張</td><td>日本語や画像などの添付ファイルを電子メールで送れるようにする規格(暗号化・署名を加えたものが S/MIME)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>SMTPは送信、POP・IMAPは受信。スマートフォンとPCの両方で同じ受信メールを見たい場合は、サーバにメールを残すIMAPが向いている。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>LANの通信制御方式と伝送時間の計算</h2>
+      <p>1本の伝送路を複数の端末で共有するLANでは、送信が重ならないように制御する必要がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>方式</th><th>使われるLAN</th><th>しくみ</th></tr></thead>
+        <tbody>
+          <tr><td>CSMA/CD</td><td>有線LAN(イーサネット)</td><td>伝送路が空いていれば送信し、送信中に衝突(コリジョン)を<strong>検出</strong>したら、ランダムな時間待って再送する</td></tr>
+          <tr><td>CSMA/CA</td><td>無線LAN</td><td>無線では衝突を検出しにくいため、伝送路が空いていてもランダムな時間待ってから送信し、衝突を<strong>回避</strong>する</td></tr>
+        </tbody>
+      </table>
+      <div class="formula-box">
+        <span class="label">伝送時間の計算</span>
+        <span>伝送時間(秒) = データ量(ビット) ÷ (回線速度(ビット/秒) × 伝送効率)<br>※ データ量がバイトで与えられたら、8倍してビットに直す</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 100Mバイトのファイルを伝送する時間</span>
+        <span>回線速度100Mビット/秒、伝送効率80%の回線で100Mバイトのファイルを送る。<br>データ量 = 100M × 8 = 800Mビット<br>実効速度 = 100Mビット/秒 × 0.8 = 80Mビット/秒<br>伝送時間 = 800 ÷ 80 = <strong>10秒</strong></span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>回線速度は「ビット/秒(bps)」、ファイルサイズは「バイト」で表されることが多い。1バイト = 8ビットの変換を忘れると答えが8倍ずれる。また伝送効率を掛けると、実際に使える速度は回線速度より遅くなる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-8">
+      <h2><span class="topic-no">9</span>IoTを支える無線通信とネットワーク技術</h2>
+      <p>多数のセンサや機器をネットワークにつなぐIoTでは、用途に合わせた無線通信技術や、処理を分散させる仕組みが使われる。</p>
+      <table class="ref-table">
+        <thead><tr><th>技術</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>LPWA</td><td>省電力で、数km〜数十kmの広い範囲をカバーする無線通信技術。通信速度は低いが、電池で長期間動くセンサに向く</td></tr>
+          <tr><td>5G(第5世代移動通信システム)</td><td>「高速・大容量」「低遅延」「多数同時接続」を特徴とする移動通信の規格</td></tr>
+          <tr><td>BLE(Bluetooth Low Energy)</td><td>消費電力を抑えたBluetoothの規格。ウェアラブル機器などに使う</td></tr>
+          <tr><td>エッジコンピューティング</td><td>データを遠くのクラウドに送らず、利用者や機器に近い場所(エッジ)で処理する。通信の遅延や量を減らせる</td></tr>
+          <tr><td>テザリング</td><td>スマートフォンなどを中継器にして、PCなどをインターネットに接続する</td></tr>
+          <tr><td>SDN</td><td>ネットワーク機器の制御機能をソフトウェアに集約し、ネットワーク全体の構成を柔軟に設定・変更できるようにする考え方</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>LPWAは「速度は低いが、省電力・広範囲」。高速なのは5G。エッジコンピューティングは「クラウドに集めて処理する」のとは逆に、「現場の近くで処理する」考え方である。</span>
       </div>
     </section>
     </article>

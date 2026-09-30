@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="system-components" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>システム構成要素のまとめ</h1>
-      <p class="genre-description">デュアル・デュプレックスなどの高信頼化構成、MTBF・MTTRと稼働率の計算、クラスタリング・負荷分散などシステムの可用性を高める構成、信頼性設計の考え方、クラウドサービスの分類など、システム構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">デュアル・デュプレックスなどの高信頼化構成、MTBF・MTTRと稼働率の計算、クラスタリング・負荷分散などシステムの可用性を高める構成、信頼性設計の考え方、クラウドサービスの分類、性能評価の指標、仮想化など、システム構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -269,6 +269,62 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>IaaSは基盤(ハードウェア相当)まで、PaaSは実行環境(OS・ミドルウェア)まで、SaaSはソフトウェアそのものまでを提供する、というように「提供者が管理する範囲の広さ」で整理すると区別しやすい。IaaS→PaaS→SaaSの順に、利用者が自分で構築・管理すべき範囲は狭くなっていく。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>システムの性能評価(レスポンスタイム・ターンアラウンドタイム・ベンチマーク)</h2>
+      <p>システムの性能は、「1件の処理にどれだけ時間がかかるか」と「一定時間にどれだけ処理できるか」の2つの観点で評価する。</p>
+      <table class="ref-table">
+        <thead><tr><th>指標</th><th>意味</th><th>主に使う処理形態</th></tr></thead>
+        <tbody>
+          <tr><td>レスポンスタイム(応答時間)</td><td>要求の入力が終わってから、最初の応答が返ってくるまでの時間</td><td>オンライン処理</td></tr>
+          <tr><td>ターンアラウンドタイム</td><td>ジョブを投入してから、処理結果がすべて出力されるまでの時間</td><td>バッチ処理</td></tr>
+          <tr><td>スループット</td><td>単位時間あたりに処理できる仕事の量(件数)</td><td>処理形態を問わない</td></tr>
+        </tbody>
+      </table>
+      <p>性能を評価・比較するため、標準的なプログラムを実際に動かして処理時間を測ることをベンチマークテストという(SPECやTPCなどの標準ベンチマークがある)。また、処理件数の増加に対して、将来どれだけの処理能力が必要になるかを見積もることをキャパシティプランニングという。</p>
+      <div class="example-box">
+        <span class="label">例題: ターンアラウンドタイムの内訳</span>
+        <span>ジョブの入力に2秒、CPU処理に5秒、結果の出力に3秒かかる場合、ターンアラウンドタイムは 2 + 5 + 3 = <strong>10秒</strong>。一方レスポンスタイムは、入力完了から最初の出力が始まるまでの時間なので、入力時間と出力時間の大部分を含まない。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>レスポンスタイムは「応答が返り<strong>始める</strong>まで」、ターンアラウンドタイムは「結果がすべて<strong>出終わる</strong>まで」。また、レスポンスタイムが短いことと、スループットが高いことは別の話である(1件が速くても同時に多くはさばけない場合がある)。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>仮想化とコンテナ</h2>
+      <p>仮想化は、1台の物理サーバ上で複数の仮想的なコンピュータ(仮想マシン)を動かす技術である。サーバの台数を減らしてハードウェア資源を有効に使える(サーバ統合)。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="11" text-anchor="middle">
+          <rect x="10" y="125" width="190" height="20" fill="#f7f9fb" stroke="#c7cdd6"/><text x="105" y="139" fill="#333">物理サーバ</text>
+          <rect x="10" y="100" width="190" height="22" fill="#fff4e5" stroke="#c9820a"/><text x="105" y="115" fill="#c9820a">ハイパーバイザ</text>
+          <rect x="10" y="30" width="92" height="67" fill="#eef2ff" stroke="#2f5fe0"/><text x="56" y="50" fill="#2f5fe0">アプリ</text><text x="56" y="82" fill="#2f5fe0">ゲストOS</text>
+          <rect x="108" y="30" width="92" height="67" fill="#eef2ff" stroke="#2f5fe0"/><text x="154" y="50" fill="#2f5fe0">アプリ</text><text x="154" y="82" fill="#2f5fe0">ゲストOS</text>
+          <text x="105" y="20" fill="#333">仮想マシン</text>
+          <rect x="240" y="125" width="190" height="20" fill="#f7f9fb" stroke="#c7cdd6"/><text x="335" y="139" fill="#333">物理サーバ</text>
+          <rect x="240" y="100" width="190" height="22" fill="#f7f9fb" stroke="#c7cdd6"/><text x="335" y="115" fill="#333">ホストOS</text>
+          <rect x="240" y="75" width="190" height="22" fill="#fff4e5" stroke="#c9820a"/><text x="335" y="90" fill="#c9820a">コンテナエンジン</text>
+          <rect x="240" y="30" width="92" height="42" fill="#eafaf0" stroke="#1f9d55"/><text x="286" y="55" fill="#1f9d55">アプリ</text>
+          <rect x="338" y="30" width="92" height="42" fill="#eafaf0" stroke="#1f9d55"/><text x="384" y="55" fill="#1f9d55">アプリ</text>
+          <text x="335" y="20" fill="#333">コンテナ</text>
+        </svg>
+        <figcaption class="fig-caption">仮想マシンはそれぞれにゲストOSを持つ。コンテナはホストOSのカーネルを共有するため、軽く速く起動できる。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>ハイパーバイザ型</td><td>ハードウェア上で直接ハイパーバイザ(仮想化ソフト)を動かし、その上で仮想マシンを動かす。ホストOSを介さないので効率がよい</td></tr>
+          <tr><td>ホスト型</td><td>ホストOS上で仮想化ソフトを動かし、その上で仮想マシンを動かす。手軽だがホストOSを経由する分オーバーヘッドが大きい</td></tr>
+          <tr><td>コンテナ型</td><td>ホストOSのカーネルを共有し、アプリの実行環境だけを分離する。ゲストOSを持たないので軽量で起動が速い</td></tr>
+          <tr><td>ライブマイグレーション</td><td>稼働中の仮想マシンを、停止させずに別の物理サーバへ移動させる技術</td></tr>
+          <tr><td>VDI(デスクトップ仮想化)</td><td>利用者のデスクトップ環境をサーバ上の仮想マシンで動かし、端末には画面だけを転送する</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>仮想マシンとコンテナの違いは「ゲストOSを持つかどうか」。コンテナはOSを丸ごと持たない分軽いが、ホストOSと異なる種類のOSは動かせない。ライブマイグレーションは「止めずに移す」点が特徴である。</span>
       </div>
     </section>
     </article>

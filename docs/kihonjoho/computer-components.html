@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="computer-components" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>コンピュータ構成要素のまとめ</h1>
-      <p class="genre-description">コンピュータの5大装置・CPUの仕組み・記憶階層・補助記憶装置と入出力インタフェースなど、コンピュータ構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">コンピュータの5大装置・CPUの仕組み・アドレス指定方式・割り込みとDMA・記憶階層・補助記憶装置と入出力インタフェースなど、コンピュータ構成要素で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -166,6 +166,54 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SSDは半導体メモリを用いるため、HDDのような磁気ヘッドは持たない(磁気ヘッドを使うのはHDDの特徴)。「可動部品がない」= 衝撃・振動に強いという因果関係もあわせて押さえる。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>命令の実行とアドレス指定方式・MIPS</h2>
+      <p>CPUは主記憶から命令を1つずつ取り出して実行する。命令は「何をするか」を表す命令部(オペコード)と、「どのデータを使うか」を表すアドレス部(オペランド)からなる。アドレス部の値から実際にデータがある場所(有効アドレス)を求める方法をアドレス指定方式という。</p>
+      <table class="ref-table">
+        <thead><tr><th>方式</th><th>有効アドレス(データの場所)の求め方</th></tr></thead>
+        <tbody>
+          <tr><td>即値アドレス指定</td><td>アドレス部の値そのものがデータ(主記憶を参照しない)</td></tr>
+          <tr><td>直接アドレス指定</td><td>アドレス部の値がそのまま有効アドレス</td></tr>
+          <tr><td>間接アドレス指定</td><td>アドレス部が指す番地に入っている値が有効アドレス</td></tr>
+          <tr><td>インデックス(指標)アドレス指定</td><td>アドレス部の値 + インデックスレジスタの値</td></tr>
+          <tr><td>ベースアドレス指定</td><td>アドレス部の値 + ベースレジスタの値</td></tr>
+          <tr><td>相対アドレス指定</td><td>アドレス部の値 + プログラムカウンタの値</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: アドレス部が100のとき、それぞれの方式で使われるデータ</span>
+        <span>主記憶の100番地に150、150番地に25が入っているとする。<br>即値: 100そのもの / 直接: 100番地の値 150 / 間接: 100番地の値150を番地とみなし、150番地の値 <strong>25</strong></span>
+      </div>
+      <div class="formula-box">
+        <span class="label">MIPS(1秒間に実行できる命令数を百万単位で表した性能指標)</span>
+        <span>MIPS = 1秒 ÷ 1命令の平均実行時間 ÷ 10⁶<br>(1命令の平均実行時間 = CPI × クロック周期。「CPUの高速化技術」の節を参照)</span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 1命令の平均実行時間が20ナノ秒のCPUの性能</span>
+        <span>1秒 ÷ (20 × 10⁻⁹秒) = 5 × 10⁷ 命令/秒 → 5 × 10⁷ ÷ 10⁶ = <strong>50MIPS</strong></span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>間接アドレス指定は主記憶を2回参照する(1回目で番地を得て、2回目でデータを得る)。MIPS値は大きいほど高性能だが、命令の種類(1命令の重さ)が違うCPUどうしでは単純に比べられない。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-5">
+      <h2><span class="topic-no">6</span>割り込みとDMA</h2>
+      <p>割り込みは、実行中のプログラムを一時中断して、発生した事象に対応する処理(割り込み処理)を先に行い、終わったら元のプログラムに戻る仕組みである。原因がCPUの外にあるか、実行中のプログラムにあるかで2つに分けられる。</p>
+      <table class="ref-table">
+        <thead><tr><th>種類</th><th>原因の例</th></tr></thead>
+        <tbody>
+          <tr><td>外部割り込み</td><td>入出力の完了、タイマ(一定時間の経過)、電源異常、機械の故障(マシンチェック)</td></tr>
+          <tr><td>内部割り込み</td><td>ゼロでの除算やオーバフローなどのプログラムの誤り、存在しないページへのアクセス(ページフォールト)、プログラムからOSの機能を呼び出す命令(SVC)</td></tr>
+        </tbody>
+      </table>
+      <p>入出力装置と主記憶の間のデータ転送を、CPUを介さずに専用の制御装置(DMAコントローラ)が直接行う方式をDMA(Direct Memory Access)という。転送中もCPUは別の処理を進められ、転送が終わるとDMAコントローラが割り込みでCPUに知らせる。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>ゼロ除算やページフォールトは、実行中のプログラム自身が原因なので「内部割り込み」。入出力の完了やタイマは、プログラムの外で起きることなので「外部割り込み」。DMAは「CPUの負担を減らす転送方式」であり、転送そのものをCPUが行うプログラム制御方式とは異なる。</span>
       </div>
     </section>
     </article>

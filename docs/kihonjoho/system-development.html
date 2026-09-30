@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="system-development" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>システム開発技術のまとめ</h1>
-      <p class="genre-description">要件定義から設計・実装・テストまでの開発工程と開発モデル、オブジェクト指向や状態遷移図、テスト技法・レビュー・保守に関する代表的な技法を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">要件定義から設計・実装・テストまでの開発工程と開発モデル、オブジェクト指向や状態遷移図・UML・DFD、モジュール設計、テスト技法・レビュー・保守、共通フレームなどの開発プロセスの標準に関する代表的な技法を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -230,6 +230,112 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>リファクタリングは「動作は変えずに中身だけ整理する」作業であり、バグ修正や機能追加(振る舞いの変更)とは異なる。またリバースエンジニアリングは実装物から設計情報を導き出す<strong>逆方向</strong>の解析、フォワードエンジニアリングは設計から実装へ進む<strong>通常の開発方向</strong>であり、矢印の向きで対比して覚えるとよい。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>UMLとDFD</h2>
+      <p>設計の内容を図で表すための代表的な表記法として、オブジェクト指向の設計で使うUMLと、データの流れに着目するDFDがある。</p>
+      <table class="ref-table">
+        <thead><tr><th>UMLの図</th><th>表すもの</th></tr></thead>
+        <tbody>
+          <tr><td>ユースケース図</td><td>利用者(アクター)とシステムが提供する機能(ユースケース)の関係。要件定義で使う</td></tr>
+          <tr><td>クラス図</td><td>クラスの属性・操作と、クラス同士の関係(継承・関連・集約など)。システムの静的な構造</td></tr>
+          <tr><td>シーケンス図</td><td>オブジェクト間のメッセージのやり取りを時系列に並べたもの</td></tr>
+          <tr><td>アクティビティ図</td><td>処理の流れ(分岐・並行処理を含む)。フローチャートに近い</td></tr>
+          <tr><td>ステートマシン図</td><td>イベントによってオブジェクトの状態がどう変わるか(状態遷移図)</td></tr>
+        </tbody>
+      </table>
+      <p>DFD(データフロー図)は、業務やシステムにおけるデータの流れを4つの記号で表す図である。処理の順序や条件分岐は表さない。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 80" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="11" text-anchor="middle">
+          <defs><marker id="sd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#2f5fe0"/></marker></defs>
+          <rect x="5" y="15" width="90" height="36" fill="#f7f9fb" stroke="#333" stroke-width="1.5"/><text x="50" y="38" fill="#333">外部実体</text>
+          <circle cx="160" cy="33" r="28" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/><text x="160" y="37" fill="#2f5fe0">プロセス</text>
+          <line x1="235" y1="15" x2="325" y2="15" stroke="#1f9d55" stroke-width="2"/><line x1="235" y1="51" x2="325" y2="51" stroke="#1f9d55" stroke-width="2"/><text x="280" y="38" fill="#1f9d55">データストア</text>
+          <line x1="350" y1="33" x2="430" y2="33" stroke="#2f5fe0" stroke-width="2" marker-end="url(#sd-arrow)"/><text x="390" y="25" fill="#2f5fe0">データフロー</text>
+          <text x="50" y="72" fill="#7b8794">発生源・行き先</text><text x="160" y="72" fill="#7b8794">データの加工</text><text x="280" y="72" fill="#7b8794">データの保管</text><text x="390" y="72" fill="#7b8794">データの流れ</text>
+        </svg>
+        <figcaption class="fig-caption">DFDの4つの記号: 外部実体(四角)、プロセス(丸)、データストア(二重線)、データフロー(矢印)。</figcaption>
+      </figure>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>シーケンス図は「時系列のやり取り」、アクティビティ図は「処理の流れ」、クラス図は「静的な構造」。DFDは「データがどこからどこへ流れるか」を表す図で、処理の順番やタイミングは表さない点がフローチャートと異なる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-8">
+      <h2><span class="topic-no">9</span>モジュール設計(モジュール強度・モジュール結合度)</h2>
+      <p>プログラムをモジュールに分割するときは、「1つのモジュールの中の機能のまとまりは強く(モジュール強度を高く)」「モジュール同士の結び付きは弱く(モジュール結合度を低く)」するのがよい設計とされる。そうすれば、1つのモジュールを修正したときに他へ影響が広がりにくい。</p>
+      <table class="ref-table">
+        <thead><tr><th>モジュール結合度(弱い=良い順)</th><th>モジュール間の受け渡し</th></tr></thead>
+        <tbody>
+          <tr><td>データ結合</td><td>必要なデータ項目だけを引数で渡す(最も良い)</td></tr>
+          <tr><td>スタンプ結合</td><td>構造体などのデータ構造をまとめて引数で渡す(使わない項目も渡る)</td></tr>
+          <tr><td>制御結合</td><td>相手の処理を切り替えるための制御情報(フラグなど)を渡す</td></tr>
+          <tr><td>外部結合</td><td>単一のデータ項目を、外部宣言した共通の領域で共有する</td></tr>
+          <tr><td>共通結合</td><td>データ構造を、共通の領域(グローバル変数)で共有する</td></tr>
+          <tr><td>内容結合</td><td>相手のモジュールの内部を直接参照・変更する(最も悪い)</td></tr>
+        </tbody>
+      </table>
+      <table class="ref-table">
+        <thead><tr><th>モジュール強度(強い=良い順)</th><th>モジュール内のまとまり</th></tr></thead>
+        <tbody>
+          <tr><td>機能的強度</td><td>1つの機能だけを実行する(最も良い)</td></tr>
+          <tr><td>情報的強度</td><td>同じデータを扱う複数の機能を1つにまとめ、機能ごとに入口を持つ</td></tr>
+          <tr><td>連絡的強度</td><td>同じデータを使う複数の処理を、決まった順に実行する</td></tr>
+          <tr><td>手順的強度</td><td>関連する複数の処理を、決まった順に実行する</td></tr>
+          <tr><td>時間的強度</td><td>初期処理など、同じ時期に実行する処理をまとめたもの</td></tr>
+          <tr><td>論理的強度</td><td>関連する複数の機能をまとめ、引数で実行する機能を切り替える</td></tr>
+          <tr><td>暗合的強度</td><td>関係のない機能をまとめたもの(最も悪い)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>「強度は高く、結合度は低く」が原則。どちらも両端(結合度は「データ結合」が最良・「内容結合」が最悪、強度は「機能的強度」が最良・「暗合的強度」が最悪)を押さえておけば、多くの問題は解ける。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-9">
+      <h2><span class="topic-no">10</span>テストケースの設計(同値分割・境界値分析・網羅基準)</h2>
+      <p>すべての入力を試すことはできないため、少ないテストケースで効率よく誤りを見つける設計技法を使う。ブラックボックステストでは入力値の選び方を、ホワイトボックステストではプログラムの中をどこまで通すか(網羅基準)を工夫する。</p>
+      <table class="ref-table">
+        <thead><tr><th>技法</th><th>種類</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>同値分割</td><td>ブラックボックス</td><td>入力を「同じ結果になるグループ(同値クラス)」に分け、各グループから代表値を1つずつ選ぶ</td></tr>
+          <tr><td>境界値分析</td><td>ブラックボックス</td><td>グループの境目(境界)の値とその両隣を選ぶ。境界付近は誤りが多いため</td></tr>
+          <tr><td>命令網羅</td><td>ホワイトボックス</td><td>すべての命令を少なくとも1回は実行する</td></tr>
+          <tr><td>判定条件網羅(分岐網羅)</td><td>ホワイトボックス</td><td>すべての分岐について、真と偽の両方を少なくとも1回は通す</td></tr>
+          <tr><td>条件網羅</td><td>ホワイトボックス</td><td>判定に含まれる個々の条件について、真と偽の両方を少なくとも1回は取る</td></tr>
+          <tr><td>複数条件網羅</td><td>ホワイトボックス</td><td>判定に含まれる条件の真・偽の組合せをすべて試す(最も厳しい)</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 「18歳以上65歳未満」を有効とする入力のテストデータ</span>
+        <span>同値分割: 無効(17以下)・有効(18〜64)・無効(65以上)の3グループから、例えば 10・30・70 を選ぶ。<br>境界値分析: 境目の <strong>17・18・64・65</strong> を選ぶ。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>命令網羅は、if文の条件が偽のときに何もしない場合、真のケースだけで満たせてしまう(偽の経路を一度も通らない)。判定条件網羅なら真と偽の両方を通すので、命令網羅より厳しい基準になる。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-10">
+      <h2><span class="topic-no">11</span>開発プロセスの標準と改善(共通フレーム・CMMI・DevOps)</h2>
+      <p>発注者と開発者の認識のずれを防いだり、開発組織の能力を高めたりするための枠組みや考え方がある。</p>
+      <table class="ref-table">
+        <thead><tr><th>用語</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>共通フレーム(SLCP-JCF)</td><td>ソフトウェアの企画・開発・運用・保守までの作業項目と用語を定義した枠組み。発注者と開発者が「共通の言葉」で取引できるようにする</td></tr>
+          <tr><td>CMMI(能力成熟度モデル統合)</td><td>開発組織のプロセスの成熟度を5段階で評価し、改善の指針にするモデル</td></tr>
+          <tr><td>DevOps</td><td>開発(Development)と運用(Operations)の担当者が協力し、ツールで自動化しながら、素早く継続的にシステムをリリースする考え方</td></tr>
+          <tr><td>CI/CD(継続的インテグレーション/デリバリー)</td><td>コードの変更のたびにビルド・テストを自動で行い、いつでもリリースできる状態を保つ仕組み</td></tr>
+          <tr><td>テスト駆動開発(TDD)</td><td>先にテストコードを書き、そのテストに合格するようにプログラムを書く開発手法(XPのプラクティスの1つ)</td></tr>
+          <tr><td>XP(エクストリームプログラミング)</td><td>アジャイル開発の手法の1つ。テスト駆動開発、ペアプログラミング、リファクタリング、継続的インテグレーションなどを実践する</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>共通フレームは「作業内容と用語をそろえるための枠組み」であり、特定の開発モデルや開発手法を強制するものではない。CMMIは個人ではなく「組織のプロセスの成熟度」を評価するモデルである。</span>
       </div>
     </section>
     </article>

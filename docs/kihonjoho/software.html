@@ -15,7 +15,7 @@
     <article class="genre-article" data-exam-type="kihonjoho" data-genre-key="software" data-category="テクノロジ系">
     <header class="genre-header">
       <h1>ソフトウェアのまとめ</h1>
-      <p class="genre-description">OSの役割・基本機能や仮想記憶、ミドルウェア・デバイスドライバなどの周辺ソフトウェア、ソフトウェアの品質特性・配布形態など、ソフトウェア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
+      <p class="genre-description">OSの役割・基本機能やタスクのスケジューリング、仮想記憶とページ置換、ミドルウェア・デバイスドライバなどの周辺ソフトウェア、ソフトウェアの品質特性・配布形態など、ソフトウェア分野で問われる要点を図解しています。読み終えたら下部から問題を解いて定着させましょう。</p>
     </header>
 
     <section class="topic" id="topic-0">
@@ -180,6 +180,80 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「無料かどうか」だけで判断しないこと。フリーウェアとシェアウェアはどちらも無料で使い始められるが、シェアウェアは継続利用に対価が必要になる点で異なる。また、オープンソースソフトウェアの本質は「無料」であることではなく、「ソースコードが公開され、改変・再配布が認められている」ことである。</span>
+      </div>
+    </section>
+    <section class="topic" id="topic-5">
+      <h2><span class="topic-no">6</span>タスクの状態遷移とスケジューリング方式</h2>
+      <p>OSのタスク管理では、タスク(プロセス)は「実行可能状態」「実行状態」「待ち状態」の3つの状態を行き来する。CPUを使えるのは実行状態のタスク1つだけで、実行可能状態のタスクの中からどれにCPUを割り当てるかを決めるのがスケジューリングである(この切替えをディスパッチという)。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 440 170" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="11">
+          <defs><marker id="sw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#7b8794"/></marker></defs>
+          <rect x="20" y="30" width="110" height="40" rx="20" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2"/><text x="75" y="55" text-anchor="middle" fill="#2f5fe0">実行可能状態</text>
+          <rect x="310" y="30" width="110" height="40" rx="20" fill="#eafaf0" stroke="#1f9d55" stroke-width="2"/><text x="365" y="55" text-anchor="middle" fill="#1f9d55">実行状態</text>
+          <rect x="165" y="120" width="110" height="40" rx="20" fill="#fff4e5" stroke="#c9820a" stroke-width="2"/><text x="220" y="145" text-anchor="middle" fill="#c9820a">待ち状態</text>
+          <g stroke="#7b8794" stroke-width="1.5" fill="none" marker-end="url(#sw-arrow)">
+            <path d="M130,42 L308,42"/><path d="M310,60 L132,60"/>
+            <path d="M345,72 L260,120"/><path d="M180,120 L100,72"/>
+          </g>
+          <g fill="#333" text-anchor="middle">
+            <text x="220" y="36">① ディスパッチ(CPU割当て)</text>
+            <text x="220" y="76">② タイムクォンタム終了など</text>
+            <text x="345" y="105">③ 入出力要求</text>
+            <text x="100" y="105">④ 入出力完了</text>
+          </g>
+        </svg>
+        <figcaption class="fig-caption">待ち状態のタスクは、入出力が終わるといったん実行可能状態に戻る(待ち状態から直接実行状態には移らない)。</figcaption>
+      </figure>
+      <table class="ref-table">
+        <thead><tr><th>スケジューリング方式</th><th>CPUを割り当てる順序</th></tr></thead>
+        <tbody>
+          <tr><td>到着順(FCFS)</td><td>実行可能状態になった順に割り当てる</td></tr>
+          <tr><td>処理時間順(SPT)</td><td>処理時間の短いタスクから割り当てる。平均の待ち時間が最も短くなる</td></tr>
+          <tr><td>優先度順</td><td>優先度の高いタスクから割り当てる。優先度の高いタスクが来たら実行中のタスクを中断させる(プリエンプション)</td></tr>
+          <tr><td>ラウンドロビン</td><td>一定時間(タイムクォンタム)ずつ順番に割り当て、時間が来たら待ち行列の最後尾に回す</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>入出力が終わったタスクは「待ち状態 → 実行可能状態」に移り、CPUの割当てを待つ。すぐに実行状態になるわけではない。また、優先度順だと優先度の低いタスクがいつまでも実行されないことがあり(スタベーション)、待ち時間に応じて優先度を上げるエージングで対策する。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-6">
+      <h2><span class="topic-no">7</span>ページング方式とページ置換アルゴリズム</h2>
+      <p>仮想記憶を実現する代表的な方式がページング方式である。プログラムを一定の大きさの「ページ」に分け、必要なページだけを主記憶に読み込む(ページイン)。参照したページが主記憶にないことをページフォールトといい、このとき主記憶に空きがなければ、どれか1つのページを補助記憶に追い出す(ページアウト)。どのページを追い出すかを決めるのがページ置換アルゴリズムである。</p>
+      <table class="ref-table">
+        <thead><tr><th>アルゴリズム</th><th>追い出すページ</th></tr></thead>
+        <tbody>
+          <tr><td>FIFO</td><td>主記憶に最も<strong>早く読み込まれた</strong>ページ</td></tr>
+          <tr><td>LRU</td><td>最後に参照されてから最も<strong>長い時間がたった</strong>ページ</td></tr>
+          <tr><td>LFU</td><td><strong>参照された回数</strong>が最も少ないページ</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: ページ枠が3つ、ページを 1, 2, 3, 1, 4 の順に参照する(LRU)</span>
+        <span>1, 2, 3 を読み込んで枠がいっぱいになる → 1 を参照(主記憶にある) → 4 を参照するとページフォールト。最後に参照されてから最も時間がたっているのは <strong>2</strong>(1は直前に参照されている)なので、2を追い出して4を読み込む。<br>FIFOなら、最も早く読み込まれた <strong>1</strong> を追い出す。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>FIFOは「読み込んだ順」、LRUは「参照した順」で判断する。途中で再参照されたページがあると、両者で追い出すページが変わる。また、主記憶が足りずページインとページアウトが頻発し、処理がほとんど進まなくなる状態をスラッシングという。</span>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>OSSのライセンス</h2>
+      <p>オープンソースソフトウェア(OSS)はライセンスの条件のもとで自由に利用・改変・再配布できる。条件は、改変したソフトウェアのソースコードも公開しなければならないかどうかで大きく分かれる。</p>
+      <table class="ref-table">
+        <thead><tr><th>ライセンス</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>GPL</td><td>改変・再配布したソフトウェアもGPLで公開し、ソースコードを開示しなければならない(コピーレフト)</td></tr>
+          <tr><td>LGPL</td><td>GPLを緩めたもの。ライブラリとして利用するだけなら、利用側のソースコードの公開は求められない</td></tr>
+          <tr><td>BSDライセンス・MITライセンス・Apacheライセンス</td><td>著作権表示などを残せば、改変したソフトウェアのソースコードを公開しなくてよい(商用ソフトに組み込みやすい)</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>OSSでも著作権は放棄されておらず、ライセンスの条件を守る必要がある。また、OSSの定義では「特定の分野・個人の利用を制限しない」「有償での販売も妨げない」とされており、「商用利用を禁止できる」「無償でなければならない」という選択肢は誤りである。</span>
       </div>
     </section>
     </article>
