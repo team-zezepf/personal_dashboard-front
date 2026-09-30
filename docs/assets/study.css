@@ -167,6 +167,24 @@
   text-align: center;
 }
 
+/* 論理ゲートの記号を入れた真理値表(基礎理論) */
+.genre-article table.gate-table th,
+.genre-article table.gate-table td {
+  padding: 6px;
+}
+
+.genre-article table.gate-table svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.genre-article .gate-note {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .genre-article .gate-name {
   font-size: 0.8rem;
   font-weight: 700;

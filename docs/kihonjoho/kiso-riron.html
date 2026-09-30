@@ -55,71 +55,19 @@
 
     <section class="topic" id="topic-1">
       <h2><span class="topic-no">2</span>論理演算と論理回路</h2>
-      <p>論理演算は0/1(偽/真)を扱う演算で、論理回路図は演算の組み合わせを図で表したもの。まずは基本の6種類の入出力を覚える。</p>
-      <table class="ref-table">
-        <thead><tr><th>A</th><th>B</th><th>AND</th><th>OR</th><th>XOR</th><th>NAND</th><th>NOR</th></tr></thead>
+      <p>論理演算は0/1(偽/真)を扱う演算で、論理回路図は演算の組み合わせを図で表したもの。まずは基本の6種類の記号と入出力を覚える。</p>
+      <table class="ref-table gate-table">
+        <thead><tr><th rowspan="2">記号</th><th rowspan="2">演算</th><th colspan="4">入力 A B</th></tr><tr><th>00</th><th>01</th><th>10</th><th>11</th></tr></thead>
         <tbody>
-          <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
-          <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
-          <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
-          <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/><path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2.5"/><line x1="67" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>AND<span class="gate-note">両方1で1</span></th><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/><path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5"/><line x1="72" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>OR<span class="gate-note">どちらか1で1</span></th><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/><path d="M12,8 C24,18 24,42 12,52" fill="none" stroke="#c9820a" stroke-width="2.5"/><path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#fff4e5" stroke="#c9820a" stroke-width="2.5"/><line x1="72" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>XOR<span class="gate-note">異なると1</span></th><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/><path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2.5"/><circle cx="73" cy="30" r="6" fill="white" stroke="#7c3aed" stroke-width="2.5"/><line x1="79" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>NAND<span class="gate-note">ANDの反転</span></th><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/><path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2.5"/><circle cx="78" cy="30" r="6" fill="white" stroke="#0f8fa8" stroke-width="2.5"/><line x1="84" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>NOR<span class="gate-note">ORの反転</span></th><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><svg viewBox="0 0 96 60" width="48" height="30" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="0" y1="30" x2="20" y2="30" stroke="#7b8794" stroke-width="2"/><path d="M20,8 L20,52 L62,30 Z" fill="#fdeaea" stroke="#d64545" stroke-width="2.5"/><circle cx="68" cy="30" r="6" fill="white" stroke="#d64545" stroke-width="2.5"/><line x1="74" y1="30" x2="96" y2="30" stroke="#7b8794" stroke-width="2"/></svg></td><th>NOT<span class="gate-note">Aを反転</span></th><td>1</td><td>1</td><td>0</td><td>0</td></tr>
         </tbody>
       </table>
-      <p>論理回路図では、ゲートの形そのものが種類を表す。AND/NANDは左辺が直線+右側が半円、OR/NOR/XORは背面がへこみ先端がとがった形、NOTは三角形。NAND・NOR・NOTの出力側についている小さな丸は「反転(否定)」を表す。</p>
-      <div class="gate-grid">
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
-            <path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#eef2ff" stroke="#2f5fe0" stroke-width="2.5"/>
-            <line x1="67" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">AND: 両方1のとき1</div>
-        </div>
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
-            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5"/>
-            <line x1="72" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">OR: どちらかが1で1</div>
-        </div>
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="30" x2="20" y2="30" stroke="#7b8794" stroke-width="2"/>
-            <path d="M20,8 L20,52 L62,30 Z" fill="#fdeaea" stroke="#d64545" stroke-width="2.5"/>
-            <circle cx="68" cy="30" r="6" fill="white" stroke="#d64545" stroke-width="2.5"/>
-            <line x1="74" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">NOT: 入力を反転(丸は反転を表す)</div>
-        </div>
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
-            <path d="M12,8 C24,18 24,42 12,52" fill="none" stroke="#c9820a" stroke-width="2.5"/>
-            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#fff4e5" stroke="#c9820a" stroke-width="2.5"/>
-            <line x1="72" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">XOR: 異なるとき1(ORに入力側の二重線)</div>
-        </div>
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
-            <path d="M20,8 L45,8 A22,22 0 0 1 45,52 L20,52 Z" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2.5"/>
-            <circle cx="73" cy="30" r="6" fill="white" stroke="#7c3aed" stroke-width="2.5"/>
-            <line x1="79" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">NAND: ANDの反転(出力に丸)</div>
-        </div>
-        <div class="gate-card">
-          <svg viewBox="0 0 120 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="18" x2="20" y2="18" stroke="#7b8794" stroke-width="2"/><line x1="0" y1="42" x2="20" y2="42" stroke="#7b8794" stroke-width="2"/>
-            <path d="M20,8 C40,8 55,10 72,30 C55,50 40,52 20,52 C32,42 32,18 20,8 Z" fill="#e6f7fa" stroke="#0f8fa8" stroke-width="2.5"/>
-            <circle cx="78" cy="30" r="6" fill="white" stroke="#0f8fa8" stroke-width="2.5"/>
-            <line x1="84" y1="30" x2="110" y2="30" stroke="#7b8794" stroke-width="2"/>
-          </svg>
-          <div class="gate-name">NOR: ORの反転(出力に丸)</div>
-        </div>
-      </div>
+      <p>論理回路図では、ゲートの形そのものが種類を表す。AND/NANDは左辺が直線+右側が半円、OR/NOR/XORは背面がへこみ先端がとがった形(XORは入力側に線が1本多い)、NOTは三角形。NAND・NOR・NOTの出力側についている小さな丸は「反転(否定)」を表す。</p>
       <figure class="fig">
         <svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
           <line x1="10" y1="50" x2="100" y2="50" stroke="#333" stroke-width="2"/>
