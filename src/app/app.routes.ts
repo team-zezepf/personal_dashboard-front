@@ -20,6 +20,8 @@ import { CardCollectionPageComponent } from './pages/card-collection/card-collec
 import { CardPacksPageComponent } from './pages/card-packs/card-packs.component';
 import { CardAdminPageComponent } from './pages/card-admin/card-admin.component';
 import { ThemeSettingsPageComponent } from './pages/theme-settings/theme-settings.component';
+import { InterviewPrepListPageComponent } from './pages/interview-prep-list/interview-prep-list.component';
+import { InterviewPrepEditPageComponent } from './pages/interview-prep-edit/interview-prep-edit.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -49,5 +51,7 @@ export const routes: Routes = [
   { path: 'cards/packs', component: CardPacksPageComponent, canActivate: [authGuard] },
   { path: 'cards/admin', component: CardAdminPageComponent, canActivate: [authGuard] },
   { path: 'settings/theme', component: ThemeSettingsPageComponent, canActivate: [authGuard] },
+  { path: 'interview-prep', component: InterviewPrepListPageComponent, canActivate: [authGuard] },
+  { path: 'interview-prep/:id', component: InterviewPrepEditPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

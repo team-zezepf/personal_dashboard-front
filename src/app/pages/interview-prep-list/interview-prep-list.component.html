@@ -1,0 +1,43 @@
+<app-header pageTitle="面接準備"></app-header>
+
+<main class="page">
+  <h1 class="page-title">面接準備</h1>
+  <p class="page-desc">企業ごとに面接準備シートを作り、項目を穴埋めしていきます。</p>
+
+  <form class="new-form" (ngSubmit)="create()">
+    <input
+      type="text"
+      name="companyName"
+      placeholder="企業名を入力（例: 株式会社サンプル）"
+      aria-label="企業名"
+      [ngModel]="newCompanyName()"
+      (ngModelChange)="newCompanyName.set($event)"
+    >
+    <button class="btn btn-primary" type="submit" [disabled]="!newCompanyName().trim() || isCreating()">シートを作る</button>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  @if (isLoading()) {
+    <p class="hint">読み込み中...</p>
+  } @else if (rows().length === 0 && !errorMessage()) {
+    <p class="empty">まだシートがありません。企業名を入れて、最初のシートを作りましょう。</p>
+  } @else {
+    <div class="prep-list">
+      @for (row of rows(); track row.prep.id) {
+        <a class="prep-card" [routerLink]="['/interview-prep', row.prep.id]">
+          <div class="prep-main">
+            <span class="prep-name">{{ row.prep.companyName }}</span>
+            <span class="prep-meta">ポジション: {{ row.position ?? '未記入' }} ・ 更新 {{ row.updated }}</span>
+          </div>
+          <div class="prep-progress">
+            記入 {{ row.filled }} / {{ total }}
+            <div class="bar"><span [class.done]="row.filled === total" [style.width.%]="progressPercent(row)"></span></div>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</main>

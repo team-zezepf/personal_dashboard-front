@@ -19,6 +19,7 @@ export const TOOLS: ToolRow[] = [
   { name: '開発Q&A', path: '/developer-qa', roles: TOOL_ACCESS['/developer-qa'] },
   { name: 'カードコレクション', path: '/cards', roles: TOOL_ACCESS['/cards'] },
   { name: 'カード登録', path: '/cards/admin', roles: TOOL_ACCESS['/cards/admin'] },
+  { name: '面接準備', path: '/interview-prep', roles: TOOL_ACCESS['/interview-prep'] },
   { name: 'テーマ設定', path: '/settings/theme', roles: TOOL_ACCESS['/settings/theme'] }
 ];
 

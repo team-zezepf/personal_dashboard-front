@@ -1,0 +1,209 @@
+:host {
+  display: contents;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.btn-danger:hover {
+  background: var(--red-soft);
+}
+
+.link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-left: 6px;
+  color: var(--primary-dark);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  line-height: 1.6;
+  background: var(--card);
+  color: var(--text);
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* 入力に合わせて高さが伸びる(未対応のブラウザでは手で広げられる) */
+textarea {
+  min-height: 72px;
+  resize: vertical;
+  field-sizing: content;
+}
+
+.edit-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.company-input {
+  flex: 1;
+  min-width: 200px;
+  width: auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.save-status {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.save-status.saved {
+  color: var(--green);
+}
+
+.save-status.error {
+  color: var(--red);
+}
+
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.toc a {
+  font-size: 0.75rem;
+  text-decoration: none;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.toc a small {
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.section {
+  margin-bottom: 14px;
+  scroll-margin-top: 16px;
+}
+
+.section h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.section h2 .count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.group-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 12px 0 4px;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.field.empty label::after {
+  content: "未記入";
+  margin-left: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--orange-text);
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 18px 12px 48px;
+  }
+  .card {
+    padding: 16px;
+  }
+}

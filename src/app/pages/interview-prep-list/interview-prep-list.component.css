@@ -1,0 +1,168 @@
+:host {
+  display: contents;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.page-title {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.page-desc {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.new-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.new-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+
+.new-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+  background: var(--primary-border);
+  cursor: not-allowed;
+}
+
+.error {
+  color: var(--red);
+  font-size: 0.9rem;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+  padding: 24px 0;
+}
+
+.prep-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prep-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.prep-card:hover {
+  border-color: var(--primary);
+}
+
+.prep-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.prep-name {
+  font-size: 1.02rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.prep-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.prep-progress {
+  width: 140px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.bar {
+  height: 6px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.bar span.done {
+  background: var(--green);
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 18px 12px 48px;
+  }
+  .prep-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .prep-progress {
+    width: auto;
+    text-align: left;
+  }
+}

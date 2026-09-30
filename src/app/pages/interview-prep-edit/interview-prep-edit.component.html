@@ -1,0 +1,70 @@
+<app-header pageTitle="面接準備"></app-header>
+
+<main class="page">
+  @if (isLoading()) {
+    <p class="hint">読み込み中...</p>
+  } @else if (loadError()) {
+    <div class="card">
+      <p class="error">{{ loadError() }}</p>
+      <a class="btn btn-ghost" routerLink="/interview-prep">一覧に戻る</a>
+    </div>
+  } @else {
+    <div class="edit-head">
+      <a class="btn btn-ghost" routerLink="/interview-prep">‹ 一覧</a>
+      <input
+        class="company-input"
+        type="text"
+        aria-label="企業名"
+        placeholder="企業名"
+        [value]="companyName()"
+        (input)="onCompanyNameInput($any($event.target).value)"
+      >
+      <span [class]="'save-status ' + saveStatus()" aria-live="polite">
+        @switch (saveStatus()) {
+          @case ('saved') { ✓ 保存しました }
+          @case ('pending') { 入力中... }
+          @case ('saving') { 保存中... }
+          @case ('error') {
+            保存できませんでした
+            <button type="button" class="link" (click)="retrySave()">もう一度保存</button>
+          }
+        }
+      </span>
+    </div>
+    @if (companyNameMissing()) {
+      <p class="error">企業名を入力すると保存されます。</p>
+    }
+
+    <nav class="toc" aria-label="目次">
+      @for (section of sections; track section.id; let i = $index) {
+        <a [href]="'#' + section.id" (click)="$event.preventDefault(); scrollTo(section.id)">
+          {{ section.shortTitle }}<small>{{ sectionCounts()[i] }}/{{ section.items.length }}</small>
+        </a>
+      }
+    </nav>
+
+    @for (section of sections; track section.id; let i = $index) {
+      <section class="card section" [id]="section.id">
+        <h2>{{ section.title }} <span class="count">{{ sectionCounts()[i] }} / {{ section.items.length }}</span></h2>
+        @for (view of section.itemViews; track view.item.key) {
+          @if (view.showGroup) {
+            <p class="group-label">{{ view.item.group }}</p>
+          }
+          <div class="field" [class.empty]="isEmpty(view.item.key)">
+            <label [for]="'item-' + view.item.key">{{ view.item.label }}</label>
+            <textarea
+              [id]="'item-' + view.item.key"
+              [value]="valueOf(view.item.key)"
+              (input)="onAnswerInput(view.item.key, $any($event.target).value)"
+            ></textarea>
+          </div>
+        }
+      </section>
+    }
+
+    <div class="foot">
+      <button type="button" class="btn btn-danger" (click)="deleteSheet()">このシートを削除</button>
+      <a class="btn btn-ghost" routerLink="/interview-prep">一覧に戻る</a>
+    </div>
+  }
+</main>
