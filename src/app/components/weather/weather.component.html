@@ -1,0 +1,93 @@
+<article class="card">
+  <div class="card-header">
+    <h2 class="card-title">天気</h2>
+    <div class="card-header-right">
+      @if (weather(); as w) {
+        <span class="place">📍 {{ w.location.name }}</span>
+      }
+      <button class="settings-button" type="button" title="天気の地点" aria-label="天気の地点を設定" (click)="openModal()">⚙</button>
+    </div>
+  </div>
+
+  <div class="weather">
+    @if (current(); as c) {
+      <div class="now">
+        <img class="now-icon" [src]="c.appearance.iconUrl" [alt]="c.appearance.label" width="48" height="48">
+        <div class="now-temp">{{ c.temperature | number: '1.1-1' }}<small>°C</small></div>
+        <div class="now-desc">
+          {{ c.appearance.label }}
+          @if (c.today?.temperatureMax != null && c.today?.temperatureMin != null) {
+            <br><span class="hi">{{ c.today!.temperatureMax! | number: '1.0-0' }}°</span> / <span class="lo">{{ c.today!.temperatureMin! | number: '1.0-0' }}°</span>
+          }
+        </div>
+      </div>
+      <div class="stats">
+        @if (c.today?.precipitationProbability != null) {
+          <span>☂ 降水確率 {{ c.today!.precipitationProbability }}%</span>
+        }
+        @if (c.apparentTemperature != null) {
+          <span>🌡 体感 {{ c.apparentTemperature | number: '1.1-1' }}°C</span>
+        }
+        @if (c.windSpeed != null) {
+          <span>💨 風速 {{ c.windSpeed | number: '1.1-1' }}m/s</span>
+        }
+        @if (c.humidity != null) {
+          <span>💧 湿度 {{ c.humidity }}%</span>
+        }
+      </div>
+      <div class="updated">
+        @if (loadFailed()) {
+          <span class="stale">最新の天気を取得できませんでした ・ </span>
+        }
+        {{ c.updatedTime }} 時点 ・ Open-Meteo
+      </div>
+    } @else if (loadFailed()) {
+      <div class="message">天気を取得できませんでした</div>
+    } @else {
+      <div class="message">読み込み中…</div>
+    }
+  </div>
+</article>
+
+@if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="weather-modal-title" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <strong id="weather-modal-title">天気の地点</strong>
+        <button class="modal-close" type="button" aria-label="閉じる" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">現在の予定・天気・カレンダーに表示する天気の地点を選びます。</p>
+        <div class="current-choice">選択中: <strong>{{ draftLocationName() }}</strong></div>
+        @for (group of regionGroups(); track group.region) {
+          <div class="region">
+            <div class="region-name">{{ group.region }}</div>
+            <div class="cities">
+              @for (location of group.locations; track location.id) {
+                <button
+                  type="button"
+                  class="city"
+                  [class.selected]="location.id === draftLocationId()"
+                  [attr.aria-pressed]="location.id === draftLocationId()"
+                  (click)="selectLocation(location.id)">
+                  {{ location.name }}
+                  @if (location.id === defaultLocationId) {
+                    <span class="default-mark">（初期設定）</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="message">読み込み中…</div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-button" [disabled]="isSaving()" (click)="closeModal()">キャンセル</button>
+        <button type="button" class="save-button" [disabled]="!canSave()" (click)="save()">
+          {{ isSaving() ? '保存中…' : '保存' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

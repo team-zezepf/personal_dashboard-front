@@ -10,6 +10,23 @@ main {
   gap: 20px;
 }
 
+/* 現在の予定の下に天気を並べる。現在の予定は残りの高さいっぱいに伸ばす */
+.left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.left-col app-schedule {
+  display: block;
+  flex: 1;
+}
+
+.left-col app-weather {
+  display: block;
+}
+
 .bottom {
   margin-top: 20px;
   display: grid;

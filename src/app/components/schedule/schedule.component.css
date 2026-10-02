@@ -29,7 +29,8 @@
   display: grid;
   grid-template-columns: 48px 1fr;
   gap: 0 14px;
-  padding-bottom: 6px;
+  /* 末尾の時間帯が数分しかなくても、その時刻の下に出す天気(アイコン・降水確率)が切れないように空けておく */
+  padding-bottom: 40px;
 }
 
 .schedule::before {
@@ -48,6 +49,27 @@
   font-size: 12px;
   padding-top: 4px;
   text-align: right;
+}
+
+/* 1〜3時間後の天気(時刻の下にアイコン。雨・雪のときだけ降水確率を添える) */
+.time-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 3px;
+  line-height: 1.15;
+}
+
+.time-weather img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.time-weather-pop {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--primary-dark);
 }
 
 .event {
