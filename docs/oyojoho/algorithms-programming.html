@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>アルゴリズムとプログラミングのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -57,6 +58,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「平均計算量」と「最悪計算量」は区別して覚える。クイックソートは平均O(n log n)だが、ピボットの選び方(特に整列済みに近いデータで先頭や末尾を選ぶ場合)によって最悪O(n²)に悪化する。また、整列アルゴリズムの「安定性」は計算量とは別の観点であり、クイックソートとマージソートのように同じO(n log n)でも安定性が異なる場合がある点に注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　同じキーを持つデータの元の並び順が、整列後も保たれる(安定な)整列アルゴリズムの組合せはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　バブルソートとマージソート</button>
+            <button type="button">イ　選択ソートとクイックソート</button>
+            <button type="button">ウ　バブルソートとクイックソート</button>
+            <button type="button">エ　選択ソートとマージソート</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>バブルソートは隣り合う要素だけを交換し、マージソートは併合のときに同じキーなら前半の要素を先に取るので、どちらも安定。選択ソートは離れた位置の要素と交換するため、クイックソートは分割の際に要素を大きく移動させるため、一般に不安定。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　先頭の要素を常にピボットに選ぶクイックソートで、計算量が O(n²) になる入力はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　要素がランダムに並んだ配列</button>
+            <button type="button">イ　要素数が2のべき乗の配列</button>
+            <button type="button">ウ　すでに昇順に整列済みの配列</button>
+            <button type="button">エ　値に重複がない配列</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>整列済みの配列では、ピボット(先頭の最小値)より小さい要素がなく、分割のたびに「0個」と「残り全部」に分かれる。そのため分割が n 回近く続き、比較回数は n²/2 程度になる。ランダムな配列ならおおむね半分ずつに分かれ、平均 O(n log n) になる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -73,6 +99,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>スタック・キューが混在するトレース問題では、操作の順序を1つずつ丁寧に書き出さないと、途中でpush/pop(あるいはenqueue/dequeue)の対象を取り違えやすい。特にpop・dequeueの直後にpush・enqueueが続く場合、「今、中に何が残っているか」を毎回書き出して確認するとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　空のスタックに対して push(1)、push(2)、push(3)、pop()、pop()、push(4)、pop()、push(5) の順に操作した。最終的にスタックに残っている要素を、底から順に並べたものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1, 4</button>
+            <button type="button">イ　1, 5</button>
+            <button type="button">ウ　1, 2, 5</button>
+            <button type="button">エ　3, 5</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>1, 2, 3 を積んだ後、pop で 3、pop で 2 が取り出され [1]。4 を積んで pop で 4 が取り出され [1]。最後に 5 を積むので [1, 5]。アは最後の pop で 4 が残ると考えた場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　空のキューに A、B、C の順に enqueue し、続いて dequeue で取り出したものを順に空のスタックへ push した。その後、スタックから pop を3回行ったとき、取り出される順はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　C, B, A</button>
+            <button type="button">イ　A, B, C</button>
+            <button type="button">ウ　B, C, A</button>
+            <button type="button">エ　C, A, B</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>キューは先入れ先出しなので、dequeue で A、B、C の順に取り出され、その順にスタックへ push される。スタックは後入れ先出しなので、pop すると C、B、A の順に出る。キューとスタックを組み合わせると、並びが逆順になる。</p>
+        </div>
       </div>
     </section>
 
@@ -120,6 +171,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>DFSは経路を深く進むため目的の頂点を偶然早く見つけることもあるが、最短経路(最少の辺数)を保証しない。重みのないグラフで最短経路を求めたい場合はBFSを用いる必要がある。「スタックを使う・再帰を使う→DFS」「キューを使う→BFS」という対応を覚えておくと、問題文からどちらの探索かを素早く判別できる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　根 A の子が B と C、B の子が D と E、C の子が F と G である木を、A から幅優先探索する。訪問する順はどれか(同じ親の子は左から訪問する)。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　A B D E C F G</button>
+            <button type="button">イ　D E B F G C A</button>
+            <button type="button">ウ　A B C D E F G</button>
+            <button type="button">エ　A C B G F E D</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>幅優先探索はキューを使い、根に近い階層から順に訪問するので A → B, C → D, E, F, G。アは1つの経路を奥まで進む深さ優先探索(行きがけ順)の訪問順、イは帰りがけ順。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　辺に重みのないグラフで、始点から目的の頂点まで最少の辺数で到達する経路を求めたい。適した探索方法と、用いるデータ構造の組合せはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　深さ優先探索とキュー</button>
+            <button type="button">イ　深さ優先探索とスタック</button>
+            <button type="button">ウ　幅優先探索とスタック</button>
+            <button type="button">エ　幅優先探索とキュー</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>幅優先探索はキューを使って始点に近い頂点から順に調べるので、最初に見つけた経路が最少の辺数になる。深さ優先探索(スタックまたは再帰)は目的の頂点を早く見つけることもあるが、最短経路は保証しない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -166,6 +242,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>動的計画法は「漸化式を立てて再帰的に解く」点は単純な再帰と同じだが、計算結果をメモ化(表に保存)して再利用する点が異なる。マージソートのような分割統治法も問題を分割して再帰的に解くが、部分問題同士に重なりがなく使い回す必要がない点で動的計画法とは異なる。両者を混同しないよう注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　fib(n) を「n ≧ 2 なら fib(n − 1) + fib(n − 2)、fib(0) = 0、fib(1) = 1」と定義し、単純な再帰で計算する。fib(5) を呼び出したとき、fib(5) 自身を含めた呼び出し回数はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　6回</button>
+            <button type="button">イ　9回</button>
+            <button type="button">ウ　15回</button>
+            <button type="button">エ　5回</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>fib(n) の呼び出し回数を C(n) とすると、C(0) = C(1) = 1、C(n) = 1 + C(n − 1) + C(n − 2)。C(2) = 3、C(3) = 5、C(4) = 9、C(5) = 1 + 9 + 5 = 15。イは fib(4) の場合の回数。アは fib(0)〜fib(5) を1回ずつ呼ぶ動的計画法(メモ化)の場合。エは fib(5) の値そのもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　動的計画法の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　問題を2つに分割し、それぞれを並行して解く</button>
+            <button type="button">イ　一度計算した部分問題の結果を表などに保存し、同じ計算を繰り返さずに再利用する</button>
+            <button type="button">ウ　基底条件を設けずに、自分自身を呼び出し続ける</button>
+            <button type="button">エ　乱数を使って、近似的な解を求める</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>動的計画法は、部分問題の結果を保存(メモ化)して再利用することで、単純な再帰で起きる同じ引数の重複計算をなくす。フィボナッチ数列では計算量が O(2ⁿ) から O(n) に下がる。基底条件のない再帰は終わらない(ウ)。</p>
+        </div>
       </div>
     </section>
 
@@ -218,6 +319,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ハッシュ法は平均的にはO(1)で高速だが、衝突が多発する(データ件数が表の大きさに対して多い、ハッシュ関数の分布が偏っている等)と衝突解決のための探索が発生し、最悪の場合は線形探索に近いO(n)まで性能が低下する。「ハッシュ法は常にO(1)」と単純に覚えず、衝突の発生しやすさ(表の大きさとデータ件数の比率=充填率)が性能に影響する点を押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　大きさ11のハッシュ表に、ハッシュ関数 h(k) = k mod 11 でキー 15、26、30、41 をこの順に格納する。衝突したときは次の番地(+1)から空きを探すオープンアドレス法(線形探査)を使う。キー 41 が格納される番地はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　8</button>
+            <button type="button">イ　9</button>
+            <button type="button">ウ　5</button>
+            <button type="button">エ　10</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>h(15) = 4 で4番地、h(26) = 4 は衝突するので5番地、h(30) = 8 で8番地。h(41) = 8 は30と衝突するので、次の9番地に格納される。アは衝突を考えずにハッシュ値をそのまま使った場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　ハッシュ法の衝突解決法のうち、チェイン法(連鎖法)の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　衝突したら、次の空いている番地を順に探して格納する</button>
+            <button type="button">イ　衝突したら、別のハッシュ関数で格納位置を計算し直す</button>
+            <button type="button">ウ　衝突したら、ハッシュ表の大きさを2倍に拡張する</button>
+            <button type="button">エ　同じハッシュ値を持つデータを、線形リストなどでつないで格納する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>チェイン法は、同じ番地に属するデータを鎖状につないでおく。アはオープンアドレス法(線形探査法)の説明。どちらの方法でも、衝突が多くなると探索が遅くなり、平均 O(1) の速さが失われる。</p>
+        </div>
       </div>
     </section>
     </article>

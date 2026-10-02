@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>基礎理論のまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -60,6 +61,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>桁落ちと情報落ちは名前が似ているが原因が逆である。<strong>桁落ち</strong>は「絶対値がほぼ等しい数の減算」で有効桁が打ち消し合うこと、<strong>情報落ち</strong>は「絶対値の差が極端に大きい数の加減算」で小さい方の値が反映されないことを指す。また、オーバーフロー・アンダーフローは「誤差」ではなく表現範囲を超える現象である点も区別すること。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　浮動小数点数で 1.0 + 1.0 × 10⁻²⁰ を計算したところ、結果が 1.0 となり、加えた値が結果に反映されなかった。この現象はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　桁落ち</button>
+            <button type="button">イ　情報落ち</button>
+            <button type="button">ウ　打ち切り誤差</button>
+            <button type="button">エ　アンダーフロー</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>絶対値の差が非常に大きい数どうしの加減算で、小さい方の値が表現できる桁からあふれて結果に反映されないのは情報落ち。桁落ちは絶対値がほぼ等しい数の減算で有効桁が減る現象。アンダーフローは演算結果が0に近すぎて表現できる下限を下回る現象で、ここでは結果が1.0なので当てはまらない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　10進数の 0.1 を2進数の浮動小数点数で表すと、正確な値にならない。その理由として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　絶対値がほぼ等しい数どうしの減算で、有効桁が打ち消し合うから</button>
+            <button type="button">イ　指数部の範囲を超えて、オーバーフローするから</button>
+            <button type="button">ウ　無限に続く計算を、有限回で打ち切るから</button>
+            <button type="button">エ　0.1 は2進数では循環小数になり、有限のビット数に収めるために下位の桁を丸めるから</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>0.1 は2進数では 0.000110011… と循環する無限小数になるので、仮数部のビット数に収める際に丸め誤差が生じる。アは桁落ち、ウは打ち切り誤差の説明。0.1 は指数部の範囲内に十分収まるので、オーバーフローは起きない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -82,6 +108,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ハミング符号が訂正できるのは1ビット誤りまでである。2ビット同時に誤ると、誤った位置を特定できず誤訂正してしまうことがある(検出できる誤りの範囲と、訂正できる誤りの範囲は異なる)。また、パリティビット単体は「検出のみ」で「訂正はできない」点をハミング符号と混同しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　7ビットのハミング符号で、位置1・2・4を検査ビットとし、位置1は位置1,3,5,7の、位置2は位置2,3,6,7の、位置4は位置4,5,6,7の1の個数がそれぞれ偶数になるように付加する。受信した符号(位置1〜7の順)が 0110111 のとき、誤りのあるビットの位置はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　5</button>
+            <button type="button">イ　3</button>
+            <button type="button">ウ　6</button>
+            <button type="button">エ　7</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>位置1,3,5,7 は 0,1,1,1 で1が3個(奇数)なので検査1が不一致。位置2,3,6,7 は 1,1,1,1 で4個(偶数)なので検査2は一致。位置4,5,6,7 は 0,1,1,1 で3個(奇数)なので検査4が不一致。不一致の検査の位置の値を足すと 1 + 4 = 5 となり、位置5のビットが誤っている(反転すれば正しい符号 0110011 になる)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ハミング符号で、2ビットが同時に誤った場合について、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　2ビットとも誤りの位置を特定して、正しく訂正できる</button>
+            <button type="button">イ　検査ビットの値は変化しないので、必ず誤りなしと判定される</button>
+            <button type="button">ウ　誤りの位置を正しく特定できず、別のビットを誤って訂正してしまうことがある</button>
+            <button type="button">エ　誤りの数にかかわらず、受信側は必ず再送を要求する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ハミング符号が訂正できるのは1ビットの誤りまで。2ビットが同時に誤ると、検査結果が別の1ビット誤りと同じ形になることがあり、誤った位置を「訂正」してしまうおそれがある。再送を要求するかどうかは符号の仕組みではなく通信手順で決まる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -98,6 +149,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ド・モルガンの法則を適用するときは、否定を内側に分配すると同時に ∧(and) と ∨(or) が入れ替わることを忘れやすい。¬(A ∧ B) を ¬A ∧ ¬B としてしまう(orに変えない)誤りが典型的な誤答パターンである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　条件式 not (a ≧ 10 or b = 0) と等価なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　a &lt; 10 or b ≠ 0</button>
+            <button type="button">イ　a ≦ 10 and b ≠ 0</button>
+            <button type="button">ウ　a &lt; 10 and b ≠ 0</button>
+            <button type="button">エ　a &lt; 10 and b = 0</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ド・モルガンの法則により not (P or Q) = (not P) and (not Q)。not (a ≧ 10) は a &lt; 10、not (b = 0) は b ≠ 0 なので a &lt; 10 and b ≠ 0。アは or を and に入れ替え忘れたもの、イは a = 10 を含めてしまっている、エは b の条件を否定し忘れたもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　論理式 A ∨ (A ∧ B) を簡単にしたものはどれか。ここで、∨ は論理和、∧ は論理積を表す。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　A</button>
+            <button type="button">イ　A ∧ B</button>
+            <button type="button">ウ　A ∨ B</button>
+            <button type="button">エ　B</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>吸収法則により A ∨ (A ∧ B) = A。A = 1 なら B に関係なく全体は1、A = 0 なら A ∧ B も0なので全体は0となり、結果は常に A と一致する。</p>
+        </div>
       </div>
     </section>
 
@@ -164,6 +240,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>逆ポーランド記法の評価では、演算子に対して「先にpopした値」と「後にpopした値」のどちらを右オペランド・左オペランドにするかを間違えやすい。加算・乗算のように順序を入れ替えても結果が変わらない演算子では問題になりにくいが、減算・除算のように順序が結果を左右する演算子では特に注意が必要である。また、計算量オーダーはあくまで「データ量が増えたときの増加の仕方」を表す指標であり、実際の実行時間そのものを表すわけではない点も押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　逆ポーランド記法の式「8 2 3 × − 4 +」の値はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　−2</button>
+            <button type="button">イ　22</button>
+            <button type="button">ウ　18</button>
+            <button type="button">エ　6</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>8、2、3 を積み、× で 2 × 3 = 6 を積む([8, 6])。− で 8 − 6 = 2 を積み、4 を積んで + で 2 + 4 = 6。イは (8 − 2) × 3 + 4 と左から順に計算した場合、ウは (8 − 2) × 3 で止めた場合、アは 8 − (2 × 3 + 4) とした場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　計算量が O(n²) のアルゴリズムで、データ1,000件の処理に1秒かかった。データを10,000件にすると、処理時間はおよそ何秒になるか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10秒</button>
+            <button type="button">イ　40秒</button>
+            <button type="button">ウ　100秒</button>
+            <button type="button">エ　1,000秒</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>O(n²) では、データ量が10倍になると処理時間は 10² = 100 倍になるので、約100秒。アは O(n)(比例)とみなした場合、エは O(n³) とみなした場合。データが増えると O(n²) が急激に遅くなることを表している。</p>
+        </div>
       </div>
     </section>
     </article>

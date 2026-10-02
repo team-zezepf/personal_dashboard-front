@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>システム構成要素のまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -71,6 +72,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>MTBFとMTTRを分子・分母で取り違えやすい。稼働率の分子は「正常に動いていた時間」を表すMTBFである。また、直列は「両方とも必要」なのでそのまま掛け算、並列は「どちらか一方でよい」ので「両方とも故障している確率」(1-A₁)×(1-A₂)を1から引く、という手順を混同しないこと。複数段の構成では、まず並列部分をひとまとめの稼働率に計算してから、直列部分と掛け合わせる順序で解くとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　稼働率0.8の装置2台を並列(どちらか一方が稼働していればよい)に接続した部分の後段に、稼働率0.9の装置1台を直列に接続した。システム全体の稼働率はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.576</button>
+            <button type="button">イ　0.72</button>
+            <button type="button">ウ　0.864</button>
+            <button type="button">エ　0.996</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>並列部分の稼働率は 1 − (1 − 0.8) × (1 − 0.8) = 0.96。これと0.9の装置を直列に接続するので 0.96 × 0.9 = 0.864。アは3台すべてを直列とした場合(0.8 × 0.8 × 0.9)、イは並列部分を1台分(0.8)とした場合、エは3台すべてを並列とした場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　稼働率0.9の装置を並列に接続し、少なくとも1台が稼働していればよいシステムを作る。システム全体の稼働率を0.999以上にするには、最低何台必要か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　2台</button>
+            <button type="button">イ　3台</button>
+            <button type="button">ウ　4台</button>
+            <button type="button">エ　10台</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>n台を並列にした稼働率は 1 − 0.1ⁿ。2台では 1 − 0.01 = 0.99、3台では 1 − 0.001 = 0.999 となり、3台で条件を満たす。並列にすると、1台増やすごとに「全台が停止する確率」が10分の1になる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -91,6 +117,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>デュアルシステムとデュプレックスシステムを混同しやすい。デュアルシステムは「2系統が常に同時に処理する」のに対し、デュプレックスシステムは「1系統だけが処理し、もう一方は待機する」構成であり、待機系という概念が存在するのはデュプレックスシステムの方である。また、ホット→ウォーム→コールドの順に「切替は速いがコストは高い」「切替は遅いがコストは低い」というトレードオフになっている点で覚えるとよい。フェールオーバー(障害時に切り替える動作)とフェイルバック(復旧後に元に戻す動作)も方向が逆であるため混同しないこと。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　デュプレックスシステムの待機系の状態のうち、OSは起動しているが、アプリケーションは起動していない(または最小限だけ起動している)ものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ホットスタンバイ</button>
+            <button type="button">イ　コールドスタンバイ</button>
+            <button type="button">ウ　デュアルシステム</button>
+            <button type="button">エ　ウォームスタンバイ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ウォームスタンバイは、ホットとコールドの中間。ホットスタンバイはOS・アプリケーションを常時起動してデータも同期しておき、コールドスタンバイは待機系の電源を入れずにおく。デュアルシステムは2系統が常に同時に処理する方式で、待機系を持たない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　待機系の状態のうち、障害時の切替時間が最も短いが、待機系の分のランニングコストが最も大きいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ホットスタンバイ</button>
+            <button type="button">イ　ウォームスタンバイ</button>
+            <button type="button">ウ　コールドスタンバイ</button>
+            <button type="button">エ　フェイルバック</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ホットスタンバイは待機系を常時起動してデータも同期しているので、すぐに切り替えられる代わりにコストがかかる。コールドスタンバイは逆に、コストは小さいが切替に最も時間がかかる。フェイルバックは、復旧後に処理を元の現用系へ戻すこと。</p>
+        </div>
       </div>
     </section>
 
@@ -132,6 +183,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>RAID0は名前に「RAID」とついているが冗長性はなく、ディスク1台の故障でも全データを失う点に注意する。RAID5とRAID6は「パリティを分散配置する」という仕組みは共通しているが、耐えられる同時故障台数がそれぞれ1台と2台で異なる。また、ロードバランサ自身が停止するとシステム全体が止まってしまう単一障害点(SPOF)になり得るため、ロードバランサ自体も2台構成などで冗長化するのが一般的である、という点も応用情報技術者試験ではあわせて問われやすい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　容量2Tバイトのディスク5台でRAID5を構成したとき、データを格納できる実効容量はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10Tバイト</button>
+            <button type="button">イ　8Tバイト</button>
+            <button type="button">ウ　6Tバイト</button>
+            <button type="button">エ　5Tバイト</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RAID5ではディスク1台分の容量がパリティに使われるので、実効容量は (5 − 1) × 2 = 8Tバイト。アは冗長性のないRAID0の場合、ウは2台分をパリティに使うRAID6の場合、エはRAID1のように半分を複製に使った場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　ディスクが2台同時に故障しても、データを復旧できるRAIDのレベルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RAID0</button>
+            <button type="button">イ　RAID1(2台構成)</button>
+            <button type="button">ウ　RAID5</button>
+            <button type="button">エ　RAID6</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RAID6は2種類のパリティを分散配置するので、2台まで故障に耐えられる(最小4台)。RAID5と2台構成のRAID1は1台まで。RAID0は冗長性がなく、1台の故障で全データを失う。</p>
+        </div>
       </div>
     </section>
     </article>

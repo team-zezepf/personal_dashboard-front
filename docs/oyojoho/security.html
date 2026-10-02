@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>セキュリティのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -63,6 +64,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ハイブリッド暗号方式は「共通鍵暗号方式と公開鍵暗号方式のどちらか」ではなく、両方を組み合わせて使う方式である。「データ本体を暗号化する鍵」と「その鍵を暗号化するための鍵」を混同し、公開鍵でデータ本体を直接暗号化していると誤読しないように注意する。また公開鍵暗号方式では、送信者は受信者の公開鍵で暗号化し、受信者は自分の秘密鍵で復号する(秘密鍵は復号する側だけが保持する)。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ハイブリッド暗号方式で暗号化されたデータを受け取った受信者が、最初に行う処理はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　共通鍵で、データ本体を復号する</button>
+            <button type="button">イ　送信者の公開鍵で、データ本体を復号する</button>
+            <button type="button">ウ　自分の秘密鍵で、暗号化された共通鍵を復号する</button>
+            <button type="button">エ　自分の公開鍵で、暗号化された共通鍵を復号する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>送信者は、データ本体を共通鍵で、その共通鍵を受信者の公開鍵で暗号化して送る。受信者はまず自分の秘密鍵で共通鍵を取り出し、その共通鍵でデータ本体を復号する。公開鍵で暗号化したものは、対になる秘密鍵でしか復号できない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　RSA暗号の安全性の根拠として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　鍵の種類が非常に多く、総当たりで探すのが困難であること</button>
+            <button type="button">イ　大きな数の素因数分解が、現実的な時間では困難であること</button>
+            <button type="button">ウ　ハッシュ値が同じになる異なる入力を見つけるのが困難であること</button>
+            <button type="button">エ　送信者と受信者だけが、同じ鍵を秘密に共有していること</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RSAは、大きな2つの素数の積を素因数分解するのが困難であることを安全性の根拠にしている。アは共通鍵暗号方式(AESなど)の安全性の根拠、ウはハッシュ関数の性質(衝突耐性)、エは共通鍵暗号方式の前提。楕円曲線暗号は離散対数問題の困難さを根拠にする。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -103,6 +129,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ハッシュ関数は鍵を使わない一方向の変換であり、復号できる暗号化とは別物である。また、デジタル署名で使う鍵の向きは通常の公開鍵暗号(秘匿目的)と逆であることに注意する。秘匿目的では「受信者の公開鍵で暗号化→受信者の秘密鍵で復号」だが、デジタル署名では「送信者の秘密鍵で署名→送信者の公開鍵で検証」であり、「誰の」「どちらの」鍵を使うのかを取り違えやすい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　デジタル署名の検証で、受信文書から計算したハッシュ値と、署名を送信者の公開鍵で復号したハッシュ値が一致した。これによって確認できることはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　文書が暗号化されていて、通信途中で第三者に読まれていないこと</button>
+            <button type="button">イ　送信者の秘密鍵が、これまで一度も漏えいしていないこと</button>
+            <button type="button">ウ　受信者が、正しい本人であること</button>
+            <button type="button">エ　文書が改ざんされていないことと、送信者の秘密鍵で署名されたこと</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ハッシュ値の一致で改ざんがないこと(完全性)が、送信者の公開鍵で復号できたことで対になる秘密鍵の持ち主が署名したこと(真正性・否認防止)が確認できる。デジタル署名は文書を暗号化しないので、盗聴は防げない(アは誤り)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　デジタル署名の検証に使う送信者の公開鍵が、本当にその送信者のものであることを確かめるために使うものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　認証局(CA)が発行したデジタル証明書</button>
+            <button type="button">イ　メッセージダイジェスト</button>
+            <button type="button">ウ　共通鍵(セッション鍵)</button>
+            <button type="button">エ　CVSSのスコア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デジタル証明書は、持ち主の情報と公開鍵に認証局が署名したもので、公開鍵の持ち主を保証する。これがないと、攻撃者が自分の公開鍵を送信者のものと偽って渡し、なりすますことができる。メッセージダイジェストは文書のハッシュ値。</p>
+        </div>
       </div>
     </section>
 
@@ -147,6 +198,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>SQLインジェクションは「サーバ側」のデータベースで、XSSは「閲覧者側」のブラウザで、それぞれ不正な処理が実行される。CSRFは情報を盗み出すのではなく、認証済みの利用者になりすまして「意図しない処理を実行させる」攻撃であり、情報窃取が目的のXSSと混同しないよう注意する。またWAFは「通信の中身(攻撃パターン)」を検査する仕組みであり、通信の許可・拒否をルールベースで判断するだけの一般的なファイアウォールとは検査対象の階層が異なる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　正規のWebサイトにログインしたままの利用者に罠のページを開かせ、利用者のブラウザから正規サイトへ意図しないリクエスト(送金や設定変更など)を送らせる攻撃はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SQLインジェクション</button>
+            <button type="button">イ　クロスサイトスクリプティング(XSS)</button>
+            <button type="button">ウ　クロスサイトリクエストフォージェリ(CSRF)</button>
+            <button type="button">エ　ディレクトリトラバーサル</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CSRFは、ブラウザが保持するCookieが自動で送られることを悪用し、利用者の認証状態で不正な操作を実行させる。XSSは閲覧者のブラウザで不正なスクリプトを実行させる攻撃、SQLインジェクションはサーバ側のデータベースで不正なSQLを実行させる攻撃。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　CSRFへの対策として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Webページに出力する文字列の特殊文字をエスケープする</button>
+            <button type="button">イ　正規の入力画面に推測困難なトークンを埋め込み、リクエストを受けたときにトークンが正しいかを確認する</button>
+            <button type="button">ウ　プレースホルダを使ってSQL文を組み立てる</button>
+            <button type="button">エ　利用者のパスワードを長く複雑なものにさせる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>罠のページからは正規画面のトークンを知ることができないので、トークンを確認すれば、利用者が正規の画面から送ったリクエストだけを受け付けられる。アはXSS、ウはSQLインジェクションの対策。CSRFはログイン済みの状態を悪用するので、パスワードを強くしても防げない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -184,6 +260,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ゼロデイ攻撃は「脆弱性の公表・パッチ提供のタイミング」に着目した分類であり、特定の組織を狙う標的型攻撃(手口・対象に着目した分類)や、ハードウェアの物理的な特性を利用するサイドチャネル攻撃、パスワードによく使われる単語を試す辞書攻撃とは分類の軸が異なる。また、CVEは脆弱性を「識別」するための番号、CVSSはその「深刻度を評価」する指標であり、両者の役割を取り違えないようにする。CRYPTRECは暗号方式の安全性評価、ISMSは組織の管理体制という、脆弱性そのものの評価とは異なるレイヤーの仕組みである点も区別しておく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　脆弱性の深刻度を、攻撃元区分・攻撃条件の複雑さ・必要な特権・影響の範囲などから、0.0〜10.0のスコアで評価する共通の基準はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　CVE</button>
+            <button type="button">イ　CRYPTREC</button>
+            <button type="button">ウ　ISMS</button>
+            <button type="button">エ　CVSS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CVSSは深刻度を数値で評価し、対応の優先順位付けに使う。CVEは個々の脆弱性に一意の番号を付けて識別する仕組み、CRYPTRECは暗号技術の安全性を評価する日本の政府プロジェクト、ISMSは情報セキュリティを組織的に管理する仕組み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　ゼロデイ攻撃の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　脆弱性が発見されてから修正プログラムが提供されるまでの間に、その脆弱性を悪用する攻撃</button>
+            <button type="button">イ　特定の組織を狙い、業務に関係するメールを装ってマルウェアを送り込む攻撃</button>
+            <button type="button">ウ　大量の通信を送りつけて、サービスを停止させる攻撃</button>
+            <button type="button">エ　考えられる文字の組合せをすべて試して、パスワードを解読する攻撃</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ゼロデイ攻撃は「脆弱性の公表・パッチ提供のタイミング」に着目した分類で、正規の対策手段がない期間を狙う。イは標的型攻撃、ウはDoS攻撃、エはブルートフォース攻撃(総当たり攻撃)。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -219,6 +320,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>多要素認証は「異なる種類」の要素を組み合わせる方式であり、同じ種類の情報を2回聞く(例: パスワードと秘密の質問を両方使う)ことは多要素認証にはあたらない。また、シングルサインオン(一度の認証で複数サービスを使える仕組み)は認証の「利便性」を高めるものであり、認証の「強度」を高める多要素認証とは目的の軸が異なるため混同しないようにする。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　多要素認証に該当するものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　パスワードと秘密の質問の答えを入力させる</button>
+            <button type="button">イ　指紋と静脈の両方で認証する</button>
+            <button type="button">ウ　パスワードの入力に加えて、スマートフォンにSMSで届いたワンタイムコードを入力させる</button>
+            <button type="button">エ　パスワードを2回入力させる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>パスワード(知識情報)とスマートフォンで受け取るコード(所持情報)は異なる種類の要素なので、多要素認証になる。アとエはどちらも知識情報、イはどちらも生体情報なので、要素が2つあっても多要素認証ではない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　生体情報を認証に使うときに注意すべき点として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　本人なのに認証されない(本人拒否)ことは起こらない</button>
+            <button type="button">イ　他人に貸し借りしやすい</button>
+            <button type="button">ウ　利用者が忘れてしまいやすい</button>
+            <button type="button">エ　漏えいしても、パスワードのように変更することができない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>指紋や顔などの生体情報は一生変えられないので、一度漏えいすると取り返しがつかない。生体認証では、体調や環境によって本人拒否や他人受入れが起こりうる(アは誤り)。貸し借りや忘却は、所持情報や知識情報で起きやすい問題。</p>
+        </div>
       </div>
     </section>
     </article>

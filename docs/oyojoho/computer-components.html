@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>コンピュータ構成要素のまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -98,6 +99,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>MIPSは「クロック周波数 ÷ CPI」を百万単位に直した値であり、クロック周波数の値をそのままMIPSと混同しないこと。また、パイプライン処理は1命令の実行時間(レイテンシ)を短縮するのではなく、複数命令を重ね合わせることでスループットを高める技術である。段数を増やせば増やすほど高速化率が際限なく伸びるわけではなく、理論上の上限は段数倍にとどまる点も押さえておく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　クロック周波数1.6GHz、CPI(1命令あたりの平均クロック数)が2のCPUの性能は何MIPSか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　3,200MIPS</button>
+            <button type="button">イ　800MIPS</button>
+            <button type="button">ウ　1,600MIPS</button>
+            <button type="button">エ　0.8MIPS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>1秒あたりの実行命令数 = クロック周波数 ÷ CPI = 1.6 × 10⁹ ÷ 2 = 8 × 10⁸。百万(10⁶)単位にすると 800MIPS。アは周波数にCPIを掛けた値、ウはクロック周波数の値をそのままMIPSとした値、エは単位の換算を誤った値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　1段あたりの処理時間が2ナノ秒の5段パイプラインで、20個の命令を実行する。パイプラインの乱れがないとき、すべての命令の実行にかかる時間はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　200ナノ秒</button>
+            <button type="button">イ　40ナノ秒</button>
+            <button type="button">ウ　50ナノ秒</button>
+            <button type="button">エ　48ナノ秒</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>パイプライン実行時間 = (段数 + 命令数 − 1) × 1段の時間 = (5 + 20 − 1) × 2 = 48ナノ秒。最初の命令が5段を終えた後は、1段の時間ごとに1命令ずつ完了する。アはパイプラインなしの場合(20 × 5 × 2)、イは最初の命令の4段分を数え忘れた場合、ウは1を引き忘れた場合。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -150,6 +176,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>実効アクセス時間の公式では「ヒット率×キャッシュのアクセス時間」と「(1−ヒット率)×主記憶のアクセス時間」の対応を逆にしないこと(ヒットしたときは高速なキャッシュ、ミスしたときは低速な主記憶にアクセスする)。またSRAM(高速・高価・小容量・リフレッシュ不要)とDRAM(低速・安価・大容量・リフレッシュ必要)の特徴は逆に覚えやすいので、「Dynamic=動的=定期的なリフレッシュが必要」と関連付けて区別するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　キャッシュメモリのアクセス時間が10ナノ秒、主記憶のアクセス時間が60ナノ秒のとき、実効アクセス時間を15ナノ秒以下にするために必要な最小のヒット率はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　75%</button>
+            <button type="button">イ　80%</button>
+            <button type="button">ウ　90%</button>
+            <button type="button">エ　95%</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ヒット率を h とすると、h × 10 + (1 − h) × 60 = 60 − 50h ≦ 15。50h ≧ 45 より h ≧ 0.9 なので、最小のヒット率は90%。ヒット率が高いほど実効アクセス時間は短くなる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　SRAMとDRAMの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SRAMはリフレッシュ動作が不要で高速だが高価・小容量なので、主にキャッシュメモリに使われる</button>
+            <button type="button">イ　DRAMはリフレッシュ動作が不要で、SRAMより高速である</button>
+            <button type="button">ウ　SRAMはコンデンサに電荷を蓄えて記憶するので、大容量化に向いている</button>
+            <button type="button">エ　DRAMは電源を切っても内容が消えない不揮発性メモリである</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SRAMはフリップフロップ回路で記憶するのでリフレッシュが不要で高速だが、回路が複雑で高価になる。DRAMはコンデンサに電荷を蓄えるのでリフレッシュが必要だが、構造が単純で大容量化・低コスト化に向き、主記憶に使われる。どちらも揮発性。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -167,6 +218,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>割り込みとDMAはどちらもCPUの負荷軽減に関わる仕組みだが、目的が異なる。割り込みは「CPUの処理を一時中断し、割り込みハンドラを実行してから元の処理に戻る」仕組みであるのに対し、DMAは「CPUを介さずに周辺装置と主記憶の間でデータそのものを直接転送する」仕組みである。「CPUの処理を中断して専用の処理を行う」という記述だけを見てDMAを選んでしまわないよう、主語(何が・何をするか)を丁寧に読み分けること。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　周辺装置と主記憶の間のデータ転送を、CPUを介さずに専用のコントローラが直接行い、転送中もCPUが他の処理を並行して実行できる方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ポーリング</button>
+            <button type="button">イ　DMA</button>
+            <button type="button">ウ　割り込み</button>
+            <button type="button">エ　スプーリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DMA(Direct Memory Access)ではDMAコントローラが転送を行い、完了したら割り込みでCPUに知らせることが多い。ポーリングはCPUが周辺装置の状態を繰り返し確認する方式で、CPUの処理能力を消費する。割り込みは周辺装置側から処理の完了などを通知する仕組みで、データ転送そのものは行わない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　割り込みが発生したとき、CPUが割り込みハンドラに制御を移す前に行うこととして、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　割り込みハンドラの処理を終了させる</button>
+            <button type="button">イ　主記憶の内容をすべて補助記憶装置に書き出す</button>
+            <button type="button">ウ　実行中のプログラムを強制終了する</button>
+            <button type="button">エ　実行中の処理の状態(プログラムカウンタやレジスタの内容など)を退避する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>割り込み処理が終わったら元の処理に復帰するため、プログラムカウンタやレジスタの内容を退避しておき、割り込みハンドラの終了後に復元する。元のプログラムは一時中断するだけで、終了はしない。</p>
+        </div>
       </div>
     </section>
     </article>
