@@ -32,6 +32,9 @@
             "styles": [
               "src/styles.css",
               "docs/assets/study.css"
+            ],
+            "scripts": [
+              "docs/assets/quiz.js"
             ]
           },
           "configurations": {

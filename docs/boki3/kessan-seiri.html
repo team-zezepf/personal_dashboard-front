@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>決算整理のまとめ | 簿記3級</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -70,6 +71,30 @@
         <span class="label">つまずきやすいポイント</span>
         <span>前払・前受(繰延べ)と未払・未収(見越し)の方向を混同しない。前払費用・未収収益は資産、前受収益・未払費用は負債である。また経過勘定は翌期首に必ず再振替仕訳を行い、決算整理仕訳と貸借を逆にして元の費用・収益勘定に振り戻す点を忘れないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="保険料,前払保険料,未払保険料,現金,支払利息,前受収益" data-debit="前払保険料:8000" data-credit="保険料:8000">
+          <p class="quiz-q">問1　決算にあたり、当期に支払った保険料24,000円のうち8,000円が次期分であったので、前払分を計上する。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>次期分の8,000円を保険料(費用)から減らし、前払保険料(資産)として次期に繰り延べる。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="受取利息,未収利息,前受利息,貸付金,支払利息,現金" data-debit="未収利息:4000" data-credit="受取利息:4000">
+          <p class="quiz-q">問2　決算にあたり、貸付金の利息のうち当期分4,000円がまだ受け取れていないので、これを計上する。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>まだ受け取っていなくても当期分の利息は当期の収益とし、受け取る権利である未収利息(資産)を計上する(見越し)。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="保険料,前払保険料,未払保険料,現金,支払利息,繰越商品" data-debit="保険料:8000" data-credit="前払保険料:8000">
+          <p class="quiz-q">問3　期首にあたり、前期末に計上した前払保険料8,000円について再振替仕訳を行う。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>再振替仕訳は決算整理仕訳の貸借を逆にしたもの。前払保険料を取り崩し、当期の費用(保険料)に戻す。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -112,6 +137,27 @@
         <span class="label">つまずきやすいポイント</span>
         <span>残存価額がある場合(「取得原価の10%」など)は、取得原価からその金額を差し引いてから耐用年数で割ることを忘れない。また間接法では減価償却累計額を貸方に計上し、備品などの取得原価そのものは減らさない(直接法のように取得原価を直接減らすわけではない)点に注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="備品,減価償却費,減価償却累計額,修繕費,現金,未払金" data-debit="減価償却費:100000" data-credit="減価償却累計額:100000">
+          <p class="quiz-q">問1　決算にあたり、備品(取得原価500,000円、残存価額0円、耐用年数5年)について、定額法・間接法で減価償却を行う。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>(500,000 − 0) ÷ 5年 = 100,000円。間接法では備品を直接減らさず、減価償却累計額を貸方に記入する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　取得原価800,000円、残存価額は取得原価の10%、耐用年数9年の建物を定額法で償却する。1年分の減価償却費はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　72,000円</button>
+            <button type="button">イ　80,000円</button>
+            <button type="button">ウ　88,889円</button>
+            <button type="button">エ　96,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>残存価額は 800,000 × 10% = 80,000円。(800,000 − 80,000) ÷ 9年 = 80,000円。残存価額を引き忘れると88,889円になる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -138,6 +184,27 @@
         <span class="label">つまずきやすいポイント</span>
         <span>差額補充法では、設定額(期末債権残高×設定率)をそのまま繰入額としてはならない。必ず決算整理前の貸倒引当金残高を確認し、その差額のみを貸倒引当金繰入として計上する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="売掛金,貸倒引当金,貸倒引当金繰入,貸倒損失,償却債権取立益,現金" data-debit="貸倒引当金繰入:5000" data-credit="貸倒引当金:5000">
+          <p class="quiz-q">問1　決算にあたり、売掛金の期末残高400,000円に対して2%の貸倒引当金を差額補充法で設定する。貸倒引当金の残高は3,000円ある。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>設定額は 400,000 × 2% = 8,000円。すでに3,000円あるので、差額の5,000円だけを繰り入れる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　売掛金の期末残高250,000円に対して3%の貸倒引当金を差額補充法で設定する。貸倒引当金の残高が2,000円あるとき、貸倒引当金繰入の金額はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　2,000円</button>
+            <button type="button">イ　5,500円</button>
+            <button type="button">ウ　7,500円</button>
+            <button type="button">エ　9,500円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>設定額は 250,000 × 3% = 7,500円。差額補充法なので 7,500 − 2,000 = 5,500円を繰り入れる。7,500円をそのまま繰り入れるのは誤り。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -156,6 +223,34 @@
         <span class="label">つまずきやすいポイント</span>
         <span>仕入勘定への振替は「期首棚卸高を仕入に加算(繰越商品→仕入)」「期末棚卸高を仕入から控除(仕入→繰越商品)」の2本の仕訳から成る。どちらも勘定科目は仕入と繰越商品のみであり、売上勘定は登場しない点に注意する(売上と混同しない)。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　期首商品棚卸高60,000円、当期商品仕入高500,000円、期末商品棚卸高80,000円のとき、売上原価はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　440,000円</button>
+            <button type="button">イ　480,000円</button>
+            <button type="button">ウ　520,000円</button>
+            <button type="button">エ　560,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>売上原価 = 期首商品棚卸高 + 当期商品仕入高 − 期末商品棚卸高 = 60,000 + 500,000 − 80,000 = 480,000円。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="仕入,売上,繰越商品,売上原価,損益,現金" data-debit="仕入:60000" data-credit="繰越商品:60000">
+          <p class="quiz-q">問2　決算にあたり、期首商品棚卸高60,000円を仕入勘定に振り替える。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>前期から繰り越した商品は当期に売られたものとして、繰越商品から仕入に振り替える(仕入に加える)。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="仕入,売上,繰越商品,売上原価,損益,現金" data-debit="繰越商品:80000" data-credit="仕入:80000">
+          <p class="quiz-q">問3　決算にあたり、期末商品棚卸高80,000円を仕入勘定から繰越商品勘定に振り替える。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>売れ残った商品は当期の原価から差し引き、繰越商品(資産)として次期に繰り越す。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -168,6 +263,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>現金過不足勘定はあくまで一時的な仮勘定であり、貸借対照表・損益計算書には残せない。決算日を迎えても原因が不明な残高は、不足なら雑損(費用)、超過なら雑益(収益)に必ず振り替えて残高をゼロにする。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,現金過不足,通信費,雑損,雑益,旅費交通費" data-debit="通信費:3000,雑損:1000" data-credit="現金過不足:4000">
+          <p class="quiz-q">問1　決算にあたり、現金過不足勘定の借方残高4,000円のうち3,000円は通信費の記入もれと判明した。残額は原因不明である。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>借方残高(現金の不足)を取り消すため現金過不足を貸方に記入し、原因がわかった3,000円は通信費、わからない1,000円は雑損(費用)とする。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,現金過不足,雑損,雑益,仮受金,受取手数料" data-debit="現金過不足:2500" data-credit="雑益:2500">
+          <p class="quiz-q">問2　決算にあたり、現金過不足勘定の貸方残高2,500円の原因が最後まで判明しなかった。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>貸方残高(現金が多かった分)で原因がわからないものは、雑益(収益)に振り替える。</p>
+        </div>
       </div>
     </section>
 
@@ -207,6 +319,30 @@
         <span class="label">つまずきやすいポイント</span>
         <span>有価証券は時価が帳簿価額より「上がれば評価益(収益)」「下がれば評価損(費用)」であり、方向を逆にしない。また貯蔵品は決算整理仕訳と翌期首の再振替仕訳とで、借方・貸方の勘定科目がちょうど逆になる点を押さえておく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="通信費,貯蔵品,租税公課,消耗品費,前払費用,現金" data-debit="貯蔵品:3000" data-credit="通信費:3000">
+          <p class="quiz-q">問1　決算にあたり、通信費として処理していた郵便切手のうち3,000円分が未使用で残っていた。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>未使用の切手は費用から貯蔵品(資産)に振り替えて次期に繰り越す。翌期首には逆の仕訳で通信費に戻す。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="売買目的有価証券,有価証券評価益,有価証券評価損,有価証券売却損,現金,雑損" data-debit="有価証券評価損:15000" data-credit="売買目的有価証券:15000">
+          <p class="quiz-q">問2　決算にあたり、売買目的有価証券(帳簿価額120,000円)の時価が105,000円に下がっていたので、評価替えをする。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>時価が帳簿価額より15,000円下がったので、有価証券を15,000円減らし、有価証券評価損(費用)を計上する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="法人税等,仮払法人税等,未払法人税等,租税公課,現金,預り金" data-debit="法人税等:280000" data-credit="仮払法人税等:120000,未払法人税等:160000">
+          <p class="quiz-q">問3　決算にあたり、法人税等の年税額が280,000円と確定した。中間申告で120,000円を納付済みである。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>年税額280,000円を法人税等とし、中間納付の仮払法人税等120,000円を取り崩す。残り160,000円はこれから納める未払法人税等(負債)とする。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -224,6 +360,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>当期純利益は「収益総額−費用総額」であり、「資産総額−負債総額」(これは資本の額を表す)とは別の計算である。両者は最終的に一致する関係にあるが、算定の式そのものを混同しないこと。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　決算整理後の金額が、売上800,000円、受取手数料20,000円、売上原価520,000円、給料150,000円、減価償却費40,000円であった。当期純利益はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　90,000円</button>
+            <button type="button">イ　110,000円</button>
+            <button type="button">ウ　150,000円</button>
+            <button type="button">エ　280,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>収益総額 = 800,000 + 20,000 = 820,000円、費用総額 = 520,000 + 150,000 + 40,000 = 710,000円。当期純利益 = 820,000 − 710,000 = 110,000円。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　当期純利益を求める式として正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　資産総額 − 負債総額</button>
+            <button type="button">イ　売上高 − 売上原価</button>
+            <button type="button">ウ　期末資本 + 引出金</button>
+            <button type="button">エ　収益総額 − 費用総額</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>当期純利益は収益総額から費用総額を引いて求める。資産総額 − 負債総額は資本(純資産)の額、売上高 − 売上原価は売上総利益である。</p>
+        </div>
       </div>
     </section>
     </article>

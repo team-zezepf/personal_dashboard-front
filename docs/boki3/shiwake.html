@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>仕訳のまとめ | 簿記3級</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -88,6 +89,34 @@
         <span class="label">つまずきやすいポイント</span>
         <span>仕入戻し(仕入の取り消し)は仕入を<strong>貸方</strong>に、売上戻り(売上の取り消し)は売上を<strong>借方</strong>に記入する。通常の仕入・売上と記入する側が逆になる点を混同しないこと。また、クレジットカード払いの売上は「クレジット売掛金」という専用の勘定科目を用い、通常の「売掛金」とは区別する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,当座預金,売掛金,買掛金,仕入,売上" data-debit="仕入:60000" data-credit="買掛金:60000">
+          <p class="quiz-q">問1　商品60,000円を仕入れ、代金は掛けとした。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>仕入(費用)の発生を借方に、後で代金を支払う義務である買掛金(負債)の増加を貸方に記入する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,当座預金,売掛金,買掛金,仕入,売上" data-debit="現金:30000,売掛金:70000" data-credit="売上:100000">
+          <p class="quiz-q">問2　商品100,000円を売り上げ、代金のうち30,000円は現金で受け取り、残額は掛けとした。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>受け取った現金30,000円と、後で受け取る売掛金70,000円(100,000円−30,000円)を借方に、売上100,000円を貸方に記入する。借方の合計と貸方の合計は一致する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問3　三分法で、商品を仕入れたときに借方に記入する勘定科目はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　商品</button>
+            <button type="button">イ　売上原価</button>
+            <button type="button">ウ　買掛金</button>
+            <button type="button">エ　仕入</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>三分法では仕入れたときは「仕入」(費用)、売ったときは「売上」(収益)で処理し、期末に「繰越商品」で在庫を調整する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -136,6 +165,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「受取利息」(収益・貸方)と「支払利息」(費用・借方)は名前が似ているため、貸し借りの向きを逆に覚えないよう注意する。また、保険料や家賃などは支払時に全額を費用計上し、期間未経過分の「前払費用」への振り替えは決算整理で行う点も押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,旅費交通費,通信費,租税公課,広告宣伝費,支払利息" data-debit="旅費交通費:3500" data-credit="現金:3500">
+          <p class="quiz-q">問1　得意先へ向かうためのタクシー代3,500円を現金で支払った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>タクシー代などの交通費は旅費交通費(費用)として借方に記入し、減った現金を貸方に記入する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,旅費交通費,保険料,租税公課,法人税等,支払利息" data-debit="租税公課:40000" data-credit="現金:40000">
+          <p class="quiz-q">問2　固定資産税40,000円を現金で納付した。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>固定資産税や印紙税は租税公課(費用)で処理する。法人税等は会社の利益にかかる税金で、別の勘定科目を使う。</p>
+        </div>
       </div>
     </section>
 
@@ -215,6 +261,34 @@
         <span class="label">つまずきやすいポイント</span>
         <span>売掛金の回収(資産の減少・<strong>貸方</strong>)と買掛金の支払い(負債の減少・<strong>借方</strong>)、受取手形(資産)と支払手形(負債)、借入金(負債)と貸付金(資産)は、名称が似ていて左右を逆に覚えやすいので注意する。「お金を受け取る権利は資産、支払う義務は負債」という原則に立ち返って判断するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,前払金,前受金,買掛金,仕入,売掛金" data-debit="仕入:150000" data-credit="前払金:50000,買掛金:100000">
+          <p class="quiz-q">問1　商品150,000円を仕入れ、代金のうち50,000円は先に支払っていた内金と相殺し、残額は掛けとした。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>内金を支払ったときに前払金(資産)を計上しているので、仕入れたときにその前払金を減らす。残りの100,000円は買掛金とする。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="当座預金,受取手形,支払手形,手形売却損,支払利息,現金" data-debit="当座預金:196000,手形売却損:4000" data-credit="受取手形:200000">
+          <p class="quiz-q">問2　所有する約束手形200,000円を銀行で割り引き、割引料4,000円を差し引かれた残額が当座預金に入金された。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>手放した受取手形200,000円を貸方に、入金された196,000円と割引料4,000円(手形売却損)を借方に記入する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問3　商品を仕入れ、代金として約束手形を振り出した。貸方に記入する勘定科目はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　支払手形</button>
+            <button type="button">イ　受取手形</button>
+            <button type="button">ウ　買掛金</button>
+            <button type="button">エ　借入金</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>約束手形を振り出した側は、手形の代金を支払う義務を負うので支払手形(負債)を貸方に記入する。受け取った側は受取手形(資産)を借方に記入する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -244,6 +318,30 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>固定資産の価値を高めたり耐用年数を延ばしたりする支出(資本的支出)は建物などの資産に加算するが、単なる原状回復のための支出(収益的支出)は修繕費(費用)として処理する。この区別を誤ると、費用と資産のどちらに計上するかを間違えやすい。また固定資産売却時は、取得原価と減価償却累計額の両方を減少させることを忘れないこと。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,備品,消耗品費,発送費,修繕費,未払金" data-debit="備品:255000" data-credit="現金:255000">
+          <p class="quiz-q">問1　事務用の備品250,000円を購入し、運送費5,000円とともに代金は現金で支払った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>固定資産の取得原価には、購入代価に運送費などの付随費用を含める。よって備品は255,000円になる。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,備品,減価償却累計額,減価償却費,売上,未収入金" data-debit="現金:160000,減価償却累計額:240000" data-credit="備品:400000">
+          <p class="quiz-q">問2　取得原価400,000円、減価償却累計額240,000円の備品を160,000円で売却し、代金は現金で受け取った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>備品の取得原価400,000円と減価償却累計額240,000円をともに減らす。帳簿価額160,000円で売れたので売却損益は生じない。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,建物,修繕費,減価償却費,備品,雑損" data-debit="修繕費:80000" data-credit="現金:80000">
+          <p class="quiz-q">問3　建物の外壁の汚れを落として元の状態に戻すための塗装代80,000円を、現金で支払った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>元の状態に戻すための支出(収益的支出)は修繕費(費用)とする。価値を高める改良のための支出(資本的支出)なら建物に加算する。</p>
+        </div>
       </div>
     </section>
 
@@ -304,6 +402,30 @@
         <span class="label">つまずきやすいポイント</span>
         <span>支出時に用途が未確定なら「仮払金(資産)」、入金時に内容が不明なら「仮受金(負債)」と、左右の向きを逆にしないよう注意する。現金過不足は、実際有高に帳簿残高を合わせる方向で仕訳する一時的な勘定であり、原因が判明したら正しい勘定科目に振り替え、決算まで原因不明のままなら雑損・雑益に振り替える。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,当座預金,受取手形,売掛金,売上,仮受金" data-debit="現金:70000" data-credit="売掛金:70000">
+          <p class="quiz-q">問1　得意先から売掛金70,000円の回収として、他社が振り出した小切手を受け取った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>他社が振り出した小切手はすぐに換金できる通貨代用証券なので、現金として処理する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,仮払金,仮受金,旅費交通費,前払金,雑益" data-debit="旅費交通費:18000,現金:2000" data-credit="仮払金:20000">
+          <p class="quiz-q">問2　出張前に概算額として渡していた20,000円について、従業員が帰社し、旅費18,000円を差し引いた残額を現金で受け取った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>渡したときの仮払金(資産)20,000円を取り消し、使った18,000円を旅費交通費、戻ってきた2,000円を現金とする。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,現金過不足,雑損,雑益,仮払金,通信費" data-debit="現金過不足:3000" data-credit="現金:3000">
+          <p class="quiz-q">問3　現金の実際有高が帳簿残高より3,000円少ないことがわかったが、原因は不明である。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>帳簿の現金を実際有高に合わせるため現金を3,000円減らし(貸方)、原因がわかるまで現金過不足で処理する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-5">
@@ -332,6 +454,23 @@
         <span class="label">つまずきやすいポイント</span>
         <span>元入れ(資本金の増加・<strong>貸方</strong>)と引出し(引出金の増加・<strong>借方</strong>)は逆方向の取引であり、混同しないよう注意する。また期中の私的な引き出しは「資本金」を直接減らすのではなく「引出金」で処理し、決算時にまとめて資本金から差し引く点も押さえておく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,資本金,引出金,給料,貸付金,雑損" data-debit="引出金:20000" data-credit="現金:20000">
+          <p class="quiz-q">問1　個人企業の事業主が、店の現金20,000円を私的な生活費として引き出した。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>事業主の私的な引き出しは、資本金を直接減らさずに引出金で処理する。費用(給料など)にはならない。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,当座預金,資本金,借入金,引出金,受取手数料" data-debit="当座預金:1000000" data-credit="資本金:1000000">
+          <p class="quiz-q">問2　株式を発行して増資を行い、払込金1,000,000円が当座預金口座に入金された。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>株式の払込みを受けた金額は資本金(純資産)の増加として貸方に記入する。借入金と違って返済の義務はない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -356,6 +495,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>給料から天引きした源泉所得税・社会保険料は、支払い時点では会社の費用にはならず「預り金(負債)」として処理する。天引き額をそのまま費用計上してしまうミスに注意する。また納付時、従業員負担分は「預り金」の減少、会社負担分は「法定福利費」(費用)として、処理する勘定科目が異なる点も区別しておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="現金,給料,預り金,法定福利費,租税公課,仮払金" data-debit="給料:250000" data-credit="預り金:18000,現金:232000">
+          <p class="quiz-q">問1　従業員に給料250,000円を支払うにあたり、源泉所得税18,000円を差し引いた残額を現金で支払った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>給料は総額250,000円を費用とし、天引きした源泉所得税は後で納付するまで預り金(負債)とする。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,給料,預り金,法定福利費,租税公課,仮払金" data-debit="預り金:18000" data-credit="現金:18000">
+          <p class="quiz-q">問2　給料から差し引いて預かっていた源泉所得税18,000円を、現金で納付した。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>預かっていた税金を納めたので、預り金(負債)を減らす。会社の費用(租税公課など)にはならない。</p>
+        </div>
       </div>
     </section>
 
@@ -382,6 +538,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>貸倒引当金が設定されているかどうかで処理が異なる(設定なし→全額を貸倒損失、設定あり→まず貸倒引当金を取り崩し、不足分のみ貸倒損失)。また、過去に貸倒れ処理した債権を回収できた場合は、すでに消去済みの「売掛金」を復活させるのではなく、「償却債権取立益(収益)」として処理する点に注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="売掛金,貸倒引当金,貸倒損失,貸倒引当金繰入,償却債権取立益,現金" data-debit="貸倒引当金:25000,貸倒損失:15000" data-credit="売掛金:40000">
+          <p class="quiz-q">問1　得意先が倒産し、売掛金40,000円が回収できなくなった。貸倒引当金の残高は25,000円ある。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>まず貸倒引当金25,000円を取り崩し、足りない15,000円を貸倒損失(費用)とする。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,売掛金,貸倒引当金,貸倒損失,償却債権取立益,雑益" data-debit="現金:8000" data-credit="償却債権取立益:8000">
+          <p class="quiz-q">問2　前期に貸倒れとして処理していた売掛金のうち8,000円を、現金で回収した。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>前期以前に貸倒れとして消した債権なので、売掛金は使わず償却債権取立益(収益)とする。</p>
+        </div>
       </div>
     </section>
 
@@ -417,6 +590,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>消費税の税抜方式では、本体価格と消費税額を分けて記帳する(仕入時は「仮払消費税」、売上時は「仮受消費税」)。また、他社が発行した商品券を受け取ったときは「受取商品券」という資産の勘定科目を用いる点(現金と同一視しない)に注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="売掛金,売上,仮払消費税,仮受消費税,未払消費税,現金" data-debit="売掛金:66000" data-credit="売上:60000,仮受消費税:6000">
+          <p class="quiz-q">問1　消費税は税抜方式で処理している。商品66,000円(うち消費税6,000円)を売り上げ、代金は掛けとした。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>税抜方式では本体価格60,000円を売上、消費税6,000円を仮受消費税(負債)に分ける。受け取る権利は税込の66,000円。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,受取商品券,売掛金,前受金,売上,仮受金" data-debit="受取商品券:30000,現金:5000" data-credit="売上:35000">
+          <p class="quiz-q">問2　商品35,000円を売り上げ、代金として他社発行の商品券30,000円と現金5,000円を受け取った。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>他社発行の商品券は、後で発行元から代金を受け取れる権利なので受取商品券(資産)とする。現金とは区別する。</p>
+        </div>
       </div>
     </section>
 
@@ -464,6 +654,23 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>損益振替では、収益は借方に、費用は貸方に記入して損益勘定に集計する(通常の仕訳とは逆側に記入するイメージ)。また、当期純利益が生じた場合は資本金の<strong>貸方</strong>に振り替える(資本金が増加する)が、当期純損失の場合は逆に資本金の<strong>借方</strong>に振り替える(資本金が減少する)点も押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="売上,仕入,損益,資本金,繰越商品,現金" data-debit="売上:800000" data-credit="損益:800000">
+          <p class="quiz-q">問1　決算にあたり、売上勘定の残高800,000円を損益勘定に振り替えた。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>収益の勘定は貸方に残高があるので、借方に記入して残高をゼロにし、損益勘定の貸方に集める。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="損益,資本金,引出金,売上,繰越利益剰余金,現金" data-debit="損益:150000" data-credit="資本金:150000">
+          <p class="quiz-q">問2　個人企業で、損益勘定で算定された当期純利益150,000円を資本金勘定に振り替えた。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>当期純利益は資本金を増やすので、資本金の貸方に振り替える。株式会社なら繰越利益剰余金に振り替える。</p>
+        </div>
       </div>
     </section>
     </article>

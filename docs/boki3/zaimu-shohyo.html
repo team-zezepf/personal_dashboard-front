@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>財務諸表のまとめ | 簿記3級</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -97,6 +98,42 @@
         <span class="label">つまずきやすいポイント</span>
         <span>現金・売掛金・商品が流動資産なのは「1年以内に現金化されるから」ではなく、通常の営業サイクルに含まれるからである(正常営業循環基準、上記の※を参照)。「1年以内かどうか」で判定するのは、営業サイクルに含まれない貸付金・借入金などに限られる。また、資産の記載順序(流動性配列法)を負債・純資産の配列と混同しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　貸借対照表等式として正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　資産 = 負債 + 純資産</button>
+            <button type="button">イ　資産 + 負債 = 純資産</button>
+            <button type="button">ウ　資産 − 純資産 = 収益</button>
+            <button type="button">エ　収益 − 費用 = 純資産</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>貸借対照表の左側の資産の合計と、右側の負債と純資産の合計は必ず一致する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　流動資産に分類されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　建物</button>
+            <button type="button">イ　土地</button>
+            <button type="button">ウ　売掛金</button>
+            <button type="button">エ　備品</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>売掛金は仕入→販売→代金回収という通常の営業サイクルに含まれるので流動資産。建物・土地・備品は長く使う固定資産である。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問3　資産合計が900,000円、負債合計が350,000円のとき、純資産の金額はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　350,000円</button>
+            <button type="button">イ　550,000円</button>
+            <button type="button">ウ　900,000円</button>
+            <button type="button">エ　1,250,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>資産 = 負債 + 純資産 なので、純資産 = 900,000 − 350,000 = 550,000円。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -121,6 +158,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>売上総利益(粗利益)は「売上高−売上原価」で求める段階的な利益であり、給料や減価償却費などその他の費用を差し引く前の金額である。売上総利益をそのまま当期純利益と混同しないよう注意する。当期純利益は、収益合計から費用の全項目を差し引いた最終的な利益である。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　売上高800,000円、売上原価560,000円、給料120,000円のとき、売上総利益はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　120,000円</button>
+            <button type="button">イ　240,000円</button>
+            <button type="button">ウ　680,000円</button>
+            <button type="button">エ　800,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>売上総利益 = 売上高 − 売上原価 = 800,000 − 560,000 = 240,000円。給料はまだ差し引かない(差し引くと当期純利益の計算になる)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　損益計算書が表すものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　一定時点の財政状態</button>
+            <button type="button">イ　得意先ごとの債権の残高</button>
+            <button type="button">ウ　一会計期間の現金の出入りだけ</button>
+            <button type="button">エ　一会計期間の経営成績</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>損益計算書は一会計期間の収益と費用から経営成績を示す。一定時点の財政状態を示すのは貸借対照表である。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -138,6 +200,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>当期純利益は損益計算書上の数値だが、それだけで完結するのではなく貸借対照表の純資産(資本)を増加させる形で反映される。この連携を忘れて2つの表を無関係なものとして覚えてしまうと、資本の増減を問う問題でつまずきやすい。また、個人企業の「引出金」は費用ではなく、資本の払い戻しとして資本を減少させる点(株式会社の配当に近い性質)にも注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　個人企業で、期首資本600,000円、当期純利益90,000円、引出金30,000円のとき、期末資本はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　540,000円</button>
+            <button type="button">イ　660,000円</button>
+            <button type="button">ウ　690,000円</button>
+            <button type="button">エ　720,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>期末資本 = 期首資本 + 当期純利益 − 引出金 = 600,000 + 90,000 − 30,000 = 660,000円。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　個人企業の引出金の説明として正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　資本を減らすものとして扱う</button>
+            <button type="button">イ　事業の費用として損益計算書に計上する</button>
+            <button type="button">ウ　負債として貸借対照表に計上する</button>
+            <button type="button">エ　収益から差し引く前に売上原価に含める</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>引出金は事業主が私的に使った分で、費用ではなく資本の払い戻しとして資本を減らす。</p>
+        </div>
       </div>
     </section>
     </article>
