@@ -79,9 +79,11 @@ docs/
 
 ## ランダム出題の練習問題(基本情報 科目B)
 
-`kihonjoho-b/practice.html` は、基本情報 科目Bの問題を分野を選んで5問ずつランダムに出題するページです(GitHub Pages だけで使い、アプリには載せない。アプリでは「問題を解く」で解ける)。解いた結果は保存しません。
+`kihonjoho-b/practice.html` は、基本情報 科目Bの問題を5問ずつランダムに出題するページです(GitHub Pages だけで使い、アプリには載せない。アプリでは「問題を解く」で解ける)。解いた結果は保存しません。
 
+- 分野は目次のリンクの `?genre=<キー>` で指定する(`algorithms-programming` / `security`。指定なしはすべての分野)。開くとすぐ出題が始まる
 - 問題は `kihonjoho-b/questions.js`。`personal_dashboard-data/exam_questions.json` の科目B(`exam_type: kihonjoho-b`)から生成するので、直接編集しない
+- 分野が増えたら、生成スクリプトの `GENRE_KEYS` にキーを追加し、目次にリンクを追加する(キーがない分野があると生成はエラーになる)
 - 問題データを直したら、front で `npm run docs:kihonjoho-b` を実行して `questions.js` を生成し直し、コミットする(生成は `scripts/build-kihonjoho-b-questions.mjs`)
 - 動きは `assets/practice.js`、見た目は `assets/practice.css`。1回の出題数はページの `data-per-session` で変えられる
 

@@ -12,11 +12,12 @@
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
   <main class="docs-main">
-    <nav class="docs-breadcrumb"><a href="../index.html">目次</a> › 基本情報技術者試験（科目B） › 練習問題</nav>
+    <!-- data-practice-genre の中身は practice.js が分野名(?genre= で指定した分野)に書き換える -->
+    <nav class="docs-breadcrumb"><a href="../index.html#kihonjoho-b">目次</a> › 基本情報技術者試験（科目B） › <span data-practice-genre>すべての分野</span></nav>
 
     <div class="practice-page">
-      <h1>科目Bの練習問題</h1>
-      <p class="practice-lead">擬似言語のプログラムや情報セキュリティの問題を、選んだ分野から5問ランダムに出題します。1問ずつ答え合わせをして、最後に結果を表示します。解いた結果は保存されません(ページを開き直すと最初から)。</p>
+      <h1><span data-practice-genre>すべての分野</span>の練習問題</h1>
+      <p class="practice-lead">5問をランダムに出題します。1問ずつ答え合わせをして、最後に結果を表示します。解いた結果は保存されません(ページを開き直すと最初から)。</p>
       <!-- 出題画面は practice.js が組み立てる。data-per-session は1回に出題する問題数 -->
       <div id="practice-app" data-per-session="5">
         <noscript>練習問題を解くには JavaScript を有効にしてください。</noscript>

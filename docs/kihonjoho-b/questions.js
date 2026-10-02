@@ -3,6 +3,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 505,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 sumOdd は、正の整数を格納した整数型の配列 array を受け取り、配列に含まれる奇数の要素の合計を返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: sumOdd(整数型の配列: array)\n  整数型: total ← 0\n  整数型: i\n  for (i を 1 から arrayの要素数 まで 1 ずつ増やす)\n    if (〔a〕)\n      total ← total + array[i]\n    endif\n  endfor\n  return total",
   "choices": [
@@ -17,6 +18,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 506,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 findMax は、要素数が1以上の整数型の配列 array を受け取り、要素の最大値を返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: findMax(整数型の配列: array)\n  整数型: maxValue ← array[1]\n  整数型: i\n  for (i を 2 から arrayの要素数 まで 1 ずつ増やす)\n    if (〔a〕)\n      maxValue ← array[i]\n    endif\n  endfor\n  return maxValue",
   "choices": [
@@ -31,6 +33,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 507,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 gcd は、2つの正の整数 x、y の最大公約数をユークリッドの互除法で求める。gcd(84, 36) を呼び出したとき、while文の中の処理(4〜6行目)が実行される回数と、関数の戻り値の組合せとして正しいものを、解答群の中から選べ。",
   "code": "○整数型: gcd(整数型: x, 整数型: y)\n  整数型: r\n  while (y ≠ 0)\n    r ← x mod y\n    x ← y\n    y ← r\n  endwhile\n  return x",
   "choices": [
@@ -45,6 +48,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 508,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 reverse は、整数型の配列 array の要素の並びを逆順にする。例えば、{1, 2, 3, 4, 5} を渡すと {5, 4, 3, 2, 1} になる。ここで、配列の要素番号は1から始まり、n ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○reverse(整数型の配列: array)\n  整数型: n ← arrayの要素数\n  整数型: i, tmp\n  for (i を 1 から n ÷ 2 まで 1 ずつ増やす)\n    tmp ← array[i]\n    array[i] ← 〔a〕\n    array[n - i + 1] ← tmp\n  endfor",
   "choices": [
@@ -59,6 +63,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 509,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a と b に入れる正しい答えの組合せを、解答群の中から選べ。\n\n関数 binarySearch は、昇順に整列済みの整数型の配列 data から、値 target を二分探索で探し、見つかった要素番号を返す。見つからない場合は -1 を返す。ここで、配列の要素番号は1から始まり、(low + high) ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: binarySearch(整数型の配列: data, 整数型: target)\n  整数型: low ← 1\n  整数型: high ← dataの要素数\n  整数型: mid\n  while (low ≦ high)\n    mid ← (low + high) ÷ 2\n    if (data[mid] = target)\n      return mid\n    elseif (data[mid] < target)\n      〔a〕\n    else\n      〔b〕\n    endif\n  endwhile\n  return -1",
   "choices": [
@@ -73,6 +78,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 510,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 bubbleSort は、整数型の配列 data の要素をバブルソートで昇順に整列する。外側の繰り返しを1回行うごとに、残りの範囲の最大値が範囲の末尾(要素番号 i)に確定する。ここで、配列の要素番号は1から始まる。",
   "code": "○bubbleSort(整数型の配列: data)\n  整数型: n ← dataの要素数\n  整数型: i, j, tmp\n  for (i を n から 2 まで 1 ずつ減らす)\n    for (j を 1 から 〔a〕 まで 1 ずつ増やす)\n      if (data[j] > data[j + 1])\n        tmp ← data[j]\n        data[j] ← data[j + 1]\n        data[j + 1] ← tmp\n      endif\n    endfor\n  endfor",
   "choices": [
@@ -87,6 +93,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 511,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 calc について、calc(3857) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、n ÷ 10 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: calc(整数型: n)\n  if (n = 0)\n    return 0\n  endif\n  return (n mod 10) + calc(n ÷ 10)",
   "choices": [
@@ -101,6 +108,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 512,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 isPrime は、整数 n が素数であれば true を、素数でなければ false を返す。2以上の整数 i で n を割り切れるかを順に調べ、i × i が n を超えた時点で割り切れる数がなければ素数と判定する。",
   "code": "○論理型: isPrime(整数型: n)\n  整数型: i\n  if (n < 2)\n    return false\n  endif\n  i ← 2\n  while (〔a〕)\n    if (n mod i = 0)\n      return false\n    endif\n    i ← i + 1\n  endwhile\n  return true",
   "choices": [
@@ -115,6 +123,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 513,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "従業員50名のX社では、取引先を装った電子メールの添付ファイルを開いた従業員のPCで、動作が急に遅くなり、見覚えのないサーバとの通信が発生していることが分かった。X社の情報セキュリティ規程では、マルウェア感染が疑われる場合の初動対応と連絡先が定められている。\n\nこの従業員が最初に取るべき行動として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -129,6 +138,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 514,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "Y社では、会員制のWebサイトを新たに構築している。会員のパスワードをデータベースに保存する方式を検討しており、万一データベースの内容が漏えいした場合でも、パスワードそのものを知られにくくしたいと考えている。\n\nパスワードの保存方式として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -143,6 +153,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 565,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 linearSearch は、整数型の配列 data の先頭から順に target と等しい要素を探し、最初に見つかった要素の要素番号を返す。見つからない場合は -1 を返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: linearSearch(整数型の配列: data, 整数型: target)\n  整数型: i\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] = target)\n      〔a〕\n    endif\n  endfor\n  return -1",
   "choices": [
@@ -157,6 +168,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 566,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 findMinIndex は、要素数が1以上の整数型の配列 data を受け取り、最小値の要素番号を返す。最小値が複数ある場合は、最も小さい要素番号を返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: findMinIndex(整数型の配列: data)\n  整数型: minIndex ← 1\n  整数型: i\n  for (i を 2 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] < 〔a〕)\n      minIndex ← i\n    endif\n  endfor\n  return minIndex",
   "choices": [
@@ -171,6 +183,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 567,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 calc について、calc({3, 2, 7, 4}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: calc(整数型の配列: data)\n  整数型: s ← 0\n  整数型: i\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] > s)\n      s ← s + data[i]\n    else\n      s ← s - data[i]\n    endif\n  endfor\n  return s",
   "choices": [
@@ -185,6 +198,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 568,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 rotateRight は、要素数が2以上の整数型の配列 data の要素を1つずつ後ろにずらし、末尾の要素を先頭に移す。例えば、{1, 2, 3, 4} は {4, 1, 2, 3} になる。ここで、配列の要素番号は1から始まる。",
   "code": "○rotateRight(整数型の配列: data)\n  整数型: n ← dataの要素数\n  整数型: last ← data[n]\n  整数型: i\n  for (i を n から 2 まで 1 ずつ減らす)\n    data[i] ← 〔a〕\n  endfor\n  data[1] ← last",
   "choices": [
@@ -199,6 +213,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 569,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 insertionSort は、整数型の配列 data を挿入ソートで昇順に整列する。ここで、配列の要素番号は1から始まる。また、and は左側の条件が偽のとき、右側の条件を評価しない。",
   "code": "○insertionSort(整数型の配列: data)\n  整数型: i, j, key\n  for (i を 2 から dataの要素数 まで 1 ずつ増やす)\n    key ← data[i]\n    j ← i - 1\n    while (j ≧ 1 and 〔a〕)\n      data[j + 1] ← data[j]\n      j ← j - 1\n    endwhile\n    data[j + 1] ← key\n  endfor",
   "choices": [
@@ -213,6 +228,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 570,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 selectionSort は、整数型の配列 data を選択ソートで昇順に整列する。外側の繰返しでは、要素番号 i 以降の最小値を探し、要素番号 i の要素と交換する。ここで、配列の要素番号は1から始まる。",
   "code": "○selectionSort(整数型の配列: data)\n  整数型: n ← dataの要素数\n  整数型: i, j, minIndex, tmp\n  for (i を 1 から n - 1 まで 1 ずつ増やす)\n    minIndex ← i\n    for (j を 〔a〕 から n まで 1 ずつ増やす)\n      if (data[j] < data[minIndex])\n        minIndex ← j\n      endif\n    endfor\n    tmp ← data[i]\n    data[i] ← data[minIndex]\n    data[minIndex] ← tmp\n  endfor",
   "choices": [
@@ -227,6 +243,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 571,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 factorize について、factorize(60) を呼び出したときに出力される値を、出力される順に並べたものとして正しいものを、解答群の中から選べ。ここで、「p を出力する」は p の値を出力する処理を表し、n ÷ p は小数点以下を切り捨てた整数の商とする。",
   "code": "○factorize(整数型: n)\n  整数型: p ← 2\n  while (n > 1)\n    if (n mod p = 0)\n      p を出力する\n      n ← n ÷ p\n    else\n      p ← p + 1\n    endif\n  endwhile",
   "choices": [
@@ -241,6 +258,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 572,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 toBinary は、正の整数 n を2進数で表した文字列を返す。例えば、toBinary(6) は \"110\" を返す。ここで、str(x) は整数 x を10進数で表した文字列を返す関数、+ は文字列の連結を表し、n ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○文字列型: toBinary(整数型: n)\n  文字列型: result ← \"\"\n  while (n > 0)\n    result ← 〔a〕\n    n ← n ÷ 2\n  endwhile\n  return result",
   "choices": [
@@ -255,6 +273,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 573,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 power について、power(3, 5) を呼び出したときの戻り値と、while文の中の処理が実行される回数の組合せとして正しいものを、解答群の中から選べ。ここで、n ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: power(整数型: x, 整数型: n)\n  整数型: result ← 1\n  while (n > 0)\n    if (n mod 2 = 1)\n      result ← result × x\n    endif\n    x ← x × x\n    n ← n ÷ 2\n  endwhile\n  return result",
   "choices": [
@@ -269,6 +288,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 574,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 fib について、fib(6) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。",
   "code": "○整数型: fib(整数型: n)\n  整数型: a ← 0\n  整数型: b ← 1\n  整数型: i, t\n  for (i を 1 から n まで 1 ずつ増やす)\n    t ← a + b\n    a ← b\n    b ← t\n  endfor\n  return a",
   "choices": [
@@ -283,6 +303,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 575,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 f は、フィボナッチ数を再帰によって求める。f(5) を呼び出したとき、関数 f が呼び出される回数(最初の f(5) の呼出しを含む)として正しいものを、解答群の中から選べ。",
   "code": "○整数型: f(整数型: n)\n  if (n ≦ 1)\n    return n\n  endif\n  return f(n - 1) + f(n - 2)",
   "choices": [
@@ -297,6 +318,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 576,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラムは、大域変数の配列 stack と top を用いてスタックを実現している。push(1)、push(2)、pop()、push(3)、push(4)、pop()、pop() の順に呼び出したとき、最後の pop() の戻り値と、その時点の top の値の組合せとして正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "大域: 整数型の配列: stack ← {0, 0, 0, 0, 0}\n大域: 整数型: top ← 0\n\n○push(整数型: x)\n  top ← top + 1\n  stack[top] ← x\n\n○整数型: pop()\n  整数型: x ← stack[top]\n  top ← top - 1\n  return x",
   "choices": [
@@ -311,6 +333,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 577,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n次のプログラムは、要素数4の配列 queue を環状に使ってキューを実現している。手続 enqueue は、tail が指す位置に x を格納し、tail を次の位置に進める。tail が末尾(4)のときは、次の位置は先頭(1)に戻る。なお、enqueue はキューに空きがあるときだけ呼び出されるものとする。ここで、配列の要素番号は1から始まる。",
   "code": "大域: 整数型の配列: queue ← {0, 0, 0, 0}\n大域: 整数型: head ← 1   /* 次に取り出す位置 */\n大域: 整数型: tail ← 1   /* 次に格納する位置 */\n大域: 整数型: count ← 0  /* 格納されている要素数 */\n\n○enqueue(整数型: x)\n  queue[tail] ← x\n  tail ← 〔a〕\n  count ← count + 1",
   "choices": [
@@ -325,6 +348,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 578,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 diagonalSum は、n 行 n 列の二次元配列 m を受け取り、2本の対角線(左上から右下、右上から左下)上にある要素の合計を返す。n が奇数のとき、中央の要素は2本の対角線の両方に含まれるが、1回だけ数える。ここで、m[i, j] は i 行 j 列の要素を表し、行と列の番号は1から始まる。また、(n + 1) ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: diagonalSum(整数型の二次元配列: m)\n  整数型: n ← mの行数\n  整数型: sum ← 0\n  整数型: i\n  for (i を 1 から n まで 1 ずつ増やす)\n    sum ← sum + m[i, i] + m[i, 〔a〕]\n  endfor\n  if (n mod 2 = 1)\n    sum ← sum - m[(n + 1) ÷ 2, (n + 1) ÷ 2]\n  endif\n  return sum",
   "choices": [
@@ -339,6 +363,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 579,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 multiply は、n 行 n 列の二次元配列 a、b の行列の積 a × b を求め、二次元配列 c に格納する。c は n 行 n 列で、全ての要素が0で初期化されているものとする。ここで、a[i, j] は i 行 j 列の要素を表し、行と列の番号は1から始まる。",
   "code": "○multiply(整数型の二次元配列: a, 整数型の二次元配列: b, 整数型の二次元配列: c)\n  整数型: n ← aの行数\n  整数型: i, j, k\n  for (i を 1 から n まで 1 ずつ増やす)\n    for (j を 1 から n まで 1 ずつ増やす)\n      for (k を 1 から n まで 1 ずつ増やす)\n        c[i, j] ← c[i, j] + 〔a〕\n      endfor\n    endfor\n  endfor",
   "choices": [
@@ -353,6 +378,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 580,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 isPalindrome は、文字型の配列 s に格納された文字列が回文(前から読んでも後ろから読んでも同じ)であれば true を、そうでなければ false を返す。例えば、\"level\" は回文である。ここで、配列の要素番号は1から始まる。",
   "code": "○論理型: isPalindrome(文字型の配列: s)\n  整数型: left ← 1\n  整数型: right ← sの要素数\n  while (left < right)\n    if (s[left] ≠ s[right])\n      return false\n    endif\n    left ← left + 1\n    right ← 〔a〕\n  endwhile\n  return true",
   "choices": [
@@ -367,6 +393,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 581,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 mode は、0〜9の整数だけを格納した、要素数1以上の配列 data を受け取り、最も多く出現する値を返す。最も多く出現する値が複数ある場合は、そのうち最も小さい値を返す。配列 count の要素番号 k には、値 k - 1 の出現回数を数える。ここで、配列の要素番号は1から始まる。なお、〔a〕 の2か所には同じものが入る。",
   "code": "○整数型: mode(整数型の配列: data)\n  整数型の配列: count ← {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}\n  整数型: i, best\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    count[〔a〕] ← count[〔a〕] + 1\n  endfor\n  best ← 1\n  for (i を 2 から 10 まで 1 ずつ増やす)\n    if (count[i] > count[best])\n      best ← i\n    endif\n  endfor\n  return best - 1",
   "choices": [
@@ -381,6 +408,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 582,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\nクラス ListElement は、整数型のメンバ変数 val と、次の要素を参照するメンバ変数 next を持つ。ListElement(v) は、val が v で next が未定義のインスタンスを生成する。大域変数 listHead は単方向リストの先頭の要素を参照し、リストが空のときは未定義である。手続 append は、値 v を持つ要素をリストの末尾に追加する。",
   "code": "大域: ListElement: listHead ← 未定義の値\n\n○append(整数型: v)\n  ListElement: prev, curr\n  curr ← ListElement(v)\n  if (listHead が 未定義)\n    listHead ← curr\n  else\n    prev ← listHead\n    while (〔a〕)\n      prev ← prev.next\n    endwhile\n    prev.next ← curr\n  endif",
   "choices": [
@@ -395,6 +423,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 583,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n単方向リストの要素は、整数型のメンバ変数 val と、次の要素を参照するメンバ変数 next を持つ。大域変数 listHead はリストの先頭の要素を参照する。手続 delete は、値 v を持つ最初の要素をリストから取り除く。ここで、値 v を持つ要素は必ずリスト中に存在し、先頭の要素ではないものとする。",
   "code": "○delete(整数型: v)\n  ListElement: prev ← listHead\n  while (prev.next.val ≠ v)\n    prev ← prev.next\n  endwhile\n  〔a〕",
   "choices": [
@@ -409,6 +438,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 584,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\nクラス Node は2分木の節を表し、左の子を参照するメンバ変数 left と、右の子を参照するメンバ変数 right を持つ。子がない場合、left や right は未定義である。関数 countNodes は、t を根とする2分木の節の数を返す。",
   "code": "○整数型: countNodes(Node: t)\n  if (t が 未定義)\n    return 0\n  endif\n  return 〔a〕",
   "choices": [
@@ -423,6 +453,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 585,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラムは、要素数7の配列 table をハッシュ表として使い、キーを格納する。格納位置が既に使われている場合は、次の位置(末尾の次は先頭)を順に調べて空いている位置に格納する。insert(10)、insert(17)、insert(3)、insert(24) の順に呼び出したとき、24 が格納される要素番号として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "大域: 整数型の配列: table ← {-1, -1, -1, -1, -1, -1, -1}  /* -1 は空き */\n\n○insert(整数型: key)\n  整数型: h ← (key mod 7) + 1\n  while (table[h] ≠ -1)\n    h ← (h mod 7) + 1\n  endwhile\n  table[h] ← key",
   "choices": [
@@ -437,6 +468,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 586,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 count について、count(n) の戻り値を n の式で表したものとして正しいものを、解答群の中から選べ。ここで、n は1以上の整数とする。",
   "code": "○整数型: count(整数型: n)\n  整数型: c ← 0\n  整数型: i, j\n  for (i を 1 から n まで 1 ずつ増やす)\n    for (j を i から n まで 1 ずつ増やす)\n      c ← c + 1\n    endfor\n  endfor\n  return c",
   "choices": [
@@ -451,6 +483,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 587,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 unique は、昇順に整列済みで要素数1以上の整数型の配列 data から重複する値を取り除き、重複のない値を data の先頭から詰めて格納して、その個数を返す。unique({1, 1, 2, 3, 3, 3, 5}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: unique(整数型の配列: data)\n  整数型: k ← 1\n  整数型: i\n  for (i を 2 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] ≠ data[k])\n      k ← k + 1\n      data[k] ← data[i]\n    endif\n  endfor\n  return k",
   "choices": [
@@ -465,6 +498,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 588,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 merge は、昇順に整列済みの整数型の配列 a、b を受け取り、全ての要素を昇順に並べた配列を返す。ここで、「c の末尾に x を追加する」は配列 c の末尾に値 x を追加する処理を表す。ここで、配列の要素番号は1から始まる。また、and は左側の条件が偽のとき、右側の条件を評価しない。",
   "code": "○整数型の配列: merge(整数型の配列: a, 整数型の配列: b)\n  整数型の配列: c ← {}\n  整数型: i ← 1\n  整数型: j ← 1\n  while (i ≦ aの要素数 and j ≦ bの要素数)\n    if (a[i] ≦ b[j])\n      c の末尾に a[i] を追加する\n      i ← i + 1\n    else\n      c の末尾に b[j] を追加する\n      j ← j + 1\n    endif\n  endwhile\n  while (i ≦ aの要素数)\n    c の末尾に a[i] を追加する\n    i ← i + 1\n  endwhile\n  while (〔a〕)\n    c の末尾に b[j] を追加する\n    j ← j + 1\n  endwhile\n  return c",
   "choices": [
@@ -479,6 +513,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 589,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 binarySearch は、昇順に整列済みの配列 data から target を二分探索で探す。data = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91}、target = 23 のとき、while文の中の処理が実行される回数として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。また、(low + high) ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: binarySearch(整数型の配列: data, 整数型: target)\n  整数型: low ← 1\n  整数型: high ← dataの要素数\n  整数型: mid\n  while (low ≦ high)\n    mid ← (low + high) ÷ 2\n    if (data[mid] = target)\n      return mid\n    elseif (data[mid] < target)\n      low ← mid + 1\n    else\n      high ← mid - 1\n    endif\n  endwhile\n  return -1",
   "choices": [
@@ -493,6 +528,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 590,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "関数 prefix は、整数型の配列 data を受け取り、累積和を格納した配列 s を返す。このとき、data[l] から data[r] まで(l ≦ r)の要素の合計を、s を使って表した式として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型の配列: prefix(整数型の配列: data)\n  整数型の配列: s ← 要素数が dataの要素数 + 1 で、全ての要素が 0 の配列\n  整数型: i\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    s[i + 1] ← s[i] + data[i]\n  endfor\n  return s",
   "choices": [
@@ -507,6 +543,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 591,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 countOnes について、countOnes(45) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、x ∧ 1 は x と 1 のビットごとの論理積、x >> 1 は x を右に1ビット論理シフトした値を表し、x は0以上の整数とする。",
   "code": "○整数型: countOnes(整数型: x)\n  整数型: c ← 0\n  while (x ≠ 0)\n    if ((x ∧ 1) = 1)\n      c ← c + 1\n    endif\n    x ← x >> 1\n  endwhile\n  return c",
   "choices": [
@@ -521,6 +558,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 592,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 printTime は、0以上の秒数 sec を、時・分・秒に分けて出力する。例えば、sec = 3725 のとき、1, 2, 5 を出力する(1時間2分5秒)。ここで、「h, m, s を出力する」は h、m、s の値をこの順に出力する処理を表し、÷ は小数点以下を切り捨てた整数の商とする。",
   "code": "○printTime(整数型: sec)\n  整数型: h ← sec ÷ 3600\n  整数型: m ← 〔a〕\n  整数型: s ← sec mod 60\n  h, m, s を出力する",
   "choices": [
@@ -535,6 +573,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 593,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 isLeapYear は、西暦 y がうるう年であれば true を、そうでなければ false を返す。うるう年は、「4で割り切れ、かつ100で割り切れない年」、または「400で割り切れる年」である。例えば、2024年と2000年はうるう年、1900年と2023年はうるう年ではない。",
   "code": "○論理型: isLeapYear(整数型: y)\n  if (〔a〕)\n    return true\n  endif\n  return false",
   "choices": [
@@ -549,6 +588,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 594,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 secondMax は、要素数が2以上で値が全て異なる整数型の配列 data を受け取り、2番目に大きい値を返す。変数 first には最大値を、second には2番目に大きい値を保持する。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: secondMax(整数型の配列: data)\n  整数型: first, second, i\n  if (data[1] > data[2])\n    first ← data[1]\n    second ← data[2]\n  else\n    first ← data[2]\n    second ← data[1]\n  endif\n  for (i を 3 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] > first)\n      〔a〕\n    elseif (data[i] > second)\n      second ← data[i]\n    endif\n  endfor\n  return second",
   "choices": [
@@ -563,6 +603,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 595,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 longestRun は、同じ値が連続して並んでいる部分のうち、最も長いものの長さを返す。longestRun({3, 3, 1, 1, 1, 2, 2, 1}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: longestRun(整数型の配列: data)\n  整数型: best ← 1\n  整数型: run ← 1\n  整数型: i\n  for (i を 2 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] = data[i - 1])\n      run ← run + 1\n    else\n      run ← 1\n    endif\n    if (run > best)\n      best ← run\n    endif\n  endfor\n  return best",
   "choices": [
@@ -577,6 +618,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 596,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n頂点が n 個の無向グラフを、n 行 n 列の二次元配列 adj で表す。adj[i, j] は、頂点 i と頂点 j の間に辺があれば1、なければ0である。無向グラフなので adj[i, j] と adj[j, i] は等しく、自分自身への辺はない(adj[i, i] は0)。関数 edgeCount は、グラフの辺の数を返す。ここで、行と列の番号は1から始まる。",
   "code": "○整数型: edgeCount(整数型の二次元配列: adj)\n  整数型: n ← adjの行数\n  整数型: c ← 0\n  整数型: i, j\n  for (i を 1 から n まで 1 ずつ増やす)\n    for (j を 〔a〕 から n まで 1 ずつ増やす)\n      c ← c + adj[i, j]\n    endfor\n  endfor\n  return c",
   "choices": [
@@ -591,6 +633,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 597,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "A社の従業員が、利用しているクラウドサービスから「不正なアクセスを検知したため、24時間以内にパスワードを再設定しないとアカウントを停止します」という電子メールを受け取った。メールには再設定用のリンクが記載されている。\n\nこの従業員が取るべき行動として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -605,6 +648,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 598,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "ECサイトを運営するB社で、会員のアカウントへの不正ログインが多発した。調査の結果、他のサービスから流出したIDとパスワードの組を使って、多数の異なるIPアドレスから少しずつログインが試行されていたことが分かった(パスワードリスト攻撃)。\n\nこの攻撃への対策として、最も効果的なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -619,6 +663,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 599,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "C社の営業部では、顧客の個人情報を含むファイルを、USBメモリで客先に持ち出す必要が生じた。\n\nUSBメモリの紛失や盗難による情報漏えいを防ぐための対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -633,6 +678,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 600,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "D社で、退職した従業員のアカウントを使って社内システムに不正にログインされる事件が発生した。調査の結果、退職後もアカウントが削除されずに残っていたことが分かった。\n\n再発防止策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -647,6 +693,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 601,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "E社では、サーバのアクセスログをそのサーバ上に保存している。あるとき、サーバに侵入した攻撃者によってログが消去され、侵入の経緯を調査できなかった。\n\n同様の事態に備えるための対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -661,6 +708,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 602,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "F社では、取引先とのファイル共有にクラウドストレージを利用している。担当者が共有範囲の設定を誤り、社外秘の資料が誰でも閲覧できる状態になっていたことが判明した。\n\n再発防止策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -675,6 +723,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 603,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "G社は、顧客の個人情報を含むデータの入力業務を、外部の事業者に委託することにした。\n\n委託にあたってG社が行うこととして、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -689,6 +738,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 604,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "H社でランサムウェアの感染が発生し、ファイルサーバのデータが暗号化された。同じ社内ネットワークに接続されたNAS(ネットワーク接続ストレージ)にバックアップを取得していたが、バックアップも暗号化されてしまい、データを復旧できなかった。\n\n今後の対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -703,6 +753,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 715,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 countAboveAverage について、countAboveAverage({4, 8, 6, 2, 10}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。また、÷ は実数の除算とする。",
   "code": "○整数型: countAboveAverage(整数型の配列: data)\n  実数型: sum ← 0\n  実数型: average\n  整数型: count ← 0\n  整数型: i\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    sum ← sum + data[i]\n  endfor\n  average ← sum ÷ dataの要素数\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    if (data[i] ≧ average)\n      count ← count + 1\n    endif\n  endfor\n  return count",
   "choices": [
@@ -717,6 +768,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 716,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 countChar は、文字型の配列 s の中に文字 c が何個含まれるかを返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: countChar(文字型の配列: s, 文字型: c)\n  整数型: count ← 0\n  整数型: i\n  for (i を 1 から sの要素数 まで 1 ずつ増やす)\n    if (〔a〕)\n      count ← count + 1\n    endif\n  endfor\n  return count",
   "choices": [
@@ -731,6 +783,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 717,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 hasDuplicate は、整数型の配列 data に同じ値の要素が2つ以上あれば true を、なければ false を返す。同じ組合せを2回比べないようにする。ここで、配列の要素番号は1から始まる。",
   "code": "○論理型: hasDuplicate(整数型の配列: data)\n  整数型: i, j\n  for (i を 1 から dataの要素数 − 1 まで 1 ずつ増やす)\n    for (j を 〔a〕 から dataの要素数 まで 1 ずつ増やす)\n      if (data[i] = data[j])\n        return true\n      endif\n    endfor\n  endfor\n  return false",
   "choices": [
@@ -745,6 +798,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 718,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 factorial について、factorial(5) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。",
   "code": "○整数型: factorial(整数型: n)\n  整数型: result ← 1\n  整数型: i\n  for (i を 2 から n まで 1 ずつ増やす)\n    result ← result × i\n  endfor\n  return result",
   "choices": [
@@ -759,6 +813,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 719,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 gcd は、正の整数 a、b の最大公約数を、ユークリッドの互除法を再帰で実装して求める。",
   "code": "○整数型: gcd(整数型: a, 整数型: b)\n  if (b = 0)\n    return a\n  endif\n  return 〔a〕",
   "choices": [
@@ -773,6 +828,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 720,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 hanoi は、ハノイの塔の円盤 n 枚を、柱 from から柱 to へ、柱 via を使って移動する。hanoi(4, \"A\", \"C\", \"B\") を呼び出したとき、「円盤を移動する」処理が実行される回数として正しいものを、解答群の中から選べ。",
   "code": "○hanoi(整数型: n, 文字列型: from, 文字列型: to, 文字列型: via)\n  if (n ≧ 1)\n    hanoi(n − 1, from, via, to)\n    from から to へ円盤を移動する\n    hanoi(n − 1, via, to, from)\n  endif",
   "choices": [
@@ -787,6 +843,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 721,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\nクラス Node は2分探索木の節を表し、整数型のメンバ変数 value と、左の子 left・右の子 right(子がないときは未定義)を持つ。2分探索木では、左の部分木の値は全て節の値より小さく、右の部分木の値は全て大きい。関数 contains は、t を根とする2分探索木に key があれば true を返す。",
   "code": "○論理型: contains(Node: t, 整数型: key)\n  if (t が 未定義)\n    return false\n  endif\n  if (key = t.value)\n    return true\n  elseif (key < t.value)\n    return 〔a〕\n  else\n    return contains(t.right, key)\n  endif",
   "choices": [
@@ -801,6 +858,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 722,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\nクラス Node は2分木の節を表し、左の子 left と右の子 right(子がないときは未定義)を持つ。関数 height は、t を根とする木の高さ(根から最も遠い葉までの節の数)を返す。空の木の高さは0とする。ここで、max(x, y) は x と y の大きい方を返す。",
   "code": "○整数型: height(Node: t)\n  if (t が 未定義)\n    return 0\n  endif\n  return 〔a〕",
   "choices": [
@@ -815,6 +873,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 723,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 dfs は、頂点1〜5の無向グラフを深さ優先で探索し、訪問した頂点番号を出力する。二次元配列 adj は隣接行列で、頂点 i と j の間に辺があれば adj[i, j] = 1 である。辺は 1−2、1−3、2−4、3−4、4−5 の5本であり、配列 visited の要素は全て false で初期化されている。dfs(1) を呼び出したとき、頂点が出力される順番として正しいものを、解答群の中から選べ。",
   "code": "○dfs(整数型: v)\n  整数型: w\n  visited[v] ← true\n  v を出力する\n  for (w を 1 から 5 まで 1 ずつ増やす)\n    if (adj[v, w] = 1 and visited[w] = false)\n      dfs(w)\n    endif\n  endfor",
   "choices": [
@@ -829,6 +888,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 724,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 bfs は、頂点1〜6の無向グラフを幅優先で探索し、訪問した頂点番号を出力する。辺は 1−2、1−3、2−4、2−5、3−6 の5本である。キューへの追加は隣接頂点の番号の小さい順に行う。bfs(1) を呼び出したとき、頂点が出力される順番として正しいものを、解答群の中から選べ。",
   "code": "○bfs(整数型: start)\n  整数型: v, w\n  start をキューの末尾に追加する\n  visited[start] ← true\n  while (キューが空でない)\n    v ← キューの先頭から取り出した値\n    v を出力する\n    for (w を 1 から 6 まで 1 ずつ増やす)\n      if (adj[v, w] = 1 and visited[w] = false)\n        visited[w] ← true\n        w をキューの末尾に追加する\n      endif\n    endfor\n  endwhile",
   "choices": [
@@ -843,6 +903,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 725,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 countingSort は、0〜9の整数だけを格納した配列 data を、計数ソートで昇順に整列する。配列 count の要素番号 k には、値 k − 1 の個数を数える(count の要素数は10で、全て0で初期化されている)。ここで、配列の要素番号は1から始まる。",
   "code": "○countingSort(整数型の配列: data)\n  整数型の配列: count ← {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}\n  整数型: i, v, k ← 1\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    count[data[i] + 1] ← count[data[i] + 1] + 1\n  endfor\n  for (v を 0 から 9 まで 1 ずつ増やす)\n    while (count[v + 1] > 0)\n      data[k] ← 〔a〕\n      k ← k + 1\n      count[v + 1] ← count[v + 1] − 1\n    endwhile\n  endfor",
   "choices": [
@@ -857,6 +918,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 726,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 mergeSort は、配列の要素番号 left から right までを、半分に分けて再帰的に整列する(マージソート)。要素数8の配列に対して mergeSort(data, 1, 8) を呼び出したとき、mergeSort が呼び出される回数(最初の呼出しを含む)として正しいものを、解答群の中から選べ。ここで、(left + right) ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○mergeSort(整数型の配列: data, 整数型: left, 整数型: right)\n  整数型: mid\n  if (left < right)\n    mid ← (left + right) ÷ 2\n    mergeSort(data, left, mid)\n    mergeSort(data, mid + 1, right)\n    data[left]〜data[mid] と data[mid + 1]〜data[right] を併合する\n  endif",
   "choices": [
@@ -871,6 +933,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 727,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 binToDec は、'0' と '1' だけからなる文字型の配列 bits が表す2進数を、10進数の整数に変換して返す。bits[1] が最上位の桁である。ここで、digit(c) は文字 c が '1' のとき1、'0' のとき0を返す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: binToDec(文字型の配列: bits)\n  整数型: value ← 0\n  整数型: i\n  for (i を 1 から bitsの要素数 まで 1 ずつ増やす)\n    value ← 〔a〕\n  endfor\n  return value",
   "choices": [
@@ -885,6 +948,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 728,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 toHex は、0以上の整数 n を16進数で表した文字列を返す。hexChars は \"0123456789ABCDEF\" の16文字を格納した文字型の配列で、hexChars[1] が '0'、hexChars[16] が 'F' である。+ は文字列の連結を表し、n ÷ 16 は小数点以下を切り捨てた整数の商とする。なお、n が0のときは \"0\" を返すものとする(プログラムは省略)。",
   "code": "○文字列型: toHex(整数型: n)\n  文字列型: result ← \"\"\n  while (n > 0)\n    result ← 〔a〕 + result\n    n ← n ÷ 16\n  endwhile\n  return result",
   "choices": [
@@ -899,6 +963,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 729,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 sieve は、エラトステネスのふるいによって、2以上 n 以下の素数を判定する。論理型の配列 isPrime は要素番号1〜n で、最初は isPrime[1] が false、それ以外が全て true である。素数 i が見つかったら、i の倍数(i 自身を除く)を素数でないとして false にする。",
   "code": "○sieve(論理型の配列: isPrime, 整数型: n)\n  整数型: i, j\n  for (i を 2 から n まで 1 ずつ増やす)\n    if (isPrime[i] = true)\n      for (j を 〔a〕 から n まで i ずつ増やす)\n        isPrime[j] ← false\n      endfor\n    endif\n  endfor",
   "choices": [
@@ -913,6 +978,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 730,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 lcm は、正の整数 a、b の最小公倍数を返す。関数 gcd(a, b) は a と b の最大公約数を返す。途中の計算で値が必要以上に大きくならないように、先に割り算を行う。ここで、÷ は整数の商とする(この計算では割り切れる)。",
   "code": "○整数型: lcm(整数型: a, 整数型: b)\n  return 〔a〕",
   "choices": [
@@ -927,6 +993,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 731,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 reverseNumber について、reverseNumber(1230) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、n ÷ 10 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: reverseNumber(整数型: n)\n  整数型: result ← 0\n  while (n > 0)\n    result ← result × 10 + (n mod 10)\n    n ← n ÷ 10\n  endwhile\n  return result",
   "choices": [
@@ -941,6 +1008,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 732,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 countCommon は、昇順に整列済みで、それぞれ値の重複がない整数型の配列 a、b を受け取り、両方に含まれる値の個数を返す。ここで、配列の要素番号は1から始まる。また、and は左側の条件が偽のとき、右側の条件を評価しない。",
   "code": "○整数型: countCommon(整数型の配列: a, 整数型の配列: b)\n  整数型: i ← 1\n  整数型: j ← 1\n  整数型: count ← 0\n  while (i ≦ aの要素数 and j ≦ bの要素数)\n    if (a[i] = b[j])\n      count ← count + 1\n      i ← i + 1\n      j ← j + 1\n    elseif (a[i] < b[j])\n      〔a〕\n    else\n      j ← j + 1\n    endif\n  endwhile\n  return count",
   "choices": [
@@ -955,6 +1023,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 733,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 maxSubarraySum は、整数型の配列 data の連続する部分(1要素以上)の和の最大値を返す。maxSubarraySum({−2, 3, −1, 4, −6, 2}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。また、max(x, y) は x と y の大きい方を返す。",
   "code": "○整数型: maxSubarraySum(整数型の配列: data)\n  整数型: current ← data[1]\n  整数型: best ← data[1]\n  整数型: i\n  for (i を 2 から dataの要素数 まで 1 ずつ増やす)\n    current ← max(data[i], current + data[i])\n    best ← max(best, current)\n  endfor\n  return best",
   "choices": [
@@ -969,6 +1038,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 734,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 compress は、英小文字の文字型の配列 s を、同じ文字が連続する部分ごとに「文字 + 連続数」で表した文字列に変換する(ランレングス圧縮)。例えば \"aaabcc\" は \"a3b1c2\" となる。ここで、+ は文字列の連結、str(x) は整数 x を文字列にしたものを表す。ここで、配列の要素番号は1から始まる。",
   "code": "○文字列型: compress(文字型の配列: s)\n  文字列型: result ← \"\"\n  整数型: count ← 1\n  整数型: i\n  for (i を 2 から sの要素数 + 1 まで 1 ずつ増やす)\n    if (i ≦ sの要素数 and s[i] = s[i − 1])\n      count ← count + 1\n    else\n      result ← result + s[i − 1] + str(count)\n      〔a〕\n    endif\n  endfor\n  return result",
   "choices": [
@@ -983,6 +1053,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 735,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 isBalanced は、'(' と ')' だけからなる文字型の配列 s の括弧が正しく対応していれば true を返す。例えば \"(())()\" は true、\"())(\" や \"(()\" は false である。ここで、配列の要素番号は1から始まる。",
   "code": "○論理型: isBalanced(文字型の配列: s)\n  整数型: depth ← 0\n  整数型: i\n  for (i を 1 から sの要素数 まで 1 ずつ増やす)\n    if (s[i] = '(')\n      depth ← depth + 1\n    else\n      depth ← depth − 1\n    endif\n    if (〔a〕)\n      return false\n    endif\n  endfor\n  return depth = 0",
   "choices": [
@@ -997,6 +1068,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 736,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 evalRPN は、逆ポーランド記法(後置記法)の式を、スタックを使って計算する。式 \"3 4 + 2 ×\" の各要素を順に処理したとき、戻り値として正しいものを、解答群の中から選べ。",
   "code": "○整数型: evalRPN(文字列型の配列: tokens)\n  整数型: i, x, y\n  for (i を 1 から tokensの要素数 まで 1 ずつ増やす)\n    if (tokens[i] が数値)\n      tokens[i] の値をスタックに積む\n    else\n      y ← スタックから取り出した値\n      x ← スタックから取り出した値\n      x と y に tokens[i] の演算を行った結果をスタックに積む\n    endif\n  endfor\n  return スタックから取り出した値",
   "choices": [
@@ -1011,6 +1083,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 737,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 transpose は、n 行 m 列の二次元配列 matrix の転置行列を、m 行 n 列の二次元配列 result に格納する。転置行列は、元の行列の i 行 j 列の要素を j 行 i 列に置いたものである。ここで、行と列の番号は1から始まる。",
   "code": "○transpose(整数型の二次元配列: matrix, 整数型の二次元配列: result)\n  整数型: i, j\n  for (i を 1 から matrixの行数 まで 1 ずつ増やす)\n    for (j を 1 から matrixの列数 まで 1 ずつ増やす)\n      〔a〕\n    endfor\n  endfor",
   "choices": [
@@ -1025,6 +1098,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 738,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 rowSums は、n 行 m 列の二次元配列 matrix の各行の要素の合計を、要素数 n の配列 sums に格納する。sums の要素は全て0で初期化されている。ここで、行と列の番号は1から始まる。",
   "code": "○rowSums(整数型の二次元配列: matrix, 整数型の配列: sums)\n  整数型: i, j\n  for (i を 1 から matrixの行数 まで 1 ずつ増やす)\n    for (j を 1 から matrixの列数 まで 1 ずつ増やす)\n      〔a〕\n    endfor\n  endfor",
   "choices": [
@@ -1039,6 +1113,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 739,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n単方向リストの各要素は、次の要素を参照するメンバ変数 next を持ち、末尾の要素の next は未定義である。関数 size は、先頭の要素 head から始まるリストの要素数を返す(リストが空のとき head は未定義)。",
   "code": "○整数型: size(ListElement: head)\n  整数型: count ← 0\n  ListElement: curr ← head\n  while (〔a〕)\n    count ← count + 1\n    curr ← curr.next\n  endwhile\n  return count",
   "choices": [
@@ -1053,6 +1128,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 740,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n単方向リストの各要素は、次の要素を参照するメンバ変数 next を持つ。関数 reverseList は、先頭の要素 head から始まるリストのつながりを逆順にし、新しい先頭の要素を返す。",
   "code": "○ListElement: reverseList(ListElement: head)\n  ListElement: prev ← 未定義の値\n  ListElement: curr ← head\n  ListElement: nextElem\n  while (curr が 未定義でない)\n    nextElem ← curr.next\n    〔a〕\n    prev ← curr\n    curr ← nextElem\n  endwhile\n  return prev",
   "choices": [
@@ -1067,6 +1143,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 741,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 isPowerOfTwo は、正の整数 x が2のべき乗(1, 2, 4, 8, …)であれば true を返す。ここで、x ∧ y は x と y のビットごとの論理積を表す。",
   "code": "○論理型: isPowerOfTwo(整数型: x)\n  return 〔a〕",
   "choices": [
@@ -1081,6 +1158,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 742,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 findSingle は、整数型の配列 data のうち、1つの値だけが1回、それ以外の値は全て2回ずつ現れるとき、1回だけ現れる値を返す。findSingle({4, 7, 2, 7, 4}) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、x ⊕ y は x と y のビットごとの排他的論理和を表す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: findSingle(整数型の配列: data)\n  整数型: result ← 0\n  整数型: i\n  for (i を 1 から dataの要素数 まで 1 ずつ増やす)\n    result ← result ⊕ data[i]\n  endfor\n  return result",
   "choices": [
@@ -1095,6 +1173,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 743,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 sumArray は、整数型の配列 data の要素番号1〜n の要素の合計を、再帰によって求める。sumArray(data, dataの要素数) のように呼び出す。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: sumArray(整数型の配列: data, 整数型: n)\n  if (〔a〕)\n    return 0\n  endif\n  return data[n] + sumArray(data, n − 1)",
   "choices": [
@@ -1109,6 +1188,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 744,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 comb は、n 個から k 個を選ぶ組合せの数を再帰によって求める。comb(5, 2) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。",
   "code": "○整数型: comb(整数型: n, 整数型: k)\n  if (k = 0 or k = n)\n    return 1\n  endif\n  return comb(n − 1, k − 1) + comb(n − 1, k)",
   "choices": [
@@ -1123,6 +1203,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 745,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 lowerBound は、昇順に整列済みの配列 data の中で、target 以上の値が最初に現れる要素番号を二分探索で求める(全ての値が target より小さい場合は 要素数 + 1 を返す)。data = {2, 4, 4, 7, 9}、target = 5 のときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。また、(low + high) ÷ 2 は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: lowerBound(整数型の配列: data, 整数型: target)\n  整数型: low ← 1\n  整数型: high ← dataの要素数 + 1\n  整数型: mid\n  while (low < high)\n    mid ← (low + high) ÷ 2\n    if (data[mid] < target)\n      low ← mid + 1\n    else\n      high ← mid\n    endif\n  endwhile\n  return low",
   "choices": [
@@ -1137,6 +1218,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 746,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 sentinelSearch は、番兵を使った線形探索で、配列 data(要素番号1〜n)から target を探し、見つかった要素番号を返す(見つからなければ −1)。data は要素番号 n + 1 の領域も確保されており、そこに番兵を置くことで、繰返しのたびに範囲の終わりを確認しなくて済むようにしている。",
   "code": "○整数型: sentinelSearch(整数型の配列: data, 整数型: n, 整数型: target)\n  整数型: i ← 1\n  〔a〕\n  while (data[i] ≠ target)\n    i ← i + 1\n  endwhile\n  if (i ≦ n)\n    return i\n  endif\n  return −1",
   "choices": [
@@ -1151,6 +1233,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 747,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 changeCount は、金額 amount を、500円・100円・50円・10円・5円・1円の硬貨で支払うとき、大きい硬貨からできるだけ多く使った場合の硬貨の枚数を返す。changeCount(680) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、÷ は小数点以下を切り捨てた整数の商とする。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: changeCount(整数型: amount)\n  整数型の配列: coins ← {500, 100, 50, 10, 5, 1}\n  整数型: count ← 0\n  整数型: i\n  for (i を 1 から coinsの要素数 まで 1 ずつ増やす)\n    count ← count + amount ÷ coins[i]\n    amount ← amount mod coins[i]\n  endfor\n  return count",
   "choices": [
@@ -1165,6 +1248,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 748,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 countDivisors は、正の整数 n の約数の個数を返す。countDivisors(36) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。",
   "code": "○整数型: countDivisors(整数型: n)\n  整数型: count ← 0\n  整数型: i ← 1\n  while (i × i ≦ n)\n    if (n mod i = 0)\n      if (i × i = n)\n        count ← count + 1\n      else\n        count ← count + 2\n      endif\n    endif\n    i ← i + 1\n  endwhile\n  return count",
   "choices": [
@@ -1179,6 +1263,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 749,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の手続 bubbleSortCount は、配列 data をバブルソートで昇順に整列し、要素を交換した回数を出力する。data = {3, 1, 4, 2} のとき、出力される交換回数として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○bubbleSortCount(整数型の配列: data)\n  整数型: n ← dataの要素数\n  整数型: i, j, tmp\n  整数型: swaps ← 0\n  for (i を n から 2 まで 1 ずつ減らす)\n    for (j を 1 から i − 1 まで 1 ずつ増やす)\n      if (data[j] > data[j + 1])\n        tmp ← data[j]\n        data[j] ← data[j + 1]\n        data[j + 1] ← tmp\n        swaps ← swaps + 1\n      endif\n    endfor\n  endfor\n  swaps を出力する",
   "choices": [
@@ -1193,6 +1278,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 750,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n手続 rotateLeft は、要素数 n の配列 data の要素を k 個分左に回転した配列を、配列 result に格納する。例えば data = {1, 2, 3, 4, 5}、k = 2 のとき、result は {3, 4, 5, 1, 2} になる。ここで、0 ≦ k < n とし、配列の要素番号は1から始まる。",
   "code": "○rotateLeft(整数型の配列: data, 整数型: k, 整数型の配列: result)\n  整数型: n ← dataの要素数\n  整数型: i\n  for (i を 1 から n まで 1 ずつ増やす)\n    result[i] ← data[〔a〕]\n  endfor",
   "choices": [
@@ -1207,6 +1293,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 751,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラムは、2分探索木に 5, 3, 8, 1, 4, 9 の順に値を挿入して作った木を、中間順(左の部分木 → 節 → 右の部分木)にたどって値を出力する。出力される値の並びとして正しいものを、解答群の中から選べ。",
   "code": "○inorder(Node: t)\n  if (t が 未定義でない)\n    inorder(t.left)\n    t.value を出力する\n    inorder(t.right)\n  endif",
   "choices": [
@@ -1221,6 +1308,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 752,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次のプログラム中の a に入れる正しい答えを、解答群の中から選べ。\n\n関数 fibMemo は、フィボナッチ数を再帰で求める。一度計算した値を配列 memo(要素番号0〜n、最初は全て −1)に保存し、同じ値を再計算しないようにしている(メモ化)。ここで、配列 memo の要素番号は0から始まる。",
   "code": "○整数型: fibMemo(整数型: n)\n  if (n ≦ 1)\n    return n\n  endif\n  if (〔a〕)\n    return memo[n]\n  endif\n  memo[n] ← fibMemo(n − 1) + fibMemo(n − 2)\n  return memo[n]",
   "choices": [
@@ -1235,6 +1323,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 753,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 addMinutes は、時刻 h 時 m 分(0 ≦ h ≦ 23、0 ≦ m ≦ 59)に minutes 分を加えた時刻を「時 × 100 + 分」の形の整数で返す(24時を過ぎたら翌日の時刻とする)。addMinutes(22, 50, 95) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、÷ は小数点以下を切り捨てた整数の商とする。",
   "code": "○整数型: addMinutes(整数型: h, 整数型: m, 整数型: minutes)\n  整数型: total ← h × 60 + m + minutes\n  total ← total mod (24 × 60)\n  return (total ÷ 60) × 100 + (total mod 60)",
   "choices": [
@@ -1249,6 +1338,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 754,
   "genre": "アルゴリズムとプログラミング",
+  "genreKey": "algorithms-programming",
   "question": "次の関数 countPairs は、整数型の配列 data から、和が target になる2要素の組(要素番号 i < j)の個数を返す。countPairs({1, 5, 3, 3, 7}, 6) を呼び出したときの戻り値として正しいものを、解答群の中から選べ。ここで、配列の要素番号は1から始まる。",
   "code": "○整数型: countPairs(整数型の配列: data, 整数型: target)\n  整数型: count ← 0\n  整数型: i, j\n  for (i を 1 から dataの要素数 − 1 まで 1 ずつ増やす)\n    for (j を i + 1 から dataの要素数 まで 1 ずつ増やす)\n      if (data[i] + data[j] = target)\n        count ← count + 1\n      endif\n    endfor\n  endfor\n  return count",
   "choices": [
@@ -1263,6 +1353,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 755,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "A社の会員サイトでは、ログイン画面で入力された会員IDを、そのまま文字列として連結してSQL文を組み立て、データベースを検索している。セキュリティ診断で、この処理にSQLインジェクションの脆弱性があると指摘された。\n\n根本的な対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1277,6 +1368,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 756,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "B社の問合せフォームでは、利用者が入力した内容を確認画面にそのまま表示している。診断の結果、入力欄に <script> タグを含む文字列を入力すると、確認画面でスクリプトが実行されてしまうことが分かった(クロスサイトスクリプティング)。\n\n対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1291,6 +1383,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 757,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "C社の営業担当者は、外出先で公衆無線LAN(暗号化されていない、誰でも接続できるアクセスポイント)を使って、社内のシステムにアクセスすることがある。\n\nこの利用にあたって行う対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1305,6 +1398,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 758,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "D社では、従業員が私物のスマートフォンで業務用の電子メールを閲覧することを認めることにした。スマートフォンを紛失した場合の情報漏えいのリスクを下げるための対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1319,6 +1413,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 759,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "E社が利用しているWebサーバのソフトウェアに、深刻な脆弱性が見つかったという情報が公開された。修正プログラムも公開されている。\n\nE社の情報システム部門が最初に行うこととして、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1333,6 +1428,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 760,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "F社の従業員は、業務で使う複数のWebサービスで、同じパスワードを使い回していた。そのうちの1つのサービスからパスワードが流出し、他のサービスにも不正にログインされた。\n\n再発防止のために従業員に求めることとして、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1347,6 +1443,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 761,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "G社の従業員が、会社の駐車場で持ち主の分からないUSBメモリを拾った。\n\nこの従業員が取るべき行動として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1361,6 +1458,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 762,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "H社の従業員が、取引先に送る見積書を添付した電子メールを、誤って別の会社の担当者に送ってしまったことに気づいた。\n\nこの従業員が最初に行うこととして、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1375,6 +1473,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 763,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "I社では、ある従業員が人事部から営業部に異動したが、異動後も人事システムにアクセスできる権限が残っていた。\n\nこのような状態を防ぐための対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [
@@ -1389,6 +1488,7 @@ window.PRACTICE_QUESTIONS = [
  {
   "id": 764,
   "genre": "情報セキュリティ",
+  "genreKey": "security",
   "question": "J社のWebサービスで、あるアカウントに対して、短時間に大量のパスワードを試すログインが行われていることが分かった(ブルートフォース攻撃)。\n\nこの攻撃への対策として、最も適切なものを解答群の中から選べ。",
   "code": null,
   "choices": [

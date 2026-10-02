@@ -11,6 +11,12 @@ import { fileURLToPath } from 'node:url';
 
 const EXAM_TYPE = 'kihonjoho-b';
 
+// 分野(問題の sub_category)と、URL(practice.html?genre=<キー>)で使うキー。目次のリンクと合わせる
+const GENRE_KEYS = {
+  'アルゴリズムとプログラミング': 'algorithms-programming',
+  '情報セキュリティ': 'security'
+};
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = resolve(process.argv[2] ?? resolve(root, '../personal_dashboard-data/exam_questions.json'));
 const output = resolve(root, 'docs/kihonjoho-b/questions.js');
@@ -29,9 +35,15 @@ if (unsupported.length > 0) {
   throw new Error(`Pages で出題できない形式の問題があります(id: ${unsupported.map((q) => q.id).join(', ')})`);
 }
 
+const unknownGenres = [...new Set(questions.map((q) => q.sub_category))].filter((g) => !GENRE_KEYS[g]);
+if (unknownGenres.length > 0) {
+  throw new Error(`GENRE_KEYS にない分野があります(${unknownGenres.join(', ')})。キーを追加し、目次にもリンクを追加してください`);
+}
+
 const data = questions.map((q) => ({
   id: q.id,
   genre: q.sub_category,
+  genreKey: GENRE_KEYS[q.sub_category],
   question: q.question,
   code: q.code ?? null,
   choices: q.choices,
