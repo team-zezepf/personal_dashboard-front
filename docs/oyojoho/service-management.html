@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>サービスマネジメントのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -42,6 +43,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SLAは「提供者と利用者(顧客)の間」の合意であるのに対し、OLAは「提供者組織の内部」の合意、UCは「提供者と外部供給者の間」の契約である。SLAで約束した目標値を、組織内部ではOLAで、外部委託先とはUCで裏付けているという入れ子構造を理解しておくと、応用的な出題にも対応しやすい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　SLAで合意したサービスレベルの目標を達成するために、サービス提供者の組織内の部門どうしで取り決める合意はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SLA</button>
+            <button type="button">イ　OLA</button>
+            <button type="button">ウ　UC</button>
+            <button type="button">エ　SLM</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>OLA(運用レベル合意書)は提供者の内部の合意。SLAは提供者と利用者(顧客)の間の合意、UC(引き受け契約)は提供者と外部の供給者の間の契約。SLMはSLAの達成状況を監視・改善するプロセス。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　SLAで合意したサービスレベルの目標を達成するために、サービス提供者が外部の供給者(委託先)と取り交わす契約はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　OLA</button>
+            <button type="button">イ　SLA</button>
+            <button type="button">ウ　UC</button>
+            <button type="button">エ　CAB</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>UC(引き受け契約)は外部の供給者との契約。SLAの目標値を達成するには、提供者の内部(OLA)と外部の委託先(UC)の取り決めが、SLAと矛盾しないようにそろえておく必要がある。CABは変更を審査する変更諮問委員会。</p>
+        </div>
       </div>
     </section>
 
@@ -92,6 +118,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「繰り返し発生するインシデントの根本原因を調査・特定し、恒久対策や暫定的な回避策を管理するプロセスはどれか」という設問では、選択肢に「インシデント管理」が並ぶことが多いが、根本原因の追求と既知の誤りの管理は問題管理の役割である。インシデント管理はあくまで個々のインシデントへの「その場の対応」であり、恒久対策の検討や既知の誤りの登録までは行わない点を区別する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　繰り返し発生するインシデントの根本原因を調査・特定し、恒久的な対策や暫定的な回避策を管理するプロセスはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　インシデント管理</button>
+            <button type="button">イ　変更管理</button>
+            <button type="button">ウ　問題管理</button>
+            <button type="button">エ　リリース管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>問題管理は時間をかけてでも根本原因を突き止め、再発を防ぐ。インシデント管理は原因が不明でもワークアラウンドで迅速にサービスを復旧させることを優先する。恒久対策の実施にシステムの変更が必要なら、変更管理に変更要求(RFC)を出す。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　原因は特定されたが恒久的な解決に至っていない障害を「既知の誤り」として登録し、同じ障害が起きたときに回避策を素早く参照できるようにするデータベースはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　KEDB</button>
+            <button type="button">イ　CMDB</button>
+            <button type="button">ウ　データウェアハウス</button>
+            <button type="button">エ　サービスカタログ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>KEDB(既知の誤りデータベース)は問題管理の成果物で、インシデント管理が回避策を探すときに使う。CMDBは構成アイテムの情報を管理するデータベース、サービスカタログは提供できるサービスの一覧。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -122,6 +173,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>変更管理・構成管理・キャパシティ管理はいずれもIT基盤の統制に関わるため選択肢に並びやすい。「変更してよいか審査・統制する」のが変更管理、「構成要素の情報を正確に記録する」のが構成管理、「将来必要な処理能力を予測・確保する」のがキャパシティ管理と、それぞれの主眼で切り分ける。また可用性管理は「止まらないこと」に着目するのに対し、キャパシティ管理は「性能・容量が足りること」に着目する点も混同しやすい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　本番環境で重大な障害が発生し、原因となったモジュールを直ちに元に戻さなければサービスの停止が長引く。この変更の扱いとして、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　標準変更として、事前に承認された手順で実施する</button>
+            <button type="button">イ　通常変更として、次回のCAB(変更諮問委員会)の審査を待つ</button>
+            <button type="button">ウ　緊急変更として、緊急変更諮問委員会(ECAB)など少人数で迅速に承認して実施する</button>
+            <button type="button">エ　変更管理の対象外として、担当者の判断だけで実施し、記録も残さない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>直ちに実施しなければ被害が拡大する変更は緊急変更として扱い、少人数で迅速に承認する。通常変更のように定例のCABを待つと停止が長引く。緊急時でも変更管理の統制(承認と記録)は省略しない(エは誤り)。標準変更は手順が確立した低リスクの定型的な変更。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　提供中の各ITサービスの性能や応答時間を監視し、SLAで合意した水準を維持するキャパシティ管理の領域はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ビジネスキャパシティ管理</button>
+            <button type="button">イ　リソースキャパシティ管理</button>
+            <button type="button">ウ　可用性管理</button>
+            <button type="button">エ　サービスキャパシティ管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>サービスキャパシティ管理はサービス単位で性能を見る。ビジネスキャパシティ管理は事業計画を踏まえて中長期的に必要な容量を予測し、リソースキャパシティ管理はサーバやネットワークなど個々の資源の使用状況を監視する。可用性管理はサービスが必要なときに使える状態を維持するプロセス。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -142,6 +218,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「独立した第三者の立場で検証・評価する」という表現は、システム監査を特徴づけるキーワードである。内部統制は組織が自ら構築・運用する管理の仕組み(監査される対象)であるのに対し、システム監査はその内部統制の整備・運用状況を独立の立場から評価する活動(監査する側)である点を取り違えないようにする。監査を実施する者と監査される業務の担当者が同一であってはならない、という独立性の原則も併せて押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　システム監査の工程のうち、監査報告書で示した改善勧告への対応状況を、後日改めて確認するものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　予備調査</button>
+            <button type="button">イ　フォローアップ</button>
+            <button type="button">ウ　本調査</button>
+            <button type="button">エ　監査計画の策定</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>フォローアップでは、監査対象の部門が改善を実施したかを確認する(改善を実施するのは監査人ではなく監査対象の部門)。予備調査は業務内容や資料を事前に把握する工程、本調査はインタビューや証跡の確認で監査証拠を集める工程。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　システム監査の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　経営者が自ら整備・運用する、業務を適正に行うための管理の仕組み</button>
+            <button type="button">イ　監査人が問題点を見つけ、自ら改善作業を実施すること</button>
+            <button type="button">ウ　開発部門が、自ら開発したシステムを出荷前にテストすること</button>
+            <button type="button">エ　監査対象から独立した立場で、情報システムのリスクに対するコントロールが適切に整備・運用されているかを検証・評価すること</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>「独立した立場で検証・評価する」のがシステム監査の特徴。アは内部統制の説明で、監査「される側」が自ら構築・運用するもの。監査人は改善を勧告するが、自ら改善はしない(イは誤り)。</p>
+        </div>
       </div>
     </section>
     </article>

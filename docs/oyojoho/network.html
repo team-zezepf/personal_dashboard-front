@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ネットワークのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -56,6 +57,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「リンクステート型(OSPF)」と「距離ベクトル型(RIP)」の違いは頻出である。距離ベクトル型は隣接ルータから伝え聞いた距離情報だけを頼りに経路を決めるのに対し、リンクステート型は各ルータがネットワーク全体のリンク情報を共有したうえで最短経路を計算する点で異なる。また、IPアドレスによる経路選択は「ネットワーク層」の役割であり、「トランスポート層」と混同しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　各リンクのコストをもとに、ダイクストラ法で総コストが最小の経路を計算するリンクステート型のルーティングプロトコルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RIP</button>
+            <button type="button">イ　OSPF</button>
+            <button type="button">ウ　BGP</button>
+            <button type="button">エ　ARP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>OSPFはリンクステート型で、帯域幅などから算出したコストを使う。RIPは距離ベクトル型でホップ数だけを基準にするため、帯域幅の違いを考慮できない。BGPはAS間の経路制御に使う。ARPはIPアドレスからMACアドレスを求めるプロトコルで、ルーティングプロトコルではない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　異なる自律システム(AS)の間の経路制御に使われるルーティングプロトコルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RIP</button>
+            <button type="button">イ　OSPF</button>
+            <button type="button">ウ　BGP</button>
+            <button type="button">エ　DHCP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>BGPはパスベクトル型のEGP(AS間のプロトコル)で、インターネットの経路制御を担う。RIPとOSPFはAS内で使うIGP。DHCPはIPアドレスなどを自動で割り当てるプロトコル。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -86,6 +112,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>サブネット分割の計算では、ホスト部から借りるビット数を「必要なサブネット数」を基準に決めるのか「必要なホスト数」を基準に決めるのかを取り違えやすい。設問が「いくつのネットワークに分けるか」を問うているのか「1ネットワークに何台収容したいか」を問うているのかを最初に見極めること。また、ネットワークアドレスとブロードキャストアドレスは実機に割り当てられないため、ホスト数を求める際は必ず2を引く。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　192.168.10.0/24 のネットワークを、それぞれ50台以上のホストを収容できるサブネットに、できるだけ多く分割したい。各サブネットのプレフィックス長はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　/24</button>
+            <button type="button">イ　/25</button>
+            <button type="button">ウ　/27</button>
+            <button type="button">エ　/26</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>50台以上を収容するには 2ʰ − 2 ≧ 50 を満たすホスト部 h が必要で、h = 6(62台)。プレフィックス長は 32 − 6 = /26 となり、4つのサブネットに分割できる。/27 ではホストが30台までしか収容できず、/25 では2つにしか分割できない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　サブネットマスクが /27(255.255.255.224)のとき、ホスト 10.1.1.100 と同じサブネットに属するホストはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10.1.1.90</button>
+            <button type="button">イ　10.1.1.95</button>
+            <button type="button">ウ　10.1.1.120</button>
+            <button type="button">エ　10.1.1.130</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>/27 のブロックサイズは 2⁵ = 32 なので、サブネットは .0、.32、.64、.96、.128 … で区切られる。10.1.1.100 は .96〜.127 の範囲に属し、同じ範囲にあるのは .120。.90 と .95 は .64〜.95、.130 は .128〜.159 の範囲。</p>
+        </div>
       </div>
     </section>
 
@@ -138,6 +189,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ARPが解決できるのは同一セグメント内の機器のMACアドレスに限られる。宛先が別セグメントにある場合、IPヘッダの宛先IPアドレスは最終的な宛先ホストのままだが、フレームの宛先MACアドレスは「デフォルトゲートウェイ(ルータ)」のものになる点を混同しやすい。また3ウェイハンドシェイクは「SYN→SYN/ACK→ACK」の順序を正確に覚えること。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　TCPの3ウェイハンドシェイクで送られるセグメントの順として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SYN → SYN/ACK → ACK</button>
+            <button type="button">イ　SYN → ACK → SYN/ACK</button>
+            <button type="button">ウ　ACK → SYN → SYN/ACK</button>
+            <button type="button">エ　SYN → SYN → ACK → ACK</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>クライアントが接続要求(SYN)を送り、サーバがそれを確認しつつ自身の接続要求も乗せて返し(SYN/ACK)、クライアントがそれを確認する(ACK)。この3回のやり取りでコネクションが確立する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　そのドメイン宛てのメールを受け取るメールサーバを指定するDNSのリソースレコードはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Aレコード</button>
+            <button type="button">イ　CNAMEレコード</button>
+            <button type="button">ウ　PTRレコード</button>
+            <button type="button">エ　MXレコード</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>MXレコードはメールの配送先のサーバを指定する。AレコードはドメインのIPv4アドレス、CNAMEレコードは別名から正式なドメイン名への参照、PTRレコードはIPアドレスからドメイン名を求める逆引きに使う。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -168,6 +244,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「NAT」と「NAPT(IPマスカレード)」を同じものとして扱ってしまいがちだが、単純なNATはIPアドレスのみを1対1で変換するのに対し、NAPTはポート番号まで変換することで複数端末が1つのグローバルIPアドレスを共有できる点が異なる。また、TLSは「公開鍵暗号方式だけ」でデータ本体を暗号化しているわけではなく、鍵交換に公開鍵暗号方式、実際のデータ通信には処理が高速な共通鍵暗号方式を使うという役割分担を理解しておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　プライベートIPアドレスとポート番号の組を、1つのグローバルIPアドレスと通信ごとに異なるポート番号の組に変換し、複数の端末が同時にインターネットと通信できるようにする技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　NAT</button>
+            <button type="button">イ　ARP</button>
+            <button type="button">ウ　NAPT</button>
+            <button type="button">エ　DNS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>NAPT(IPマスカレード)はポート番号まで変換するので、1つのグローバルIPアドレスを複数の端末で共有できる。単純なNATはIPアドレスだけを1対1で変換するので、同時に通信できる端末の数はグローバルIPアドレスの数に限られる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　TLSによる通信で、実際に送受信するデータ本体を暗号化する方法として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　サーバの公開鍵で、すべてのデータを暗号化する</button>
+            <button type="button">イ　鍵交換で共有した共通鍵(セッション鍵)を使い、共通鍵暗号方式で暗号化する</button>
+            <button type="button">ウ　ハッシュ関数でデータを変換する</button>
+            <button type="button">エ　サーバの秘密鍵で、すべてのデータを暗号化する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>TLSはハイブリッド方式で、公開鍵暗号方式(またはDiffie-Hellmanなど)で共通鍵を安全に共有し、データ本体は高速な共通鍵暗号方式で暗号化する。公開鍵暗号ですべてのデータを暗号化すると処理が重すぎる。サーバ証明書は、なりすましを防ぐために使う。</p>
+        </div>
       </div>
     </section>
     </article>

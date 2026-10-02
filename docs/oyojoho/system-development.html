@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>システム開発技術のまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -75,6 +76,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>スパイラルモデルとアジャイル開発は、どちらも「反復」を伴う点で似ているため混同しやすい。スパイラルモデルは反復のたびに<strong>リスク分析</strong>を行い品質・リスクを段階的に詰めていく重量級のモデルであるのに対し、アジャイル(スクラム)は短いスプリントで<strong>顧客フィードバック</strong>を得ながら軽快に開発を進める点が異なる。また「V字モデル」は名前だけ見るとテスト技法と誤解しやすいが、実際は開発工程とテスト工程の対応関係を示す<strong>開発モデルの一種</strong>である。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　反復のたびにリスク分析を行い、試作(プロトタイプ)と評価を繰り返しながら、少しずつ完成度を高めていく開発モデルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ウォーターフォールモデル</button>
+            <button type="button">イ　スクラム</button>
+            <button type="button">ウ　スパイラルモデル</button>
+            <button type="button">エ　Vモデル</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スパイラルモデルは「反復のたびにリスク分析を行う」点が特徴。スクラム(アジャイル開発)も反復するが、スプリントごとに優先度の高い項目から動くものを作る点に重きを置く。Vモデルは設計工程とテスト工程の対応を示したもので、開発順序はウォーターフォールと同じ。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　新規のWebサービスを立ち上げるにあたり、利用者の反応を見ながら機能の優先順位や仕様を頻繁に見直したい。適した開発モデルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　アジャイル開発(スクラムなど)</button>
+            <button type="button">イ　ウォーターフォールモデル</button>
+            <button type="button">ウ　Vモデル</button>
+            <button type="button">エ　共通フレーム</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>アジャイル開発は短いスプリントを反復し、各スプリントで優先順位や仕様を見直せる。ウォーターフォールモデルとVモデルは最初に要件を固定して後戻りしない前提なので、仕様の頻繁な変更に向かない。共通フレームは作業項目と用語をそろえる枠組みで、開発モデルではない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -122,6 +148,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「オブジェクト間でやり取りされるメッセージを時系列で表す図」はシーケンス図であり、クラス図と混同しやすい。クラス図は<strong>構造(何がある/何とつながっているか)</strong>を表す静的な図、シーケンス図は<strong>振る舞い(いつ何をやり取りするか)</strong>を表す動的な図であるという軸で区別するとよい。問題文に「時系列」「メッセージのやり取り」とあればシーケンス図、「属性」「操作」「関連」とあればクラス図と判断する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　クラス図で、「部署」と「社員」の関連の部署側の端に多重度「1」、社員側の端に多重度「1..*」が書かれている。この関連の読み取り方として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1人の社員は1つ以上の部署に所属し、1つの部署には社員が1人だけ所属する</button>
+            <button type="button">イ　1つの部署には1人以上の社員が所属し、1人の社員はちょうど1つの部署に所属する</button>
+            <button type="button">ウ　社員が1人もいない部署があってもよい</button>
+            <button type="button">エ　部署と社員は多対多の関係である</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>多重度は、関連の反対側から見た個数を、その端に書く。社員側の「1..*」は「1つの部署に対して社員が1人以上」、部署側の「1」は「1人の社員に対して部署がちょうど1つ」を表す。社員が0人の部署を許すなら、社員側は「0..*」になる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　オブジェクト間でやり取りされるメッセージを、時間の流れに沿って表すUMLの図はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　クラス図</button>
+            <button type="button">イ　ユースケース図</button>
+            <button type="button">ウ　アクティビティ図</button>
+            <button type="button">エ　シーケンス図</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シーケンス図はメッセージのやり取りを時系列で表す動的な図。クラス図はクラスの属性・操作と関連(静的な構造)、ユースケース図はアクターとシステムの機能の関係、アクティビティ図は分岐や並行処理を含む処理の流れを表す。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -141,6 +192,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「内部構造(ソースコード)に着目する」という表現が出てきたら<strong>ホワイトボックステスト</strong>、「入出力の仕様のみに着目する」という表現が出てきたら<strong>ブラックボックステスト</strong>と判断する。回帰テスト(リグレッションテスト)は、プログラム修正後に既存機能へ悪影響が出ていないかを確認するテストであり、ホワイトボックス/ブラックボックスという着眼点の分類とは<strong>別の軸</strong>の概念である点に注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　「if (a &gt; 0) { x = 1 }」(else 節はない)という処理をテストする。命令網羅と分岐網羅を満たすのに必要な最小のテストケース数の組合せはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　命令網羅 1件、分岐網羅 1件</button>
+            <button type="button">イ　命令網羅 1件、分岐網羅 2件</button>
+            <button type="button">ウ　命令網羅 2件、分岐網羅 2件</button>
+            <button type="button">エ　命令網羅 2件、分岐網羅 1件</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>命令網羅は a = 1 の1件で、唯一の命令 x = 1 を実行できる。分岐網羅は判定の真と偽の両方を通す必要があるので、a = 1 と a = 0 の2件が必要。else 節がない if 文では、命令網羅を満たしても偽の経路を一度も通らないことがある。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　「if (a &gt; 0 and b &gt; 0)」という判定をテストする。条件網羅(個々の条件が真と偽の両方を取る)は満たすが、分岐網羅(判定全体が真と偽の両方を取る)は満たさないテストケースの組はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　(a = 1, b = 1) と (a = 0, b = 0)</button>
+            <button type="button">イ　(a = 1, b = 1) と (a = 1, b = 0)</button>
+            <button type="button">ウ　(a = 1, b = 0) と (a = 0, b = 1)</button>
+            <button type="button">エ　(a = 0, b = 0) と (a = 0, b = 1)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ウでは a &gt; 0 も b &gt; 0 もそれぞれ真と偽の両方を取るが、判定全体はどちらのケースも偽になる。アは条件網羅と分岐網羅の両方を満たす。イは a &gt; 0 が真しか取らず、エは a &gt; 0 が偽しか取らないので、条件網羅を満たさない。</p>
+        </div>
       </div>
     </section>
 
@@ -164,6 +240,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>リファクタリングは「外部から見た動作(仕様)を変えない」という点が核心であり、バグを直す<strong>デバッグ</strong>(振る舞いの誤りを修正する)、別の環境・基盤へ移行する<strong>マイグレーション</strong>、修正後に既存機能への影響を確認する<strong>リグレッションテスト</strong>とは目的も内容も異なる。選択肢にこれらが並んだときは「仕様(振る舞い)を変えているかどうか」で切り分けるとよい。またSingletonパターンは、単に「グローバル変数を使う」こととは異なり、インスタンス生成そのものを1つに制限し、生成の管理をクラス自身がカプセル化する点が特徴である。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　あるクラスのインスタンスが、システム全体で常に1つだけ存在することを保証するデザインパターンはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Singletonパターン</button>
+            <button type="button">イ　Factory Methodパターン</button>
+            <button type="button">ウ　Observerパターン</button>
+            <button type="button">エ　Adapterパターン</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>Singletonパターンは、設定情報の管理やログ出力のように、インスタンスが複数あると整合性が崩れるクラスに使う。Factory Methodはインスタンスの生成をサブクラスに任せるパターン、Adapterはインタフェースが異なるクラスを既存の呼び出し方に合わせて使えるようにするパターン。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　あるオブジェクトの状態が変化したことを、それを監視している複数のオブジェクトに自動的に通知するデザインパターンはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Singletonパターン</button>
+            <button type="button">イ　Adapterパターン</button>
+            <button type="button">ウ　Factory Methodパターン</button>
+            <button type="button">エ　Observerパターン</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>Observerパターンでは、通知する側は監視する側の具体的なクラスを知らなくてよいので、監視する側を後から追加しやすい。画面の表示を、データの変更に合わせて自動で更新するような場面で使われる。</p>
+        </div>
       </div>
     </section>
     </article>

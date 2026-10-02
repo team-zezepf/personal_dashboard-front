@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>システム戦略のまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -38,6 +39,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ERPは会計・人事・生産・販売など基幹業務全体を統合的に扱う点が特徴であり、特定の業務領域に特化したシステムとは対象範囲が異なる。たとえばSFA(営業支援システム)は営業活動、CRM(顧客関係管理)は顧客対応、SCM(供給連鎖管理)は調達・生産・物流の連鎖に特化しており、いずれもERPほど対象範囲が広くない。選択肢に紛らわしい略語が並ぶ場合は「全社の基幹業務全体を統合管理するか、特定の業務領域に特化しているか」で切り分ける。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　EA(エンタープライズアーキテクチャ)で、企業全体の業務とシステムを体系化する4つの観点に含まれないものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ビジネスアーキテクチャ</button>
+            <button type="button">イ　データアーキテクチャ</button>
+            <button type="button">ウ　マーケティングアーキテクチャ</button>
+            <button type="button">エ　テクノロジアーキテクチャ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>EAは、ビジネス・データ・アプリケーション・テクノロジの4つの観点(BDAT)で、現状と目指す姿を描いて全体最適を図る。マーケティングアーキテクチャという観点はない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　全社的な業務改革を進める際の、EA・BPR・ERPの適用順序として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ERPを導入してから、BPRで業務を見直し、最後にEAで全体像を描く</button>
+            <button type="button">イ　EAで経営戦略と整合した全体像を描き、BPRで業務プロセスを再設計し、ERPで再設計後の業務を統合的に支える</button>
+            <button type="button">ウ　BPRで業務を見直してから、EAで全体像を描き、ERPを導入する</button>
+            <button type="button">エ　ERPを導入してから、EAで全体像を描き、BPRで業務を見直す</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>まずEAで全社の目指す姿を描き、それに沿ってBPRで個々の業務プロセスを抜本的に作り直し、再設計した業務をERPで統合的に支える。先にERPを導入すると、既存の業務のやり方に合わせたシステムになりやすく、全体最適にならない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -59,6 +85,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>RFPは「見積りの提出を依頼する」側面も持つため、見積りに関する文書=RFQと早合点しやすいが、RFPは見積りだけでなく実現方法や実施体制を含めた提案全体を依頼する文書である点で、価格提示のみに特化したRFQより対象範囲が広い。また、NDAは提案や見積りを依頼する文書ではなく、機密情報の取り扱いを取り決める契約文書である点も混同しやすいので注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　システムの調達で、提案内容ではなく、価格・見積りの提示だけをベンダーに依頼する文書はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RFI</button>
+            <button type="button">イ　RFP</button>
+            <button type="button">ウ　RFQ</button>
+            <button type="button">エ　NDA</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RFQ(見積依頼書)は、調達仕様がほぼ確定した段階で価格だけを求める。RFP(提案依頼書)は見積りだけでなく、実現方法や実施体制を含めた具体的な提案を求める。RFIは初期段階でベンダーの製品・技術・実績の情報を集める文書。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　RFIやRFPで、自社の機密情報をベンダーに開示する前に締結しておくべきものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　NDA(秘密保持契約)</button>
+            <button type="button">イ　SLA(サービスレベル合意書)</button>
+            <button type="button">ウ　RFQ(見積依頼書)</button>
+            <button type="button">エ　請負契約</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>提案や見積りの過程で開示する業務内容などの機密情報が漏れないよう、事前にNDAを締結しておく。SLAや請負契約は、ベンダーを選定した後にサービスや開発の内容について結ぶもの。</p>
+        </div>
       </div>
     </section>
 
@@ -123,6 +174,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>DaaSは仮想デスクトップ環境(利用者の操作画面そのもの)を提供するサービスであり、サーバ・ネットワークなどインフラのリソースを提供するIaaSとは提供対象が異なるため混同しないこと。また、SaaSは自社でサーバやソフトウェアを保有・運用する必要がない点が、ソフトウェアを自社に導入して運用するオンプレミスのパッケージソフトウェアとの本質的な違いである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　自社でアプリケーションを開発して運用したいが、OSやミドルウェアの構築・保守の手間は省きたい。適したクラウドサービスの形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　IaaS</button>
+            <button type="button">イ　PaaS</button>
+            <button type="button">ウ　SaaS</button>
+            <button type="button">エ　DaaS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>PaaSはOS・ミドルウェアなどの実行環境まで事業者が管理し、利用者はアプリケーションの開発・運用に集中できる。IaaSではOSから上を利用者が管理する必要がある。SaaSは事業者が用意したアプリケーションを使う形態なので、自社のアプリケーションは動かせない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　仮想デスクトップ環境(利用者の操作画面そのもの)をサービスとして提供するクラウドサービスの形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　IaaS</button>
+            <button type="button">イ　SaaS</button>
+            <button type="button">ウ　PaaS</button>
+            <button type="button">エ　DaaS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DaaS(Desktop as a Service)はデスクトップ環境を提供し、利用者は端末から画面を操作する。サーバ・ストレージなどのインフラのリソースを提供するIaaSとは提供するものが異なる。</p>
+        </div>
       </div>
     </section>
     </article>

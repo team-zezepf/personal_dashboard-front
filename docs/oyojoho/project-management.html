@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>プロジェクトマネジメントのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -34,6 +35,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>プロジェクト憲章は「プロジェクトの開始を正式に認可する文書」であり、着手後に作成する詳細な計画書(プロジェクトマネジメント計画書やスコープ記述書)と混同しないこと。また、ステークホルダマネジメントは「特定した相手全員に画一的に同じ情報量を提供する」活動ではなく、関心度・影響力に応じてコミュニケーションの深さを使い分ける点が問われやすい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ステークホルダを影響力と関心度で分類したとき、影響力が大きく、関心度も高いステークホルダ(経営層など)への基本方針として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　過不足のない最小限のモニタリングにとどめる</button>
+            <button type="button">イ　満足度を維持できる程度に、要点を押さえて情報を提供する</button>
+            <button type="button">ウ　積極的に関与させ、密に情報共有と調整を行う</button>
+            <button type="button">エ　情報は提供するが、意見はプロジェクトに反映しない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>影響力も関心度も大きいステークホルダは、プロジェクトの成否を大きく左右するので、積極的に関与させて密に調整する。アは影響力・関心度ともに小、イは影響力が大きく関心度が小さいステークホルダへの方針。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　プロジェクト憲章の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　作業ごとの詳細なスケジュールと担当者をまとめた文書</button>
+            <button type="button">イ　プロジェクトの作業を階層的に分解して整理したもの</button>
+            <button type="button">ウ　特定したリスクと、その対応策の一覧</button>
+            <button type="button">エ　プロジェクトの目的・概要・責任者などを示し、プロジェクトの開始を正式に認可する文書</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>プロジェクト憲章は立ち上げの段階で作り、プロジェクトマネージャに権限を与えて開始を認可する。詳細な計画(ア)は着手後に作るプロジェクトマネジメント計画書など、イはWBS、ウはリスク登録簿にあたる。</p>
+        </div>
       </div>
     </section>
 
@@ -88,6 +114,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>経路の所要日数を比較する際は、見た目上まっすぐに見える経路だけでなく、必ず開始から終了までのすべての経路を洗い出したうえで最長のものを選ぶ必要がある。クリティカルパスは「最も日数が短い経路」ではなく「最も日数が長い経路」である点を取り違えないこと。また、フロート(ゆとり)は「最遅結合点時刻-最早結合点時刻」で求めるものであり、フロートが0の結合点だけをたどった経路がクリティカルパスになる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　あるプロジェクトの作業は、結合点①→②の作業A(4日)、①→③の作業B(2日)、②→④の作業C(5日)、③→④の作業D(8日)、④→⑤の作業E(3日)である(①が開始、⑤が終了)。プロジェクト全体の所要日数はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　12日</button>
+            <button type="button">イ　9日</button>
+            <button type="button">ウ　13日</button>
+            <button type="button">エ　22日</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>経路は ①→②→④→⑤ が A + C + E = 4 + 5 + 3 = 12日、①→③→④→⑤ が B + D + E = 2 + 8 + 3 = 13日。最長の経路(クリティカルパス)B → D → E の13日が全体の所要日数になる。エはすべての作業日数の合計で、並行して進む作業を考慮していない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　あるプロジェクトの作業は、結合点①→②の作業A(4日)、①→③の作業B(2日)、②→④の作業C(5日)、③→④の作業D(8日)、④→⑤の作業E(3日)である(①が開始、⑤が終了)。結合点②の最遅結合点時刻はどれか(開始時刻を0日とする)。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　4日</button>
+            <button type="button">イ　5日</button>
+            <button type="button">ウ　2日</button>
+            <button type="button">エ　10日</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>終了点⑤の時刻は13日。後ろから計算すると ④ = 13 − 3 = 10日、② = 10 − 5 = 5日。②の最早結合点時刻は4日なので、作業Cの開始は1日遅れても全体に影響しない(余裕が1日ある)。アは最早結合点時刻。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -112,6 +163,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>クラッシングとファストトラッキングは、どちらも「工期短縮」という目的は共通しているが、手段が異なる。クラッシングは「資源投入によるコスト増」、ファストトラッキングは「並行作業によるリスク増(コスト増は小さい)」という組み合わせで覚え、逆に対応付けないよう注意する。また、クリティカルパス上にない作業をいくら短縮しても、全体の完了日には影響しない点にも注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　ある作業の楽観値が6日、最可能値が9日、悲観値が18日であるとき、PERT法(三点見積り)による期待値はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10日</button>
+            <button type="button">イ　9日</button>
+            <button type="button">ウ　11日</button>
+            <button type="button">エ　12日</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>期待値 = (6 + 4 × 9 + 18) ÷ 6 = 60 ÷ 6 = 10日。ウは3つの値の単純な平均((6 + 9 + 18) ÷ 3)、イは最可能値そのもの。悲観値が大きいほど、期待値は最可能値より大きくなる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　本来は順番に実施する作業の一部を並行して実施するように工程を組み替え、工期を短縮する技法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　クラッシング</button>
+            <button type="button">イ　ファストトラッキング</button>
+            <button type="button">ウ　ワークアラウンド</button>
+            <button type="button">エ　リファクタリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ファストトラッキングは追加のコストを抑えられるが、前の作業が終わる前に次の作業を始めるため、手戻りや調整のリスクが増える。クラッシングはクリティカルパス上の作業に要員などの資源を追加投入して期間を縮める技法で、コストが増えやすい。</p>
+        </div>
       </div>
     </section>
 
@@ -143,6 +219,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>CPI(EV÷AC)は「コスト」の効率を、SPI(EV÷PV)は「スケジュール(進捗)」の効率を表す指標であり、分母がACかPVかを取り違えやすい。いずれも1より大きければ順調・効率的、1より小さければ非効率(コスト超過・進捗遅延)と判断する。また、AC(実コスト)は「使った金額」であって「終わらせた作業量」ではないため、ACが多いこと自体は進捗が進んでいることを意味しない点にも注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　ある時点で、PV(計画価値)が800万円、EV(出来高)が600万円、AC(実コスト)が750万円であった。CV(コスト差異)とSV(スケジュール差異)の組合せはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　CV = 150万円、SV = 200万円</button>
+            <button type="button">イ　CV = −200万円、SV = −150万円</button>
+            <button type="button">ウ　CV = −150万円、SV = 200万円</button>
+            <button type="button">エ　CV = −150万円、SV = −200万円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CV = EV − AC = 600 − 750 = −150万円(コスト超過)、SV = EV − PV = 600 − 800 = −200万円(遅延)。どちらも EV から引く。イは CV と SV を取り違えた場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ある時点で、EV(出来高)が600万円、AC(実コスト)が750万円であった。完成時総予算(BAC)は2,000万円である。今のコスト効率(CPI)がこのまま続くと仮定したとき、完成時総コストの予測値(EAC)はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1,600万円</button>
+            <button type="button">イ　2,000万円</button>
+            <button type="button">ウ　2,500万円</button>
+            <button type="button">エ　2,150万円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CPI = EV ÷ AC = 600 ÷ 750 = 0.8。EAC = BAC ÷ CPI = 2,000 ÷ 0.8 = 2,500万円。アは BAC に CPI を掛けてしまった場合。CPI が1より小さい(コスト効率が悪い)ので、予測値は予算を上回る。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -164,6 +265,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「軽減(低減)」は予防策によってリスクの発生確率・影響度を下げる対応であり、リスクの原因そのものを取り除く「回避」とは異なる(軽減してもリスクがゼロになるとは限らない)。また、「転嫁」は保険や外部委託によって影響を第三者に移す対応であり、無対策のまま受け入れる「受容」とも混同しやすいため、それぞれの対応が「発生確率・影響度を下げるのか」「原因を消すのか」「影響を移すのか」「何もしないのか」を整理して覚える。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　屋外工事が悪天候で遅れるリスクに対して、防水シートの設置や作業手順の見直しなどの対策をとり、遅延の起きる可能性を下げる。このリスク対応戦略はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　回避</button>
+            <button type="button">イ　軽減(低減)</button>
+            <button type="button">ウ　転嫁</button>
+            <button type="button">エ　受容</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>軽減は、予防策で発生確率や影響度を下げる対応で、リスク自体は残る。回避はリスクの原因となる作業や条件そのものをなくす対応、転嫁は保険や外部委託で影響を第三者に移す対応、受容は対策をとらずに影響を受け入れる対応。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　屋外工事が悪天候で遅れるリスクに対して、屋外の作業工程そのものをやめ、工場内で部材を組み立てる工法に変更した。このリスク対応戦略はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　回避</button>
+            <button type="button">イ　軽減(低減)</button>
+            <button type="button">ウ　転嫁</button>
+            <button type="button">エ　受容</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>天候の影響を受ける作業自体を計画から取り除いたので、リスクの原因がなくなる「回避」にあたる。防水シートの設置のように作業は残したまま遅延の可能性を下げる対応は「軽減」。</p>
+        </div>
       </div>
     </section>
     </article>

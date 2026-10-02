@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>データベースのまとめ | 応用情報技術者試験（午前）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -56,6 +57,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>第3正規形の定義には「第2正規形の条件を満たした上で」という前提が含まれる。部分関数従属が残ったまま推移的関数従属だけを取り除いても第3正規形にはならない点に注意する。また、選択肢としてよく登場するボイス・コッド正規形(BCNF)は第3正規形よりもさらに強い制約(すべての決定項が候補キーであること)を課す、一段進んだ正規形であり、第3正規形と同一視しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　表「受注明細(受注番号, 商品番号, 商品名, 数量)」の主キーは {受注番号, 商品番号} である。商品名は商品番号だけで値が決まる。この商品名の関数従属はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　完全関数従属</button>
+            <button type="button">イ　部分関数従属</button>
+            <button type="button">ウ　推移的関数従属</button>
+            <button type="button">エ　多値従属</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>商品名は複合キーの一部(商品番号)だけで決まるので部分関数従属。これを取り除くと第2正規形になる。数量は受注番号と商品番号の両方がそろって初めて決まるので、キー全体への完全関数従属。推移的関数従属は、キー以外の属性を経由して決まる従属。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　表「社員(社員番号, 氏名, 部門コード, 部門名)」の主キーは社員番号で、部門名は部門コードによって値が決まる。この表は、どの正規形まで満たしているか(各セルには1つの値だけが入っている)。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　非正規形</button>
+            <button type="button">イ　第1正規形</button>
+            <button type="button">ウ　第2正規形</button>
+            <button type="button">エ　第3正規形</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>主キーが単一の列なので部分関数従属はなく、第2正規形を満たす。しかし部門名は、キー以外の属性である部門コードを経由して社員番号に推移的に従属しているので、第3正規形ではない。部門(部門コード, 部門名)を別の表に分けると第3正規形になる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -80,6 +106,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>WHERE句は集計(GROUP BY)前の個々の行に対する絞り込み条件であり、HAVING句は集計後の集計結果(AVGやSUMなど)に対する絞り込み条件である。集計関数を使った条件を誤ってWHERE句に書くとエラーになるか意図と異なる結果になる。また、関係代数の「射影」は列を絞り込む操作であり、行を絞り込む「選択」と名前が似ているため混同しやすい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　SQLで、GROUP BYによる集計後の結果(AVGやSUMの値など)に対して、絞り込みの条件を指定する句はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　WHERE</button>
+            <button type="button">イ　GROUP BY</button>
+            <button type="button">ウ　ORDER BY</button>
+            <button type="button">エ　HAVING</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>HAVING句は集計後の結果に対する条件(例: HAVING AVG(給与) &gt;= 400)。WHERE句は集計前の個々の行に対する条件なので、集計関数を使った条件は書けない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　関係代数で、表から指定した列だけを取り出す演算はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　射影</button>
+            <button type="button">イ　選択</button>
+            <button type="button">ウ　結合</button>
+            <button type="button">エ　差</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>射影(プロジェクション)はSQLのSELECT句の列リストにあたり、列を絞り込む。選択(セレクション)はWHERE句にあたり、条件に一致する行を絞り込む。行か列かを取り違えないようにする。</p>
+        </div>
       </div>
     </section>
 
@@ -138,6 +189,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>デッドロックが検出されると、DBMSはいずれか一方のトランザクションを強制的にロールバックして解消する。「先にロックを獲得した側が優先される」といった単純な規則ではない。また、排他制御(ロックによる同時アクセス制御そのもの)とデッドロック(その結果起こりうる処理停止状態)は別の概念であり、両者を同一視しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　トランザクションの分離レベルのうち、ダーティリードは防げるが、ノンリピータブルリードとファントムリードは起こりうるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　READ UNCOMMITTED</button>
+            <button type="button">イ　READ COMMITTED</button>
+            <button type="button">ウ　REPEATABLE READ</button>
+            <button type="button">エ　SERIALIZABLE</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>READ COMMITTEDはコミット済みのデータだけを読むのでダーティリードは防げるが、同じ行を2回読む間に他のトランザクションが更新・コミットすると値が変わる(ノンリピータブルリード)。REPEATABLE READはファントムリードだけが起こりうる。SERIALIZABLEはすべて防げる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　DBMSがデッドロックを検出したときの一般的な解消方法として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　先にロックを獲得したトランザクションが、ロックを持ったまま待ち続ける</button>
+            <button type="button">イ　両方のトランザクションをそのままコミットする</button>
+            <button type="button">ウ　いずれかのトランザクションを強制的にロールバックし、ロックを解放させる</button>
+            <button type="button">エ　分離レベルを下げて、ロックを不要にする</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デッドロックは互いに相手のロック解除を待つ循環状態なので、どちらかをロールバックしてロックを解放させないと解消しない。ロールバックされたトランザクションは、後で再実行する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -171,6 +247,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ACID特性(伝統的なRDBが重視する厳格な整合性)とBASE特性(分散NoSQLが重視する可用性優先・結果整合性)は対照的な設計思想であり、混同しないこと。またCAP定理は「3つのうち任意の2つを自由に選べる」という単純な話ではなく、実際に分断が発生した瞬間にCとAのどちらを優先するかという判断を迫られる、という点を理解しておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　ハッシュインデックスでは高速化できない検索条件はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　WHERE 社員番号 = 'E001'</button>
+            <button type="button">イ　WHERE 部門コード = 'D10'</button>
+            <button type="button">ウ　WHERE 顧客ID = 123</button>
+            <button type="button">エ　WHERE 価格 BETWEEN 1000 AND 2000</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ハッシュインデックスは値をハッシュ関数で格納位置に変換するので、キーの大小関係が保たれず、範囲検索(以上・以下・BETWEEN)には使えない。等価条件(=)なら平均 O(1) で高速に検索できる。範囲検索にはB木(B+木)インデックスが向いている。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　ネットワーク分断が起こりうることを前提とした分散データベースで、一時的にノード間でデータが一致しない状態を許し、最終的に一致すればよいとする考え方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ACID特性</button>
+            <button type="button">イ　結果整合性(BASE特性)</button>
+            <button type="button">ウ　2相コミット</button>
+            <button type="button">エ　正規化</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>BASE特性は可用性を優先し、結果整合性(最終的に一致すればよい)を許す。ACID特性は伝統的なRDBが重視する厳格な整合性で、対照的な考え方。2相コミットは分散データベースで全ノードの更新をそろって確定させる手順で、一貫性を重視する側の仕組み。</p>
+        </div>
       </div>
     </section>
     </article>
