@@ -1,0 +1,166 @@
+:host {
+  display: block;
+  --like: #e0457b;
+}
+
+.post {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--line);
+}
+
+.post.reply .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.post-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reply-to {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.reply-to a {
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+.reply-to a:hover {
+  text-decoration: underline;
+}
+
+.post-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.menus {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.menu {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.menu:hover:not(:disabled) {
+  color: var(--primary-dark);
+}
+
+.menu.danger:hover:not(:disabled) {
+  color: var(--red);
+}
+
+.body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+
+.large .body {
+  font-size: 1.05rem;
+}
+
+.body a {
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+.body a:hover {
+  text-decoration: underline;
+}
+
+.attachment {
+  display: block;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.action {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+span.action {
+  cursor: default;
+}
+
+.reply:hover {
+  color: var(--primary);
+}
+
+.like:hover:not(:disabled),
+.like.on {
+  color: var(--like);
+}
+
+.like.on {
+  font-weight: 700;
+}
+
+.bookmark {
+  margin-left: auto;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.bookmark:hover:not(:disabled),
+.bookmark.on {
+  color: var(--orange);
+}
+
+.action:disabled {
+  cursor: wait;
+}

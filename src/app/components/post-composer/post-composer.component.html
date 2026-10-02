@@ -1,0 +1,50 @@
+<div class="composer" [class.compact]="compact()">
+  <textarea
+    [placeholder]="placeholder()"
+    [attr.aria-label]="placeholder()"
+    [rows]="compact() ? 2 : 3"
+    [ngModel]="body()"
+    (ngModelChange)="onBodyChange($event)"
+    (keydown)="onKeydown($event)"
+  ></textarea>
+
+  @if (images().length > 0 || uploadingCount() > 0) {
+    <div class="attach-list">
+      @for (filename of images(); track filename; let i = $index) {
+        <div class="attach">
+          <img [src]="postImageUrl(filename)" alt="">
+          <button type="button" class="attach-remove" title="外す" aria-label="画像を外す" (click)="removeImage(i)">✕</button>
+        </div>
+      }
+      @for (slot of uploadingSlots(); track $index) {
+        <div class="attach uploading">アップロード中…</div>
+      }
+    </div>
+  }
+
+  @if (preview(); as linkPreview) {
+    <app-link-card class="preview" [preview]="linkPreview"></app-link-card>
+  }
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <div class="foot">
+    <button
+      type="button"
+      class="icon-btn"
+      [disabled]="!canAttach()"
+      [title]="'画像を添付（' + maxImages + '枚まで）'"
+      aria-label="画像を添付"
+      (click)="fileInput.click()"
+    >🖼</button>
+    <input #fileInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden (change)="onFilesSelected($event)">
+
+    <span class="counter" [class.over]="length() > maxLength">{{ length() }} / {{ maxLength }}</span>
+    @if (cancellable()) {
+      <button type="button" class="btn btn-ghost" (click)="cancelled.emit()">キャンセル</button>
+    }
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit()" (click)="submit()">{{ submitLabel() }}</button>
+  </div>
+</div>

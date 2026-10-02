@@ -1,0 +1,21 @@
+<div class="images" [class]="'images n' + urls().length">
+  @for (url of urls(); track url; let i = $index) {
+    <button type="button" class="image" (click)="open(i)" [attr.aria-label]="'画像' + (i + 1) + 'を拡大'">
+      <img [src]="url" alt="" loading="lazy">
+    </button>
+  }
+</div>
+
+@if (openIndex() !== null) {
+  <div class="viewer" role="dialog" aria-modal="true" aria-label="画像の拡大表示" (click)="close()">
+    <button type="button" class="viewer-close" aria-label="閉じる" (click)="close()">✕</button>
+    @if (urls().length > 1) {
+      <button type="button" class="viewer-nav prev" aria-label="前の画像" (click)="move(-1, $event)">‹</button>
+    }
+    <img class="viewer-image" [src]="urls()[openIndex()!]" alt="" (click)="$event.stopPropagation()">
+    @if (urls().length > 1) {
+      <button type="button" class="viewer-nav next" aria-label="次の画像" (click)="move(1, $event)">›</button>
+      <span class="viewer-count">{{ openIndex()! + 1 }} / {{ urls().length }}</span>
+    }
+  </div>
+}
