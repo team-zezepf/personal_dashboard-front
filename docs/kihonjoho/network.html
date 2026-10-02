@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ネットワークのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -54,6 +55,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>データリンク層で扱う「フレーム」、ネットワーク層で扱う「パケット」、トランスポート層で扱う「セグメント」は、いずれも通信データの分割単位を指す言葉だが、扱う階層によって呼び方が異なるだけである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　集線装置(ハブなど)を中心に、各端末を個別のケーブルで接続するネットワークの接続形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　バス型</button>
+            <button type="button">イ　リング型</button>
+            <button type="button">ウ　スター型</button>
+            <button type="button">エ　メッシュ型</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スター型は中央の集線装置に各端末をつなぐ形態で、1本のケーブルの障害が他の端末に影響しにくく、現在最も一般的。バス型は1本の幹線に全端末をつなぎ、リング型は環状につないで順に受け渡し、メッシュ型は網目状につないで複数の経路を確保する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　ネットワーク層(TCP/IPのインターネット層)で扱う、通信データの分割単位を表す用語はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　フレーム</button>
+            <button type="button">イ　パケット</button>
+            <button type="button">ウ　セグメント</button>
+            <button type="button">エ　メッセージ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ネットワーク層で扱う単位はパケット。データリンク層ではフレーム、トランスポート層(TCP)ではセグメントと呼ぶ。メッセージは、アプリケーションがやり取りするデータ全体を指すことが多い。</p>
+        </div>
       </div>
     </section>
 
@@ -105,6 +131,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>HTTPはアプリケーション層、IPはネットワーク(インターネット)層のプロトコルであり、トランスポート層には分類されない。「どの層のプロトコルか」を問う設問では、各プロトコルの役割から階層を逆算できるようにしておく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　OSI参照モデルで、経路選択(ルーティング)やIPアドレスによるアドレッシングを担う層はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　トランスポート層</button>
+            <button type="button">イ　データリンク層</button>
+            <button type="button">ウ　セッション層</button>
+            <button type="button">エ　ネットワーク層</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ネットワーク層(第3層)は、異なるネットワーク間の経路選択とアドレッシングを担い、IPが代表的なプロトコル。トランスポート層は端末間の信頼性の確保(TCP・UDP)、データリンク層はMACアドレスによる隣接機器間の転送、セッション層は通信の開始・終了の管理を行う。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　UDPの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コネクションレス型で、到達確認や再送制御を行わない分、高速に送れる</button>
+            <button type="button">イ　事前に接続を確立し、到達確認・再送制御・順序制御を行う</button>
+            <button type="button">ウ　宛先IPアドレスをもとに、異なるネットワーク間の経路を選択する</button>
+            <button type="button">エ　MACアドレスを使って、隣接する機器との間でデータを転送する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>UDPは接続の確立を行わず、信頼性より速度を優先するため、動画・音声の配信やDNSの問い合わせに使われる。イはTCPの説明。ウはIP(ネットワーク層)、エはデータリンク層の説明。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -130,6 +181,31 @@
         <span>ホスト部が全て0のアドレスは「ネットワークアドレス」(ネットワークそのものを指す識別子)、全て1のアドレスは「ブロードキャストアドレス」(ネットワーク内全体への一斉送信用)であり、どちらも個々の機器には割り当てられない。ホスト数を求める際は必ずこの2個を引くことを忘れない。</span>
       </div>
       <p>IPv4はアドレス空間が32ビット(約43億個)であり、インターネットの普及に伴いアドレスの枯渇が問題となった。この対策として、128ビットという非常に広大なアドレス空間を持つIPv6が策定されている。</p>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　IPv4のネットワーク 172.16.5.0/27 で、ホストに割り当てられるIPアドレスは最大何個か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　30</button>
+            <button type="button">イ　32</button>
+            <button type="button">ウ　62</button>
+            <button type="button">エ　14</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ホスト部は 32 − 27 = 5 ビットで、アドレスは 2⁵ = 32 個。ホスト部が全て0のネットワークアドレスと、全て1のブロードキャストアドレスを除いた 30 個がホストに割り当てられる。イは2個を除き忘れた値、ウは /26、エは /28 の場合の値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　IPv4のネットワーク 192.168.10.64/26 のブロードキャストアドレスはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　192.168.10.63</button>
+            <button type="button">イ　192.168.10.64</button>
+            <button type="button">ウ　192.168.10.127</button>
+            <button type="button">エ　192.168.10.255</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ホスト部は6ビットなので、このネットワークのアドレスは 64 から 64 + 63 = 127 まで。ホスト部が全て1の 192.168.10.127 がブロードキャストアドレスになる。イはホスト部が全て0のネットワークアドレス、アは1つ前のネットワーク(.0/26)のブロードキャストアドレス、エは /24 とみなした場合のブロードキャストアドレス。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -190,6 +266,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「ハブ(リピータハブ)」は同一セグメント内で信号をそのまま中継するだけで、異なるネットワークを繋ぐことはできない。異なるネットワーク間の接続・中継には必ず「ルータ」が必要になる、という区別が頻出のポイント。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　接続された機器のMACアドレスを学習し、宛先の機器が接続されているポートにだけデータを転送するネットワーク機器はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　リピータハブ</button>
+            <button type="button">イ　スイッチングハブ</button>
+            <button type="button">ウ　ルータ</button>
+            <button type="button">エ　プロキシサーバ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スイッチングハブはデータリンク層の機器で、MACアドレスで宛先を判別する。リピータハブ(物理層)は宛先を区別せず全ポートへ中継する。ルータ(ネットワーク層)はIPアドレスをもとに異なるネットワーク間でパケットを中継する。プロキシサーバはクライアントの代理でサーバにアクセスするサーバ。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　端末が自分のネットワークの外と通信するとき、最初にパケットを送る中継機器(通常はルータ)のアドレスを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　サブネットマスク</button>
+            <button type="button">イ　ブロードキャストアドレス</button>
+            <button type="button">ウ　ネットワークアドレス</button>
+            <button type="button">エ　デフォルトゲートウェイ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デフォルトゲートウェイは、他のネットワークへの出口となる機器のアドレス。サブネットマスクはネットワーク部とホスト部の境界を示す値、ブロードキャストアドレスはネットワーク内の全端末宛てのアドレス、ネットワークアドレスはネットワークそのものを表すアドレス。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -234,6 +335,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>DNSは「名前解決(ドメイン名⇔IPアドレス)」、DHCPは「アドレス等の自動割当て」、NATは「アドレスの変換」と役割が似た用語が並ぶため混同しやすい。それぞれ「何を」「どう変換・割当てするか」で整理して区別する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ネットワークに接続した端末に、IPアドレスなどのネットワーク設定を自動的に割り当てるプロトコルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　DNS</button>
+            <button type="button">イ　NAT</button>
+            <button type="button">ウ　DHCP</button>
+            <button type="button">エ　SMTP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DHCPは、IPアドレス・サブネットマスク・デフォルトゲートウェイなどを自動で割り当てる。DNSはドメイン名とIPアドレスの相互変換(名前解決)、NATはアドレスの変換、SMTPはメールの送信に使う。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　HTTPSで通常使われるポート番号はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　443</button>
+            <button type="button">イ　80</button>
+            <button type="button">ウ　53</button>
+            <button type="button">エ　25</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>HTTPSはSSL/TLSで暗号化したHTTP通信で、ポート番号は443。80はHTTP(平文)、53はDNS、25はSMTPのポート番号。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-5">
@@ -267,6 +393,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>AES・DESは「共通鍵暗号方式」、RSA・楕円曲線暗号(ECC)は「公開鍵暗号方式」に分類される。名称だけで覚えるのではなく、鍵が1つ(共通)か2つ(公開鍵・秘密鍵)かという構造で整理すると区別しやすい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　共通鍵暗号方式に分類される暗号はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RSA</button>
+            <button type="button">イ　AES</button>
+            <button type="button">ウ　楕円曲線暗号</button>
+            <button type="button">エ　SHA-256</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>AESは暗号化と復号に同じ鍵を使う共通鍵暗号方式。RSAと楕円曲線暗号は、公開鍵と秘密鍵を使う公開鍵暗号方式。SHA-256はハッシュ関数で、暗号化して元に戻すためのものではない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　インターネットなどの公衆回線上に、暗号化技術を使って仮想的な専用線のような通信経路を作る技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　NAT</button>
+            <button type="button">イ　DHCP</button>
+            <button type="button">ウ　VPN</button>
+            <button type="button">エ　プロキシサーバ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>VPN(Virtual Private Network)は、拠点間の接続や在宅勤務時の社内ネットワークへの接続に使われる。NATはアドレスの変換、DHCPはIPアドレスなどの自動割当て、プロキシサーバはクライアントの代理でサーバにアクセスする仕組み。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-6">
       <h2><span class="topic-no">7</span>電子メールのプロトコル</h2>
@@ -283,6 +434,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SMTPは送信、POP・IMAPは受信。スマートフォンとPCの両方で同じ受信メールを見たい場合は、サーバにメールを残すIMAPが向いている。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　受信したメールをメールサーバ上に置いたまま読み、スマートフォンとPCなど複数の端末から同じメールを扱えるプロトコルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SMTP</button>
+            <button type="button">イ　POP3</button>
+            <button type="button">ウ　MIME</button>
+            <button type="button">エ　IMAP4</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>IMAP4はメールをサーバ上で管理するため、複数の端末で同じメールを扱える。POP3はメールを端末にダウンロードして読み、基本的にサーバからは削除される。SMTPは送信とサーバ間の転送、MIMEは日本語や添付ファイルを送るための規格。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　電子メールで、日本語の本文や画像などの添付ファイルを送れるようにする規格はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　MIME</button>
+            <button type="button">イ　SMTP-AUTH</button>
+            <button type="button">ウ　POP3</button>
+            <button type="button">エ　IMAP4</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>MIMEは、電子メールで英数字以外のデータを扱えるようにする規格。これに暗号化・署名を加えたものが S/MIME。SMTP-AUTHは送信時に利用者を認証する仕組み、POP3・IMAP4は受信のプロトコル。</p>
+        </div>
       </div>
     </section>
 
@@ -308,6 +484,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>回線速度は「ビット/秒(bps)」、ファイルサイズは「バイト」で表されることが多い。1バイト = 8ビットの変換を忘れると答えが8倍ずれる。また伝送効率を掛けると、実際に使える速度は回線速度より遅くなる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　無線LANで使われ、伝送路が空いていてもランダムな時間待ってから送信することで、衝突を回避する通信制御方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　CSMA/CD</button>
+            <button type="button">イ　CSMA/CA</button>
+            <button type="button">ウ　トークンパッシング</button>
+            <button type="button">エ　TDMA</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>無線では衝突を検出しにくいため、CSMA/CA(Collision Avoidance)で衝突を避ける。CSMA/CDは有線LAN(イーサネット)で使われ、衝突を検出したら待って再送する。トークンパッシングは送信権(トークン)を順に回す方式、TDMAは時間を区切って端末ごとに割り当てる方式。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　回線速度100Mビット/秒、伝送効率50%の回線で、50Mバイトのファイルを送るのに何秒かかるか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.5秒</button>
+            <button type="button">イ　1秒</button>
+            <button type="button">ウ　4秒</button>
+            <button type="button">エ　8秒</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>データ量は 50M × 8 = 400Mビット、実効速度は 100M × 0.5 = 50Mビット/秒なので、400 ÷ 50 = 8 秒。ウは伝送効率を掛け忘れた場合(400 ÷ 100)、イはバイトをビットに直し忘れた場合(50 ÷ 50)、アはその両方を忘れた場合。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-8">
@@ -327,6 +528,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>LPWAは「速度は低いが、省電力・広範囲」。高速なのは5G。エッジコンピューティングは「クラウドに集めて処理する」のとは逆に、「現場の近くで処理する」考え方である。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　通信速度は低いが、省電力で数km〜数十kmの広い範囲をカバーし、電池で長期間動くIoTのセンサに向く無線通信技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　5G</button>
+            <button type="button">イ　BLE</button>
+            <button type="button">ウ　LPWA</button>
+            <button type="button">エ　テザリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>LPWA(Low Power Wide Area)は「省電力・広範囲・低速」が特徴。5Gは高速・大容量・低遅延・多数同時接続の移動通信規格。BLEは省電力だが近距離向けのBluetoothの規格。テザリングはスマートフォンなどを中継器にしてインターネットに接続すること。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　データを遠くのクラウドに送らず、利用者や機器に近い場所で処理することで、通信の遅延や量を減らす考え方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　クラウドコンピューティング</button>
+            <button type="button">イ　エッジコンピューティング</button>
+            <button type="button">ウ　SDN</button>
+            <button type="button">エ　テザリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>エッジコンピューティングは、現場の近く(エッジ)で処理して、遅延や通信量を減らす。クラウドコンピューティングはデータをクラウドに集めて処理するので逆の考え方。SDNはネットワーク機器の制御をソフトウェアに集約して構成を柔軟に変える考え方。</p>
+        </div>
       </div>
     </section>
     </article>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>基礎理論のまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -51,6 +52,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>8進数・16進数はどちらも「各桁の重み(8のn乗、16のn乗)×桁の値」を足し合わせるだけで10進数に変換できる。基数(2, 8, 16)が違うだけで考え方は同じ。逆方向(10進数→n進数)は割り算の「余り」を使う点が、10進数への変換(掛け算で重みを足す)と逆になることを意識するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　2進数 101101 を10進数で表したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　41</button>
+            <button type="button">イ　45</button>
+            <button type="button">ウ　53</button>
+            <button type="button">エ　90</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>各桁の重みは左から 32, 16, 8, 4, 2, 1。1 が立っている桁を足すと 32 + 8 + 4 + 1 = 45 になる。ア(41)は 4 の桁を足し忘れた値、ウ(53)は 8 の桁と 16 の桁を取り違えた値。エ(90)は 101101 を左に1ビットずらした 1011010 の値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　10進数 172 を16進数で表したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　A2</button>
+            <button type="button">イ　AB</button>
+            <button type="button">ウ　BA</button>
+            <button type="button">エ　AC</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>172 ÷ 16 = 10 余り 12。商の 10(A)が上の桁、余りの 12(C)が下の桁になるので AC。ア(A2)は 162、イ(AB)は 171、ウ(BA)は 186 にあたる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -87,6 +113,31 @@
         <span class="label">ド・モルガンの法則</span>
         <span>¬(A ∧ B) = ¬A ∨ ¬B　(「AかつBでない」は「Aでない、またはBでない」)<br>¬(A ∨ B) = ¬A ∧ ¬B　(「AまたはBでない」は「Aでない、かつBでない」)</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　2つの入力が異なるときだけ出力が1になる論理演算はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　AND</button>
+            <button type="button">イ　OR</button>
+            <button type="button">ウ　XOR</button>
+            <button type="button">エ　NAND</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>XOR(排他的論理和)は、入力が 0 と 1、または 1 と 0 のときだけ 1 を出力する。ORは両方が1のときも1になる点がXORと違う。ANDは両方が1のときだけ1、NANDはANDの結果を反転したもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　論理式 ¬(A ∨ B) と等しいものはどれか。ここで、¬ は否定、∨ は論理和、∧ は論理積を表す。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　¬A ∧ ¬B</button>
+            <button type="button">イ　¬A ∨ ¬B</button>
+            <button type="button">ウ　A ∧ B</button>
+            <button type="button">エ　¬(A ∧ B)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ド・モルガンの法則により、「AまたはBでない」は「Aでない、かつBでない」と等しい。全体の否定を外すと、∨ は ∧ に入れ替わる。イとエは ¬(A ∧ B) を表す式で、A と B のどちらか一方だけが1のときに ¬(A ∨ B) と結果が変わる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -110,6 +161,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「1の補数」は反転するだけ、「2の補数」はさらに+1する。混同しやすいので注意。固定小数点数は精度・範囲が固定、浮動小数点数は指数部により広い範囲を表現できる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　8ビットの2の補数表現で、10進数の −6 を表したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10000110</button>
+            <button type="button">イ　11111001</button>
+            <button type="button">ウ　11111010</button>
+            <button type="button">エ　11111011</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>6 = 00000110 の各ビットを反転すると 11111001、これに1を加えて 11111010 になる。イは反転しただけの1の補数。アは先頭のビットを符号にしただけの表し方で、2の補数ではない。エは −5 を表す。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　浮動小数点数のビット構成のうち、数値の有効数字を表す部分はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　指数部</button>
+            <button type="button">イ　符号部</button>
+            <button type="button">ウ　パリティビット</button>
+            <button type="button">エ　仮数部</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>浮動小数点数は、符号部(正負)・指数部(小数点の位置)・仮数部(有効数字)からなる。パリティビットは誤り検出のために付加するビットで、数値の表現とは関係がない。</p>
+        </div>
       </div>
     </section>
 
@@ -146,6 +222,31 @@
           <tr><td>ハミング符号</td><td>1ビットの誤りの検出と<strong>訂正</strong>(2ビットの誤りは検出のみ)</td><td>複数の検査ビットを付加し、どのビットが誤っているかを特定する。ECCメモリなどで使われる</td></tr>
         </tbody>
       </table>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　偶数パリティのビットを付加した8ビットのデータを受信した。誤りがあると判定されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10110100</button>
+            <button type="button">イ　11000011</button>
+            <button type="button">ウ　01110000</button>
+            <button type="button">エ　00000000</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>偶数パリティでは、パリティビットを含めた1の個数が偶数になるようにして送る。ウは1が3個(奇数)なので誤りと判定される。アとイは1が4個、エは0個で、いずれも偶数なので正常と判定される。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　1ビットの誤りを検出するだけでなく、どのビットが誤っているかを特定して訂正できる方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ハミング符号</button>
+            <button type="button">イ　偶数パリティ</button>
+            <button type="button">ウ　奇数パリティ</button>
+            <button type="button">エ　CRC</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ハミング符号は複数の検査ビットを付加し、1ビットの誤りの位置を特定して訂正できる(2ビットの誤りは検出のみ)。パリティチェックは誤りが起きたことしか分からない。CRCはバースト誤りの検出に強いが、訂正はしない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -159,6 +260,31 @@
           <tr><td>EBCDIC</td><td>主にIBM系大型機で使われてきた文字コード</td></tr>
         </tbody>
       </table>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　英数字や記号を7ビットで表す、最も基本的な文字コードはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Unicode</button>
+            <button type="button">イ　EBCDIC</button>
+            <button type="button">ウ　ASCII</button>
+            <button type="button">エ　JISコード</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ASCIIは英数字・記号を7ビットで表す。Unicodeは世界中の文字を統一的に扱う文字コード、EBCDICは主にIBM系の大型機で使われてきた文字コード、JISコードは日本語を扱うために策定された文字コード。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　世界中の文字を統一的な体系で扱うために策定され、現在主流となっている文字コードはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ASCII</button>
+            <button type="button">イ　Unicode</button>
+            <button type="button">ウ　EBCDIC</button>
+            <button type="button">エ　JISコード</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>Unicodeは、さまざまな言語の文字を1つの体系で扱えるようにした文字コード。ASCIIは英数字のみ、JISコードは日本語向け、EBCDICは大型機向けで、いずれも扱える文字や用途が限られる。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-5">
       <h2><span class="topic-no">6</span>シフト演算</h2>
@@ -182,6 +308,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>負の数(例: 11110000 = -16)を右に1ビット論理シフトすると先頭に0が入り、正の数になってしまう。算術シフトなら先頭に1が入って 11111000 = -8 となり、正しく1/2になる。また、左シフトではみ出したビットは失われる(あふれ=オーバフロー)点にも注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　8ビットの符号なし2進数 00001101 を、左に2ビット論理シフトした結果を10進数で表したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　26</button>
+            <button type="button">イ　52</button>
+            <button type="button">ウ　3</button>
+            <button type="button">エ　104</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>00001101 は 13。左に2ビットシフトすると 2² = 4 倍になり、00110100 = 52。アは1ビット(2倍)、エは3ビット(8倍)シフトした値。ウは右に2ビットシフトした値(13 ÷ 4 の商)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　8ビットの2の補数で表した 11101000(−24)を、右に2ビット算術シフトした結果はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　00111010</button>
+            <button type="button">イ　11010000</button>
+            <button type="button">ウ　10100000</button>
+            <button type="button">エ　11111010</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>算術シフトでは符号ビットを残し、右シフトで空いたビットには符号ビットと同じ1を入れる。11111010 は −6 で、−24 ÷ 4 になっている。アは論理シフトで先頭に0が入った結果で、正の数(58)になってしまう。イは左に1ビット、ウは左に2ビットシフトした結果。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -203,6 +354,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「桁落ち」は近い値の<strong>引き算</strong>、「情報落ち」は大きさが極端に違う値の<strong>足し算・引き算</strong>で起きる。情報落ちを防ぐには、絶対値の小さい数から順に足していくとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　値がほぼ等しい2つの数の減算を行ったとき、有効数字の桁数が大きく減ってしまう誤差はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　丸め誤差</button>
+            <button type="button">イ　情報落ち</button>
+            <button type="button">ウ　打切り誤差</button>
+            <button type="button">エ　桁落ち</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>桁落ちは、近い値どうしの減算で上位の桁が打ち消し合い、有効数字が減る誤差。情報落ちは絶対値が大きく異なる数の加減算で小さい方の数が結果に反映されない誤差、丸め誤差は表せる桁より下を丸めて生じる誤差、打切り誤差は無限に続く計算を途中でやめて生じる誤差。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　絶対値が大きく異なる多数の数値を合計するとき、情報落ちによる誤差を小さくする方法として適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　絶対値の小さい数から順に加算する</button>
+            <button type="button">イ　絶対値の大きい数から順に加算する</button>
+            <button type="button">ウ　正の数と負の数を交互に加算する</button>
+            <button type="button">エ　加算の回数を途中で打ち切る</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>小さい数どうしを先に足して値をまとめておくと、大きい数に足したときに有効桁に収まりやすくなり、情報落ちを減らせる。大きい数から足すと、後から足す小さい数がそのつど消えてしまう。計算を途中で打ち切ると、打切り誤差が生じる。</p>
+        </div>
       </div>
     </section>
 
@@ -249,6 +425,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「選んだものに順番や役割があるか」で順列(P)と組合せ(C)を使い分ける。また、平均値が同じでも標準偏差が大きいほどデータは広く散らばっている。平均値だけ・標準偏差だけで分布を判断しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　6人の中から3人の委員を選ぶ(役割は区別しない)とき、選び方は何通りか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　18</button>
+            <button type="button">イ　20</button>
+            <button type="button">ウ　120</button>
+            <button type="button">エ　216</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>順番を問わずに選ぶので組合せ 6C3 = (6 × 5 × 4) ÷ (3 × 2 × 1) = 20 通り。ウの120は、選んだ3人に役割を付けて並べる順列 6P3 の値。エの216は 6³、アの18は 6 × 3。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　50人のクラスで、英語の講習を受けた人が30人、数学の講習を受けた人が25人、両方を受けた人が10人いた。どちらも受けていない人は何人か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0人</button>
+            <button type="button">イ　5人</button>
+            <button type="button">ウ　10人</button>
+            <button type="button">エ　45人</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>少なくとも一方を受けた人数は n(A∪B) = 30 + 25 − 10 = 45 人なので、どちらも受けていない人は 50 − 45 = 5 人。アは両方を受けた10人を二重に数えた場合(30 + 25 = 55 人が50人を超える)。ウは両方を受けた人数、エは少なくとも一方を受けた人数。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-8">
@@ -280,6 +481,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>利用率が高くなると、待ち時間は比例ではなく急激に増える。ρ = 0.5 なら待ち時間はサービス時間の1倍だが、ρ = 0.8 なら 0.8 ÷ 0.2 = 4倍、ρ = 0.9 なら9倍になる。「到着率が2倍になったら待ち時間も2倍」とはならない。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　M/M/1モデルの窓口で、平均サービス時間が2分、利用率が0.75のとき、平均待ち時間は何分か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1.5分</button>
+            <button type="button">イ　2分</button>
+            <button type="button">ウ　6分</button>
+            <button type="button">エ　8分</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>平均待ち時間 = ρ ÷ (1 − ρ) × 平均サービス時間 = 0.75 ÷ 0.25 × 2 = 6分。エの8分は、待ち時間にサービス時間を加えた平均応答時間。アは ρ × サービス時間、イはサービス時間そのもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　M/M/1モデルで、平均サービス時間を変えずに利用率を0.5から0.9に上げると、平均待ち時間は何倍になるか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　9倍</button>
+            <button type="button">イ　1.8倍</button>
+            <button type="button">ウ　4倍</button>
+            <button type="button">エ　18倍</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>平均待ち時間はサービス時間の ρ ÷ (1 − ρ) 倍。ρ = 0.5 では 0.5 ÷ 0.5 = 1 倍、ρ = 0.9 では 0.9 ÷ 0.1 = 9 倍なので、待ち時間は9倍になる。イの1.8倍は利用率の比(0.9 ÷ 0.5)で、待ち時間は利用率に比例せず急激に増える。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-9">
@@ -310,6 +536,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>逆ポーランド記法では、スタックから取り出した2つの値の順序に注意する。「A B −」は A − B であり、先に取り出した値(B)が演算子の<strong>右側</strong>になる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　中置記法の式 (A − B) × C + D を逆ポーランド記法で表したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　AB−CD+×</button>
+            <button type="button">イ　ABC×−D+</button>
+            <button type="button">ウ　AB−C×D+</button>
+            <button type="button">エ　ABCD−×+</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>先に計算する (A − B) を AB−、それに C を掛けて AB−C×、最後に D を足して AB−C×D+ となる。アは (A − B) × (C + D)、イは A − B × C + D、エは A + B × (C − D) を表す。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　逆ポーランド記法の式「6 2 − 3 ×」を、スタックを使って計算した結果はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　12</button>
+            <button type="button">イ　−12</button>
+            <button type="button">ウ　0</button>
+            <button type="button">エ　4</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>6、2 を積み、− で2つ取り出して 6 − 2 = 4 を積む。3 を積み、× で 4 × 3 = 12。先に取り出した値(2)が演算子の右側になる。イは 2 − 6 と取り違えた場合、ウは 6 − 2 × 3 と計算した場合。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-10">
@@ -335,6 +586,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「正解データを与えるか」で教師あり/なしを、「報酬」というキーワードで強化学習を見分ける。また、ディープラーニングは機械学習の一種であり、機械学習はAIを実現する技術の一種である(AI ⊃ 機械学習 ⊃ ディープラーニング)。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　試行錯誤させて、良い行動に報酬を与え、報酬が最大になる行動を学ばせる機械学習の手法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　教師あり学習</button>
+            <button type="button">イ　教師なし学習</button>
+            <button type="button">ウ　ディープラーニング</button>
+            <button type="button">エ　強化学習</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>「報酬」がキーワードになるのは強化学習で、ゲームの攻略やロボットの制御に使われる。教師あり学習は正解付きのデータで学習し、教師なし学習は正解なしでデータの構造(グループなど)を見つける。ディープラーニングは中間層を多層にしたニューラルネットワークによる手法。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　機械学習における過学習の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　学習データが少なすぎて、学習が最後まで終わらない状態</button>
+            <button type="button">イ　学習データに合わせすぎて、未知のデータに対する予測精度が下がる状態</button>
+            <button type="button">ウ　正解ラベルのないデータで学習してしまった状態</button>
+            <button type="button">エ　学習を繰り返すほど、未知のデータに対する精度が上がり続ける状態</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>過学習は、学習データの細かな特徴やノイズまで覚えてしまい、学習データには高い精度を示すのに、新しいデータではうまく予測できなくなる状態。ウは教師なし学習の説明に近い。学習を繰り返せば精度が上がり続けるとは限らない(エ)。</p>
+        </div>
       </div>
     </section>
     </article>

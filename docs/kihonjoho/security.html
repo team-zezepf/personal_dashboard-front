@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>セキュリティのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -98,6 +99,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>公開鍵暗号方式では、送信者が受信者の公開鍵で暗号化し、受信者が自分の秘密鍵で復号する(秘密鍵は復号する側だけが持つ)。「どちらの鍵で暗号化するか」を逆に覚えやすいので注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　公開鍵暗号方式を使って、AさんがBさんに暗号化したデータを送る。Aさんが暗号化に使う鍵はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Aさんの公開鍵</button>
+            <button type="button">イ　Aさんの秘密鍵</button>
+            <button type="button">ウ　Bさんの公開鍵</button>
+            <button type="button">エ　Bさんの秘密鍵</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>送信者は受信者(Bさん)の公開鍵で暗号化し、受信者は自分の秘密鍵で復号する。秘密鍵は復号する側(Bさん)だけが持っているので、Bさん以外は復号できない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　ハイブリッド暗号方式で、送信するデータ本体を暗号化する方法として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　送信者が生成した共通鍵(セッション鍵)で暗号化する</button>
+            <button type="button">イ　受信者の公開鍵で暗号化する</button>
+            <button type="button">ウ　送信者の秘密鍵で暗号化する</button>
+            <button type="button">エ　ハッシュ関数で変換する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>データ本体は処理の速い共通鍵暗号方式で暗号化し、その共通鍵だけを受信者の公開鍵で暗号化して送る。こうして、共通鍵暗号の速さと公開鍵暗号の鍵配送のしやすさを両立する。ハッシュ関数は元に戻せないので、暗号化には使えない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -154,6 +180,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ハッシュ関数は鍵を使わない一方向の変換であり、鍵を使って行う暗号化(復号可能)とは異なる。また、通常の公開鍵暗号(秘匿目的)が「公開鍵で暗号化→秘密鍵で復号」なのに対し、デジタル署名は逆に「秘密鍵で署名→公開鍵で検証」する点を混同しないよう注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　デジタル署名で、受信者が署名を検証するときに使う鍵はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　送信者の秘密鍵</button>
+            <button type="button">イ　送信者の公開鍵</button>
+            <button type="button">ウ　受信者の秘密鍵</button>
+            <button type="button">エ　受信者の公開鍵</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>送信者は文書のハッシュ値を自分の秘密鍵で暗号化して署名し、受信者は送信者の公開鍵で署名を復号して、文書から計算したハッシュ値と比べる。秘匿目的の公開鍵暗号とは、鍵の使い方が逆になる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ハッシュ関数の性質として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　鍵を使えば、ハッシュ値から元のデータに戻せる</button>
+            <button type="button">イ　入力データが長いほど、ハッシュ値も長くなる</button>
+            <button type="button">ウ　ハッシュ値から元のデータを求めることは困難で、同じ入力からは常に同じハッシュ値が得られる</button>
+            <button type="button">エ　同じ入力データでも、計算するたびに異なるハッシュ値になる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ハッシュ関数は鍵を使わない一方向の変換で、入力の長さに関係なく固定長のハッシュ値を生成する。同じ入力からは常に同じ値になるので、改ざん検知やパスワードの保管に使える。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -202,6 +253,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>多要素認証は「異なる種類」の要素を組み合わせる方式であり、同じ種類の情報を2回聞く(例: パスワードを2回入力させる)ことは多要素認証にはあたらない。また、シングルサインオンは認証の「利便性」を高める仕組みであり、認証を「強化」するワンタイムパスワードや多要素認証とは目的が異なる点に注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　多要素認証に該当するものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　パスワードを2回入力させる</button>
+            <button type="button">イ　パスワードと秘密の質問の答えを入力させる</button>
+            <button type="button">ウ　指紋と顔の両方で認証する</button>
+            <button type="button">エ　パスワードの入力と、ICカードの読み取りを組み合わせる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>多要素認証は、知識情報・所持情報・生体情報のうち異なる種類を組み合わせる。エはパスワード(知識)とICカード(所持)の組合せ。アとイはどちらも知識情報、ウはどちらも生体情報なので、多要素認証にはならない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　一度の認証で、複数のシステムやサービスを利用できるようにする仕組みはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ゼロトラスト</button>
+            <button type="button">イ　シングルサインオン</button>
+            <button type="button">ウ　ワンタイムパスワード</button>
+            <button type="button">エ　多要素認証</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シングルサインオン(SSO)は利便性の向上を目的とした仕組み。ゼロトラストは社内外を区別せず通信を都度検証する考え方、ワンタイムパスワードはログインのたびに変わる使い捨てのパスワード、多要素認証は異なる種類の要素を組み合わせる認証方式。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -223,6 +299,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>フィッシングは「偽のWebサイトへ誘導する」という技術的な仕掛けを伴うのに対し、ソーシャルエンジニアリングは技術を使わず人間の心理・行動の隙を突く点で異なる。また、ブルートフォース攻撃(総当たり)と辞書攻撃(よく使われる単語のリストを試す)も混同しやすいので区別しておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　上司を名乗って電話をかけ、担当者からパスワードを聞き出す攻撃はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ソーシャルエンジニアリング</button>
+            <button type="button">イ　フィッシング</button>
+            <button type="button">ウ　ブルートフォース攻撃</button>
+            <button type="button">エ　ゼロデイ攻撃</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ソーシャルエンジニアリングは、技術を使わずに人の心理的な隙や行動のミスにつけ込む攻撃。フィッシングは偽のメールやWebサイトに誘導して情報をだまし取る攻撃、ブルートフォース攻撃は文字の組合せを総当たりで試す攻撃。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ソフトウェアの脆弱性が発見されてから、修正プログラムが提供されるまでの期間を狙う攻撃はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　フィッシング</button>
+            <button type="button">イ　ブルートフォース攻撃</button>
+            <button type="button">ウ　ゼロデイ攻撃</button>
+            <button type="button">エ　DoS攻撃</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ゼロデイ攻撃は、修正プログラム(パッチ)が提供される前の無防備な期間を狙う。DoS攻撃は大量の要求を送りつけてサービスを利用できなくする攻撃。</p>
+        </div>
       </div>
     </section>
 
@@ -290,6 +391,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>SQLインジェクションは「サーバ側」のデータベースで不正なSQLが実行されるのに対し、XSSは「閲覧者側」のブラウザで不正なスクリプトが実行される点で攻撃の対象が異なる。どちらも入力値のチェック(検証・無害化)が不十分なことが原因である点は共通している。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　SQLインジェクションへの対策として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Webページに出力する文字列の特殊文字をエスケープする</button>
+            <button type="button">イ　利用者のパスワードを長く複雑なものにさせる</button>
+            <button type="button">ウ　Webサーバとの通信をTLSで暗号化する</button>
+            <button type="button">エ　プレースホルダ(バインド機構)を使ってSQL文を組み立てる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>プレースホルダを使うと、入力値はSQL文の一部ではなく単なる値として扱われるので、入力された文字列がSQLとして実行されなくなる。アはクロスサイトスクリプティング(XSS)の対策。通信の暗号化は盗聴の対策で、SQLインジェクションは防げない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　クロスサイトスクリプティング(XSS)で、攻撃者が埋め込んだスクリプトが実行される場所はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Webサーバ</button>
+            <button type="button">イ　データベース</button>
+            <button type="button">ウ　閲覧者のブラウザ</button>
+            <button type="button">エ　DNSサーバ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>XSSでは、脆弱なサイトに埋め込まれたスクリプトが閲覧者のブラウザで実行され、Cookieなどの情報が盗まれる。サーバ側のデータベースで不正なSQLが実行されるのはSQLインジェクション。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-5">
@@ -355,6 +481,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ファイアウォールは「通信の可否」をルールに基づいて判断する仕組みであり、マルウェア自体を検知するものではない。マルウェアの検知・駆除にはウイルス対策ソフト(ウイルス定義ファイルとの照合)が必要であり、両者は役割が異なる。また、ファイアウォール自体はランサムウェアやワームのような「マルウェア」には分類されない点にも注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　データを暗号化するなどして使用できなくし、復旧と引き換えに金銭を要求するマルウェアはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ランサムウェア</button>
+            <button type="button">イ　ワーム</button>
+            <button type="button">ウ　トロイの木馬</button>
+            <button type="button">エ　スパイウェア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ランサムウェアは「身代金(ランサム)」を要求するマルウェア。ワームは単独で自己増殖して感染を広げ、トロイの木馬は無害なソフトウェアを装って侵入する。スパイウェアは利用者の情報をひそかに収集して外部に送る。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　単独で自己増殖し、ネットワークを通じて他のコンピュータへ感染を広げるマルウェアはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　トロイの木馬</button>
+            <button type="button">イ　ワーム</button>
+            <button type="button">ウ　ランサムウェア</button>
+            <button type="button">エ　ファイアウォール</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ワームは他のプログラムに寄生せず、単独でネットワーク経由で広がる。トロイの木馬は自己増殖せず、無害なソフトウェアを装って侵入する。ファイアウォールはマルウェアではなく、通信の可否を判断する防御の仕組み。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-6">
       <h2><span class="topic-no">7</span>情報セキュリティ管理(CIA・リスクマネジメント・ISMS・CSIRT)</h2>
@@ -390,6 +541,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>保険をかけるのは損失を他者に負担してもらう「移転」であり、「低減」ではない。また、情報セキュリティポリシーの基本方針は経営陣(トップ)が定めて組織全体に示すものであり、情報システム部門だけで決めるものではない。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　DoS攻撃によってWebサイトが応答しなくなった。主に損なわれた情報セキュリティの要素はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　機密性</button>
+            <button type="button">イ　完全性</button>
+            <button type="button">ウ　可用性</button>
+            <button type="button">エ　責任追跡性</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>可用性は、必要なときに情報やシステムを使えること。サービスが止まると可用性が損なわれる。機密性は許可された人だけがアクセスできること(漏えいで損なわれる)、完全性は情報が正確で改ざんされていないこと(改ざんで損なわれる)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　サイバー保険に加入して、情報漏えいが起きたときの損失を補えるようにした。このリスク対応はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　リスク回避</button>
+            <button type="button">イ　リスク低減</button>
+            <button type="button">ウ　リスク保有</button>
+            <button type="button">エ　リスク移転</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>保険への加入は、損失を他者に負担してもらう「リスク移転(共有)」。リスク回避は原因となる活動自体をやめること、リスク低減は対策で発生確率や影響を小さくすること、リスク保有は対策をせず損失を受け入れること。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-7">
@@ -421,6 +597,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>IDSは「見つけて知らせる」まで、IPSは「見つけて止める」まで行う。一般的なファイアウォールはIPアドレスやポート番号で通信を許可・拒否するため、正規のポート(HTTPSの443番など)を通るWebアプリケーションへの攻撃は防げない。それを防ぐのがWAFである。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　通信を監視して不正な通信を検知し、その通信を遮断するところまで行う仕組みはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　IDS</button>
+            <button type="button">イ　IPS</button>
+            <button type="button">ウ　DMZ</button>
+            <button type="button">エ　リバースプロキシ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>IPS(侵入防止システム)は「見つけて止める」まで行う。IDS(侵入検知システム)は「見つけて知らせる」まで。DMZはインターネットと内部ネットワークの間に設ける区域、リバースプロキシは外部からのアクセスを受けてWebサーバに中継する仕組み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　外部に公開するWebサーバやメールサーバを置くために、インターネットと内部ネットワークの間に設ける区域はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　DMZ</button>
+            <button type="button">イ　内部ネットワーク</button>
+            <button type="button">ウ　VPN</button>
+            <button type="button">エ　SOC</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DMZ(非武装地帯)に公開サーバを置けば、そのサーバが乗っ取られても、ファイアウォールが内部ネットワークへの通信を遮断できる。公開サーバを内部ネットワークに置くと、乗っ取られたときに内部まで被害が広がる。SOCは機器を監視して攻撃を検知・分析する組織。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-8">
@@ -443,6 +644,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>デジタル証明書に含まれるのは<strong>公開鍵</strong>であり、秘密鍵は含まれない。デジタル証明書は「公開鍵の持ち主が誰か」を保証するもので、通信内容を暗号化するもの自体ではない。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　デジタル証明書に含まれないものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　持ち主の情報</button>
+            <button type="button">イ　持ち主の公開鍵</button>
+            <button type="button">ウ　有効期限</button>
+            <button type="button">エ　持ち主の秘密鍵</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デジタル証明書は、持ち主の情報・公開鍵・有効期限などに認証局がデジタル署名をしたもので、「その公開鍵の持ち主が誰か」を保証する。秘密鍵は持ち主だけが管理するもので、証明書には含まれない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　秘密鍵の漏えいなどにより、有効期限より前に失効させたデジタル証明書の一覧はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ルート証明書</button>
+            <button type="button">イ　サーバ証明書</button>
+            <button type="button">ウ　CRL</button>
+            <button type="button">エ　認証局(CA)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CRL(証明書失効リスト)で、証明書が失効していないかを確認できる。ルート証明書は認証局自身の証明書で検証の起点になるもの、サーバ証明書はWebサーバの正当性を証明する証明書、認証局は証明書を発行・失効させる機関。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-9">
@@ -464,6 +690,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SPFは「送信元<strong>サーバのIPアドレス</strong>」で、DKIMは「<strong>デジタル署名</strong>」で送信元を確認する。サンドボックスは「実際に動かして調べる」、ファジングは「異常なデータを入力して調べる」点で区別する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　送信元ドメインの正規のメールサーバのIPアドレスをDNSに登録しておき、受信側が送信元サーバのIPアドレスと照合して、なりすましを見つける技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SPF</button>
+            <button type="button">イ　DKIM</button>
+            <button type="button">ウ　S/MIME</button>
+            <button type="button">エ　サンドボックス</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SPFは「送信元サーバのIPアドレス」で送信元を確認する。DKIMは送信側のメールサーバが付けたデジタル署名を、DNSに公開された公開鍵で検証する。S/MIMEはメールの暗号化とデジタル署名を行う規格。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　隔離された仮想環境で不審なプログラムを実際に動かし、その挙動を観察してマルウェアかどうかを判定する技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ハニーポット</button>
+            <button type="button">イ　ファジング</button>
+            <button type="button">ウ　ペネトレーションテスト</button>
+            <button type="button">エ　サンドボックス</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>サンドボックスは「実際に動かして調べる」技術。ハニーポットはわざと侵入しやすくしたおとりのシステムで攻撃の手口を観察するもの、ファジングは予測できないデータを大量に入力して脆弱性を探すもの、ペネトレーションテストは攻撃者の立場で実際に侵入を試みる検査。</p>
+        </div>
       </div>
     </section>
     </article>
