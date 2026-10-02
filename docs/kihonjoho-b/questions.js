@@ -1,4 +1,4 @@
-// このファイルは scripts/build-kihonjoho-b-questions.mjs で生成する。直接編集しない(問題データを直して生成し直す)
+// このファイルは scripts/build-practice-questions.mjs で生成する。直接編集しない(問題データを直して生成し直す)
 window.PRACTICE_QUESTIONS = [
  {
   "id": 505,
