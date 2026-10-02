@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>システム開発技術のまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -53,6 +54,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「外部設計」と「内部設計」は名前が似ていて混同しやすい。外部設計は<strong>利用者から見える</strong>画面・帳票などの仕様を決める工程、内部設計は<strong>開発者だけが意識する</strong>プログラム内部の構造(モジュール分割など)を決める工程である。「外に見えるか、中身だけの話か」で判断するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　画面レイアウトや帳票など、利用者から見えるインタフェースの仕様を設計する工程はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　要件定義</button>
+            <button type="button">イ　外部設計</button>
+            <button type="button">ウ　内部設計</button>
+            <button type="button">エ　プログラミング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>外部設計(概要設計)は利用者の視点で、画面や帳票などの仕様を決める。要件定義はシステムに求められる機能・性能を明確にする工程、内部設計はプログラムの内部構造など開発者の視点で仕様を詳細化する工程。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　プログラムの内部構造やモジュール分割など、開発者の視点で仕様を詳細化する工程はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　外部設計</button>
+            <button type="button">イ　要件定義</button>
+            <button type="button">ウ　受入テスト</button>
+            <button type="button">エ　内部設計</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>内部設計(詳細設計)は開発者の視点で、外部設計の内容を実現するための内部の仕組みを決める。外部設計は利用者から見える部分の設計、受入テストは発注者がシステムを検収するテスト。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -95,6 +121,31 @@
         </svg>
         <figcaption class="fig-caption">ウォーターフォールは一方向に工程を進めるのに対し、アジャイルは短いサイクルを反復しながら進める。</figcaption>
       </figure>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　短いサイクル(イテレーション)で計画・設計・実装・テストを繰り返し、各サイクルで柔軟に見直しながら進める開発の進め方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ウォーターフォールモデル</button>
+            <button type="button">イ　プロトタイピングモデル</button>
+            <button type="button">ウ　アジャイル開発</button>
+            <button type="button">エ　V字モデル</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>アジャイル開発は短いサイクルを反復する。ウォーターフォールモデルは工程を上流から下流へ一度だけ進め、後戻りを想定しない。プロトタイピングモデルは試作品で利用者の確認を得ながら進める。V字モデルは設計工程とテスト工程の対応を示したもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　開発の早い段階で試作品を作り、利用者に確認してもらいながら開発を進めるモデルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　プロトタイピングモデル</button>
+            <button type="button">イ　ウォーターフォールモデル</button>
+            <button type="button">ウ　スパイラルモデル</button>
+            <button type="button">エ　リバースエンジニアリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>プロトタイピングモデルは、試作品(プロトタイプ)を使って利用者の要求を早めに確かめる。スパイラルモデルはサブシステムごとに設計・開発・評価を繰り返しながら段階的に完成させる。リバースエンジニアリングは既存のプログラムを解析する技術で、開発モデルではない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -115,6 +166,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「オブジェクト指向は逐次処理のみをサポートする」という選択肢は誤り。オブジェクト指向はデータと処理をオブジェクトとしてまとめる設計上の考え方であり、条件分岐・繰り返しなど処理の流れ自体を制限するものではない。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　オブジェクト指向で、既存のクラスの属性やメソッドを引き継いで、新しいクラスを定義することを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　カプセル化</button>
+            <button type="button">イ　継承</button>
+            <button type="button">ウ　ポリモーフィズム</button>
+            <button type="button">エ　インスタンス化</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>継承では親クラスの属性・メソッドを子クラスが引き継ぎ、固有の属性を追加できる。カプセル化はデータと処理をまとめて内部構造を隠すこと、ポリモーフィズムは同じ呼び出しで種類ごとに異なる処理を実行できること、インスタンス化はクラスから実体(オブジェクト)を作ること。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　同じメソッドを呼び出しても、オブジェクトの種類ごとに異なる処理が実行されることを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　継承</button>
+            <button type="button">イ　カプセル化</button>
+            <button type="button">ウ　汎化</button>
+            <button type="button">エ　ポリモーフィズム</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ポリモーフィズム(多態性)では、例えば「動く」というメソッドを呼び出すと、車と自転車でそれぞれ異なる処理が実行される。汎化は、複数のクラスの共通部分を取り出して親クラスにまとめること。</p>
+        </div>
       </div>
     </section>
 
@@ -140,6 +216,31 @@
       <div class="example-box">
         <span class="label">読み取り方のコツ</span>
         <span>出題では「ある状態」から「あるイベント」が発生したときの遷移先を問われることが多い。まず問題文の状態を図中から探し、そこから出ている矢印のうち該当イベントのラベルを持つものをたどればよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　ある機械の状態遷移は次のとおりである。「停止中」で「開始」→「運転中」、「運転中」で「一時停止」→「一時停止中」、「運転中」で「停止」→「停止中」、「一時停止中」で「開始」→「運転中」、「一時停止中」で「停止」→「停止中」。これ以外のイベントでは状態は変化しない。「停止中」の状態から、「開始」「一時停止」「開始」の順にイベントが発生した。最後の状態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　停止中</button>
+            <button type="button">イ　運転中</button>
+            <button type="button">ウ　一時停止中</button>
+            <button type="button">エ　状態は変化しない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>「停止中」で「開始」→「運転中」、「運転中」で「一時停止」→「一時停止中」、「一時停止中」で「開始」→「運転中」と遷移するので、最後は「運転中」。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ある機械の状態遷移は次のとおりである。「停止中」で「開始」→「運転中」、「運転中」で「一時停止」→「一時停止中」、「運転中」で「停止」→「停止中」、「一時停止中」で「開始」→「運転中」、「一時停止中」で「停止」→「停止中」。これ以外のイベントでは状態は変化しない。「停止中」の状態で「一時停止」のイベントが発生すると、どうなるか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　「運転中」になる</button>
+            <button type="button">イ　「一時停止中」になる</button>
+            <button type="button">ウ　「停止中」のまま変化しない</button>
+            <button type="button">エ　「運転中」を経て「一時停止中」になる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>「停止中」から「一時停止」の矢印はないので、状態は変化しない。状態遷移図では、その状態から出ている矢印のイベントだけを見て遷移先を判断する。</p>
+        </div>
       </div>
     </section>
 
@@ -196,6 +297,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>4種類のテストは「検証範囲の広さ」と「誰が行うか」で区別する。単体・結合・システムテストは<strong>開発者側</strong>が行うが、受入テストだけは<strong>発注者(利用者)側</strong>が主体となる点に注意。また回帰テスト(リグレッションテスト)は、プログラムを修正した際に既存の正常な機能へ悪影響(デグレード)が出ていないかを確認するテストで、上記4種類とは別の「修正のたびに行う」テストである。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　納品されたシステムが業務要件や契約内容を満たしているかを、発注者(利用者側)が確認するテストはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　単体テスト</button>
+            <button type="button">イ　結合テスト</button>
+            <button type="button">ウ　システムテスト</button>
+            <button type="button">エ　受入テスト</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>受入テスト(検収テスト)は発注者が行う。単体テスト・結合テスト・システムテストは開発者側が行い、それぞれモジュール単体、モジュール間のインタフェース、システム全体を検証する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　プログラムの内部構造は考慮せず、入力に対する出力が仕様どおりかに着目して検証するテスト技法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ホワイトボックステスト</button>
+            <button type="button">イ　ブラックボックステスト</button>
+            <button type="button">ウ　単体テスト</button>
+            <button type="button">エ　インスペクション</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ブラックボックステストは中身を見ずに入出力だけで確認する。ホワイトボックステストは内部構造(制御の流れなど)に着目する。単体テストはテストの段階の名前で、どちらの技法も使われる。インスペクションはレビューの技法。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-5">
@@ -212,6 +338,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ウォークスルーとインスペクションは「開発者(作成者)自身が主導するか、第三者が主導するか」で覚えるとよい。ウォークスルーは<strong>作成者主導</strong>の比較的軽いレビュー、インスペクションは<strong>第三者(モデレーター)主導</strong>の公式なレビューである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　作成者以外の第三者(モデレーター)が進行役となり、役割分担された参加者が決められた形式に沿って検証するレビュー技法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ペアプログラミング</button>
+            <button type="button">イ　ウォークスルー</button>
+            <button type="button">ウ　インスペクション</button>
+            <button type="button">エ　机上デバッグ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>インスペクションは第三者が主導する公式なレビュー。ウォークスルーは作成者自身が説明役となって主導する比較的簡易なレビュー。ペアプログラミングは2人1組でコードを書きながら常にレビューし合う開発スタイル。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　作成者(開発者)自身が説明役となり、参加者と一緒に内容をたどりながら誤りを探すレビュー技法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ウォークスルー</button>
+            <button type="button">イ　インスペクション</button>
+            <button type="button">ウ　受入テスト</button>
+            <button type="button">エ　ブラックボックステスト</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ウォークスルーは作成者が主導する。インスペクションは作成者以外の第三者(モデレーター)が主導する。受入テストとブラックボックステストは、完成したプログラムを動かして確認するテスト。</p>
+        </div>
       </div>
     </section>
 
@@ -230,6 +381,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>リファクタリングは「動作は変えずに中身だけ整理する」作業であり、バグ修正や機能追加(振る舞いの変更)とは異なる。またリバースエンジニアリングは実装物から設計情報を導き出す<strong>逆方向</strong>の解析、フォワードエンジニアリングは設計から実装へ進む<strong>通常の開発方向</strong>であり、矢印の向きで対比して覚えるとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　外部から見た動作(仕様)は変えずに、プログラムの内部構造を分かりやすく保守しやすい形に整理し直すことはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　リファクタリング</button>
+            <button type="button">イ　リバースエンジニアリング</button>
+            <button type="button">ウ　フォワードエンジニアリング</button>
+            <button type="button">エ　プロトタイピング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>リファクタリングは「動作は変えずに中身だけ整理する」作業で、バグ修正や機能追加とは異なる。リバースエンジニアリングは既存のプログラムを解析して設計内容を明らかにすること、フォワードエンジニアリングは設計書から通常の順序で開発すること。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　既存のプログラムやシステムを解析し、明文化されていなかった設計内容や仕組みを明らかにすることはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　リファクタリング</button>
+            <button type="button">イ　フォワードエンジニアリング</button>
+            <button type="button">ウ　リバースエンジニアリング</button>
+            <button type="button">エ　デバッグ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>リバースエンジニアリングは、実装から設計へと通常とは逆の方向にたどる。フォワードエンジニアリングは設計から実装へと通常の順序で開発すること。デバッグはプログラムの誤りを見つけて直す作業。</p>
+        </div>
       </div>
     </section>
     <section class="topic" id="topic-7">
@@ -260,6 +436,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>シーケンス図は「時系列のやり取り」、アクティビティ図は「処理の流れ」、クラス図は「静的な構造」。DFDは「データがどこからどこへ流れるか」を表す図で、処理の順番やタイミングは表さない点がフローチャートと異なる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　オブジェクト間のメッセージのやり取りを、時系列に並べて表すUMLの図はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　クラス図</button>
+            <button type="button">イ　ユースケース図</button>
+            <button type="button">ウ　アクティビティ図</button>
+            <button type="button">エ　シーケンス図</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シーケンス図は時系列のやり取りを表す。クラス図はクラスの属性・操作とクラス同士の関係(静的な構造)、ユースケース図は利用者とシステムの機能の関係、アクティビティ図は分岐や並行処理を含む処理の流れを表す。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　DFD(データフロー図)で表さないものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　データの流れ</button>
+            <button type="button">イ　データの保管場所</button>
+            <button type="button">ウ　処理の順序や条件分岐</button>
+            <button type="button">エ　データの発生源や行き先(外部実体)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DFDは外部実体・プロセス・データストア・データフローの4つの記号で、データがどこから来てどこへ行くかを表す。処理の順序や条件分岐は表さない(それらはフローチャートやアクティビティ図で表す)。</p>
+        </div>
       </div>
     </section>
 
@@ -293,6 +494,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「強度は高く、結合度は低く」が原則。どちらも両端(結合度は「データ結合」が最良・「内容結合」が最悪、強度は「機能的強度」が最良・「暗合的強度」が最悪)を押さえておけば、多くの問題は解ける。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　モジュール結合度が最も弱い(最も望ましい)ものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　内容結合</button>
+            <button type="button">イ　共通結合</button>
+            <button type="button">ウ　制御結合</button>
+            <button type="button">エ　データ結合</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>データ結合は必要なデータ項目だけを引数で渡すので、モジュール間の依存が最も小さい。内容結合は相手の内部を直接参照・変更するので最も悪い。共通結合はグローバル変数で共有し、制御結合は処理を切り替えるフラグなどを渡す。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　モジュール強度が最も強い(最も望ましい)ものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　機能的強度</button>
+            <button type="button">イ　論理的強度</button>
+            <button type="button">ウ　時間的強度</button>
+            <button type="button">エ　暗合的強度</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>機能的強度は1つの機能だけを実行するモジュールで、最も望ましい。暗合的強度は関係のない機能をまとめたもので最も悪い。「強度は高く、結合度は低く」が原則。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-9">
@@ -317,6 +543,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>命令網羅は、if文の条件が偽のときに何もしない場合、真のケースだけで満たせてしまう(偽の経路を一度も通らない)。判定条件網羅なら真と偽の両方を通すので、命令網羅より厳しい基準になる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　1以上100以下の整数を有効な入力とするプログラムで、境界値分析によって選ぶテストデータとして、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1, 50, 100</button>
+            <button type="button">イ　−10, 50, 200</button>
+            <button type="button">ウ　0, 1, 100, 101</button>
+            <button type="button">エ　1, 2, 99, 100</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>境界値分析では、有効と無効の境目の値とその両隣を選ぶので、0(無効)・1(有効)・100(有効)・101(無効)になる。イは同値分割で各グループの代表値を選んだ例。エは有効側の値だけで、無効側の境界を確かめられない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　判定に含まれる条件の真・偽の組合せを、すべて試すホワイトボックステストの網羅基準はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　命令網羅</button>
+            <button type="button">イ　判定条件網羅</button>
+            <button type="button">ウ　条件網羅</button>
+            <button type="button">エ　複数条件網羅</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>複数条件網羅は条件の真偽の組合せをすべて試す、最も厳しい基準。命令網羅はすべての命令を1回は実行する、判定条件網羅はすべての分岐で真と偽の両方を通す、条件網羅は個々の条件で真と偽の両方を取る基準。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-10">
@@ -336,6 +587,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>共通フレームは「作業内容と用語をそろえるための枠組み」であり、特定の開発モデルや開発手法を強制するものではない。CMMIは個人ではなく「組織のプロセスの成熟度」を評価するモデルである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　開発組織のプロセスの成熟度を5段階で評価し、改善の指針にするモデルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　共通フレーム</button>
+            <button type="button">イ　CMMI</button>
+            <button type="button">ウ　DevOps</button>
+            <button type="button">エ　XP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CMMI(能力成熟度モデル統合)は組織の成熟度を5段階で評価する。共通フレームは企画から保守までの作業項目と用語をそろえる枠組み、DevOpsは開発と運用が協力して素早く継続的にリリースする考え方、XPはアジャイル開発の手法の1つ。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　先にテストコードを書き、そのテストに合格するようにプログラムを書く開発手法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　テスト駆動開発</button>
+            <button type="button">イ　ペアプログラミング</button>
+            <button type="button">ウ　継続的インテグレーション</button>
+            <button type="button">エ　リファクタリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>テスト駆動開発(TDD)はXPのプラクティスの1つ。ペアプログラミングは2人1組でコードを書く手法、継続的インテグレーションはコードの変更のたびにビルドとテストを自動で行うこと、リファクタリングは動作を変えずに内部構造を整理すること。</p>
+        </div>
       </div>
     </section>
     </article>

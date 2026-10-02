@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>マルチメディアのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -33,6 +34,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「可逆圧縮」と「非可逆圧縮」を混同しやすい。GIF・PNGは可逆圧縮(完全復元できる)、JPEGは非可逆圧縮(一部の情報が失われる)である。JPEGは保存し直す(再圧縮する)たびに画質が少しずつ劣化していく点にも注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　写真などの自然画像に広く使われ、高い圧縮率が得られる代わりに、圧縮のたびに画質が劣化する画像形式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　GIF</button>
+            <button type="button">イ　PNG</button>
+            <button type="button">ウ　JPEG</button>
+            <button type="button">エ　BMP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>JPEGは非可逆圧縮なので、一部の情報が失われる。GIFとPNGは可逆圧縮(完全に元に戻せる)、BMPは圧縮しない形式。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　可逆圧縮で、フルカラーと透過(アルファチャンネル)の両方に対応する画像形式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　JPEG</button>
+            <button type="button">イ　PNG</button>
+            <button type="button">ウ　GIF</button>
+            <button type="button">エ　BMP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>PNGは可逆圧縮でフルカラーと透過に対応するが、JPEGほどの圧縮率は得られない。GIFも可逆圧縮で透過やアニメーションに対応するが、最大256色までに制限される。</p>
+        </div>
       </div>
     </section>
 
@@ -98,6 +124,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>標本化(サンプリング周波数)は「時間軸をどれだけ細かく区切るか」、量子化(量子化ビット数)は「振幅の値をどれだけ細かい段階で表すか」を決めるものであり、役割が異なる。データ量の計算では両方を掛け合わせる必要があり、どちらか一方だけで計算しないよう注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　サンプリング周波数8,000Hz、量子化ビット数8ビット、モノラル(1チャンネル)で60秒間録音したときのデータ量は何バイトか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　480,000バイト</button>
+            <button type="button">イ　960,000バイト</button>
+            <button type="button">ウ　3,840,000バイト</button>
+            <button type="button">エ　60,000バイト</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>8,000 × 8 × 1 × 60 ÷ 8 = 480,000バイト。ウはビットからバイトへの変換(÷ 8)を忘れた値、イはステレオ(2チャンネル)で計算した値、エは量子化ビット数を掛け忘れた値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　アナログの音声をデジタル化する手順のうち、取り出した振幅の値を、決められた段階のどれかに割り当てる処理はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　標本化</button>
+            <button type="button">イ　符号化</button>
+            <button type="button">ウ　量子化</button>
+            <button type="button">エ　圧縮</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>量子化は振幅を何段階で表すか(量子化ビット数)にかかわる処理。標本化は時間軸を一定間隔で区切って値を取り出す処理(サンプリング周波数)、符号化は量子化した値を2進数のデータに変換する処理。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -114,6 +165,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「コーデック」と「コンテナ形式」を混同しやすい。コーデックはデータを圧縮・復号する"方式"であり、コンテナ形式はそれらをまとめる"ファイルの入れ物"である。例えばMP4はコンテナ形式であり、その中に特定のコーデックで圧縮された映像・音声データが格納されている。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　映像・音声・字幕など複数のデータを、1つのファイルにまとめて格納する形式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コーデック</button>
+            <button type="button">イ　コンテナ形式</button>
+            <button type="button">ウ　MPEG</button>
+            <button type="button">エ　MIDI</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>コンテナ形式はデータをまとめる「入れ物」で、MP4やAVIが代表例。コーデックはデータを圧縮・復号する方式、MPEGは動画や音声の圧縮符号化方式の国際標準規格の総称、MIDIは演奏情報をやり取りする規格。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　動画や音声のデータを圧縮符号化(エンコード)し、復号(デコード)する方式やソフトウェアのことを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コンテナ形式</button>
+            <button type="button">イ　MP4</button>
+            <button type="button">ウ　ストリーミング</button>
+            <button type="button">エ　コーデック</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>コーデック(codec)は encode と decode を合わせた言葉。MP4はコンテナ形式の一つ。ストリーミングはデータを受信しながら順次再生する配信方式。</p>
+        </div>
       </div>
     </section>
 
@@ -132,6 +208,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>MIDIは音声データそのものではなく「演奏情報(楽譜に近いデータ)」を扱う規格であり、波形そのものを記録するMP3やWAVとは異なる。また、ARは現実の映像に情報を重ねる技術、VRは仮想空間に没入する技術であり、両者を混同しないよう区別して覚える。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　現実の映像や風景に、コンピュータが生成した文字や画像などの情報を重ね合わせて表示する技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　VR</button>
+            <button type="button">イ　ストリーミング</button>
+            <button type="button">ウ　AR</button>
+            <button type="button">エ　MIDI</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>AR(拡張現実)は現実に情報を重ねる技術。VR(仮想現実)は、コンピュータが作り出した仮想空間を現実のように体験させる技術で、現実の風景は使わない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　MIDIの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　電子楽器やコンピュータの間で、音の高さ・強さ・タイミングなどの演奏情報をやり取りするための規格</button>
+            <button type="button">イ　音声の波形をそのまま記録する音声ファイルの形式</button>
+            <button type="button">ウ　動画や音声を圧縮符号化する国際標準規格</button>
+            <button type="button">エ　動画や音声を受信しながら順次再生する配信方式</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>MIDIは音声そのものではなく、楽譜に近い「演奏情報」を扱う規格。波形を記録するのはWAVやMP3などの形式。ウはMPEG、エはストリーミング配信の説明。</p>
+        </div>
       </div>
     </section>
     </article>

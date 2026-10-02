@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>システム構成要素のまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -53,6 +54,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「スケールアップ」と「スケールアウト」は名前が紛らわしい。性能を高く「アップ」させるのが1台の強化、規模を外へ「アウト(広げる)」のが台数増加、とイメージで区別するとよい。また実際には分散処理のオーバーヘッドがあるため、台数を増やしても必ずしも台数倍の性能向上にはならない点にも注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　サーバの台数を増やして、システム全体の処理能力を高める方法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　スケールアップ</button>
+            <button type="button">イ　スケールアウト</button>
+            <button type="button">ウ　フェイルオーバー</button>
+            <button type="button">エ　ライブマイグレーション</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スケールアウト(水平拡張)は台数を増やす方法。スケールアップ(垂直拡張)は1台のCPUやメモリなどの性能を強化する方法。フェイルオーバーは障害時に待機系へ処理を引き継ぐ仕組み、ライブマイグレーションは稼働中の仮想マシンを別の物理サーバへ移す技術。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　1台で実行すると90分かかる処理を、同じ性能のコンピュータ3台に均等に分散して並列に実行する。分散に伴うオーバーヘッドを無視すると、処理時間は何分か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　30分</button>
+            <button type="button">イ　45分</button>
+            <button type="button">ウ　90分</button>
+            <button type="button">エ　270分</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>処理を3台で均等に分けるので、1台あたりの処理量は3分の1になり、90 ÷ 3 = 30分。実際には処理の分割や結果の集約にオーバーヘッドがかかるため、台数に比例して速くなるとは限らない。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -96,6 +122,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>MTBF(動いている時間の平均=長いほど良い)とMTTR(直している時間の平均=短いほど良い)を取り違えない。またデュアルシステム(2系統とも稼働して相互照合)とデュプレックスシステム(主系のみ稼働し従系は待機)の違いを混同しない。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　MTBFが380時間、MTTRが20時間のシステムの稼働率はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.05</button>
+            <button type="button">イ　0.90</button>
+            <button type="button">ウ　0.947</button>
+            <button type="button">エ　0.95</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>稼働率 = MTBF ÷ (MTBF + MTTR) = 380 ÷ (380 + 20) = 0.95。アは MTTR ÷ (MTBF + MTTR) で、稼働していない割合。イとウは MTBF から MTTR を引いてしまった誤りで、それぞれ 360 ÷ 400、360 ÷ 380 の値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　デュプレックスシステムの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　2系統が常に同じ処理を行い、互いの結果を照合する</button>
+            <button type="button">イ　1台のサーバのCPUやメモリを強化して、処理能力を高める</button>
+            <button type="button">ウ　主系だけが稼働して処理を行い、障害が起きたら待機している従系に切り替える</button>
+            <button type="button">エ　複数のサーバに処理要求を振り分けて、負荷を分散する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デュプレックスシステムは主系と従系(待機系)からなり、障害時に従系へ切り替える。アはデュアルシステムの説明。イはスケールアップ、エは負荷分散(ロードバランシング)。</p>
+        </div>
       </div>
     </section>
 
@@ -155,6 +206,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>直列と並列の式を混同しやすい。直列は「両方とも必要」なのでそのまま稼働率を掛け算する。並列は「どちらか一方でよい」ので、まず「両方とも故障している確率」(1-A₁)×(1-A₂)を求め、それを1から引く。並列(冗長)構成の稼働率は、必ず個々の装置単体の稼働率より高くなる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　稼働率0.9の装置Aと、稼働率0.95の装置Bを直列に接続したシステムの稼働率はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.995</button>
+            <button type="button">イ　0.855</button>
+            <button type="button">ウ　0.925</button>
+            <button type="button">エ　0.9</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>直列はすべての装置が稼働している必要があるので、0.9 × 0.95 = 0.855。アは並列に接続した場合(1 − 0.1 × 0.05)、ウは2つの稼働率の平均。直列にすると、システム全体の稼働率は最も低い装置(0.9)よりもさらに低くなる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　稼働率0.8の装置を2台並列に接続し、どちらか一方が稼働していればよいシステムの稼働率はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.64</button>
+            <button type="button">イ　0.8</button>
+            <button type="button">ウ　0.96</button>
+            <button type="button">エ　0.99</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>並列は「両方とも止まっている」場合だけ停止するので、1 − (1 − 0.8) × (1 − 0.8) = 1 − 0.04 = 0.96。アは直列に接続した場合(0.8 × 0.8)。並列にすると、1台のとき(0.8)より稼働率が高くなる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -203,6 +279,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>フェイルセーフは「障害時に安全に止める」考え方であるのに対し、フェイルソフトやフォールトトレランスは「障害があっても動かし続ける」考え方であり、方向性が逆である点に注意する。また、フールプルーフだけは対象が「利用者の誤操作」であり、他の3つ(装置の故障が対象)とは前提が異なる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　利用者が誤った操作をしても、システムに重大な影響が及ばないように設計しておく考え方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　フェイルセーフ</button>
+            <button type="button">イ　フェイルソフト</button>
+            <button type="button">ウ　フォールトトレランス</button>
+            <button type="button">エ　フールプルーフ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>フールプルーフは「誤操作を無害化する」考え方で、ふたを閉めないと動かない電子レンジなどが例。フェイルセーフは障害時に安全な状態に止める考え方、フェイルソフトは機能を縮小して運転を続ける考え方、フォールトトレランスは多重化などで障害があっても正常な処理を続ける考え方。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　障害が発生したとき、機能の一部を停止・制限してでも、システム全体の運転を継続する考え方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　フェイルソフト</button>
+            <button type="button">イ　フェイルセーフ</button>
+            <button type="button">ウ　フールプルーフ</button>
+            <button type="button">エ　フォールトトレランス</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>フェイルソフト(縮退運転)は、機能を縮小してでも動かし続ける。フェイルセーフは安全側に止める考え方で、動かし続けることは目的にしない。フォールトトレランスは、障害があっても機能を落とさずに正常な処理を続けることを目指す。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -231,6 +332,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>シンクライアントは単なる「機能の少ない軽量端末」ではなく、データをサーバ側に集約することで情報漏えい対策や運用管理の一元化に有効という点とセットで問われることが多い。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　クライアント端末には画面表示や入力の受付など必要最小限の機能だけを持たせ、データ処理やアプリケーションの実行はサーバ側に集約するシステムはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　データセンタ</button>
+            <button type="button">イ　スタンドアロン</button>
+            <button type="button">ウ　シンクライアントシステム</button>
+            <button type="button">エ　ピアツーピア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シンクライアントシステムは、処理とデータをサーバ側に集約する。データセンタはサーバやネットワーク機器を集約して集中管理する施設。スタンドアロンはネットワークにつながず単独で使う形態、ピアツーピアは端末どうしが対等に直接通信する形態。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　シンクライアントシステムを導入する利点として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ネットワークが切れても、端末だけで業務を続けられる</button>
+            <button type="button">イ　端末にデータが残らないので、端末の紛失や盗難による情報漏えいのリスクを減らせる</button>
+            <button type="button">ウ　処理を端末側で行うので、サーバの負荷が小さくなる</button>
+            <button type="button">エ　端末に高い処理性能を持たせることで、処理が速くなる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シンクライアントはデータをサーバ側に集約するので、情報漏えい対策や運用管理の一元化に役立つ。処理はサーバで行うため、ネットワークが切れると業務を続けにくく(アは誤り)、サーバの負荷は大きくなる(ウは誤り)。端末は最小限の機能でよい(エは誤り)。</p>
+        </div>
       </div>
     </section>
 
@@ -270,6 +396,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>IaaSは基盤(ハードウェア相当)まで、PaaSは実行環境(OS・ミドルウェア)まで、SaaSはソフトウェアそのものまでを提供する、というように「提供者が管理する範囲の広さ」で整理すると区別しやすい。IaaS→PaaS→SaaSの順に、利用者が自分で構築・管理すべき範囲は狭くなっていく。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　OSやミドルウェアなど、アプリケーションの実行環境をサービスとして提供するクラウドサービスの形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　IaaS</button>
+            <button type="button">イ　SaaS</button>
+            <button type="button">ウ　PaaS</button>
+            <button type="button">エ　ハウジング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>PaaS(Platform as a Service)は実行環境まで提供し、利用者は自分のアプリケーションを動かす。IaaSはサーバ・ストレージなどのインフラ基盤まで、SaaSはソフトウェアの機能そのものまでを提供する。ハウジングは利用者の機器を事業者の施設に設置するサービス。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　利用者がOSを選んでインストールし、その上のミドルウェアやアプリケーションも自分で管理するクラウドサービスの形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SaaS</button>
+            <button type="button">イ　PaaS</button>
+            <button type="button">ウ　Webメール</button>
+            <button type="button">エ　IaaS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>IaaSでは提供者が仮想サーバなどのインフラ基盤を用意し、OSから上は利用者が用意・管理する。IaaS → PaaS → SaaS の順に、提供者が管理する範囲が広がり、利用者が用意する範囲は狭くなる。Webメールは SaaS の例。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-6">
       <h2><span class="topic-no">7</span>システムの性能評価(レスポンスタイム・ターンアラウンドタイム・ベンチマーク)</h2>
@@ -290,6 +441,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>レスポンスタイムは「応答が返り<strong>始める</strong>まで」、ターンアラウンドタイムは「結果がすべて<strong>出終わる</strong>まで」。また、レスポンスタイムが短いことと、スループットが高いことは別の話である(1件が速くても同時に多くはさばけない場合がある)。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ジョブを投入してから、処理結果がすべて出力されるまでの時間はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　レスポンスタイム</button>
+            <button type="button">イ　スループット</button>
+            <button type="button">ウ　ターンアラウンドタイム</button>
+            <button type="button">エ　ベンチマーク</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ターンアラウンドタイムは「結果がすべて出終わるまで」の時間で、主にバッチ処理の評価に使う。レスポンスタイムは要求の入力が終わってから最初の応答が返るまでの時間で、主にオンライン処理の評価に使う。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　単位時間あたりに処理できる仕事の量(件数)を表す指標はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　スループット</button>
+            <button type="button">イ　レスポンスタイム</button>
+            <button type="button">ウ　ターンアラウンドタイム</button>
+            <button type="button">エ　MIPS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スループットは一定時間に処理できる量で、処理形態を問わずに使う。レスポンスタイムとターンアラウンドタイムは1件の処理にかかる時間の指標。MIPSは1秒間に実行できる命令数(百万単位)で、CPUの性能を表す。</p>
+        </div>
       </div>
     </section>
 
@@ -325,6 +501,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>仮想マシンとコンテナの違いは「ゲストOSを持つかどうか」。コンテナはOSを丸ごと持たない分軽いが、ホストOSと異なる種類のOSは動かせない。ライブマイグレーションは「止めずに移す」点が特徴である。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　ホストOSのカーネルを共有し、アプリケーションの実行環境だけを分離する仮想化の方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コンテナ型</button>
+            <button type="button">イ　ハイパーバイザ型</button>
+            <button type="button">ウ　ホスト型</button>
+            <button type="button">エ　VDI</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>コンテナ型はゲストOSを持たないので、軽量で起動が速い。ハイパーバイザ型とホスト型はどちらも仮想マシンごとにゲストOSを持つ(ハイパーバイザ型はホストOSを介さない)。VDIはデスクトップ環境をサーバ上の仮想マシンで動かし、端末に画面だけを転送する仕組み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　稼働中の仮想マシンを、停止させずに別の物理サーバへ移動させる技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　VDI</button>
+            <button type="button">イ　ライブマイグレーション</button>
+            <button type="button">ウ　フェイルオーバー</button>
+            <button type="button">エ　スケールアウト</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ライブマイグレーションを使うと、物理サーバの保守のときもサービスを止めずに済む。フェイルオーバーは障害が起きたときに待機系へ処理を引き継ぐ仕組みで、稼働中の仮想マシンをそのまま移すものではない。</p>
+        </div>
       </div>
     </section>
     </article>

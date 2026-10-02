@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>コンピュータ構成要素のまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -55,6 +56,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>5大装置は「入力・出力・記憶・演算・制御」の5つであり、「通信装置」は含まれない(頻出のひっかけ)。また演算装置と制御装置をあわせたものがCPU(中央処理装置)である。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　コンピュータの5大装置に含まれないものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　入力装置</button>
+            <button type="button">イ　制御装置</button>
+            <button type="button">ウ　通信装置</button>
+            <button type="button">エ　記憶装置</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>5大装置は「入力装置・出力装置・記憶装置・演算装置・制御装置」の5つで、通信装置は含まれない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　中央処理装置(CPU)を構成する装置の組合せとして、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　演算装置と制御装置</button>
+            <button type="button">イ　演算装置と記憶装置</button>
+            <button type="button">ウ　制御装置と記憶装置</button>
+            <button type="button">エ　入力装置と出力装置</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CPUは、データの処理を行う演算装置と、各装置に指示を出してプログラムの実行を制御する制御装置をあわせたもの。記憶装置(主記憶・補助記憶)はCPUとは別の装置として数える。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -101,6 +127,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>クロック周波数が高い=必ず処理が速いとは限らない(CPIやアーキテクチャの違いで実際の性能は変わる)。同様に、コア数がN倍になっても性能が単純にN倍になるとは限らない(並列化できない処理も含まれるため)。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　クロック周波数が4GHzで、1命令あたりの平均クロック数(CPI)が2のCPUの、1命令の平均実行時間は何ナノ秒か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.125ナノ秒</button>
+            <button type="button">イ　0.5ナノ秒</button>
+            <button type="button">ウ　2ナノ秒</button>
+            <button type="button">エ　8ナノ秒</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>クロック周期は 1 ÷ (4 × 10⁹) = 0.25ナノ秒。1命令の実行時間は CPI × クロック周期 = 2 × 0.25 = 0.5ナノ秒。アはクロック周期をCPIで割った値、ウは周波数をCPIで割った値(4 ÷ 2)、エは周波数とCPIを掛けた値で、いずれも式の使い方を誤っている。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　CPUのパイプライン処理の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　クロック周波数を上げて、命令の各段階にかかる時間を短くする</button>
+            <button type="button">イ　複数のコアで、別々のプログラムを同時に実行する</button>
+            <button type="button">ウ　命令の実行を複数の段階に分け、各段階をずらして重ね合わせることで、複数の命令を並行して処理する</button>
+            <button type="button">エ　よく使うデータをキャッシュメモリに置き、主記憶へのアクセスを減らす</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>パイプライン処理では、ある命令が解読段階に進むと同時に次の命令の取り出しを始めるなど、段階をずらして重ねることで全体の処理時間を短くする。イはマルチコア、エはキャッシュメモリの説明。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -143,6 +194,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>SRAM(高速・高価・小容量、リフレッシュ不要)とDRAM(低速・安価・大容量、リフレッシュ必要)を混同しない。ROMは「読み出し専用の不揮発性メモリ」であり、書き込み可能なRAMとは性質が異なる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　キャッシュメモリのアクセス時間が5ナノ秒、主記憶のアクセス時間が50ナノ秒、キャッシュのヒット率が80%のとき、実効アクセス時間は何ナノ秒か。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　4ナノ秒</button>
+            <button type="button">イ　14ナノ秒</button>
+            <button type="button">ウ　41ナノ秒</button>
+            <button type="button">エ　55ナノ秒</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>実効アクセス時間 = 0.8 × 5 + (1 − 0.8) × 50 = 4 + 10 = 14ナノ秒。ウはヒット率を主記憶の側に掛けてしまった場合(0.2 × 5 + 0.8 × 50)。アはキャッシュの分だけ、エは2つのアクセス時間を単純に足した値。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　リフレッシュ動作が必要な揮発性のメモリで、安価で大容量にしやすいため主記憶に使われるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SRAM</button>
+            <button type="button">イ　ROM</button>
+            <button type="button">ウ　レジスタ</button>
+            <button type="button">エ　DRAM</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DRAMはリフレッシュが必要だが安価・大容量で、主記憶に使われる。SRAMはリフレッシュ不要で高速だが高価・小容量のため、キャッシュメモリに使われる。ROMは読み出し専用の不揮発性メモリ、レジスタはCPU内部にある最も高速・小容量の記憶装置。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -166,6 +242,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SSDは半導体メモリを用いるため、HDDのような磁気ヘッドは持たない(磁気ヘッドを使うのはHDDの特徴)。「可動部品がない」= 衝撃・振動に強いという因果関係もあわせて押さえる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　SSDの特徴として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　磁気ディスクを回転させ、磁気ヘッドでデータを読み書きする</button>
+            <button type="button">イ　電源を切ると、記憶していた内容が消える</button>
+            <button type="button">ウ　主記憶よりも高速だが、容量当たりの価格が高い</button>
+            <button type="button">エ　半導体メモリを用いて駆動部分を持たないため、HDDより衝撃や振動に強い</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SSDは半導体メモリを使う不揮発性の補助記憶装置で、可動部品がないため衝撃・振動に強く、動作音も静か。アはHDDの特徴。補助記憶装置は電源を切っても内容が消えず(イは誤り)、主記憶より低速・大容量・低コスト(ウは誤り)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　次の機器のうち、入力装置に分類されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ディスプレイ</button>
+            <button type="button">イ　プリンタ</button>
+            <button type="button">ウ　スキャナ</button>
+            <button type="button">エ　SSD</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スキャナは紙の文書や写真を読み取ってデータとして取り込む入力装置。ディスプレイとプリンタは出力装置、SSDは補助記憶装置。</p>
+        </div>
       </div>
     </section>
     <section class="topic" id="topic-4">
@@ -198,6 +299,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>間接アドレス指定は主記憶を2回参照する(1回目で番地を得て、2回目でデータを得る)。MIPS値は大きいほど高性能だが、命令の種類(1命令の重さ)が違うCPUどうしでは単純に比べられない。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　命令のアドレス部の値が200で、主記憶の200番地に300、300番地に40が格納されている。間接アドレス指定方式のとき、命令で使われるデータはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　40</button>
+            <button type="button">イ　200</button>
+            <button type="button">ウ　300</button>
+            <button type="button">エ　500</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>間接アドレス指定では、アドレス部が指す200番地の値(300)を有効アドレスとみなし、300番地の値 40 を使う(主記憶を2回参照する)。イは即値アドレス指定、ウは直接アドレス指定の場合のデータ。エは値を足し合わせたもので、間接アドレス指定では足し算はしない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　1命令の平均実行時間が25ナノ秒のCPUの性能は何MIPSか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　4MIPS</button>
+            <button type="button">イ　25MIPS</button>
+            <button type="button">ウ　40MIPS</button>
+            <button type="button">エ　400MIPS</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>1秒間に実行できる命令数は 1 ÷ (25 × 10⁻⁹) = 4 × 10⁷ 命令。百万(10⁶)単位にすると 40MIPS。アとエは10の累乗の計算を1桁ずつ誤った値、イは平均実行時間の数値をそのまま使った値。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-5">
@@ -214,6 +340,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ゼロ除算やページフォールトは、実行中のプログラム自身が原因なので「内部割り込み」。入出力の完了やタイマは、プログラムの外で起きることなので「外部割り込み」。DMAは「CPUの負担を減らす転送方式」であり、転送そのものをCPUが行うプログラム制御方式とは異なる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　内部割り込みに分類されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　タイマ(一定時間の経過)</button>
+            <button type="button">イ　ゼロでの除算</button>
+            <button type="button">ウ　入出力の完了</button>
+            <button type="button">エ　電源異常</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ゼロでの除算は、実行中のプログラム自身が原因で起きるので内部割り込み。タイマ・入出力の完了・電源異常は、プログラムの外で起きる事象なので外部割り込み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　入出力装置と主記憶の間のデータ転送を、CPUを介さずに専用の制御装置が直接行う方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　割り込み</button>
+            <button type="button">イ　パイプライン</button>
+            <button type="button">ウ　キャッシュメモリ</button>
+            <button type="button">エ　DMA</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>DMA(Direct Memory Access)では、DMAコントローラが転送を行うため、その間もCPUは別の処理を進められる。割り込みは実行中の処理を中断して別の処理を先に行う仕組み、パイプラインは命令を段階的に重ねて処理する技術、キャッシュメモリは主記憶へのアクセスを速くするための高速なメモリ。</p>
+        </div>
       </div>
     </section>
     </article>

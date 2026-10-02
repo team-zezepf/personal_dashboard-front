@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>アルゴリズムとプログラミングのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -57,6 +58,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ループの継続条件(「i≦3」など)を満たさなくなった時点のiの値では、ループ内の処理は実行されない。境界の値を1つ多く/少なく数えてしまうミスが起きやすいので、面倒でも1ステップずつ値を書き出してトレースするとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　x = 0、i = 1 から開始し、「i ≦ 4」の間「x ← x + i、i ← i + 2」を繰り返す。終了したときの x の値はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1</button>
+            <button type="button">イ　4</button>
+            <button type="button">ウ　9</button>
+            <button type="button">エ　10</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>i = 1 のとき x = 1、i = 3。i = 3 のとき x = 1 + 3 = 4、i = 5。i = 5 は条件 i ≦ 4 を満たさないので終了し、x = 4。ウは条件を満たさない i = 5 まで足してしまった場合、エは i を1ずつ増やした場合(1 + 2 + 3 + 4)、アは1回で終わったとみなした場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　フローチャートで、条件によって処理の流れを分岐させることを表す図形はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　楕円</button>
+            <button type="button">イ　長方形</button>
+            <button type="button">ウ　ひし形</button>
+            <button type="button">エ　平行四辺形</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>条件分岐はひし形で表す。楕円は開始・終了、長方形は代入や計算などの処理を表す。平行四辺形はデータの入出力を表す記号。</p>
+        </div>
       </div>
     </section>
 
@@ -121,6 +147,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>配列はランダムアクセスが得意だが挿入・削除は苦手、線形リストはその逆(アクセスは苦手だが挿入・削除は得意)という「得意・不得意が逆」の関係で対比して覚えるとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　線形リストが配列と比べて優れている点はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　添字を使って、任意の要素に直接アクセスできる</button>
+            <button type="button">イ　要素の挿入・削除を、ポインタの付け替えだけで行える</button>
+            <button type="button">ウ　データを連続した領域に格納するので、ポインタの領域が要らない</button>
+            <button type="button">エ　先頭から順にたどらなくても、目的の要素にたどり着ける</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>線形リストは各要素が次の要素へのポインタを持つので、挿入・削除はポインタの付け替えだけで済み、後続の要素を移動しなくてよい。ア・ウは配列の特徴。線形リストで目的の要素にたどり着くには先頭から順にたどる必要がある(エは誤り)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　真(true)と偽(false)の2つの値だけを扱うデータ型はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　整数型</button>
+            <button type="button">イ　実数型</button>
+            <button type="button">ウ　文字列型</button>
+            <button type="button">エ　論理型</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>論理型は真・偽の2値を扱う。整数型は小数点を含まない整数、実数型は小数点を含む数値、文字列型は文字の並びを扱う。</p>
+        </div>
       </div>
     </section>
 
@@ -189,6 +240,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>スタック(LIFO)とキュー(FIFO)は取り出す順序が逆であるため混同しやすい。「積み重ねた本は上から取る(スタック)」「行列は先頭の人から進む(キュー)」のように身近な例と結びつけて覚えるとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　空のスタックに対して push(1)、push(2)、pop()、push(3)、push(4)、pop()、pop() の順に操作した。pop() で取り出される値の順として、正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　2, 4, 3</button>
+            <button type="button">イ　1, 3, 4</button>
+            <button type="button">ウ　2, 3, 4</button>
+            <button type="button">エ　1, 2, 3</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スタックは後入れ先出し(LIFO)。1、2 を積んで pop すると直前の 2 が出る。続いて 3、4 を積むと、pop で 4、次の pop で 3 が出る。イとエは先入れ先出し(キュー)のように考えた場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　空のキューに対して、enqueue(A)、enqueue(B)、dequeue()、enqueue(C)、dequeue() の順に操作した。2回目の dequeue() で取り出されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　A</button>
+            <button type="button">イ　B</button>
+            <button type="button">ウ　C</button>
+            <button type="button">エ　何も取り出せない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>キューは先入れ先出し(FIFO)。1回目の dequeue で最初に入れた A が出て、キューには B、C が残る。2回目の dequeue では先頭の B が出る。ウは後入れ先出し(スタック)のように考えた場合。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -241,6 +317,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「平均計算量」と「最悪計算量」は区別して覚える。クイックソートは平均O(n log n)と高速だが、ピボットの選び方が悪いと最悪O(n²)になる。同様に線形探索も、目的の値が先頭付近にあれば速いが、最悪(末尾または存在しない場合)はO(n)になる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　二分探索を使うための前提条件として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　データの件数が2のべき乗である</button>
+            <button type="button">イ　データに重複がない</button>
+            <button type="button">ウ　データが整列済みである</button>
+            <button type="button">エ　データが線形リストで格納されている</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>二分探索は中央の値と比べて探索範囲を半分に絞り込むので、データが整列済みでなければならない。件数が2のべき乗である必要はない。また中央の要素に直接アクセスできる配列が向いており、線形リストには向かない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　平均計算量も最悪計算量も O(n log n) である整列アルゴリズムはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　バブルソート</button>
+            <button type="button">イ　選択ソート</button>
+            <button type="button">ウ　クイックソート</button>
+            <button type="button">エ　マージソート</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>マージソートは平均・最悪ともに O(n log n)。クイックソートは平均 O(n log n) だが、ピボットの選び方が悪いと最悪 O(n²) になる。バブルソートと選択ソートは平均・最悪ともに O(n²)。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -275,6 +376,31 @@
           <tr><td>インタプリタ方式</td><td>ソースコードを1行(1文)ずつ解釈しながら実行する</td></tr>
         </tbody>
       </table>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　関数 f(n) を「n ≦ 1 なら 1 を返し、そうでなければ n + f(n − 1) を返す」と定義する。f(4) の値はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　10</button>
+            <button type="button">イ　24</button>
+            <button type="button">ウ　4</button>
+            <button type="button">エ　9</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>f(4) = 4 + f(3)、f(3) = 3 + f(2)、f(2) = 2 + f(1)、f(1) = 1(基底条件)。戻りながら計算すると f(2) = 3、f(3) = 6、f(4) = 10。イは足し算ではなく掛け算(階乗)で計算した場合、エは f(1) を 0 とした場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　ソースコードを1文ずつ解釈しながら実行するプログラムの実行方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コンパイラ方式</button>
+            <button type="button">イ　インタプリタ方式</button>
+            <button type="button">ウ　リンカ</button>
+            <button type="button">エ　アセンブラ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>インタプリタ方式は1文ずつ解釈して実行する。コンパイラ方式はソースコード全体を事前に機械語へ一括変換してから実行する。リンカは複数のオブジェクトコードを結合して実行可能なプログラムを作るもの、アセンブラはアセンブリ言語を機械語に変換するもの。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-5">
       <h2><span class="topic-no">6</span>2分探索木とヒープ</h2>
@@ -324,6 +450,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>2分探索木を「根 → 左 → 右」ではなく「左 → 節 → 右」の順(中間順)でたどると、値が昇順に並ぶ。また、2分探索木は値が偏って追加されると片側に伸びた形になり、探索の効率が線形探索と同じ O(n) まで落ちる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　ヒープの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　どの節も「左の子孫の値 &lt; 節の値 &lt; 右の子孫の値」になっている</button>
+            <button type="button">イ　どの節も、左の子の値が右の子の値より小さい</button>
+            <button type="button">ウ　値の大きさに関係なく、追加した順に左から詰めて並べたもの</button>
+            <button type="button">エ　どの節も「親の値 ≧ 子の値」(または ≦)になっていて、根に最大値(最小値)がある</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ヒープは親と子の大小関係だけを決めた2分木で、最大値(最小値)が常に根にあるため、取り出しが速い。兄弟の大小は問わない(イは誤り)。アは2分探索木の決まり。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　2分探索木の節を「左の子孫 → 節 → 右の子孫」の順(中間順)でたどったとき、値はどのように並ぶか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　昇順に並ぶ</button>
+            <button type="button">イ　降順に並ぶ</button>
+            <button type="button">ウ　根に近い節から順に並ぶ</button>
+            <button type="button">エ　追加した順に並ぶ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>2分探索木は「左の子孫 &lt; 節 &lt; 右の子孫」なので、左 → 節 → 右の順にたどると小さい値から順(昇順)になる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -337,6 +488,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ハッシュ法は衝突が多くなるほど探索が遅くなる。また、データの格納位置はキーの大小と無関係になるため、「範囲を指定した検索」や「昇順に並べて取り出す」処理には向かない。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ハッシュ関数「キー mod 11」で格納位置を求めるとき、キー 47 の格納位置はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　4</button>
+            <button type="button">イ　7</button>
+            <button type="button">ウ　3</button>
+            <button type="button">エ　5</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>47 ÷ 11 = 4 余り 3 なので、格納位置は 3。mod は割り算の余りを求める演算で、アの4は商。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　ハッシュ法で、異なるキーから同じ格納位置が求まってしまうことを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　シノニム</button>
+            <button type="button">イ　オーバフロー</button>
+            <button type="button">ウ　ハッシュ値</button>
+            <button type="button">エ　衝突(コリジョン)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>異なるキーから同じ格納位置が求まることを衝突(コリジョン)という。シノニムは、衝突したキーどうしのことを指す。ハッシュ値はハッシュ関数で計算した値そのもの。</p>
+        </div>
       </div>
     </section>
     </article>

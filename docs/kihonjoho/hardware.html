@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ハードウェアのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -69,6 +70,31 @@
           <tr><td>RAID5</td><td>データと誤り訂正用のパリティを分散して記録</td><td>1台の故障までは復旧可能。速度と耐障害性のバランスがよい</td></tr>
         </tbody>
       </table>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　同じデータを複数のディスクに複製して書き込み、耐障害性を高めるRAIDのレベルはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RAID0</button>
+            <button type="button">イ　RAID1</button>
+            <button type="button">ウ　RAID5</button>
+            <button type="button">エ　RAID10</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RAID1(ミラーリング)は同じデータを複製して書き込むので、1台が故障してもデータが残る。ただし実効容量はディスク合計より少なくなる。RAID0(ストライピング)はデータを分散して書き込むだけで冗長性はない。RAID5はデータとパリティを分散して記録する。RAID10はRAID1とRAID0を組み合わせたもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　フラッシュメモリの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　コンデンサに電荷を蓄えて記憶し、定期的なリフレッシュが必要である</button>
+            <button type="button">イ　フリップフロップ回路で記憶し、高速なのでキャッシュメモリに使われる</button>
+            <button type="button">ウ　電気的にデータの消去・書込みができ、電源を切ってもデータを保持する</button>
+            <button type="button">エ　磁気ディスクを回転させ、磁気ヘッドで読み書きする</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>フラッシュメモリは不揮発性の半導体メモリで、SSDやUSBメモリに使われる。アはDRAM、イはSRAMの説明で、どちらも電源を切るとデータが消える揮発性メモリ。エはHDDの説明。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -139,6 +165,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「解像度」(画素の密度)、「リフレッシュレート」(1秒間に画面を書き換える回数)、「コントラスト比」(最も明るい部分と暗い部分の差)、「応答速度」(画素の色が変化する速さ)は、いずれもディスプレイの性能を表す別の指標であり混同しやすい。画素の“数・密度”を表す用語は解像度だけである。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　ディスプレイの性能を表す指標のうち、1秒間に画面を書き換える回数を表すものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　解像度</button>
+            <button type="button">イ　コントラスト比</button>
+            <button type="button">ウ　画素数</button>
+            <button type="button">エ　リフレッシュレート</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>リフレッシュレートが高いほど、動きのある映像がなめらかに表示される。解像度は画素の密度(きめ細かさ)、コントラスト比は最も明るい部分と暗い部分の比、画素数は画面を構成する点の数。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　入力と出力を兼ねた装置はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　タッチパネル</button>
+            <button type="button">イ　プロッタ</button>
+            <button type="button">ウ　スキャナ</button>
+            <button type="button">エ　3Dプリンタ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>タッチパネルは画面に表示(出力)しつつ、指やペンで触れて入力もできる。プロッタと3Dプリンタは出力装置、スキャナは入力装置。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -178,6 +229,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>センサとアクチュエータは変換の向きが逆である。センサは「物理量→電気信号」(入力装置)、アクチュエータは「電気信号→機械的な運動」(出力装置)。名称と働きを取り違えないよう注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　制御装置からの電気信号を、回転や振動などの機械的な動きに変換する装置はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　センサ</button>
+            <button type="button">イ　アクチュエータ</button>
+            <button type="button">ウ　照度センサ</button>
+            <button type="button">エ　タッチパネル</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>アクチュエータは「電気信号 → 機械的な動き」に変換する出力側の装置で、モータなどが代表例。センサは逆に「物理量 → 電気信号」に変換する入力側の装置。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　照度センサが検出する物理量はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　温度</button>
+            <button type="button">イ　湿度</button>
+            <button type="button">ウ　光の量</button>
+            <button type="button">エ　圧力</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>照度センサ(光センサ)は明るさ(光の量)を検出し、画面の明るさの自動調整などに使われる。温度は温度センサ、湿度は湿度センサ、圧力は圧力センサで検出する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -204,6 +280,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>NFCは「かざすだけ」で通信できる極めて近距離(数cm程度)の技術である点が最大の特徴。Bluetooth・Wi-Fiなど他の無線通信技術との通信距離の違いが問われやすいので、距離の大小関係(NFC < Bluetooth < Wi-Fi)を押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　多数の単純な演算コアを持ち、同じ種類の演算を大量のデータに並列に実行することが得意で、画像処理や機械学習に使われる処理装置はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　DRAM</button>
+            <button type="button">イ　CPU</button>
+            <button type="button">ウ　NFC</button>
+            <button type="button">エ　GPU</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>GPUは並列演算が得意。CPUは少数の高性能なコアで、複雑な条件分岐を含む汎用的な処理を順に実行するのが得意。DRAMは記憶装置、NFCは近距離無線通信の技術。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ICカードやスマートフォンを、数cm程度の距離にかざすだけで通信できる技術はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　Bluetooth</button>
+            <button type="button">イ　Wi-Fi</button>
+            <button type="button">ウ　NFC</button>
+            <button type="button">エ　赤外線通信</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>NFCは数cm〜10cm程度の極めて近い距離で通信する技術で、交通系ICカードや決済に使われる。Bluetoothは数m〜数十m程度で周辺機器の接続に、Wi-Fiは無線LANとしてネットワークへの接続に、赤外線通信は家電のリモコンなどに使われる。</p>
+        </div>
       </div>
     </section>
     </article>

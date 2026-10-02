@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>データベースのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -58,6 +59,31 @@
         </tbody>
       </table>
       <p>なお、表形式に縛られずキーバリュー型・ドキュメント型など多様なデータモデルを扱うデータベースの総称をNoSQLデータベースと呼び、RDBとは異なる設計思想を持つ。</p>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　自分の表の列が別の表の主キーを参照する形で設定し、表どうしの関連付けと参照整合性の維持に使うキーはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　主キー</button>
+            <button type="button">イ　候補キー</button>
+            <button type="button">ウ　複合キー</button>
+            <button type="button">エ　外部キー</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>外部キーは、参照先の表に存在しない値が入らないようにする(参照整合性)ために使う。主キーは表内の各行を一意に識別する列、候補キーは主キーになりうる列、複合キーは複数の列を組み合わせて一意性を満たすキー。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　主キーの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　値の重複は許されないが、NULLは許される</button>
+            <button type="button">イ　値の重複もNULLも許されない</button>
+            <button type="button">ウ　1つの表に複数の主キーを設定できる</button>
+            <button type="button">エ　必ず1つの列だけで構成しなければならない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>主キーは各行を一意に識別するため、値の重複もNULLも許されない。主キーは1つの表に1つだけ(候補キーは複数あってよい)。複数の列を組み合わせた複合キーを主キーにすることもできる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -108,6 +134,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>どちら側が「多」なのかは、矢印(線)の両端に立って文章にして確認するとよい。「1人の顧客は複数の注文を行うことができるが、1件の注文は1人の顧客に対応する」ので顧客側が1、注文側が多となる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　1冊の本は1つの出版社から出版され、1つの出版社は複数の本を出版する。「出版社」と「本」のカーディナリティはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1対1</button>
+            <button type="button">イ　多対1</button>
+            <button type="button">ウ　1対多</button>
+            <button type="button">エ　多対多</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>「1つの出版社は複数の本を出版する」ので出版社側が1、本側が多になり、出版社:本 = 1対多。「1冊の本の出版社は1つ」なので多対多ではない。イは出版社と本を逆に見た場合。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　多対多の関係にある2つの実体を、リレーショナルデータベースで表現する方法として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　中間の表(関連実体)を設けて、2つの1対多の関係に分解する</button>
+            <button type="button">イ　一方の表に、相手の表の主キーを繰り返し項目として持たせる</button>
+            <button type="button">ウ　2つの表を1つの表にまとめる</button>
+            <button type="button">エ　主キーを設定せずに、2つの表をそのまま関連付ける</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>例えば「生徒」と「授業」の多対多は、「受講」のような中間の表を設けて、生徒:受講 = 1対多、授業:受講 = 1対多に分解する。イのように繰り返し項目を持たせると、1つのセルに複数の値が入る非正規形になってしまう。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -128,6 +179,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>正規化は「データの重複を排除して更新時の矛盾を防ぐ」ための設計であり、「検索速度を高めるためにあえてデータを重複させる」非正規化とは逆方向の考え方である。両者を混同しないこと。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　正規化の目的として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　検索を速くするために、あえてデータを重複させる</button>
+            <button type="button">イ　データを暗号化して、不正な参照を防ぐ</button>
+            <button type="button">ウ　データの重複を排除し、挿入・更新・削除のときに矛盾が生じないようにする</button>
+            <button type="button">エ　複数の表を1つにまとめて、結合(JOIN)を不要にする</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>正規化は、データの重複を排除して更新異常を防ぐための設計手法。アとエは、検索速度を優先してあえて重複させる「非正規化」の考え方。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　第3正規形の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1つのセルに1つの値だけが入るように、繰り返し項目をなくした状態</button>
+            <button type="button">イ　複合キーの一部だけに従属する項目(部分関数従属)を分離した状態</button>
+            <button type="button">ウ　検索を速くするために、よく使う項目を重複して持たせた状態</button>
+            <button type="button">エ　キー以外の項目どうしの従属(推移的関数従属)を分離した状態</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>第3正規形は、第2正規形からさらに「キー以外の項目が、別のキー以外の項目に従属する」関係を別の表に分離した状態。アは第1正規形、イは第2正規形の説明。ウは非正規化。</p>
+        </div>
       </div>
     </section>
 
@@ -161,6 +237,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>INNER JOINは「一致する行だけ」を残すため、キーが対応しない行は結果から消える。片方のテーブルの行を漏らさず残したい場合はOUTER JOIN(LEFT/RIGHT/FULL)を使う必要があり、単に「JOIN」とだけ書くとINNER JOINになる点に注意。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　表「商品」から、単価が1000以上の行の商品名を取り出すSQL文として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SELECT 商品 FROM 商品名 WHERE 単価 &gt;= 1000</button>
+            <button type="button">イ　SELECT 商品名 FROM 商品 WHERE 単価 &gt;= 1000</button>
+            <button type="button">ウ　SELECT 商品名 WHERE 単価 &gt;= 1000 FROM 商品</button>
+            <button type="button">エ　SELECT 単価 &gt;= 1000 FROM 商品 WHERE 商品名</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SELECT の後に取り出す列、FROM の後に表、WHERE の後に抽出条件を書く。アは表名と列名が逆、ウは句の順序が誤り(FROM は WHERE より前)、エは条件と取り出す列が入れ替わっている。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　表A(左)と表B(右)を結合するとき、表Aの全行を残し、表Bに一致する行がない部分はNULLで補う結合はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　INNER JOIN</button>
+            <button type="button">イ　RIGHT OUTER JOIN</button>
+            <button type="button">ウ　FULL OUTER JOIN</button>
+            <button type="button">エ　LEFT OUTER JOIN</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>左側(表A)の全行を残すのは LEFT OUTER JOIN。INNER JOIN は両方でキーが一致する行だけを残す。RIGHT OUTER JOIN は右側(表B)の全行を残し、FULL OUTER JOIN は両方の全行を残す。</p>
+        </div>
       </div>
     </section>
 
@@ -207,6 +308,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>インデックスは検索(SELECT)を速くする一方、更新(INSERT/UPDATE/DELETE)のたびに索引の再構築が必要になるためオーバーヘッドが増える。「多いほど良い」わけではない点に注意。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　インデックス(索引)の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　検索は速くなるが、行の追加や更新のたびに索引も更新するため、更新処理の負荷が増える</button>
+            <button type="button">イ　多く作るほど、検索も更新も速くなる</button>
+            <button type="button">ウ　元の表のデータを複製して保持する仮想表である</button>
+            <button type="button">エ　複雑な問い合わせを名前を付けて保存し、再利用するための仮想表である</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>インデックスは検索(SELECT)を速くする一方、INSERT・UPDATE・DELETE のたびに索引の再構築が必要になる。そのため多ければ良いわけではない。エはビューの説明。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　ビューの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　特定の列の値をあらかじめ整理しておき、検索を速くする仕組み</button>
+            <button type="button">イ　SELECT文の結果を、参照するたびに表示する仮想表で、実データは保持しない</button>
+            <button type="button">ウ　元の表を更新しても、ビューには反映されない</button>
+            <button type="button">エ　表のデータをバックアップするために、別の領域に複製したもの</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ビューはSELECT文の結果を表のように扱える仮想表で、複雑な問い合わせの再利用や簡略化に使う。実データを持たないので、元の表の更新はそのままビューにも反映される(ウは誤り)。アはインデックスの説明。</p>
+        </div>
       </div>
     </section>
 
@@ -255,6 +381,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>排他制御(ロックの仕組みそのもの)と、デッドロック(複数の処理が互いに相手のロック解除を待ち続け、どちらも先に進めなくなる状態)は別の概念。また、コミット(更新確定)とロールバック(更新取り消し)も対になる操作として混同しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　ACID特性のうち、コミットしたトランザクションの結果は、その後に障害が起きても失われないという性質はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　原子性</button>
+            <button type="button">イ　一貫性</button>
+            <button type="button">ウ　独立性</button>
+            <button type="button">エ　持続性</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>持続性(Durability)は、コミットした結果がデータベースに残り続ける性質。原子性はすべて実行されるか全く実行されないかのどちらかになる性質、一貫性は前後で整合性が保たれる性質、独立性は同時に実行しても互いに影響しない性質。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　デッドロックの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　更新中の行にロックをかけ、他のトランザクションの更新を待たせる仕組み</button>
+            <button type="button">イ　異常が起きたときに、トランザクションの開始前の状態に戻すこと</button>
+            <button type="button">ウ　複数のトランザクションが互いに相手のロックの解除を待ち続け、どちらも先に進めなくなる状態</button>
+            <button type="button">エ　同じデータを同時に更新して、後の更新が先の更新を上書きしてしまうこと</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デッドロックは、例えばトランザクション1がデータAをロックしてBを待ち、トランザクション2がBをロックしてAを待つような状態。アは排他制御(ロック)の仕組みそのもの、イはロールバック、エは排他制御をしないときに起きる問題。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-6">
       <h2><span class="topic-no">7</span>障害回復(ログ・チェックポイント・ロールフォワード)と2相コミット</h2>
@@ -274,6 +425,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ロールバックは「更新<strong>前</strong>ログで戻す(取り消す)」、ロールフォワードは「更新<strong>後</strong>ログで進める(やり直す)」。ディスクが壊れた媒体障害では、まずバックアップを復元し、その後に更新後ログでロールフォワードする。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　データベースを格納したディスクが故障した(媒体障害)ときの回復方法として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　更新前ログを使って、すべての更新を取り消す</button>
+            <button type="button">イ　バックアップを新しいディスクに戻し、更新後ログを使ってバックアップ以降の更新をやり直す</button>
+            <button type="button">ウ　チェックポイントの時点からDBMSを再起動するだけでよい</button>
+            <button type="button">エ　2相コミットで、各サーバの更新をそろって確定させる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>媒体障害では、まずバックアップを戻し、その後のコミット済みの更新を更新後ログでやり直す(ロールフォワード)。アのロールバックは、処理中のトランザクションの更新を取り消すときに使う。2相コミットは分散データベースで更新を確定させる手順で、障害回復の方法ではない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　システム障害が起きたとき、障害の時点でコミットされていなかったトランザクションに対して行う処理はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　更新前ログを使ってロールバックする</button>
+            <button type="button">イ　更新後ログを使ってロールフォワードする</button>
+            <button type="button">ウ　何もしなくてよい</button>
+            <button type="button">エ　バックアップからデータベース全体を復元する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>未コミットのトランザクションは途中までの更新が残っているおそれがあるので、更新前ログで取り消して開始前の状態に戻す(原子性を保つ)。ロールフォワードは、コミット済みなのにディスクに反映されていない可能性のある更新に対して行う。</p>
+        </div>
       </div>
     </section>
 
@@ -295,6 +471,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>データウェアハウスは「分析用に整理して蓄積」、データレイクは「加工せずそのまま蓄積」、データマイニングは「蓄積したデータから規則性を発見する分析」。保管場所の名前と分析手法の名前を混同しない。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　構造化・非構造化を問わず、データを加工せずにそのままの形式で蓄積しておく保管場所はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　データウェアハウス</button>
+            <button type="button">イ　データマート</button>
+            <button type="button">ウ　データレイク</button>
+            <button type="button">エ　データマイニング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>データレイクは「加工せずそのまま蓄積」する。データウェアハウスは分析しやすい形に統合して時系列で蓄積したもの、データマートはそこから部門や目的ごとに必要なデータを取り出したもの。データマイニングは蓄積したデータから規則性を見つける分析のこと。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　業務システムからデータを抽出し、変換して、データウェアハウスに書き出す処理はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　OLAP</button>
+            <button type="button">イ　ETL</button>
+            <button type="button">ウ　データマイニング</button>
+            <button type="button">エ　データマート</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ETLは Extract(抽出)・Transform(変換)・Load(書き出し)の頭文字。OLAPはデータを地域別・期間別などの多次元で集計・分析すること、データマイニングは隠れた規則性を見つけ出すこと。</p>
+        </div>
       </div>
     </section>
     </article>

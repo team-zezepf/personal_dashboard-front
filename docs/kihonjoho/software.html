@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ソフトウェアのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -39,6 +40,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「信頼性」と「可用性」は混同しやすい。信頼性は障害を起こさず動作し続ける能力(壊れにくさ)を指すのに対し、可用性は必要なときにシステムを利用できる度合い(稼働率のようなもの)を指す。試験では選択肢として並べて出されることが多いので、意味の違いを区別しておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　ソフトウェアの品質特性のうち、別の機種やOSなどの環境に移しやすい度合いを表すものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　保守性</button>
+            <button type="button">イ　移植性</button>
+            <button type="button">ウ　使用性</button>
+            <button type="button">エ　効率性</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>移植性は別の環境に移しやすい度合い。保守性は機能を理解して修正しやすい度合い、使用性は利用者が理解・習得・使用しやすい度合い、効率性は少ない資源で効率よく処理する能力。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　ソフトウェアの品質特性のうち、利用者が理解し、習得し、使用しやすい度合いを表すものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　機能性</button>
+            <button type="button">イ　信頼性</button>
+            <button type="button">ウ　効率性</button>
+            <button type="button">エ　使用性</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>使用性は使いやすさの度合い。機能性は必要な機能を備えている度合い、信頼性は要求された機能を維持して動作し続ける能力(壊れにくさ)、効率性は少ない資源で効率よく処理する能力。</p>
+        </div>
       </div>
     </section>
 
@@ -101,6 +127,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ジョブ管理は利用者が依頼した一連の処理(ジョブ)を投入から終了まで一括して管理するのに対し、タスク管理(プロセス管理)は実行中の個々のプログラム(プロセス・タスク)にCPU時間を割り当てるなど、より細かい単位を制御する機能である。「ジョブ」と「タスク(プロセス)」の粒度の違いを混同しないこと。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　利用者が依頼した一連の処理を、投入から終了まで一括して管理するOSの機能はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　タスク管理</button>
+            <button type="button">イ　ジョブ管理</button>
+            <button type="button">ウ　ファイル管理</button>
+            <button type="button">エ　記憶管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ジョブ管理は、利用者が依頼した一連の処理(ジョブ)を単位として管理する。タスク管理(プロセス管理)は、実行中の個々のプログラムへのCPU時間の割当てなどを制御する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　マルチタスクの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1つのプログラムの実行が終わるまで、次のプログラムを実行しない</button>
+            <button type="button">イ　1つのプログラムを分割して、複数のCPUで同時に処理する</button>
+            <button type="button">ウ　CPU時間を細かく分割し、複数のプログラムに切り替えながら割り当てて、同時に実行しているように見せる</button>
+            <button type="button">エ　主記憶の不足を、補助記憶装置の一部を使って補う</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>マルチタスクでは、OSがCPU時間を細かく区切って複数のプログラムに順に割り当てるので、1つのCPUでも複数のプログラムが同時に動いているように見える。エは仮想記憶の説明。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -130,6 +181,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「仮想記憶」は主記憶容量を超えるサイズのプログラムやデータを扱うための仕組み(概念)であり、「スワッピング」はその仕組みを実現するために主記憶と補助記憶の間で実際にデータを入れ替える処理を指す。両者を同じ意味だと思い込まないこと。また、キャッシュメモリは処理速度を高速化するための仕組みであり、記憶容量を拡張する仮想記憶とは目的が異なる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　仮想記憶で、主記憶に入りきらないデータを補助記憶装置との間で入れ替える処理はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　スワッピング</button>
+            <button type="button">イ　デフラグメンテーション</button>
+            <button type="button">ウ　キャッシング</button>
+            <button type="button">エ　スプーリング</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>スワッピングは、主記憶のデータを補助記憶装置に書き出し(スワップアウト)、必要なデータを読み込む(スワップイン)処理。デフラグメンテーションは断片化した記憶領域を整理すること、スプーリングは入出力データを一時的に補助記憶装置にためて、CPUの待ちを減らす仕組み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　仮想記憶を使う利点として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　主記憶へのアクセスが速くなる</button>
+            <button type="button">イ　補助記憶装置が不要になる</button>
+            <button type="button">ウ　ページフォールトが起きなくなる</button>
+            <button type="button">エ　主記憶の容量を超える大きさのプログラムを実行できる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>仮想記憶は補助記憶装置の一部を主記憶の延長として扱うので、実際の主記憶より大きなプログラムやデータを扱える。補助記憶装置との入れ替えが起きる分、アクセスはむしろ遅くなることがある。ページフォールトは仮想記憶を使うからこそ起きる。</p>
+        </div>
       </div>
     </section>
 
@@ -163,6 +239,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>ファームウェアは機器本体に組み込まれる(ハードウェア寄りの)ソフトウェアであるのに対し、デバイスドライバはOS側から個々のハードウェアを制御するためのソフトウェアである。また、ミドルウェアはOSとアプリケーションの間で共通機能を提供するものであり、特定の周辺機器を制御するデバイスドライバとは役割が異なる。3つの「制御・仲介ソフトウェア」が担う境界の違いを整理して覚える。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　特定の周辺機器をOSが制御できるようにするために、機器ごとに用意されるソフトウェアはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ミドルウェア</button>
+            <button type="button">イ　ファームウェア</button>
+            <button type="button">ウ　デバイスドライバ</button>
+            <button type="button">エ　アプリケーションソフトウェア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デバイスドライバは、OS側から個々の周辺機器を制御するためのソフトウェア。ファームウェアは機器本体に組み込まれて基本的な動作を制御するソフトウェア、ミドルウェアはOSとアプリケーションの中間で共通機能を提供するソフトウェア。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　ソフトウェアをハードウェアに近い順に並べたものとして、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ファームウェア → OS → ミドルウェア → アプリケーションソフトウェア</button>
+            <button type="button">イ　OS → ファームウェア → ミドルウェア → アプリケーションソフトウェア</button>
+            <button type="button">ウ　ミドルウェア → OS → ファームウェア → アプリケーションソフトウェア</button>
+            <button type="button">エ　ファームウェア → ミドルウェア → OS → アプリケーションソフトウェア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ファームウェアは機器に組み込まれた最もハードウェア寄りのソフトウェア。その上でOS(デバイスドライバを含む)が動き、OSとアプリケーションの間にミドルウェアが位置する。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -180,6 +281,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>「無料かどうか」だけで判断しないこと。フリーウェアとシェアウェアはどちらも無料で使い始められるが、シェアウェアは継続利用に対価が必要になる点で異なる。また、オープンソースソフトウェアの本質は「無料」であることではなく、「ソースコードが公開され、改変・再配布が認められている」ことである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　一定期間または一定の機能を無料で試用でき、使い続ける場合には対価の支払いを求める配布形態はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　フリーウェア</button>
+            <button type="button">イ　シェアウェア</button>
+            <button type="button">ウ　オープンソースソフトウェア</button>
+            <button type="button">エ　パッケージソフトウェア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>シェアウェアは試用後の継続利用に対価が必要。フリーウェアは無償で利用でき、ソースコードは非公開であることが多い。オープンソースソフトウェアはソースコードが公開され、ライセンスの条件の下で利用・改変・再配布できる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　オープンソースソフトウェア(OSS)の説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　著作権が放棄されているので、誰でも制限なく利用できる</button>
+            <button type="button">イ　無償で利用できるが、ソースコードは公開されていない</button>
+            <button type="button">ウ　ソースコードが公開されており、ライセンスの条件の下で誰でも利用・改変・再配布できる</button>
+            <button type="button">エ　個人の学習目的に限って利用でき、商用利用はできない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>OSSはソースコードが公開され、ライセンスの条件を守れば利用・改変・再配布できる。著作権は放棄されていない(アは誤り)。OSSの定義では、特定の分野や個人の利用を制限しないので、商用利用もできる(エは誤り)。イはフリーウェアに多い形態。</p>
+        </div>
       </div>
     </section>
     <section class="topic" id="topic-5">
@@ -217,6 +343,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>入出力が終わったタスクは「待ち状態 → 実行可能状態」に移り、CPUの割当てを待つ。すぐに実行状態になるわけではない。また、優先度順だと優先度の低いタスクがいつまでも実行されないことがあり(スタベーション)、待ち時間に応じて優先度を上げるエージングで対策する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　入出力の完了を待っていた待ち状態のタスクは、入出力が完了するとどの状態に移るか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　実行可能状態</button>
+            <button type="button">イ　実行状態</button>
+            <button type="button">ウ　待ち状態のまま</button>
+            <button type="button">エ　終了状態</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>入出力が終わったタスクは、いったん実行可能状態に戻ってCPUの割当て(ディスパッチ)を待つ。待ち状態から直接、実行状態に移ることはない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　一定時間(タイムクォンタム)ずつ順番にCPUを割り当て、時間が来たら待ち行列の最後尾に回すスケジューリング方式はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　到着順(FCFS)</button>
+            <button type="button">イ　処理時間順(SPT)</button>
+            <button type="button">ウ　優先度順</button>
+            <button type="button">エ　ラウンドロビン</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ラウンドロビンは、各タスクに一定時間ずつ順番にCPUを割り当てる。到着順は実行可能になった順、処理時間順は処理時間の短い順(平均待ち時間が最も短くなる)、優先度順は優先度の高い順に割り当てる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -238,6 +389,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>FIFOは「読み込んだ順」、LRUは「参照した順」で判断する。途中で再参照されたページがあると、両者で追い出すページが変わる。また、主記憶が足りずページインとページアウトが頻発し、処理がほとんど進まなくなる状態をスラッシングという。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　ページ枠が3つの主記憶で、ページを 3, 1, 2, 3, 4 の順に参照する。ページ置換アルゴリズムがLRUのとき、ページ4を参照したときに追い出されるページはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1</button>
+            <button type="button">イ　2</button>
+            <button type="button">ウ　3</button>
+            <button type="button">エ　4</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ページ4を参照する時点で、最後に参照された時刻は 1 が2番目、2 が3番目、3 が4番目(再参照されている)。最後に参照されてから最も長い時間がたったページ 1 が追い出される。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ページ枠が3つの主記憶で、ページを 3, 1, 2, 3, 4 の順に参照する。ページ置換アルゴリズムがFIFOのとき、ページ4を参照したときに追い出されるページはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　1</button>
+            <button type="button">イ　2</button>
+            <button type="button">ウ　3</button>
+            <button type="button">エ　追い出されるページはない</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>FIFOは主記憶に読み込まれた順で判断するので、最初に読み込まれた 3 が追い出される。途中で 3 が再参照されていても、FIFOでは考慮しない(LRUなら 1 が追い出される)。ページ枠はいっぱいなので、何かを追い出す必要がある。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-7">
@@ -254,6 +430,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>OSSでも著作権は放棄されておらず、ライセンスの条件を守る必要がある。また、OSSの定義では「特定の分野・個人の利用を制限しない」「有償での販売も妨げない」とされており、「商用利用を禁止できる」「無償でなければならない」という選択肢は誤りである。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　GPLのように、改変・再配布したソフトウェアにも同じライセンスを適用し、ソースコードの開示を求める考え方はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　パブリックドメイン</button>
+            <button type="button">イ　コピーレフト</button>
+            <button type="button">ウ　シェアウェア</button>
+            <button type="button">エ　フリーウェア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>コピーレフトは、改変したソフトウェアも同じ条件で公開させることで、自由に利用できる状態を保つ考え方。パブリックドメインは著作権が放棄された(または消滅した)状態。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　MITライセンスのOSSを改変して、自社の製品に組み込んで販売したい。適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　改変した部分のソースコードを、必ず公開しなければならない</button>
+            <button type="button">イ　OSSなので、著作権表示も残さなくてよい</button>
+            <button type="button">ウ　OSSは商用の製品に組み込むことはできない</button>
+            <button type="button">エ　著作権表示などを残せば、改変した部分のソースコードを公開しなくてよい</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>MITライセンスやBSDライセンスは、著作権表示などを残せば、改変したソフトウェアのソースコードを公開しなくてよい。アはGPL(コピーレフト)の条件。OSSでも著作権は放棄されていないので、ライセンスの条件(著作権表示など)は守る必要がある。</p>
+        </div>
       </div>
     </section>
     </article>
