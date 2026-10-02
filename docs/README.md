@@ -77,14 +77,15 @@ docs/
 - 仕訳は、入力した行の科目と金額が正解とすべて一致し、過不足がないときに正解とする(行の順番は問わない)
 - 解いた結果は保存しない(ページを開き直すと最初から)
 
-## ランダム出題の練習問題(基本情報 科目B)
+## ランダム出題の練習問題(基本情報 科目B・応用情報 午後)
 
-`kihonjoho-b/practice.html` は、基本情報 科目Bの問題を5問ずつランダムに出題するページです(GitHub Pages だけで使い、アプリには載せない。アプリでは「問題を解く」で解ける)。解いた結果は保存しません。
+`kihonjoho-b/practice.html` と `oyojoho-pm/practice.html` は、問題を5問ずつランダムに出題するページです(GitHub Pages だけで使い、アプリには載せない。アプリでは「問題を解く」で解ける)。解いた結果は保存しません。
 
-- 分野は目次のリンクの `?genre=<キー>` で指定する(`algorithms-programming` / `security`。指定なしはすべての分野)。開くとすぐ出題が始まる
-- 問題は `kihonjoho-b/questions.js`。`personal_dashboard-data/exam_questions.json` の科目B(`exam_type: kihonjoho-b`)から生成するので、直接編集しない
-- 分野が増えたら、生成スクリプトの `GENRE_KEYS` にキーを追加し、目次にリンクを追加する(キーがない分野があると生成はエラーになる)
-- 問題データを直したら、front で `npm run docs:kihonjoho-b` を実行して `questions.js` を生成し直し、コミットする(生成は `scripts/build-kihonjoho-b-questions.mjs`)
+- 分野は目次のリンクの `?genre=<キー>` で指定する(指定なしはすべての分野)。開くとすぐ出題が始まる
+- 問題は各フォルダの `questions.js`。`personal_dashboard-data/exam_questions.json` から生成するので、直接編集しない
+- 問題データを直したら、front で `npm run docs:practice` を実行して `questions.js` を生成し直し、コミットする(生成は `scripts/build-practice-questions.mjs`。全科目をまとめて生成する)
+- 分野が増えたら、生成スクリプトの `EXAMS` にキーを追加し、目次にリンクを追加する(キーがない分野があると生成はエラーになる)
+- 科目を増やすときは、`EXAMS` に科目を追加し、既存の `practice.html` をコピーして試験名(パンくず・`data-exam-name`)と戻り先(`data-toc-href`)を書き換え、目次に欄を追加する
 - 動きは `assets/practice.js`、見た目は `assets/practice.css`。1回の出題数はページの `data-per-session` で変えられる
 
 ## ジャンルを追加するとき

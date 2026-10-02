@@ -8,7 +8,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "docs:kihonjoho-b": "node scripts/build-kihonjoho-b-questions.mjs"
+    "docs:practice": "node scripts/build-practice-questions.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.8",

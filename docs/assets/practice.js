@@ -1,6 +1,6 @@
 /*
- * GitHub Pages の「ランダム出題の練習問題」を動かすスクリプト(front#170、今は基本情報 科目Bで使う)。
- * window.PRACTICE_QUESTIONS(scripts/build-kihonjoho-b-questions.mjs で生成)から、選んだ分野の問題を
+ * GitHub Pages の「ランダム出題の練習問題」を動かすスクリプト(front#170, #175。基本情報 科目B・応用情報 午後で使う)。
+ * window.PRACTICE_QUESTIONS(scripts/build-practice-questions.mjs で生成)から、選んだ分野の問題を
  * ランダムに出題し、1問ずつ答え合わせ → 最後に結果を表示する。解いた結果は保存しない。
  * 書き方は docs/README.md を参照。
  */
@@ -22,7 +22,7 @@
     return a;
   }
 
-  // 擬似言語のプログラムを行番号付きで表示する。〔a〕のような空欄は枠で強調する(アプリの code-block と同じ)
+  // 擬似言語などのプログラムを行番号付きで表示する。〔a〕のような空欄は枠で強調する(アプリの code-block と同じ)
   function codeHtml(code) {
     return '<div class="practice-code">' + code.split('\n').map(function (line, i) {
       var src = escapeHtml(line).replace(/〔([^〕]*)〕/g, '<span class="practice-blank">$1</span>');
@@ -36,6 +36,9 @@
     var all = window.PRACTICE_QUESTIONS;
     if (!app || !all) return;
     var perSession = Number(app.dataset.perSession) || 5;
+    // 試験名(タブのタイトルに使う)と、「分野を選び直す」で戻る目次の位置は、ページの data- 属性で受け取る
+    var examName = app.dataset.examName || '';
+    var tocHref = app.dataset.tocHref || '../index.html';
 
     // 分野は目次のリンクの ?genre=<キー> で受け取る。指定なし(または知らないキー)はすべての分野から出題する
     var genreKey = new URLSearchParams(location.search).get('genre');
@@ -49,7 +52,7 @@
     document.querySelectorAll('[data-practice-genre]').forEach(function (el) {
       el.textContent = genreName;
     });
-    document.title = genreName + 'の練習問題 | 基本情報技術者試験（科目B）';
+    document.title = genreName + 'の練習問題' + (examName ? ' | ' + examName : '');
 
     function start() {
       session = { questions: shuffle(pool).slice(0, perSession), index: 0, results: [] };
@@ -111,7 +114,7 @@
             '<span>問' + (i + 1) + '</span><span class="practice-summary-q">' + escapeHtml(title) + '</span></li>';
         }).join('') + '</ul>' +
         '<button type="button" class="practice-btn" data-action="start">もう一度' + perSession + '問 解く</button>' +
-        '<a class="practice-btn is-sub" href="../index.html#kihonjoho-b">分野を選び直す</a>' +
+        '<a class="practice-btn is-sub" href="' + escapeHtml(tocHref) + '">分野を選び直す</a>' +
         '</div>';
     }
 
