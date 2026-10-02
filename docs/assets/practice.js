@@ -37,37 +37,21 @@
     if (!app || !all) return;
     var perSession = Number(app.dataset.perSession) || 5;
 
-    // 分野は問題データに出てくる順に並べる
-    var genres = [];
-    all.forEach(function (q) {
-      if (genres.indexOf(q.genre) < 0) genres.push(q.genre);
-    });
-    var selectedGenre = '';
+    // 分野は目次のリンクの ?genre=<キー> で受け取る。指定なし(または知らないキー)はすべての分野から出題する
+    var genreKey = new URLSearchParams(location.search).get('genre');
+    var pool = all.filter(function (q) { return q.genreKey === genreKey; });
+    if (pool.length === 0) pool = all;
+    var genreName = pool === all ? 'すべての分野' : pool[0].genre;
     // 出題中の問題・何問目か・各問の正誤
     var session = null;
 
-    function countOf(genre) {
-      return all.filter(function (q) { return !genre || q.genre === genre; }).length;
-    }
-
-    function showStart() {
-      var options = [''].concat(genres).map(function (g) {
-        return '<label class="practice-genre"><input type="radio" name="practice-genre" value="' + escapeHtml(g) + '"' +
-          (g === selectedGenre ? ' checked' : '') + '><span>' + (g ? escapeHtml(g) : 'すべての分野') +
-          '</span><small>' + countOf(g) + '問</small></label>';
-      }).join('');
-      app.innerHTML =
-        '<div class="practice-card">' +
-        '<div class="practice-label">出題する分野</div>' +
-        '<div class="practice-genres">' + options + '</div>' +
-        '<button type="button" class="practice-btn" data-action="start">' + perSession + '問 解く</button>' +
-        '</div>';
-    }
+    // 見出し・パンくず・タブのタイトルに分野名を出す
+    document.querySelectorAll('[data-practice-genre]').forEach(function (el) {
+      el.textContent = genreName;
+    });
+    document.title = genreName + 'の練習問題 | 基本情報技術者試験（科目B）';
 
     function start() {
-      var checked = app.querySelector('input[name="practice-genre"]:checked');
-      if (checked) selectedGenre = checked.value;
-      var pool = all.filter(function (q) { return !selectedGenre || q.genre === selectedGenre; });
       session = { questions: shuffle(pool).slice(0, perSession), index: 0, results: [] };
       showQuestion();
     }
@@ -88,7 +72,9 @@
         }).join('') + '</div>' +
         '<div class="practice-answer" aria-live="polite"></div>' +
         '</div>';
-      window.scrollTo(0, app.getBoundingClientRect().top + window.pageYOffset - 16);
+      // 前の問題の解説を読んで下までスクロールしているときは、次の問題の先頭に戻す
+      var top = app.getBoundingClientRect().top;
+      if (top < 0) window.scrollTo(0, top + window.pageYOffset - 16);
     }
 
     function answer(picked) {
@@ -125,7 +111,7 @@
             '<span>問' + (i + 1) + '</span><span class="practice-summary-q">' + escapeHtml(title) + '</span></li>';
         }).join('') + '</ul>' +
         '<button type="button" class="practice-btn" data-action="start">もう一度' + perSession + '問 解く</button>' +
-        '<button type="button" class="practice-btn is-sub" data-action="top">分野を選び直す</button>' +
+        '<a class="practice-btn is-sub" href="../index.html#kihonjoho-b">分野を選び直す</a>' +
         '</div>';
     }
 
@@ -137,11 +123,10 @@
         case 'answer': answer(Number(btn.dataset.choice)); break;
         case 'next': session.index++; showQuestion(); break;
         case 'finish': showResult(); break;
-        case 'top': showStart(); break;
       }
     });
 
-    showStart();
+    start();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

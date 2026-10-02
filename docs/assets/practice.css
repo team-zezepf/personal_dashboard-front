@@ -38,33 +38,9 @@
   font-size: 0.9rem;
 }
 
-.practice-genres {
-  display: grid;
-  gap: 8px;
-  margin: 10px 0 16px;
-}
-
-.practice-genre {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid #d5dde6;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-}
-
-.practice-genre:has(input:checked) {
-  border-color: var(--pr-primary);
-  background: #f3fbff;
-}
-
-.practice-genre small {
-  margin-left: auto;
-  color: var(--pr-muted);
-}
-
 .practice-btn {
+  display: inline-block;
+  text-decoration: none;
   border: 1px solid var(--pr-primary);
   border-radius: 10px;
   background: var(--pr-primary);
