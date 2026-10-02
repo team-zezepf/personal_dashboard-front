@@ -1,0 +1,296 @@
+/*
+ * GitHub Pages の「ランダム出題の練習問題」(docs/assets/practice.js)のスタイル(front#170)。
+ * アプリでは使わないため、study.css とは分けている。外枠(.docs-page など)は study.css のものを使う。
+ */
+.practice-page {
+  --pr-text: #1f2937;
+  --pr-muted: #7b8794;
+  --pr-line: #e7ebf0;
+  --pr-primary: #13a9df;
+  --pr-primary-dark: #078ec2;
+  color: var(--pr-text);
+  line-height: 1.7;
+}
+
+.practice-page h1 {
+  font-size: 1.5rem;
+  margin: 0 0 8px;
+}
+
+.practice-lead {
+  color: var(--pr-muted);
+  font-size: 0.92rem;
+  margin: 0 0 20px;
+}
+
+.practice-card {
+  background: #fff;
+  border: 1px solid var(--pr-line);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-top: 12px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  min-width: 0;
+}
+
+.practice-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.practice-genres {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+
+.practice-genre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d5dde6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.practice-genre:has(input:checked) {
+  border-color: var(--pr-primary);
+  background: #f3fbff;
+}
+
+.practice-genre small {
+  margin-left: auto;
+  color: var(--pr-muted);
+}
+
+.practice-btn {
+  border: 1px solid var(--pr-primary);
+  border-radius: 10px;
+  background: var(--pr-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 9px 20px;
+  cursor: pointer;
+}
+
+.practice-btn:hover {
+  background: var(--pr-primary-dark);
+  border-color: var(--pr-primary-dark);
+}
+
+.practice-btn.is-sub {
+  background: #fff;
+  color: var(--pr-primary-dark);
+  margin-left: 8px;
+}
+
+.practice-btn.is-sub:hover {
+  background: #f3fbff;
+}
+
+.practice-progress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--pr-muted);
+}
+
+.practice-bar {
+  height: 6px;
+  background: var(--pr-line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.practice-bar i {
+  display: block;
+  height: 100%;
+  background: var(--pr-primary);
+}
+
+.practice-q-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--pr-muted);
+  margin-bottom: 6px;
+}
+
+.practice-tag {
+  background: #e6f6fc;
+  color: var(--pr-primary-dark);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-weight: 700;
+}
+
+.practice-q {
+  white-space: pre-wrap;
+  margin: 0 0 14px;
+}
+
+/* 擬似言語の手続・関数の宣言に使う「○」が欧文等幅フォントで小さくならないよう、この記号だけ日本語フォントで表示する */
+@font-face {
+  font-family: "PseudoCodeSymbol";
+  src: local("BIZ UDGothic"), local("MS Gothic"), local("Yu Gothic"), local("Hiragino Sans");
+  unicode-range: U+25CB;
+}
+
+.practice-code {
+  margin: 0 0 16px;
+  padding: 10px 0;
+  background: #f8fafc;
+  border: 1px solid var(--pr-line);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-family: "PseudoCodeSymbol", Consolas, "BIZ UDGothic", "Osaka-Mono", "MS Gothic", monospace;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.practice-code-line {
+  display: flex;
+  white-space: pre;
+}
+
+.practice-code-no {
+  flex-shrink: 0;
+  width: 3em;
+  padding-right: 12px;
+  text-align: right;
+  color: #9aa5b1;
+  border-right: 1px solid var(--pr-line);
+  user-select: none;
+}
+
+.practice-code-src {
+  padding: 0 16px 0 14px;
+}
+
+.practice-blank {
+  display: inline-block;
+  min-width: 2.6em;
+  padding: 0 4px;
+  text-align: center;
+  border: 2px solid #f59e0b;
+  border-radius: 4px;
+  color: #b45309;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.practice-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.practice-choices button {
+  text-align: left;
+  border: 1px solid #d5dde6;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 0.92rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.practice-choices button:hover:not(:disabled) {
+  border-color: var(--pr-primary);
+}
+
+.practice-choices button:disabled {
+  cursor: default;
+  color: inherit;
+}
+
+.practice-choices button.is-correct {
+  background: #e8f8ef;
+  border-color: #22b573;
+  font-weight: 700;
+}
+
+.practice-choices button.is-wrong {
+  background: #fdecec;
+  border-color: #ef5b5b;
+}
+
+.practice-result {
+  margin-top: 14px;
+  font-weight: 700;
+}
+
+.practice-ok {
+  color: #1f9d55;
+}
+
+.practice-ng {
+  color: #d64545;
+}
+
+.practice-explain {
+  white-space: pre-wrap;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.practice-nav {
+  margin-top: 14px;
+  text-align: right;
+}
+
+.practice-summary {
+  text-align: center;
+}
+
+.practice-score {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--pr-primary-dark);
+  margin: 2px 0 8px;
+}
+
+.practice-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  text-align: left;
+}
+
+.practice-summary li {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef1f4;
+  font-size: 0.88rem;
+}
+
+.practice-summary li > span:nth-child(2) {
+  flex-shrink: 0;
+  color: var(--pr-muted);
+}
+
+.practice-summary-q {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .practice-card {
+    padding: 16px 14px;
+  }
+  .practice-btn.is-sub {
+    margin: 8px 0 0;
+  }
+}

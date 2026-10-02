@@ -77,6 +77,14 @@ docs/
 - 仕訳は、入力した行の科目と金額が正解とすべて一致し、過不足がないときに正解とする(行の順番は問わない)
 - 解いた結果は保存しない(ページを開き直すと最初から)
 
+## ランダム出題の練習問題(基本情報 科目B)
+
+`kihonjoho-b/practice.html` は、基本情報 科目Bの問題を分野を選んで5問ずつランダムに出題するページです(GitHub Pages だけで使い、アプリには載せない。アプリでは「問題を解く」で解ける)。解いた結果は保存しません。
+
+- 問題は `kihonjoho-b/questions.js`。`personal_dashboard-data/exam_questions.json` の科目B(`exam_type: kihonjoho-b`)から生成するので、直接編集しない
+- 問題データを直したら、front で `npm run docs:kihonjoho-b` を実行して `questions.js` を生成し直し、コミットする(生成は `scripts/build-kihonjoho-b-questions.mjs`)
+- 動きは `assets/practice.js`、見た目は `assets/practice.css`。1回の出題数はページの `data-per-session` で変えられる
+
 ## ジャンルを追加するとき
 
 1. `docs/<examType>/<genreKey>.html` を追加する(既存のページをコピーすると早い)
