@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>プロジェクトマネジメントのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -52,6 +53,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>プロジェクト憲章は、プロジェクトの実施を正式に認可する文書であり、詳細な作業内容やスケジュールをまとめる「プロジェクト計画書」とは役割が異なる。また、QCDは3要素のどれか一つだけを追求すればよいものではなく、常にバランスを考えながら管理する必要がある点に注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　プロジェクトの目的・目標・責任者などを記載し、プロジェクトの存在を正式に認可する文書はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　WBS</button>
+            <button type="button">イ　プロジェクト憲章</button>
+            <button type="button">ウ　ガントチャート</button>
+            <button type="button">エ　議事録</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>プロジェクト憲章は、プロジェクトの実施を正式に認可・承認する文書。詳細な作業内容やスケジュールをまとめるものではない。WBSは作業を階層的に分解した一覧、ガントチャートは作業の日程を横棒で表した図。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　プロジェクトの制約条件であるQCD(品質・コスト・納期)の関係として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　3つの要素は互いに独立しており、影響し合わない</button>
+            <button type="button">イ　品質を高めれば、コストと納期も必ず改善する</button>
+            <button type="button">ウ　1つの要素を優先すると他の要素に影響が出る、トレードオフの関係にある</button>
+            <button type="button">エ　納期は変えられないので、品質とコストだけを調整する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>QCDは互いにトレードオフの関係にあり、例えば品質を高めようとするとコストや期間が増えやすい。プロジェクトマネージャはこの3つのバランスを取りながら計画・管理する。</p>
+        </div>
       </div>
     </section>
 
@@ -122,6 +148,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>WBSは「作業の範囲を階層的に分解した一覧」であり、日程そのものを表すものではない。日程や依存関係を横棒で示すのはガントチャート、作業の順序関係や重要経路を矢印(アロー)で示すのはPERT図であり、それぞれの表現形式と目的を混同しないよう注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　プロジェクトで実施する作業を階層的に細分化し、管理しやすい単位(ワークパッケージ)にまで分解したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ガントチャート</button>
+            <button type="button">イ　PERT図</button>
+            <button type="button">ウ　WBS</button>
+            <button type="button">エ　マイルストーン</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>WBS(作業分解構成図)は作業の範囲を階層的に分解した一覧で、日程そのものは表さない。ガントチャートは日程を横棒で、PERT図は作業の順序関係を矢印で表す。マイルストーンは工程の完了など重要な区切りの時点。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　各作業の開始日・終了日・期間を横棒で表し、日程や進捗を視覚的に管理する図はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ガントチャート</button>
+            <button type="button">イ　WBS</button>
+            <button type="button">ウ　パレート図</button>
+            <button type="button">エ　特性要因図</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ガントチャートは作業ごとの横棒で、開始・終了のタイミングや作業の重なりを一目で把握できる。パレート図は項目を大きい順に並べた棒グラフと累積比率の折れ線、特性要因図は結果と原因の関係を魚の骨の形で整理する図。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -170,6 +221,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>クリティカルパスは「複数経路のうち最も日数が長い経路」であり、最も短い経路ではない点を取り違えないよう注意する。クリティカルパス以外の経路には多少の余裕(フロート)があっても、クリティカルパス上の作業の遅延は必ずプロジェクト全体の遅延に直結する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　あるプロジェクトには開始から終了まで3つの経路があり、各経路の作業と所要日数は、経路①: A(3日)→B(4日)→D(5日)、経路②: A(3日)→C(6日)→D(5日)、経路③: E(8日)→F(4日)である。プロジェクト全体の所要日数はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　12日</button>
+            <button type="button">イ　14日</button>
+            <button type="button">ウ　26日</button>
+            <button type="button">エ　35日</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>各経路の日数は、①が 3 + 4 + 5 = 12日、②が 3 + 6 + 5 = 14日、③が 8 + 4 = 12日。すべての経路の作業が終わらないとプロジェクトは終わらないので、最も長い経路②(クリティカルパス)の14日が全体の所要日数になる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　クリティカルパスの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　開始から終了までの経路のうち、所要日数が最も短い経路</button>
+            <button type="button">イ　作業の数が最も多い経路</button>
+            <button type="button">ウ　作業が遅れてもプロジェクト全体の日程に影響しない、余裕のある経路</button>
+            <button type="button">エ　所要日数が最も長い経路で、この経路上の作業が遅れるとプロジェクト全体が遅れる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>クリティカルパスは最も日数が長い経路で、余裕がない。この経路上の作業を短縮しなければ、全体の期間は短くならない。作業の数ではなく、所要日数の合計で決まる。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -199,6 +275,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>パラメトリック見積りは「過去データから導いた数式(パラメータ)」を使う点で、類似プロジェクトの実績値をそのまま当てはめる類推見積りとは異なる。また、三点見積りの期待値は単純平均((楽観値+最頻値+悲観値)÷3)ではなく、最頻値を4倍して重み付けした上で6で割る点に注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　ある作業の楽観値が3日、最頻値が5日、悲観値が13日であるとき、三点見積り(PERT見積り)による期待値はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　5日</button>
+            <button type="button">イ　7日</button>
+            <button type="button">ウ　6日</button>
+            <button type="button">エ　3日</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>期待値 = (楽観値 + 4 × 最頻値 + 悲観値) ÷ 6 = (3 + 20 + 13) ÷ 6 = 6日。イは3つの値の単純な平均((3 + 5 + 13) ÷ 3)。最頻値に4倍の重みを付ける点に注意する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　複数の専門家に匿名でアンケートを繰り返し行い、意見を収束させて見積もる技法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　類推見積り</button>
+            <button type="button">イ　パラメトリック見積り</button>
+            <button type="button">ウ　三点見積り</button>
+            <button type="button">エ　デルファイ法</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>デルファイ法は、匿名で回答を繰り返すことで、声の大きい人に引きずられずに意見をまとめる。類推見積りは類似プロジェクトの実績を参考にし、パラメトリック見積りは過去の実績から導いた数式で算出する。</p>
+        </div>
       </div>
     </section>
 
@@ -242,6 +343,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>SPI(EV÷PV)は「スケジュール(進捗)」の効率を、CPI(EV÷AC)は「コスト」の効率を表す指標であり、分母がPVかACかを取り違えやすい。どちらも計算結果が1より大きければ計画より順調(進んでいる・予算内)、1より小さければ非効率(遅延・超過)であると覚えておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　ある時点で、PV(計画価値)が200万円、EV(出来高)が150万円、AC(実コスト)が120万円であった。SPI(スケジュール効率指数)はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　0.75</button>
+            <button type="button">イ　1.25</button>
+            <button type="button">ウ　0.8</button>
+            <button type="button">エ　0.6</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SPI = EV ÷ PV = 150 ÷ 200 = 0.75。イは CPI(EV ÷ AC = 150 ÷ 120)の値、ウは AC ÷ EV、エは AC ÷ PV。分母が PV か AC かを取り違えないようにする。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　ある時点で、PV(計画価値)が200万円、EV(出来高)が150万円、AC(実コスト)が120万円であった。この時点のプロジェクトの状況として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　スケジュールは進んでいるが、コストは予算を超過している</button>
+            <button type="button">イ　スケジュールは遅れているが、コストは予算内に収まっている</button>
+            <button type="button">ウ　スケジュールは遅れており、コストも予算を超過している</button>
+            <button type="button">エ　スケジュールは進んでおり、コストも予算内に収まっている</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SPI = 150 ÷ 200 = 0.75 で1を下回るので、スケジュールは遅れている。CPI = 150 ÷ 120 = 1.25 で1を上回るので、出来高に対して少ないコストで済んでおり、コストは予算内に収まっている。</p>
+        </div>
       </div>
     </section>
 
@@ -307,6 +433,31 @@
         <span class="label">つまずきやすいポイント(リスク)</span>
         <span>「転嫁」は保険や外部委託によってリスクの影響を第三者に移す対応であり、リスクの原因そのものを取り除く「回避」とは異なる。また「軽減」は発生確率や影響度を下げる対応であり、無対策のまま受け入れる「受容」と混同しないよう注意する。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　個々の成果物を検査し、欠陥を検出・除去する活動はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　品質保証(QA)</button>
+            <button type="button">イ　リスク軽減</button>
+            <button type="button">ウ　品質管理(QC)</button>
+            <button type="button">エ　構成管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>品質管理(QC)は個々の成果物に着目して欠陥を見つける。品質保証(QA)はプロセス全体に着目し、定められたプロセスが適切に実行されているかを確認する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　保険への加入や外部委託によって、リスクが顕在化したときの影響を第三者に移すリスク対応はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　回避</button>
+            <button type="button">イ　軽減</button>
+            <button type="button">ウ　受容</button>
+            <button type="button">エ　転嫁</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>転嫁はリスクの影響を第三者に移す対応。回避はリスクの原因となる作業を計画から取り除くこと、軽減は発生確率や影響度を下げる対策をとること、受容は対策をとらずに影響を受け入れること。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-6">
@@ -346,6 +497,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>人的資源・コミュニケーション・調達マネジメントは、いずれもプロジェクトマネジメントの管理対象であるが、対象がそれぞれ異なる(要員体制/情報共有/外部調達)点を区別する。特に、ステークホルダーとの情報共有計画を指すのは「コミュニケーションマネジメント」であり、外部ベンダーとの契約・調達を指す「調達マネジメント」と混同しないよう注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　ステークホルダー間で、必要な情報を適切なタイミング・手段・頻度で共有するための計画と管理を行うマネジメント領域はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　人的資源マネジメント</button>
+            <button type="button">イ　コミュニケーションマネジメント</button>
+            <button type="button">ウ　調達マネジメント</button>
+            <button type="button">エ　スコープマネジメント</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>コミュニケーションマネジメントは情報共有が対象。人的資源マネジメントは要員の確保や体制、調達マネジメントは外部からの資材・サービスの調達、スコープマネジメントは作業の範囲を対象とする。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　プロジェクトに必要な資材やサービスを、外部の供給者から調達するための計画立案・契約・管理を行うマネジメント領域はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　調達マネジメント</button>
+            <button type="button">イ　人的資源マネジメント</button>
+            <button type="button">ウ　コミュニケーションマネジメント</button>
+            <button type="button">エ　品質マネジメント</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>調達マネジメントは、外部のベンダーの選定や契約、納品物の管理を扱う。人的資源マネジメントはプロジェクトのメンバーの確保や役割分担を扱う。</p>
+        </div>
       </div>
     </section>
 
@@ -401,6 +577,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>かんばん方式はボード上でカードを移動させて「作業の状態」を可視化する手法であり、時間経過に伴う残作業量の推移を折れ線で示す「バーンダウンチャート」とは表現方法が異なる。また、スプリントは「開発サイクルの単位(期間)」を指す言葉であり、「役割」を指すプロダクトオーナーと混同しないよう注意する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　縦軸に残作業量、横軸に時間をとり、残作業量が減っていく様子を示すグラフはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　かんばん</button>
+            <button type="button">イ　ガントチャート</button>
+            <button type="button">ウ　バーンダウンチャート</button>
+            <button type="button">エ　PERT図</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>バーンダウンチャートでは、理想線と実績線を比べて進み具合を確認する。かんばんはカードをボード上で移動させて作業の状態を可視化する手法で、残作業量の推移は表さない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　スクラムで、要求事項(プロダクトバックログ)の優先順位付けを行い、開発する製品の価値を最大化する責任を持つ役割はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　スクラムマスター</button>
+            <button type="button">イ　開発者</button>
+            <button type="button">ウ　ステークホルダー</button>
+            <button type="button">エ　プロダクトオーナー</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>プロダクトオーナーは、何をどの順に作るかを決める責任を持つ。スクラムマスターはスクラムが正しく進むようにチームを支援する役割、開発者はスプリントの中で実際に製品を作る役割。</p>
+        </div>
       </div>
     </section>
     </article>

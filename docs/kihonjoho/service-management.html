@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>サービスマネジメントのまとめ | 基本情報技術者試験（科目A）</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -70,6 +71,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>SLAは提供者と利用者が合意した「文書(目標値)」そのものであるのに対し、SLMはその達成状況を継続的に監視・改善し続ける「プロセス(活動)」である。名称が似ているため混同しやすいが、「文書か、プロセス(活動)か」で区別するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　サービスの提供者と利用者の間で、稼働率や応答時間などのサービスレベルの目標値を明文化して合意したものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　SLM</button>
+            <button type="button">イ　SLA</button>
+            <button type="button">ウ　サービスカタログ</button>
+            <button type="button">エ　ITIL</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>SLA(サービスレベルアグリーメント)は合意した文書そのもの。SLM(サービスレベル管理)はSLAの達成状況を監視・改善し続けるプロセス。サービスカタログは提供できるサービスの一覧、ITILはITサービスマネジメントのベストプラクティス集。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　ITサービスマネジメントのベストプラクティスをまとめたフレームワークはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　ISMS</button>
+            <button type="button">イ　PMBOK</button>
+            <button type="button">ウ　ITIL</button>
+            <button type="button">エ　CMMI</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ITILはITサービスマネジメントのフレームワーク。ISMSは情報セキュリティを組織的に管理する仕組み、PMBOKはプロジェクトマネジメントの知識体系、CMMIは開発組織のプロセスの成熟度を評価するモデル。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -130,6 +156,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>インシデント管理は「サービスを止めない・早く戻す」ことが目的であり、根本原因の特定は目的としない。一方、問題管理は根本原因の特定・恒久対策の検討が目的であり、必ずしも迅速さを優先しない。この「速さ優先か、原因究明優先か」という目的の違いが問われやすい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　インシデント管理の目的として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　障害の根本原因を特定し、恒久的な再発防止策を講じる</button>
+            <button type="button">イ　IT環境の構成要素の情報を正確に把握する</button>
+            <button type="button">ウ　応急処置(ワークアラウンド)を含めて、サービスをできるだけ早く復旧させる</button>
+            <button type="button">エ　変更による影響を評価し、変更の実施を承認する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>インシデント管理は「サービスを止めない・早く戻す」ことが目的で、根本原因の特定は目的としない。アは問題管理、イは構成管理、エは変更管理の目的。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　問題管理の過程で原因は特定されているが、まだ恒久的な解決に至っていない障害として記録されるものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　インシデント</button>
+            <button type="button">イ　変更要求(RFC)</button>
+            <button type="button">ウ　構成アイテム(CI)</button>
+            <button type="button">エ　既知の誤り(Known Error)</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>既知の誤りとして記録しておくと、同じ障害が起きたときにワークアラウンドを素早く適用できる。変更要求は変更管理に提出する変更の依頼、構成アイテムは構成管理で管理するハードウェアやソフトウェアなどの構成要素。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-2">
@@ -174,6 +225,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>3つのプロセスは連携して動くため混同しやすい。「変更してよいか判断・統制する」のが変更管理、「変更内容を実際に本番環境へ展開する」のがリリース管理、「環境の現状の情報を正確に記録しておく」のが構成管理、という役割分担で覚えるとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　IT環境への変更が及ぼす影響を評価し、変更の承認・実施・記録を統制するプロセスはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　変更管理</button>
+            <button type="button">イ　構成管理</button>
+            <button type="button">ウ　リリース管理</button>
+            <button type="button">エ　問題管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>変更管理は「変更してよいか判断・統制する」プロセス。リリース管理は承認された変更を本番環境へ計画的に展開し、構成管理は構成要素の情報を正確に記録・維持する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　サーバやソフトウェア、ネットワーク機器などの構成アイテムの情報を記録・維持するデータベースはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RFC</button>
+            <button type="button">イ　SLA</button>
+            <button type="button">ウ　CMDB</button>
+            <button type="button">エ　BCP</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>CMDB(構成管理データベース)は構成管理で使う。RFCは変更要求、SLAはサービスレベルの合意、BCPは緊急事態でも重要な事業を継続するための事業継続計画。</p>
+        </div>
       </div>
     </section>
 
@@ -223,6 +299,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>「可用性管理」はサービスが止まらず稼働できる状態を維持すること、「キャパシティ管理」は必要な処理能力・容量を確保することが目的であり、どちらも安定稼働に関わるため混同しやすい。可用性管理は主に「止まらないこと(稼働率)」、キャパシティ管理は主に「十分な性能・容量があること」に着目していると整理するとよい。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　将来の業務量やシステムの利用状況を予測し、必要な処理能力を適切な時期に確保するプロセスはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　可用性管理</button>
+            <button type="button">イ　キャパシティ管理</button>
+            <button type="button">ウ　ファシリティマネジメント</button>
+            <button type="button">エ　財務管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>キャパシティ管理は必要な処理能力・容量を確保する。可用性管理は合意したサービスレベルに基づいて、サービスが必要なときに使える状態を維持する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　データセンタなどの設備で、電源・空調・入退室管理などの物理的な環境を維持・管理する活動はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　キャパシティ管理</button>
+            <button type="button">イ　可用性管理</button>
+            <button type="button">ウ　財務管理</button>
+            <button type="button">エ　ファシリティマネジメント</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ファシリティマネジメントは物理的な設備環境を対象とする。財務管理はITサービスの提供にかかるコストを把握し、予算編成や課金などを行う。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-4">
@@ -262,6 +363,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>サービスデスクは技術的な問い合わせに限らず、利用者からのあらゆる問い合わせ・要望を受け付ける「総合窓口」である。これに対しヘルプデスクは、その中でも技術的な問題解決に特化した窓口を指すことが多い。両者を同一視しがちだが、対象範囲の広さが異なる点を押さえておく。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　担当者だけでは対応できない問い合わせを、より高度な知識や権限を持つ上位の担当者・部署に引き継ぐことを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　エスカレーション</button>
+            <button type="button">イ　フェイルオーバー</button>
+            <button type="button">ウ　ワークアラウンド</button>
+            <button type="button">エ　リストア</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>エスカレーションは、サービスデスクで解決できない場合などに上位の担当へ引き継ぐこと。フェイルオーバーは障害時に待機系へ処理を引き継ぐ仕組み、ワークアラウンドは応急処置、リストアはバックアップからの復元。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　サービスデスクの説明として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　技術的な問い合わせだけを受け付ける専門の窓口</button>
+            <button type="button">イ　利用者からの問い合わせ・障害報告・要望などを一元的に受け付ける窓口</button>
+            <button type="button">ウ　障害の根本原因を調査して、恒久対策を講じる部署</button>
+            <button type="button">エ　システムへの変更を評価・承認する会議体</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>サービスデスクは技術的な内容に限らず、あらゆる問い合わせを受け付ける総合窓口。技術的な問い合わせを専門に扱う窓口はヘルプデスクと呼ぶことが多い。ウは問題管理、エは変更管理の役割。</p>
+        </div>
       </div>
     </section>
 
@@ -313,6 +439,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>RTOとRPOはどちらも「目標」を表す指標だが、RTOは障害発生後の「時間の長さ(いつまでに復旧するか)」、RPOは障害発生時点から見た「データの遡り具合(どの時点まで復旧するか)」を表しており、着目する軸が異なる。「時間(Time)のRTO」「データを戻す地点(Point)のRPO」と対応づけて覚えるとよい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　障害が発生してから、業務(サービス)を再開させるまでに許容される最大の時間を表す指標はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　RPO</button>
+            <button type="button">イ　MTBF</button>
+            <button type="button">ウ　RTO</button>
+            <button type="button">エ　SLA</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RTO(目標復旧時間)は「いつまでに復旧するか」という時間の長さ。RPO(目標復旧時点)は「どの時点の状態までデータを戻せればよいか」を表す。MTBFは平均故障間隔、SLAはサービスレベルの合意。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　あるシステムのRPOを24時間と定めた。これを満たすために必要な対策として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　少なくとも24時間ごとにバックアップを取得する</button>
+            <button type="button">イ　障害が発生してから24時間以内にサービスを再開する</button>
+            <button type="button">ウ　システムを24時間連続で稼働させる</button>
+            <button type="button">エ　24時間ごとにセキュリティパッチを適用する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>RPOが24時間なら、障害発生時点から遡って24時間以内の状態までデータを戻せる必要があるので、24時間以内の間隔でバックアップを取得しておく。イはRTOを24時間とした場合の対策。</p>
+        </div>
       </div>
     </section>
 
@@ -372,6 +523,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>バックアップは障害に備えて複製を「取得しておく」作業、リストアはその複製を使って「復元する」作業であり、方向(退避か復元か)が逆である点に注意する。また、パッチ管理(ソフトウェアの脆弱性修正)と構成管理(構成情報の記録)は、どちらもIT資産に関わる活動だが目的が異なるため混同しないようにする。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　バックアップしたデータを使って、障害が発生する前の状態にシステムやデータを復元する操作はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　バックアップ</button>
+            <button type="button">イ　リストア</button>
+            <button type="button">ウ　ログ</button>
+            <button type="button">エ　ジョブスケジューラ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>リストアは複製を使って「復元する」操作で、バックアップは障害に備えて複製を「取得しておく」作業。ログは操作履歴などの記録、ジョブスケジューラはバッチ処理などを決めたスケジュールで自動実行する仕組み。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　ソフトウェアの脆弱性を修正する更新プログラムを適用し、システムを安全な状態に保つ管理活動はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　システム監視</button>
+            <button type="button">イ　ジョブスケジューラ</button>
+            <button type="button">ウ　ログ管理</button>
+            <button type="button">エ　パッチ管理</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>パッチ管理は更新プログラム(パッチ)の適用を管理する。システム監視は稼働状況を常に観測して異常を早期に検知する活動、ログ管理は操作履歴や障害の発生状況の記録を扱う活動。</p>
+        </div>
+      </div>
     </section>
     <section class="topic" id="topic-7">
       <h2><span class="topic-no">8</span>システム監査(目的・監査人の独立性・監査の流れ)</h2>
@@ -398,6 +574,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>システム監査人は、監査対象の業務に関与してはいけない。改善を「勧告・助言」はするが、改善そのものを実施したり、改善計画を作ったりするのは監査対象の部門である。「監査人が自ら修正する」「監査対象部門の担当者が自部門を監査する」という選択肢は誤り。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　システム監査人の独立性について、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　監査対象のシステムを開発した担当者が監査する</button>
+            <button type="button">イ　監査人が指摘した改善を、監査人自身が実施する</button>
+            <button type="button">ウ　監査人は、監査対象の部門と身分上・組織上の関係を持たない</button>
+            <button type="button">エ　監査対象の部門の責任者が、監査人を兼ねる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>システム監査人は監査対象から独立している必要がある(外観上の独立性)。監査人は改善を勧告・助言はするが、改善を実施するのは監査対象の部門なので、イは誤り。アとエは監査対象に関与しているので独立性がない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　システム監査で、ヒアリングや現場の観察、記録の突合せなどを行い、結論の裏付けとなる監査証拠を集める手順はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　予備調査</button>
+            <button type="button">イ　本調査</button>
+            <button type="button">ウ　監査報告</button>
+            <button type="button">エ　フォローアップ</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>本調査で監査証拠を集める。予備調査は資料の閲覧などで実態を把握し、本調査で重点的に見る点を絞る手順。フォローアップは勧告した改善が実際に行われているかを確認する手順。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-8">
@@ -417,6 +618,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>ITガバナンスの主体は情報システム部門ではなく「経営陣」である。職務分掌は「1人で最初から最後まで処理できないように分ける」ことがポイントで、同じ担当者に申請と承認の両方をさせる選択肢は、内部統制上の問題がある例として出題される。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　ITガバナンスの主体として、適切なものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　経営陣</button>
+            <button type="button">イ　情報システム部門</button>
+            <button type="button">ウ　外部のシステム監査人</button>
+            <button type="button">エ　各利用部門</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>ITガバナンスは、経営陣がITの活用について方針を示し、組織全体でITが適切に使われるよう統制する仕組み。情報システム部門が主体ではない点に注意する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　1人に権限が集中しないよう、例えば「発注する人」と「検収・支払を承認する人」を分けることを何というか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　モニタリング</button>
+            <button type="button">イ　レピュテーションリスク</button>
+            <button type="button">ウ　ITへの対応</button>
+            <button type="button">エ　職務分掌</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>職務分掌は、仕事の担当と権限を分けて、1人で最初から最後まで処理できないようにすることで、不正や誤りを防ぐ。モニタリングは内部統制が有効に機能しているかを継続的に評価する活動、レピュテーションリスクは評判の低下で損失が生じるリスク。</p>
+        </div>
       </div>
     </section>
     </article>
