@@ -1,0 +1,49 @@
+<app-header pageTitle="つぶやき"></app-header>
+
+<main class="page">
+  <div class="thread-head">
+    <a class="back" routerLink="/timeline">‹ タイムライン</a>
+    <h1 class="page-title">スレッド</h1>
+  </div>
+
+  @if (isLoading()) {
+    <p class="message">読み込み中...</p>
+  } @else if (post(); as parent) {
+    <section class="card">
+      <app-post-item
+        [post]="parent"
+        [large]="true"
+        (updated)="post.set($event)"
+        (removed)="onParentRemoved()"
+      ></app-post-item>
+
+      <div class="reply-compose">
+        <img class="avatar" [src]="myAvatarSrc" alt="">
+        <app-post-composer
+          class="reply-main"
+          [compact]="true"
+          [busy]="isReplying()"
+          placeholder="返信を書く"
+          submitLabel="返信"
+          (submitted)="reply($event)"
+        ></app-post-composer>
+      </div>
+
+      @if (replies().length > 0) {
+        <div class="replies-label">返信 {{ replies().length }}件（古い順）</div>
+        @for (reply of replies(); track reply.id) {
+          <app-post-item
+            class="item"
+            [post]="reply"
+            (updated)="replaceReply($event)"
+            (removed)="removeReply($event)"
+          ></app-post-item>
+        }
+      } @else {
+        <p class="message">まだ返信はありません。</p>
+      }
+    </section>
+  } @else {
+    <p class="message error">{{ errorMessage() }}</p>
+  }
+</main>

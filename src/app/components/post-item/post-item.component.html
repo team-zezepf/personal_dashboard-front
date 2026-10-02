@@ -1,0 +1,85 @@
+<article class="post" [class.large]="large()" [class.reply]="isReply() && !showReplyTo()">
+  <img class="avatar" [src]="avatarSrc()" alt="">
+
+  <div class="post-main">
+    @if (showReplyTo() && isReply()) {
+      <div class="reply-to">↪ <a [routerLink]="['/timeline', threadId()]">{{ post().replyToAuthorName }}さんへの返信</a></div>
+    }
+
+    <div class="post-head">
+      <span class="name">{{ post().author.name }}</span>
+      <span class="time">・ {{ time() }}{{ post().editedAt ? ' ・ 編集済み' : '' }}</span>
+      @if (!isEditing() && (post().canEdit || post().canDelete)) {
+        <span class="menus">
+          @if (post().canEdit) {
+            <button type="button" class="menu" [disabled]="isBusy()" (click)="isEditing.set(true)">編集</button>
+          }
+          @if (post().canDelete) {
+            <button type="button" class="menu danger" [disabled]="isBusy()" (click)="delete()">削除</button>
+          }
+        </span>
+      }
+    </div>
+
+    @if (isEditing()) {
+      <app-post-composer
+        [compact]="true"
+        [cancellable]="true"
+        [busy]="isBusy()"
+        submitLabel="保存"
+        placeholder="本文"
+        [initialBody]="post().body"
+        [initialImages]="post().imageFilenames"
+        (submitted)="saveEdit($event)"
+        (cancelled)="isEditing.set(false)"
+      ></app-post-composer>
+    } @else {
+      @if (post().body) {
+        <!-- 本文は pre-wrap で表示するので、URL以外の部分も span に入れてテンプレートの空白が混ざらないようにする -->
+        <p class="body">
+          @for (segment of segments(); track $index) {
+            @if (segment.url) {
+              <a [href]="segment.url" target="_blank" rel="noopener noreferrer">{{ segment.text }}</a>
+            } @else {
+              <span>{{ segment.text }}</span>
+            }
+          }
+        </p>
+      }
+      @if (post().imageFilenames.length > 0) {
+        <app-post-images class="attachment" [filenames]="post().imageFilenames"></app-post-images>
+      } @else if (post().linkPreview; as linkPreview) {
+        <app-link-card class="attachment" [preview]="linkPreview"></app-link-card>
+      }
+    }
+
+    <div class="actions">
+      @if (!isReply()) {
+        @if (large()) {
+          <span class="action">💬 {{ post().replyCount }}</span>
+        } @else {
+          <a class="action reply" [routerLink]="['/timeline', post().id]" [attr.aria-label]="'返信 ' + post().replyCount + '件'">💬 {{ post().replyCount }}</a>
+        }
+      }
+      <button
+        type="button"
+        class="action like"
+        [class.on]="post().likedByMe"
+        [disabled]="isBusy()"
+        [attr.aria-pressed]="post().likedByMe"
+        aria-label="いいね"
+        (click)="toggleLike()"
+      >{{ post().likedByMe ? '♥' : '♡' }} {{ post().likeCount }}</button>
+      <button
+        type="button"
+        class="action bookmark"
+        [class.on]="post().bookmarkedByMe"
+        [disabled]="isBusy()"
+        [attr.aria-pressed]="post().bookmarkedByMe"
+        [title]="post().bookmarkedByMe ? 'ブックマークを外す' : 'ブックマーク'"
+        aria-label="ブックマーク"
+        (click)="toggleBookmark()"
+      >{{ post().bookmarkedByMe ? '★' : '☆' }}</button>
+    </div>
+  </div>
+</article>

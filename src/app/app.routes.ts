@@ -22,6 +22,8 @@ import { CardAdminPageComponent } from './pages/card-admin/card-admin.component'
 import { ThemeSettingsPageComponent } from './pages/theme-settings/theme-settings.component';
 import { InterviewPrepListPageComponent } from './pages/interview-prep-list/interview-prep-list.component';
 import { InterviewPrepEditPageComponent } from './pages/interview-prep-edit/interview-prep-edit.component';
+import { TimelinePageComponent } from './pages/timeline/timeline.component';
+import { PostThreadPageComponent } from './pages/post-thread/post-thread.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -53,5 +55,7 @@ export const routes: Routes = [
   { path: 'settings/theme', component: ThemeSettingsPageComponent, canActivate: [authGuard] },
   { path: 'interview-prep', component: InterviewPrepListPageComponent, canActivate: [authGuard] },
   { path: 'interview-prep/:id', component: InterviewPrepEditPageComponent, canActivate: [authGuard] },
+  { path: 'timeline', component: TimelinePageComponent, canActivate: [authGuard] },
+  { path: 'timeline/:id', component: PostThreadPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

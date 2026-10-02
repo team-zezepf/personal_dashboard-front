@@ -1,0 +1,43 @@
+<app-header pageTitle="つぶやき"></app-header>
+
+<main class="page">
+  <h1 class="page-title">つぶやき</h1>
+
+  <section class="compose card">
+    <img class="avatar" [src]="myAvatarSrc" alt="">
+    <app-post-composer class="compose-main" [busy]="isPosting()" (submitted)="create($event)"></app-post-composer>
+  </section>
+
+  <section class="timeline card">
+    <nav class="tabs" aria-label="表示する投稿">
+      @for (tab of tabs; track tab.filter) {
+        <button
+          type="button"
+          class="tab"
+          [class.active]="tab === activeTab()"
+          [attr.aria-current]="tab === activeTab() ? 'page' : null"
+          (click)="selectTab(tab)"
+        >{{ tab.label }}</button>
+      }
+    </nav>
+    <button type="button" class="reload" [disabled]="isLoading()" (click)="load()">↻ 新しい投稿を表示</button>
+
+    @if (errorMessage()) {
+      <p class="message error">{{ errorMessage() }}</p>
+    } @else if (isLoading() && posts().length === 0) {
+      <p class="message">読み込み中...</p>
+    } @else if (posts().length === 0) {
+      <p class="message">{{ activeTab().empty }}</p>
+    } @else {
+      @for (post of posts(); track post.id) {
+        <app-post-item
+          class="item"
+          [post]="post"
+          [showReplyTo]="true"
+          (updated)="replace($event)"
+          (removed)="remove($event)"
+        ></app-post-item>
+      }
+    }
+  </section>
+</main>
