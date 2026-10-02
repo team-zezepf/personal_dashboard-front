@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>試算表のまとめ | 簿記3級</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -55,6 +56,31 @@
         <span class="label">例題: 貸借が一致することを確かめる</span>
         <span>上の残高試算表について、借方残高の合計は 150,000円+80,000円+110,000円=<strong>340,000円</strong>、貸方残高の合計は 40,000円+100,000円+200,000円=<strong>340,000円</strong>となり、両者は一致する。これは、どの取引も借方・貸方の両方に同じ金額を記入するため、元帳を勘定科目ごとに集計しなおしても貸借の合計は崩れない、という<strong>貸借平均の原理</strong>によるものである。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　試算表を作成する主な目的はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　取引を発生した順に記録する</button>
+            <button type="button">イ　現金の実際有高を確かめる</button>
+            <button type="button">ウ　仕訳から総勘定元帳への転記が正しいかを確かめる</button>
+            <button type="button">エ　得意先ごとの売掛金の残高を確かめる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>試算表は元帳の各勘定の金額を一覧にし、借方と貸方の合計が一致するかで転記の正しさを確かめる。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　残高試算表の借方に 現金200,000円・売掛金100,000円・仕入150,000円、貸方に 買掛金80,000円・資本金(?)・売上250,000円 が記入されている。資本金の金額はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　70,000円</button>
+            <button type="button">イ　120,000円</button>
+            <button type="button">ウ　200,000円</button>
+            <button type="button">エ　450,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>借方合計は 200,000 + 100,000 + 150,000 = 450,000円。貸方合計も450,000円になるので、資本金 = 450,000 − 80,000 − 250,000 = 120,000円。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -78,6 +104,31 @@
       <div class="example-box">
         <span class="label">例題: 合計試算表の借方合計は仕訳帳の借方合計と一致する</span>
         <span>合計試算表は、仕訳帳に記入された取引をそのまま勘定科目ごとに集計しなおしたものである。そのため合計試算表の借方合計金額は<strong>仕訳帳の借方合計金額</strong>と、貸方合計金額は<strong>仕訳帳の貸方合計金額</strong>と、それぞれ必ず一致する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　各勘定の借方合計額と貸方合計額をそのまま集計する試算表はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　残高試算表</button>
+            <button type="button">イ　合計残高試算表</button>
+            <button type="button">ウ　精算表</button>
+            <button type="button">エ　合計試算表</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>合計試算表は借方・貸方の合計額を、残高試算表は差額(残高)だけを集計する。合計残高試算表はその両方を1つの表にしたもの。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　現金勘定の借方合計が500,000円、貸方合計が320,000円である。残高試算表にはどのように記入するか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　借方に180,000円</button>
+            <button type="button">イ　貸方に180,000円</button>
+            <button type="button">ウ　借方に500,000円</button>
+            <button type="button">エ　借方に820,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>残高は 500,000 − 320,000 = 180,000円。借方のほうが多いので借方残高として記入する。</p>
+        </div>
       </div>
     </section>
 
@@ -131,6 +182,31 @@
         <span class="label">つまずきやすいポイント</span>
         <span>損益計算書欄と貸借対照表欄とで、当期純利益を記入する側(借方・貸方)が逆になる点に注意する。損益計算書欄では<strong>借方</strong>に、貸借対照表欄では<strong>貸方</strong>に記入する。逆に当期純損失が生じた場合は、この記入する側がすべて反対になる。</span>
       </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　精算表で当期純利益が生じたとき、その金額を記入する欄の組合せとして正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　損益計算書欄の貸方と、貸借対照表欄の借方</button>
+            <button type="button">イ　損益計算書欄の貸方と、貸借対照表欄の貸方</button>
+            <button type="button">ウ　損益計算書欄の借方と、貸借対照表欄の貸方</button>
+            <button type="button">エ　損益計算書欄の借方と、貸借対照表欄の借方</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>損益計算書欄では差額を借方に書いて貸借を合わせ、貸借対照表欄では同じ金額を貸方に書く(利益の分だけ純資産が増える)。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　精算表で、売掛金の金額を書き移す欄はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　損益計算書欄の借方</button>
+            <button type="button">イ　損益計算書欄の貸方</button>
+            <button type="button">ウ　貸借対照表欄の貸方</button>
+            <button type="button">エ　貸借対照表欄の借方</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>売掛金は資産なので貸借対照表欄に移し、資産は借方に記入する。収益・費用の勘定は損益計算書欄に移す。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-3">
@@ -150,6 +226,31 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>試算表の貸借合計が一致していても、転記や仕訳に誤りがないとは限らない。<strong>取引全体の記帳もれ</strong>、<strong>勘定科目の書き間違い</strong>、<strong>貸借の逆記入</strong>などは、借方・貸方の金額そのものは変わらないため、試算表上では貸借が一致してしまい発見できない。「貸借が一致=誤りなし」と早合点しないこと。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　試算表を作成することで発見できる誤りはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　借方だけを転記し、貸方を転記し忘れた</button>
+            <button type="button">イ　ある取引を借方・貸方ともに記帳し忘れた</button>
+            <button type="button">ウ　正しい金額で、本来とは別の勘定科目に転記した</button>
+            <button type="button">エ　ある取引の借方と貸方を逆に記入した</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>片側だけの転記もれは貸借の合計が一致しなくなるので発見できる。それ以外は借方・貸方に同じ影響が出るため、合計は一致したままで発見できない。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　商品50,000円を現金で仕入れた取引を、誤って (借方)現金 50,000 / (貸方)仕入 50,000 と記帳した。試算表の借方合計と貸方合計はどうなるか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　借方合計が100,000円多くなる</button>
+            <button type="button">イ　貸方合計が50,000円多くなる</button>
+            <button type="button">ウ　一致したままになる</button>
+            <button type="button">エ　借方合計が50,000円多くなる</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>貸借を逆に記入しても、借方と貸方には同じ50,000円が記入されるので合計は一致する。試算表では発見できない誤りである。</p>
+        </div>
       </div>
     </section>
     </article>

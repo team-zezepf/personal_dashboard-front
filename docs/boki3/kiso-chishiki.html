@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>基礎知識のまとめ | 簿記3級</title>
   <link rel="stylesheet" href="../assets/study.css">
+  <script src="../assets/quiz.js" defer></script>
 </head>
 <body class="docs-page">
   <header class="docs-header"><a href="../index.html">資格学習のまとめ</a></header>
@@ -38,6 +39,31 @@
         <figcaption class="fig-caption">T字勘定は、勘定科目ごとに紙面を左右に分けて記録する形。左側を借方、右側を貸方と呼ぶ。どちらの側が「増加」を表すかは勘定科目の分類によって異なる(次の項目の表を参照)。</figcaption>
       </figure>
       <p>複式簿記では、一つの取引を借方・貸方の両方に同じ金額で記入する(これを仕訳という)。そのため、すべての取引を記録し終えた時点で、借方の合計金額と貸方の合計金額は必ず一致する。これを貸借平均の原理という。</p>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　一つの取引を原因と結果の両面から捉え、借方と貸方の両方に記録する方法はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　複式簿記</button>
+            <button type="button">イ　単式簿記</button>
+            <button type="button">ウ　三分法</button>
+            <button type="button">エ　伝票会計</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>取引を借方・貸方の両面から記録するのが複式簿記である。単式簿記は現金の増減だけを記録する簡易な方法である。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　すべての取引を仕訳して記録し終えたとき、借方の合計金額と貸方の合計金額の関係として正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　借方の合計のほうが必ず大きい</button>
+            <button type="button">イ　貸方の合計のほうが必ず大きい</button>
+            <button type="button">ウ　取引の内容によって異なる</button>
+            <button type="button">エ　必ず一致する</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>仕訳では1つの取引を借方・貸方の両方に同じ金額で記入するため、合計は必ず一致する(貸借平均の原理)。</p>
+        </div>
+      </div>
     </section>
 
     <section class="topic" id="topic-1">
@@ -60,6 +86,38 @@
       <div class="pitfall-box">
         <span class="label">つまずきやすいポイント</span>
         <span>資産は借方(左)が増加、負債・純資産・収益は貸方(右)が増加というように、勘定科目の分類によって「借方・貸方のどちらが増加を表すか」が異なる。特に資産と負債は増加する側が逆になるため混同しやすい。例えば現金(資産)が増えたときは借方に記入するが、借入金(負債)が増えたときは貸方に記入する。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 3問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問1　負債に分類される勘定科目はどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　借入金</button>
+            <button type="button">イ　売掛金</button>
+            <button type="button">ウ　受取手数料</button>
+            <button type="button">エ　給料</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>借入金は後で返済する義務なので負債。売掛金は資産、受取手数料は収益、給料は費用である。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問2　増加(発生)したときに借方に記入する分類の組合せはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　資産と負債</button>
+            <button type="button">イ　負債と収益</button>
+            <button type="button">ウ　資産と費用</button>
+            <button type="button">エ　純資産と費用</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>資産の増加と費用の発生は借方(左)、負債・純資産の増加と収益の発生は貸方(右)に記入する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,貸付金,借入金,資本金,受取利息,支払利息" data-debit="現金:300000" data-credit="借入金:300000">
+          <p class="quiz-q">問3　銀行から現金300,000円を借り入れた。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>現金(資産)が増えたので借方に、返済する義務である借入金(負債)が増えたので貸方に記入する。</p>
+        </div>
       </div>
     </section>
     </article>
