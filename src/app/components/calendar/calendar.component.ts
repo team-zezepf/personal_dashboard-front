@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
 import { Schedule } from '../../models/dashboard.models';
 import { TimeSelectComponent } from '../time-select/time-select.component';
+import { WeatherService } from '../../services/weather.service';
+import { WeatherAppearance, weatherAppearance } from '../../config/weather-icons';
 
 interface CalendarDay {
   dateString: string;
@@ -20,6 +22,15 @@ interface WeekDay {
   dayNumber: number;
   weekdayLabel: string;
   isToday: boolean;
+  isPast: boolean;
+  // その日の天気(取得範囲外なら null。今日より前は実際の天気)
+  weather: WeekDayWeather | null;
+}
+
+interface WeekDayWeather {
+  appearance: WeatherAppearance;
+  temperatureMax: number | null;
+  temperatureMin: number | null;
 }
 
 interface WeekEventBlock {
@@ -88,6 +99,10 @@ interface DuplicateState {
 })
 export class CalendarComponent {
   private dashboardService = inject(DashboardService);
+  private weatherService = inject(WeatherService);
+
+  // 週表示の左上に出す天気の地点名
+  readonly weatherLocationName = computed(() => this.weatherService.weather()?.location.name ?? null);
 
   // 表示用(繰り返し予定を実日付に展開したもの)。編集・削除は常に元の予定(マスター)に対して行う
   readonly schedules = this.dashboardService.scheduleOccurrences;
@@ -257,11 +272,23 @@ export class CalendarComponent {
         dateString: dStr,
         dayNumber: d.getDate(),
         weekdayLabel: this.weekdays[d.getDay()],
-        isToday: dStr === todayStr
+        isToday: dStr === todayStr,
+        isPast: dStr < todayStr,
+        weather: this.weekDayWeather(dStr)
       });
     }
     return days;
   });
+
+  private weekDayWeather(date: string): WeekDayWeather | null {
+    const daily = this.weatherService.dailyFor(date);
+    if (!daily || daily.weatherCode == null) return null;
+    return {
+      appearance: weatherAppearance(daily.weatherCode),
+      temperatureMax: daily.temperatureMax,
+      temperatureMin: daily.temperatureMin
+    };
+  }
 
   readonly weekRangeLabel = computed(() => {
     const days = this.weekDays();

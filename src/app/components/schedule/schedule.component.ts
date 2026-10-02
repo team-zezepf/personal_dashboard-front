@@ -2,6 +2,8 @@ import { Component, inject, computed, signal, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard.service';
 import { Schedule } from '../../models/dashboard.models';
+import { WeatherService } from '../../services/weather.service';
+import { WeatherAppearance, weatherAppearance } from '../../config/weather-icons';
 
 interface TimelineHour {
   hour: number;
@@ -9,6 +11,14 @@ interface TimelineHour {
   rowSpan: number;
   timeLabel: string;
   hasEvent: boolean;
+  // 1〜3時間後の正時に出す天気(取得できていなければ null)
+  weather: TimelineWeather | null;
+}
+
+interface TimelineWeather {
+  appearance: WeatherAppearance;
+  // 雨や雪のときだけ出す降水確率
+  precipitationProbability: number | null;
 }
 
 interface TimelineEventBlock {
@@ -22,6 +32,7 @@ interface TimelineEventBlock {
 const SUBROWS_PER_HOUR = 12; // 5分刻み
 const SUBROW_MINUTES = 60 / SUBROWS_PER_HOUR;
 const HOUR_COUNT = 3; // 3時間分のスロット（例: 11:00, 12:00, 13:00）
+const WEATHER_HOURS_AHEAD = 3; // 先頭(今の時間帯)の次から、この数の正時に天気を出す
 
 @Component({
   selector: 'app-schedule',
@@ -32,6 +43,7 @@ const HOUR_COUNT = 3; // 3時間分のスロット（例: 11:00, 12:00, 13:00）
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
+  private weatherService = inject(WeatherService);
   private timerId: any = null;
 
   // 現在時刻をSUBROW_MINUTES(5分)単位で切り捨てた「分」(0〜1435)。
@@ -77,6 +89,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const displayStart = this.displayStartMinutes;
     const displayEnd = this.displayEndMinutes;
     const schedules = this.todaySchedules();
+    const weather = this.weatherService.weather();
 
     const hours: TimelineHour[] = [];
     let cursor = displayStart;
@@ -104,7 +117,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         rowStart: rowCursor,
         rowSpan,
         timeLabel: `${hour.toString().padStart(2, '0')}:00`,
-        hasEvent
+        hasEvent,
+        weather: weather && hours.length >= 1 && hours.length <= WEATHER_HOURS_AHEAD ? this.weatherAt(cursor) : null
       });
 
       rowCursor += rowSpan;
@@ -153,6 +167,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     return blocks;
   });
+
+  // 今日の0時からの分(24時以降は翌日)の時間帯の天気
+  private weatherAt(minutesFromToday: number): TimelineWeather | null {
+    const d = new Date(`${this.dashboardService.currentDate()}T00:00:00`);
+    d.setMinutes(Math.floor(minutesFromToday / 60) * 60);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const time = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
+    const hourly = this.weatherService.hourlyFor(time);
+    if (!hourly || hourly.weatherCode == null) return null;
+    const appearance = weatherAppearance(hourly.weatherCode);
+    return {
+      appearance,
+      precipitationProbability: appearance.isWet ? hourly.precipitationProbability : null
+    };
+  }
 
   private toMinutes(time: string): number {
     return Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));

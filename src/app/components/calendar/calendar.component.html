@@ -68,11 +68,26 @@
       <div
         class="week-grid"
         [style.grid-template-rows]="'auto repeat(' + (weekTimes.length * weekSubRowsPerHour) + ', ' + weekSubRowHeightPx + 'px)'">
-        <div [style.grid-row]="1" [style.grid-column]="1"></div>
+        <div class="week-corner" [style.grid-row]="1" [style.grid-column]="1">
+          @if (weatherLocationName(); as locationName) {
+            <span class="week-weather-location" [title]="locationName + 'の天気'">{{ locationName }}</span>
+          }
+        </div>
         @for (day of weekDays(); track day.dateString; let dayIndex = $index) {
           <div class="week-day-header" [class.today]="day.isToday" [style.grid-row]="1" [style.grid-column]="dayIndex + 2">
             {{ day.weekdayLabel }}
             <strong>{{ day.dayNumber }}</strong>
+            <!-- その日の天気(今日より前は実際の天気を薄く表示、予報がない日は「–」) -->
+            <div class="week-weather" [class.past]="day.isPast">
+              @if (day.weather; as w) {
+                <img [src]="w.appearance.iconUrl" [alt]="w.appearance.label" [title]="w.appearance.label" width="22" height="22">
+                @if (w.temperatureMax != null && w.temperatureMin != null) {
+                  <span class="week-weather-temp"><span class="hi">{{ w.temperatureMax | number: '1.0-0' }}°</span> / <span class="lo">{{ w.temperatureMin | number: '1.0-0' }}°</span></span>
+                }
+              } @else if (weatherLocationName()) {
+                <span class="week-weather-none">–</span>
+              }
+            </div>
           </div>
         }
         @for (time of weekTimes; track time; let rowIndex = $index) {

@@ -7,7 +7,17 @@
   <div class="content">
     <div class="schedule" [style.grid-template-rows]="'repeat(' + totalSubRows + ', ' + subRowHeightPx + 'px)'">
       @for (row of timelineHours(); track row.rowStart) {
-        <div class="time" [style.grid-row]="row.rowStart + ' / span ' + row.rowSpan">{{ row.timeLabel }}</div>
+        <div class="time" [style.grid-row]="row.rowStart + ' / span ' + row.rowSpan">
+          {{ row.timeLabel }}
+          @if (row.weather; as w) {
+            <div class="time-weather" [title]="w.appearance.label">
+              <img [src]="w.appearance.iconUrl" [alt]="w.appearance.label" width="20" height="20">
+              @if (w.precipitationProbability != null) {
+                <span class="time-weather-pop">☂{{ w.precipitationProbability }}%</span>
+              }
+            </div>
+          }
+        </div>
         @if (!row.hasEvent) {
           <div class="empty" [style.grid-row]="row.rowStart + ' / span ' + row.rowSpan" [style.min-height]="(row.rowSpan * subRowHeightPx) + 'px'"></div>
         }
