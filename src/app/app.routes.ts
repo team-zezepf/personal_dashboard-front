@@ -25,6 +25,7 @@ import { InterviewPrepEditPageComponent } from './pages/interview-prep-edit/inte
 import { TimelinePageComponent } from './pages/timeline/timeline.component';
 import { PostThreadPageComponent } from './pages/post-thread/post-thread.component';
 import { OfflineSettingsPageComponent } from './pages/offline-settings/offline-settings.component';
+import { DataTransferPageComponent } from './pages/data-transfer/data-transfer.component';
 import { environment } from '../environments/environment';
 
 const allRoutes: Routes = [
@@ -55,6 +56,8 @@ const allRoutes: Routes = [
   { path: 'cards/packs', component: CardPacksPageComponent, canActivate: [authGuard] },
   { path: 'cards/admin', component: CardAdminPageComponent, canActivate: [authGuard] },
   { path: 'settings/theme', component: ThemeSettingsPageComponent, canActivate: [authGuard] },
+  // PC 版と Android 版で予定・タスク・成績をやり取りする(PC 版はアバターメニュー、Android 版は設定タブから開く)
+  { path: 'settings/data-transfer', component: DataTransferPageComponent, canActivate: [authGuard] },
   { path: 'interview-prep', component: InterviewPrepListPageComponent, canActivate: [authGuard] },
   { path: 'interview-prep/:id', component: InterviewPrepEditPageComponent, canActivate: [authGuard] },
   { path: 'timeline', component: TimelinePageComponent, canActivate: [authGuard] },
@@ -73,7 +76,8 @@ const OFFLINE_PATHS = new Set([
   'study/:examType/genres',
   'study/:examType/genre/:genreKey',
   'achievements',
-  'settings/theme'
+  'settings/theme',
+  'settings/data-transfer'
 ]);
 
 const offlineRoutes: Routes = [
