@@ -4,6 +4,7 @@ import { Observable, defer, map, of, shareReplay, throwError } from 'rxjs';
 import { Schedule, Task } from '../models/dashboard.models';
 import { ExamQuestion } from '../models/exam-question.models';
 import { ExamAnswer, ExamRecord } from '../models/exam-record.models';
+import { ImportDataResult, TransferFile } from '../models/data-transfer.models';
 
 // 模擬試験の問題ごとの回答を残す回数(科目ごとに新しい順)。API の MOCK_EXAM_ANSWERS_KEPT と同じ
 const MOCK_EXAM_ANSWERS_KEPT = 10;
@@ -28,6 +29,7 @@ type BundledQuestion = ExamQuestion & { examType: string };
  * - 予定・タスク・成績: 端末内(localStorage)に保存する。保存の仕方(仮 ID の採番、模擬試験の古い回答の削除など)は API と同じ
  * - 問題: APK に同梱した offline-data/exam_questions.json を読む(scripts/prepare-android-data.mjs が書き出す)
  * - ポイント・テーマ: ポイントは Android 版にないので何もしない。テーマは呼び出し元(ThemeService)が端末に保存するので、受け取った値を返すだけ
+ * - PC 版とのやり取り(exportData / importData): API の DataTransferService と同じ形のファイルを、同じルールで書き出し・取り込みする(front#185)
  *
  * ここにない機能(カード・つぶやきなど)は Android 版では画面ごと出さないので、呼ばれたらエラーにする。
  */
@@ -63,6 +65,10 @@ export class OfflineBackendService {
           return of({ addPoints: { points: 0 } });
         case 'updateTheme':
           return of({ updateTheme: { theme: variables['input'] } });
+        case 'exportData':
+          return of({ exportData: this.exportData() });
+        case 'importData':
+          return of({ importData: this.importData(variables['data'], !!variables['dryRun']) });
         default:
           return throwError(() => new Error(`Android版では使えない機能です(${field ?? '不明'})`));
       }
@@ -76,6 +82,103 @@ export class OfflineBackendService {
       tasks: this.read('tasks').length,
       examRecords: this.read('examRecords').length
     };
+  }
+
+  private exportData(): string {
+    const file: TransferFile = {
+      app: TRANSFER_APP_ID,
+      version: TRANSFER_FORMAT_VERSION,
+      source: 'android',
+      exportedAt: toDateTimeString(new Date()),
+      schedules: this.read<Schedule>('schedules').map((s) => ({
+        id: Number(s.id),
+        taskId: s.taskId == null ? null : Number(s.taskId),
+        title: s.title,
+        description: s.description ?? null,
+        scheduleDate: s.scheduleDate,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        scheduleType: s.scheduleType,
+        repeat: s.repeat ?? null,
+        createdAt: s.createdAt ?? null,
+        updatedAt: s.updatedAt ?? null
+      })),
+      tasks: this.read<Task>('tasks').map((t) => ({
+        id: Number(t.id),
+        title: t.title,
+        description: t.description ?? null,
+        taskDate: t.taskDate,
+        status: t.status,
+        completedAt: t.completedAt ?? null,
+        createdAt: t.createdAt ?? null,
+        updatedAt: t.updatedAt ?? null
+      })),
+      examRecords: this.read<ExamRecord>('examRecords').map((r) => ({
+        examType: r.examType,
+        mode: r.mode,
+        date: r.date,
+        correctCount: r.correctCount,
+        totalCount: r.totalCount,
+        passed: r.passed,
+        answers: r.answers ?? [],
+        createdAt: r.createdAt ?? null
+      }))
+    };
+    return JSON.stringify(file);
+  }
+
+  // API の DataTransferService.importData と同じルールで取り込む。予定・タスクは置き換え(id は 1 から振り直し、
+  // 予定の taskId も付け替える)、成績は同じ内容の記録がすでにある件数を超える分だけ追加する。dryRun のときは保存しない
+  private importData(data: string, dryRun: boolean): ImportDataResult {
+    const file = parseTransferFile(data);
+    // 作成日時・科目・モード・日付・正解数・問題数・合否が同じ記録は同じものとみなす(API の key() と同じ)
+    const recordKey = (r: Omit<ExamRecord, 'id' | 'userId'>) =>
+      [r.createdAt, r.examType, r.mode, r.date, r.correctCount, r.totalCount, r.passed].join('|');
+    const records = this.read<ExamRecord>('examRecords');
+    const remaining = new Map<string, number>();
+    for (const r of records) remaining.set(recordKey(r), (remaining.get(recordKey(r)) ?? 0) + 1);
+    const newRecords = file.examRecords.filter((r) => {
+      const left = remaining.get(recordKey(r)) ?? 0;
+      if (left > 0) remaining.set(recordKey(r), left - 1);
+      return left === 0;
+    });
+
+    const result: ImportDataResult = {
+      source: file.source,
+      exportedAt: file.exportedAt,
+      schedules: file.schedules.length,
+      tasks: file.tasks.length,
+      addedExamRecords: newRecords.length,
+      currentSchedules: this.read('schedules').length,
+      currentTasks: this.read('tasks').length
+    };
+    if (dryRun) return result;
+
+    const taskIdMap = new Map<number, number>();
+    const tasks: Task[] = file.tasks.map((t, i) => {
+      taskIdMap.set(Number(t.id), i + 1);
+      return { ...t, id: i + 1, userId: OFFLINE_USER_ID };
+    });
+    const schedules: Schedule[] = file.schedules.map((s, i) => ({
+      ...s,
+      id: i + 1,
+      userId: OFFLINE_USER_ID,
+      taskId: s.taskId == null ? null : (taskIdMap.get(Number(s.taskId)) ?? null)
+    }));
+    let maxRecordId = Math.max(0, ...records.map((r) => Number(r.id)));
+    let updatedRecords: ExamRecord[] = [
+      ...records,
+      ...[...newRecords]
+        .sort((a, b) => (a.createdAt ?? a.date).localeCompare(b.createdAt ?? b.date))
+        .map((r) => ({ ...r, id: ++maxRecordId, userId: OFFLINE_USER_ID }))
+    ];
+    for (const examType of new Set(newRecords.filter((r) => r.mode === 'MOCK_EXAM').map((r) => r.examType))) {
+      updatedRecords = pruneOldMockExamAnswers(updatedRecords, examType);
+    }
+    this.write('tasks', tasks);
+    this.write('schedules', schedules);
+    this.write('examRecords', updatedRecords);
+    return result;
   }
 
   private dashboardData(date: string | null | undefined) {
@@ -228,6 +331,47 @@ function pruneOldMockExamAnswers(records: ExamRecord[], examType: string): ExamR
       .map((r) => r.id)
   );
   return records.map((r) => (isTarget(r) && !keptIds.has(r.id) && r.answers?.length ? { ...r, answers: [] } : r));
+}
+
+const TRANSFER_APP_ID = 'personal-dashboard';
+const TRANSFER_FORMAT_VERSION = 1;
+
+// 書き出したファイルを読む。API の DataTransferService.parse と同じメッセージで、形式が違うファイルを断る
+function parseTransferFile(data: string): TransferFile {
+  const broken = 'Personal Dashboard で書き出したファイルではないか、ファイルが壊れています';
+  let file: any;
+  try {
+    file = JSON.parse(data);
+  } catch {
+    throw new Error(broken);
+  }
+  if (!file || typeof file !== 'object') throw new Error(broken);
+  if (file.app !== TRANSFER_APP_ID) throw new Error('Personal Dashboard で書き出したファイルではありません');
+  if (typeof file.version !== 'number' || typeof file.source !== 'string' || typeof file.exportedAt !== 'string') {
+    throw new Error(broken);
+  }
+  if (file.version > TRANSFER_FORMAT_VERSION) {
+    throw new Error('新しい形式のファイルのため取り込めません。アプリを新しくしてから取り込んでください');
+  }
+  const list = (value: unknown, valid: (item: any) => boolean) => {
+    const items = value ?? [];
+    if (!Array.isArray(items) || !items.every((item) => item && typeof item === 'object' && valid(item))) throw new Error(broken);
+    return items;
+  };
+  const isString = (v: unknown) => typeof v === 'string';
+  const isNumber = (v: unknown) => typeof v === 'number';
+  return {
+    ...file,
+    tasks: list(file.tasks, (t) => isNumber(t.id) && isString(t.title) && isString(t.taskDate)).map((t) => ({ status: 'TODO', ...t })),
+    schedules: list(
+      file.schedules,
+      (s) => isNumber(s.id) && isString(s.title) && isString(s.scheduleDate) && isString(s.startTime) && isString(s.endTime)
+    ).map((s) => ({ scheduleType: 'SCHEDULE', ...s })),
+    examRecords: list(
+      file.examRecords,
+      (r) => isString(r.examType) && isString(r.date) && isNumber(r.correctCount) && isNumber(r.totalCount)
+    ).map((r) => ({ mode: 'PRACTICE', passed: true, answers: [], ...r }))
+  };
 }
 
 function pad(n: number): string {

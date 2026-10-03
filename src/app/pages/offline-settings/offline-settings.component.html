@@ -11,7 +11,11 @@
       <span class="label">件数</span>
       <span class="value">予定 {{ counts.schedules }}件・タスク {{ counts.tasks }}件・成績 {{ counts.examRecords }}件</span>
     </div>
-    <p class="note">データはこの端末の中だけに保存しています。アプリを消すとデータも消えます。</p>
+    <a class="row link" routerLink="/settings/data-transfer">
+      <span>PC 版とのやり取り</span>
+      <span class="value">書き出し・取り込み ›</span>
+    </a>
+    <p class="note">データはこの端末の中だけに保存しています。アプリを消すとデータも消えるので、ときどき書き出して PC 版に取り込んでおくと安心です。</p>
   </section>
 
   <section class="card">

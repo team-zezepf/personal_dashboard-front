@@ -59,6 +59,7 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 Dashboard（予定・カレンダー・タスク）と資格学習だけを使える、Android 用のオフライン版アプリです（#184）。[Capacitor](https://capacitorjs.com/) でこのフロントをそのまま Android アプリにしています。API には通信せず、データは端末の中だけに保存します。
 
 - 予定・タスク・成績は端末内（WebView の localStorage）に保存します。アプリを消すとデータも消えます
+- PC 版とは、予定・タスク・成績をファイルでやり取りできます（#185）。Android 版は 設定 →「PC 版とのやり取り」、PC 版はアバターメニュー →「データの書き出し・取り込み」。予定・タスクは取り込んだ内容で置き換え、成績は追加します
 - 問題データ（`personal_dashboard-data/exam_questions.json`）は、APK を作るときに同梱します。問題を追加・修正したら、APK を作り直して入れ直してください
 - 天気・株価・トピック・ポイント・ログイン画面などは出しません
 - しくみ: `environment.offline`（`src/environments/environment.android.ts`）が true のとき、`GraphQLService` が API の代わりに `OfflineBackendService` を呼びます

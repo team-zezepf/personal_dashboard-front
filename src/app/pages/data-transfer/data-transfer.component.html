@@ -1,0 +1,68 @@
+<app-header pageTitle="データのやり取り"></app-header>
+
+<main class="page">
+  <p class="page-desc">
+    予定・タスク・成績を、{{ other }}とファイルでやり取りします。
+    書き出したファイルを Google ドライブやメールなどで{{ other }}へ送り、{{ other }}の「取り込み」で選んでください。
+  </p>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <section class="card">
+    <h2 class="card-title">書き出し</h2>
+    <p class="card-desc">{{ here }}の予定・タスク・成績を 1 つのファイルにして{{ offline ? '保存・送信' : 'ダウンロード' }}します。</p>
+    <button class="btn btn-primary" type="button" [disabled]="isExporting()" (click)="export()">
+      {{ isExporting() ? '書き出し中...' : (offline ? '書き出す' : 'ダウンロード') }}
+    </button>
+    @if (lastExportedAt(); as at) {
+      <p class="last">最後に書き出した日時: {{ formatDateTime(at) }}</p>
+    }
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">取り込み</h2>
+    <p class="card-desc">{{ other }}で書き出したファイルを選びます。取り込む前に件数を確認できます。</p>
+    <label class="btn btn-outline" [class.disabled]="isImporting()">
+      {{ isImporting() ? '読み込み中...' : 'ファイルを選ぶ' }}
+      <input type="file" accept="application/json,.json" [disabled]="isImporting()" (change)="onFileSelected($event)" />
+    </label>
+    @if (lastImportedAt(); as at) {
+      <p class="last">最後に取り込んだ日時: {{ formatDateTime(at) }}</p>
+    }
+    <p class="warn">
+      ⚠ 予定・タスクは取り込んだ内容で置き換わります。{{ here }}で追加・変更した予定があるときは、先に書き出して{{ other }}に取り込んでおいてください。
+    </p>
+  </section>
+</main>
+
+@if (pending(); as p) {
+  <div class="modal-overlay">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="import-confirm-title">
+      <h3 id="import-confirm-title">このファイルを取り込みますか？</h3>
+      <p class="file">{{ p.fileName }}（{{ sourceLabel(p.preview.source) }}・{{ formatDateTime(p.preview.exportedAt) }} 書き出し）</p>
+      <table class="counts">
+        <tr>
+          <td>予定<span class="tag replace">置き換え</span></td>
+          <td class="n">{{ p.preview.schedules }}件</td>
+        </tr>
+        <tr>
+          <td>タスク<span class="tag replace">置き換え</span></td>
+          <td class="n">{{ p.preview.tasks }}件</td>
+        </tr>
+        <tr>
+          <td>成績<span class="tag add">追加</span></td>
+          <td class="n">+{{ p.preview.addedExamRecords }}件</td>
+        </tr>
+      </table>
+      <p class="warn">{{ here }}の今の予定 {{ p.preview.currentSchedules }}件・タスク {{ p.preview.currentTasks }}件は消えます（成績は残ります）。</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" type="button" [disabled]="isImporting()" (click)="cancelImport()">やめる</button>
+        <button class="btn btn-danger" type="button" [disabled]="isImporting()" (click)="confirmImport()">
+          {{ isImporting() ? '取り込み中...' : '取り込む' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

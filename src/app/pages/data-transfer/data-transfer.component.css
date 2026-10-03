@@ -1,0 +1,171 @@
+:host {
+  display: contents;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 12px 32px;
+}
+
+.page-desc {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.error {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--red-border);
+  border-radius: 10px;
+  background: var(--red-soft);
+  color: var(--red-text);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.card-desc {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-outline {
+  background: var(--card);
+  border: 1px solid var(--primary);
+  color: var(--primary-dark);
+}
+
+.btn-danger {
+  background: var(--orange);
+  color: #fff;
+}
+
+/* ファイル選択の部品は隠し、ボタンの見た目の label で開く */
+.btn-outline input[type="file"] {
+  display: none;
+}
+
+.last {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.warn {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--orange-soft);
+  color: var(--orange-text);
+  font-size: 12px;
+}
+
+/* ===== 取り込む前の確認ダイアログ ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(31, 41, 55, 0.45);
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 400px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-box h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.file {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.counts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.counts td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.counts .n {
+  text-align: right;
+  font-weight: 700;
+}
+
+.tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.tag.replace {
+  background: var(--red-soft);
+  color: var(--red-text);
+}
+
+.tag.add {
+  background: var(--green-soft);
+  color: var(--green-text);
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
