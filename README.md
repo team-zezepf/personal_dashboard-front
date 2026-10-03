@@ -83,6 +83,17 @@ npm run android:apk -- C:/zezepf/personal_dashboard/personal_dashboard-data/exam
 
 `android/app/build/outputs/apk/debug/app-debug.apk` ができるので、スマホにコピーして開くとインストールできます（「提供元不明のアプリ」のインストールを許可する必要があります）。USB でつないでいれば、`adb install -r android/app/build/outputs/apk/debug/app-debug.apk` でも入れられます。`-r` を付ければ、データを残したまま上書きでインストールします。
 
+### アイコンを変える
+
+元画像は `assets/icon.png`（透明な背景に丸い絵）です。差し替えたら、各サイズのアイコンを書き出してから APK を作り直します。
+
+```bash
+npm run android:icons
+npm run android:apk
+```
+
+背景は透明で、Pixel など丸く切り抜く端末では丸い絵がちょうど収まります。四角・角丸に切り抜く端末では四隅が透明になります。
+
 ### ブラウザで確認する
 
 Android 版の画面は、ブラウザでも確認できます（データはそのブラウザの localStorage に保存されます）。
