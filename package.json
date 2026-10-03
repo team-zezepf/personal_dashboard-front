@@ -9,6 +9,7 @@
     "build": "ng build",
     "build:android": "node scripts/prepare-android-data.mjs && ng build --configuration android",
     "android:apk": "node scripts/build-android-apk.mjs",
+    "android:icons": "node scripts/generate-android-icons.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "docs:practice": "node scripts/build-practice-questions.mjs"
@@ -37,6 +38,7 @@
     "@capacitor/cli": "^8.5.2",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
+    "sharp": "^0.35.5",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }
