@@ -54,6 +54,44 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Android版アプリ
+
+Dashboard（予定・カレンダー・タスク）と資格学習だけを使える、Android 用のオフライン版アプリです（#184）。[Capacitor](https://capacitorjs.com/) でこのフロントをそのまま Android アプリにしています。API には通信せず、データは端末の中だけに保存します。
+
+- 予定・タスク・成績は端末内（WebView の localStorage）に保存します。アプリを消すとデータも消えます
+- 問題データ（`personal_dashboard-data/exam_questions.json`）は、APK を作るときに同梱します。問題を追加・修正したら、APK を作り直して入れ直してください
+- 天気・株価・トピック・ポイント・ログイン画面などは出しません
+- しくみ: `environment.offline`（`src/environments/environment.android.ts`）が true のとき、`GraphQLService` が API の代わりに `OfflineBackendService` を呼びます
+
+### 必要なもの
+
+- [Android Studio](https://developer.android.com/studio)（付属の JDK 21 と Android SDK を使います。SDK のライセンスには Android Studio の初回起動時に同意しておきます）
+- 足りない SDK（Platform 36 / Build-Tools など）は、初回のビルドで自動でダウンロードされます
+
+### APK の作り方
+
+```bash
+npm run android:apk
+```
+
+問題データが既定の場所（`../personal_dashboard-data/exam_questions.json`）にないときは、場所を渡します。
+
+```bash
+npm run android:apk -- C:/zezepf/personal_dashboard/personal_dashboard-data/exam_questions.json
+```
+
+`android/app/build/outputs/apk/debug/app-debug.apk` ができるので、スマホにコピーして開くとインストールできます（「提供元不明のアプリ」のインストールを許可する必要があります）。USB でつないでいれば、`adb install -r android/app/build/outputs/apk/debug/app-debug.apk` でも入れられます。`-r` を付ければ、データを残したまま上書きでインストールします。
+
+### ブラウザで確認する
+
+Android 版の画面は、ブラウザでも確認できます（データはそのブラウザの localStorage に保存されます）。
+
+```bash
+npm run start:android
+```
+
+http://localhost:4202 を開き、開発者ツールでスマホの画面幅にして確認します。
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

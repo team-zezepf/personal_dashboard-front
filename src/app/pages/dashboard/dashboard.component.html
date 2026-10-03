@@ -4,15 +4,20 @@
   <section class="grid">
     <div class="left-col">
       <app-schedule></app-schedule>
-      <app-weather></app-weather>
+      @if (!offline) {
+        <app-weather></app-weather>
+      }
     </div>
     <app-calendar></app-calendar>
   </section>
 
-  <section class="bottom">
-    <app-stock></app-stock>
-    <app-topics></app-topics>
-  </section>
+  <!-- Android版(オフライン)は外部サービスへ通信できないので、天気・株価・トピックを出さない -->
+  @if (!offline) {
+    <section class="bottom">
+      <app-stock></app-stock>
+      <app-topics></app-topics>
+    </section>
+  }
 </main>
 
 <app-tasks></app-tasks>

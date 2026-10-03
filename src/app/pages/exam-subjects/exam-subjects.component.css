@@ -186,3 +186,18 @@
     width: auto;
   }
 }
+
+/* Android版(オフライン)だけ出す、実績ページへのリンク */
+.achievements-link {
+  display: block;
+  margin: 4px 0 24px;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}

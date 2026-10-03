@@ -1,4 +1,4 @@
-<header class="topbar">
+<header class="topbar" [class.offline]="offline">
   <div class="title-menu-wrapper">
     <button
       class="page-title-button"
@@ -69,7 +69,10 @@
       aria-haspopup="true"
       aria-label="ユーザーメニュー"
     >
-      <img class="user-avatar" [src]="avatarSrc()" alt="ユーザーアイコン">
+      <!-- Android版(オフライン)はアバター画像がない(API から取る)ので読み込まない -->
+      @if (!offline) {
+        <img class="user-avatar" [src]="avatarSrc()" alt="ユーザーアイコン">
+      }
     </button>
 
     @if (isAvatarMenuOpen()) {

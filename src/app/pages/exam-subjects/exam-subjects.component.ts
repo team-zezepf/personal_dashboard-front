@@ -9,6 +9,7 @@ import { firstGenreOf } from '../../config/genre-content';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
 import { reviewTargets } from '../../utils/mistake-review';
 import { catchError, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-exam-subjects-page',
@@ -21,6 +22,8 @@ export class ExamSubjectsPageComponent implements OnInit {
   private readonly achievementsService = inject(ExamAchievementsService);
 
   readonly subjects = EXAM_SUBJECTS;
+  // Android版(オフライン)はポイントがないので、ポイントの履歴を出さない。ツール一覧もないので、実績ページへのリンクを出す
+  readonly offline = environment.offline;
 
   // 科目ごとの模擬試験の合格回数。1回以上合格した科目のカードに「合格」スタンプを表示する
   private readonly passCounts = signal<ReadonlyMap<string, number>>(new Map());

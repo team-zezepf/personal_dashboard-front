@@ -218,3 +218,35 @@
     font-size: 17px;
   }
 }
+
+/* Android版(オフライン)は画面下のタブで画面を切り替え、ポイント・アカウントもないので、画面名と日付だけにする */
+.topbar.offline .page-title-button {
+  cursor: default;
+}
+
+.topbar.offline .page-title-button:hover {
+  background: none;
+}
+
+.topbar.offline .points-badge,
+.topbar.offline .avatar-menu-wrapper {
+  display: none;
+}
+
+
+/* 長い画面名(科目名 - 模擬試験 など)は2行にせず、1行に収まらない分を「…」にする(日付は PC 版と同じく狭い画面では出さない) */
+.topbar.offline .title-menu-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar.offline .page-title-button {
+  max-width: 100%;
+}
+
+.topbar.offline .page-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

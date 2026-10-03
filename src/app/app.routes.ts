@@ -24,8 +24,10 @@ import { InterviewPrepListPageComponent } from './pages/interview-prep-list/inte
 import { InterviewPrepEditPageComponent } from './pages/interview-prep-edit/interview-prep-edit.component';
 import { TimelinePageComponent } from './pages/timeline/timeline.component';
 import { PostThreadPageComponent } from './pages/post-thread/post-thread.component';
+import { OfflineSettingsPageComponent } from './pages/offline-settings/offline-settings.component';
+import { environment } from '../environments/environment';
 
-export const routes: Routes = [
+const allRoutes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
@@ -59,3 +61,25 @@ export const routes: Routes = [
   { path: 'timeline/:id', component: PostThreadPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];
+
+// Android版(オフライン)で使う画面。Dashboard・資格学習と、画面下のタブの「設定」だけにする(front#184)。
+// ログイン画面も出さない(起動時にログイン済みの状態にする)。ここにない画面を開こうとしたら Dashboard に戻す
+const OFFLINE_PATHS = new Set([
+  '',
+  'study',
+  'study/:examType',
+  'study/:examType/mock-exam',
+  'study/:examType/review',
+  'study/:examType/genres',
+  'study/:examType/genre/:genreKey',
+  'achievements',
+  'settings/theme'
+]);
+
+const offlineRoutes: Routes = [
+  ...allRoutes.filter(r => OFFLINE_PATHS.has(r.path ?? '')),
+  { path: 'settings', component: OfflineSettingsPageComponent, canActivate: [authGuard] },
+  { path: '**', redirectTo: '' }
+];
+
+export const routes: Routes = environment.offline ? offlineRoutes : allRoutes;

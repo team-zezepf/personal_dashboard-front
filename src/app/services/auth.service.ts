@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { UserTheme } from '../config/theme';
+import { OFFLINE_USER_ID } from './offline-backend.service';
 
 export interface AuthUser {
   id: string | number;
@@ -62,6 +63,16 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.authBase}/register`, formData).pipe(
       tap(res => this.storeSession(res))
     );
+  }
+
+  // Android版(オフライン)はログイン画面を出さず、端末の持ち主 1 人だけが使う。
+  // 起動時に呼び、まだなければ端末内の利用者でログインした状態にする(テーマなど保存済みの内容は残す)
+  startOfflineSession(): void {
+    if (this.isAuthenticated() && this.currentUser()) return;
+    this.storeSession({
+      token: 'offline',
+      user: { id: OFFLINE_USER_ID, name: '自分', email: '', role: 'GENERAL', points: 0, theme: null }
+    });
   }
 
   logout(): void {

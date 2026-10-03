@@ -1,7 +1,8 @@
 .floating-tasks {
   position: fixed;
   right: 24px;
-  bottom: 20px;
+  /* Android版では画面下のタブの分だけ上にずらす(--bottom-tabs-height は styles.css。PC 版は 0) */
+  bottom: calc(20px + var(--bottom-tabs-height, 0px));
   width: 350px;
   background: color-mix(in srgb, var(--card) 97%, transparent);
   border: 1px solid var(--line);
@@ -160,7 +161,7 @@
 @media (max-width: 560px) {
   .floating-tasks {
     right: 12px;
-    bottom: 12px;
+    bottom: calc(12px + var(--bottom-tabs-height, 0px));
     width: calc(100vw - 24px);
   }
 

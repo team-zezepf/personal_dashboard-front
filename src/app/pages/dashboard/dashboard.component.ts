@@ -10,6 +10,7 @@ import { StockComponent } from '../../components/stock/stock.component';
 import { TopicsComponent } from '../../components/topics/topics.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { WeatherComponent } from '../../components/weather/weather.component';
+import { environment } from '../../../environments/environment';
 
 // 天気を読み込み直す間隔(API 側のキャッシュと同じ30分)
 const WEATHER_REFRESH_MS = 30 * 60 * 1000;
@@ -36,8 +37,12 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   private weatherService = inject(WeatherService);
   private weatherTimerId: ReturnType<typeof setInterval> | null = null;
 
+  // Android版(オフライン)は天気・株価・トピックを出さない(外部サービスへの通信が必要なため)
+  readonly offline = environment.offline;
+
   ngOnInit() {
     this.dashboardService.loadDashboardData();
+    if (this.offline) return;
     this.weatherService.load();
     this.weatherTimerId = setInterval(() => this.weatherService.load(), WEATHER_REFRESH_MS);
   }
