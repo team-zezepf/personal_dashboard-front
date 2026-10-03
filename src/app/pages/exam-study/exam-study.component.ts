@@ -8,6 +8,7 @@ import { ExamStudyService } from '../../services/exam-study.service';
 import { EXAM_ACHIEVEMENT_RATIO } from '../../services/exam-achievements.service';
 import { ExamQuestion } from '../../models/exam-question.models';
 import { findExamSubject } from '../../config/exam-subjects';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-exam-study-page',
@@ -18,6 +19,8 @@ import { findExamSubject } from '../../config/exam-subjects';
 })
 export class ExamStudyPageComponent {
   readonly examStudy = inject(ExamStudyService);
+  // Android版(オフライン)はポイントがないので、獲得ポイントを出さない
+  readonly offline = environment.offline;
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

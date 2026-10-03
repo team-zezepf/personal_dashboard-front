@@ -72,3 +72,22 @@ textarea {
   background-color: var(--card);
   color: var(--text);
 }
+
+/*
+ * Android版(オフライン)のとき(offline-app.ts が <html> に offline-app クラスを付ける)。
+ * 画面下にタブ(app-bottom-tabs)を固定で出すので、その高さの分だけ下に余白を空ける。
+ * 画面下に固定で出す部品(タスク・トーストなど)も --bottom-tabs-height の分だけ上にずらしている
+ */
+.offline-app {
+  --bottom-tabs-height: calc(58px + env(safe-area-inset-bottom));
+}
+
+.offline-app body {
+  padding-bottom: var(--bottom-tabs-height);
+}
+
+/* ステータスバーの裏まで画面が広がる端末(Android 15 以降など)では、ヘッダーをステータスバーの下から始める */
+.offline-app app-header .topbar {
+  height: calc(56px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}

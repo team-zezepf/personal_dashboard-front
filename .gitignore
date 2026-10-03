@@ -42,3 +42,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Android版に同梱する問題データ(npm run build:android で scripts/prepare-android-data.mjs が書き出す)
+/src/offline-data

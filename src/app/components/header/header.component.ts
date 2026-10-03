@@ -8,6 +8,7 @@ import { avatarUrl } from '../../utils/avatar';
 import { TOOL_ACCESS, isElevatedOnly, isRoleAllowed } from '../../config/tool-access';
 import { TOOLS, findToolByPath } from '../../config/tools';
 import { ToastComponent } from '../toast/toast.component';
+import { environment } from '../../../environments/environment';
 
 interface TitleMenuItem {
   label: string;
@@ -37,6 +38,8 @@ export class HeaderComponent {
   private accountService = inject(AccountService);
   private elementRef = inject(ElementRef<HTMLElement>);
 
+  // Android版(オフライン)は画面名と日付だけを出し、メニューは開かない(画面の切り替えは画面下のタブ)
+  readonly offline = environment.offline;
   readonly currentUser = this.authService.currentUser;
   readonly isTitleMenuOpen = signal(false);
   readonly isAvatarMenuOpen = signal(false);
@@ -67,6 +70,7 @@ export class HeaderComponent {
   });
 
   toggleTitleMenu(): void {
+    if (this.offline) return;
     this.isTitleMenuOpen.update(v => !v);
     this.isAvatarMenuOpen.set(false);
   }

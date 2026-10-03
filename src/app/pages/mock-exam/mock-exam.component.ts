@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { CodeBlockComponent } from '../../components/code-block/code-block.component';
 import { MockExamService } from '../../services/mock-exam.service';
 import { MockExamComposition, findExamSubject, hasMockExam } from '../../config/exam-subjects';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-mock-exam-page',
@@ -16,6 +17,8 @@ import { MockExamComposition, findExamSubject, hasMockExam } from '../../config/
 })
 export class MockExamPageComponent implements OnDestroy {
   readonly mockExam = inject(MockExamService);
+  // Android版(オフライン)はポイントがないので、獲得ポイントを出さない
+  readonly offline = environment.offline;
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

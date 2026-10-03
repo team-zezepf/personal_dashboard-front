@@ -152,7 +152,9 @@
       <div class="result-banner" [class.pass]="result.passed" [class.fail]="!result.passed">
         <div class="result-label">{{ result.passed ? '合格' : '不合格' }}</div>
         <div class="result-score">正解数: {{ result.correctCount }} / {{ result.totalCount }} 問(合格ボーダー {{ result.passBorder }}問)</div>
-        <div class="result-points">獲得ポイント: +{{ result.pointsEarned }}pt</div>
+        @if (!offline) {
+          <div class="result-points">獲得ポイント: +{{ result.pointsEarned }}pt</div>
+        }
       </div>
 
       @for (q of mockExam.sessionQuestions(); track q.id; let i = $index) {

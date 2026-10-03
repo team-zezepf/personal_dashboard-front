@@ -47,6 +47,13 @@
     }
   </div>
 
+  <!-- Android版(オフライン)はツール一覧がないので、実績ページへはここから行く -->
+  @if (offline) {
+    <a class="achievements-link" routerLink="/achievements">📈 実績を見る</a>
+  }
+
   <app-recent-mock-exams />
-  <app-point-history />
+  @if (!offline) {
+    <app-point-history />
+  }
 </main>
