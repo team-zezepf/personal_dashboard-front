@@ -604,39 +604,33 @@
   resize: vertical;
 }
 
-.schedule-type {
+.schedule-type-tabs {
   display: flex;
-  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
 }
 
-.schedule-type-option {
+.schedule-type-tab {
   flex: 1;
-  position: relative;
-  cursor: pointer;
-}
-
-.schedule-type-option input {
-  position: absolute;
-  opacity: 0;
-}
-
-.schedule-type-option span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  font-size: 12px;
+  padding: 11px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.schedule-type-option input:checked + span {
+.schedule-type-tab:hover {
+  color: var(--text-sub);
+}
+
+.schedule-type-tab.active {
   color: var(--primary-dark);
-  border-color: var(--primary-border);
-  background: var(--primary-soft);
+  border-bottom-color: var(--primary-dark);
   font-weight: 700;
 }
 
