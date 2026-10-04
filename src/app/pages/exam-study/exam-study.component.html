@@ -55,11 +55,11 @@
                 [class.selected]="isSelected(q, $index)"
                 (click)="toggleChoice(q, $index)"
               >
-                <label>
+                <!-- 選択は li のクリックで切り替える。label の既定の動作(中の input へのクリックの転送)を止めないと、文字のクリックで2回切り替わる(front#204) -->
+                <label (click)="$event.preventDefault()">
                   <input
                     [type]="q.type === 'multi' ? 'checkbox' : 'radio'"
                     [checked]="isSelected(q, $index)"
-                    (click)="$event.preventDefault()"
                   >
                   <span>{{ choice }}</span>
                 </label>
