@@ -33,7 +33,7 @@ Issue番号を含めることで、PRの説明欄に `closes #10` と書いた�
 - [pull_request_template.md](.github/pull_request_template.md) に沿って記載する。
 - 「関連Issue・チケット」欄に `closes #番号` を必ず書く。
 - api/frontの両リポジトリにまたがる変更の場合、PR本文にもう一方のリポジトリのPRリンクを貼り、対応関係を明示する。
-- マージ前にCIが整備され次第、それが通っていることを確認する（現状front側にはCIワークフローが未整備。別途整備を推奨）。
+- マージ前にCI（`.github/workflows/ci.yml`）が通っていることを確認する。
 
 ## マージ方法
 
