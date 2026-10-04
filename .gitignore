@@ -34,6 +34,10 @@ yarn-error.log
 .sass-cache/
 /connect.lock
 /coverage
+# E2E テスト(Playwright)の失敗時の記録。証跡の報告書はリポジトリの外(../test)に作る
+/test-results
+/playwright-report
+/blob-report
 /libpeerconnection.log
 testem.log
 /typings
