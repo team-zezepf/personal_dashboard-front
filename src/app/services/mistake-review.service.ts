@@ -6,6 +6,7 @@ import { ExamRecord } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
 import { reviewTargets } from '../utils/mistake-review';
 import { shuffle } from '../utils/mock-exam-composition';
+import { isCorrectAnswer } from '../utils/exam-answer';
 import { catchError, forkJoin, of } from 'rxjs';
 
 export type MistakeReviewView = 'start' | 'quiz' | 'review' | 'result';
@@ -21,16 +22,6 @@ export interface ReviewItem {
 export interface ReviewGenre {
   genre: string;
   count: number;
-}
-
-function sortedUnique(values: number[]): number[] {
-  return [...new Set(values)].sort((a, b) => a - b);
-}
-
-function isCorrectAnswer(question: ExamQuestion, answer: number[]): boolean {
-  const correct = sortedUnique(question.correct);
-  const given = sortedUnique(answer);
-  return correct.length === given.length && correct.every((v, i) => v === given[i]);
 }
 
 /**

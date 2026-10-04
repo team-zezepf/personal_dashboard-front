@@ -5,6 +5,7 @@ import { AccountService } from './account.service';
 import { ExamQuestion } from '../models/exam-question.models';
 import { ExamSubject, findExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
+import { isCorrectAnswer } from '../utils/exam-answer';
 
 export type ExamStudyView = 'start' | 'quiz' | 'review' | 'result';
 
@@ -15,16 +16,6 @@ function shuffle<T>(items: T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
-}
-
-function sortedUnique(values: number[]): number[] {
-  return [...new Set(values)].sort((a, b) => a - b);
-}
-
-function isCorrectAnswer(question: ExamQuestion, answer: number[]): boolean {
-  const correct = sortedUnique(question.correct);
-  const given = sortedUnique(answer);
-  return correct.length === given.length && correct.every((v, i) => v === given[i]);
 }
 
 @Injectable({
