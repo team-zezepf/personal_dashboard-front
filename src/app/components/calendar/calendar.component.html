@@ -211,24 +211,20 @@
       <strong>{{ isEditing() ? '予定を編集' : 'タスク・予定を登録' }}</strong>
       <button class="schedule-modal-close" type="button" (click)="closeModal()" aria-label="閉じる">×</button>
     </div>
+    <div class="schedule-type-tabs" role="tablist" aria-label="種別">
+      <button type="button" class="schedule-type-tab" role="tab"
+              [class.active]="modalScheduleType === 'task'"
+              [attr.aria-selected]="modalScheduleType === 'task'"
+              (click)="modalScheduleType = 'task'">タスク</button>
+      <button type="button" class="schedule-type-tab" role="tab"
+              [class.active]="modalScheduleType === 'schedule'"
+              [attr.aria-selected]="modalScheduleType === 'schedule'"
+              (click)="modalScheduleType = 'schedule'">予定</button>
+    </div>
     <div class="schedule-modal-body">
       <div class="schedule-form-group">
         <label for="scheduleTitle">タイトル</label>
         <input id="scheduleTitle" type="text" [(ngModel)]="modalTitle" placeholder="例：資料作成">
-      </div>
-
-      <div class="schedule-form-group">
-        <label>種別</label>
-        <div class="schedule-type">
-          <label class="schedule-type-option">
-            <input type="radio" name="scheduleType" value="task" [(ngModel)]="modalScheduleType">
-            <span>タスク</span>
-          </label>
-          <label class="schedule-type-option">
-            <input type="radio" name="scheduleType" value="schedule" [(ngModel)]="modalScheduleType">
-            <span>予定</span>
-          </label>
-        </div>
       </div>
 
       <!-- タスク期限 -->
