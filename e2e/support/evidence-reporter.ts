@@ -2,7 +2,7 @@ import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } fr
 import { execSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { EVIDENCE_NAME, EVIDENCE_ROOT, FRONT_URL } from './env';
+import { EVIDENCE_NAME, EVIDENCE_NOTE, EVIDENCE_ROOT, FRONT_URL, issueOf, toFolderName } from './env';
 import { EXPECTED, PRECONDITION, STEP_ATTACHMENT, StepEvidence } from './evidence';
 
 interface CaseResult {
@@ -47,7 +47,9 @@ export default class EvidenceReporter implements Reporter {
   }
 
   onEnd(result: FullResult): void {
-    const dir = path.join(EVIDENCE_ROOT, EVIDENCE_NAME, timestamp(this.startedAt));
+    // 実行日時のフォルダ名の後ろに、メモ(E2E_NOTE)を付ける。例: 20261004-222108-修正前
+    const runName = EVIDENCE_NOTE ? `${timestamp(this.startedAt)}-${toFolderName(EVIDENCE_NOTE)}` : timestamp(this.startedAt);
+    const dir = path.join(EVIDENCE_ROOT, EVIDENCE_NAME, runName);
     const shotDir = path.join(dir, 'screenshots');
     mkdirSync(shotDir, { recursive: true });
 
@@ -131,6 +133,7 @@ function renderList(items: string[]): string {
 }
 
 function renderReport(cases: CaseResult[], startedAt: Date, result: FullResult): string {
+  const issue = issueOf(EVIDENCE_NAME);
   const passed = cases.filter((c) => c.status === 'passed').length;
   const failed = cases.filter((c) => c.status === 'failed' || c.status === 'timedOut').length;
   const others = cases.length - passed - failed;
@@ -196,7 +199,7 @@ function renderReport(cases: CaseResult[], startedAt: Date, result: FullResult):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E テスト報告書 ${escapeHtml(EVIDENCE_NAME)} ${escapeHtml(formatDateTime(startedAt))}</title>
+<title>E2E テスト報告書 ${escapeHtml(issue?.label ?? EVIDENCE_NAME)}${EVIDENCE_NOTE ? ` ${escapeHtml(EVIDENCE_NOTE)}` : ''} ${escapeHtml(formatDateTime(startedAt))}</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: #f5f7fa; color: #1f2937; line-height: 1.6;
@@ -230,12 +233,14 @@ function renderReport(cases: CaseResult[], startedAt: Date, result: FullResult):
 </style>
 </head>
 <body>
-<header><h1>E2E テスト報告書 <span class="badge ${overall ? 'ok' : 'ng'}">${overall ? 'すべてOK' : 'NGあり'}</span></h1></header>
+<header><h1>E2E テスト報告書${issue ? ` ${escapeHtml(issue.label)}` : ''}${EVIDENCE_NOTE ? `（${escapeHtml(EVIDENCE_NOTE)}）` : ''} <span class="badge ${overall ? 'ok' : 'ng'}">${overall ? 'すべてOK' : 'NGあり'}</span></h1></header>
 <main>
   <section class="card">
     <h2>実行の情報</h2>
     <dl>
       <dt>実行日時</dt><dd>${escapeHtml(formatDateTime(startedAt))}</dd>
+      ${issue ? `<dt>Issue</dt><dd><a href="${escapeHtml(issue.url)}" target="_blank">${escapeHtml(issue.label)}</a></dd>` : ''}
+      ${EVIDENCE_NOTE ? `<dt>メモ</dt><dd>${escapeHtml(EVIDENCE_NOTE)}</dd>` : ''}
       <dt>証跡のフォルダ</dt><dd>${escapeHtml(EVIDENCE_NAME)}</dd>
       <dt>接続先</dt><dd>${escapeHtml(FRONT_URL)}</dd>
       <dt>ブランチ / コミット</dt><dd>${escapeHtml(git('rev-parse --abbrev-ref HEAD'))} / ${escapeHtml(git('rev-parse --short HEAD'))}</dd>

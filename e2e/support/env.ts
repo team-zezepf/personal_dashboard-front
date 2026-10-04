@@ -15,9 +15,30 @@ export const E2E_ACCOUNT = {
 export const E2E_DATA_PREFIX = '[E2E]';
 
 /**
- * 証跡(報告書)を置くフォルダ: <E2E_EVIDENCE_ROOT>/<E2E_EVIDENCE>/<実行日時>/
- * - E2E_EVIDENCE: Issue 番号が分かるフォルダ名(例: front-203-e2e-tests)。省略すると e2e
+ * 証跡(報告書)を置くフォルダ: <E2E_EVIDENCE_ROOT>/<E2E_EVIDENCE>/<実行日時>[-<E2E_NOTE>]/
+ * - E2E_EVIDENCE: Issue 番号が分かるフォルダ名。<repo>-issue<番号>-<内容>(例: front-issue204-multi-choice-click)にすると、
+ *   報告書に Issue へのリンクを出す。省略すると e2e
+ * - E2E_NOTE: 実行の目的などのメモ(例: 修正前)。実行日時のフォルダ名の後ろに付け、報告書にも出す
  * - E2E_EVIDENCE_ROOT: 省略するとリポジトリの隣の test/(C:\zezepf\personal_dashboard\test)
  */
 export const EVIDENCE_ROOT = process.env['E2E_EVIDENCE_ROOT'] ?? path.resolve(__dirname, '..', '..', '..', 'test');
-export const EVIDENCE_NAME = process.env['E2E_EVIDENCE'] ?? 'e2e';
+export const EVIDENCE_NAME = toFolderName(process.env['E2E_EVIDENCE'] ?? 'e2e');
+export const EVIDENCE_NOTE = (process.env['E2E_NOTE'] ?? '').trim();
+
+// フォルダ名に使えない文字・空白を _ に置き換える
+export function toFolderName(text: string): string {
+  return text.trim().replace(/[\\/:*?"<>|\s]+/g, '_');
+}
+
+const REPOSITORIES: Record<string, string> = {
+  front: 'team-zezepf/personal_dashboard-front',
+  api: 'team-zezepf/personal_dashboard-api'
+};
+
+/** 証跡のフォルダ名(<repo>-issue<番号>-...)から、Issue の表示名と URL を読み取る。読み取れなければ null */
+export function issueOf(evidenceName: string): { label: string; url: string } | null {
+  const match = /^(front|api)-issue(\d+)(?:-|$)/.exec(evidenceName);
+  if (!match) return null;
+  const [, repo, number] = match;
+  return { label: `${repo}#${number}`, url: `https://github.com/${REPOSITORIES[repo]}/issues/${number}` };
+}
