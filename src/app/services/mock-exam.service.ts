@@ -7,22 +7,13 @@ import { ExamAnswer } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
 import { pickByComposition, shuffle } from '../utils/mock-exam-composition';
 import { reviewTargets } from '../utils/mistake-review';
+import { isCorrectAnswer } from '../utils/exam-answer';
 import { catchError, of, switchMap } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
 
 // 前回選んだ分野を次回の初期値にするためのブラウザ保存のキー(科目ごと)
 const electivesStorageKey = (examType: string) => `mockExam.electives.${examType}`;
-
-function sortedUnique(values: number[]): number[] {
-  return [...new Set(values)].sort((a, b) => a - b);
-}
-
-function isCorrectAnswer(question: ExamQuestion, answer: number[]): boolean {
-  const correct = sortedUnique(question.correct);
-  const given = sortedUnique(answer);
-  return correct.length === given.length && correct.every((v, i) => v === given[i]);
-}
 
 @Injectable({
   providedIn: 'root'
