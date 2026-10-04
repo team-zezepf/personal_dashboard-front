@@ -13,6 +13,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:coverage": "ng test --watch=false --coverage --coverage-include=src/app/**/*.ts --coverage-reporters=html --coverage-reporters=json-summary",
+    "e2e": "playwright test",
     "docs:practice": "node scripts/build-practice-questions.mjs"
   },
   "private": true,
@@ -37,6 +38,7 @@
     "@angular/cli": "^21.2.22",
     "@angular/compiler-cli": "^21.2.0",
     "@capacitor/cli": "^8.5.2",
+    "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",

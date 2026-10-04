@@ -46,13 +46,31 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+ブラウザでの主な操作(ログイン・予定の登録・練習・模擬試験・つぶやき・メニューの出し分け)を、[Playwright](https://playwright.dev/) で確かめる(`e2e/`)。
+
+1. 動作確認用の環境(sandbox)を起動しておく(ルートの `start-sandbox.bat`。フロント 4201 / API 8081)
+2. 実行する。Issue の証跡として残すときは、Issue 番号が分かるフォルダ名を `E2E_EVIDENCE` に指定する
 
 ```bash
-ng e2e
+npm run e2e                                         # 証跡は ../test/e2e/<実行日時>/ に残る
+E2E_EVIDENCE=front-203-e2e-tests npm run e2e        # 証跡は ../test/front-203-e2e-tests/<実行日時>/ に残る
+npm run e2e -- --headed                             # ブラウザを表示しながら実行する
+npm run e2e -- e2e/calendar.spec.ts                 # 1つのファイルだけ実行する
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+PowerShell では、環境変数を先に設定する。
+
+```powershell
+$env:E2E_EVIDENCE = "front-203-e2e-tests"; npm run e2e
+```
+
+- 証跡(報告書)は、テストケース(前提・期待する結果)と、手順ごとの結果(OK / NG)・スクリーンショットを並べた HTML(`index.html`)。実行のたびに実行日時のフォルダを作る
+- E2E 専用のアカウント(`e2e@example.com`)を使う。なければ最初に作る。手で確認するときの `sandbox@example.com` には触らない
+- テストで作った予定・つぶやきは、テストの終わりに消す。失敗して残ったもの(タイトルが `[E2E]` で始まるもの)は、次の実行の最初に消す
+- 練習・模擬試験の記録とポイントは、E2E 専用のアカウントに溜まっていく
+- ブラウザはインストール済みの Chrome を使う(Playwright のブラウザはダウンロードしない)
+- API のコードを変えたときは、sandbox の API を起動し直してから実行する
+- 失敗したときは、操作の記録(trace)が `test-results/` に残る(`npx playwright show-trace <trace.zip>` で開ける)
 
 ## Android版アプリ
 
