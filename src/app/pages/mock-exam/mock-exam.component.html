@@ -106,8 +106,9 @@
               <ul class="choice-list">
                 @for (choice of q.choices; track $index; let ci = $index) {
                   <li class="choice-item" [class.selected]="mockExam.isSelected(globalIndex(i), ci)" (click)="mockExam.selectAnswer(globalIndex(i), ci)">
-                    <label>
-                      <input [type]="q.type === 'multi' ? 'checkbox' : 'radio'" [checked]="mockExam.isSelected(globalIndex(i), ci)" (click)="$event.preventDefault()">
+                    <!-- 選択は li のクリックで切り替える。label の既定の動作(中の input へのクリックの転送)を止めないと、文字のクリックで2回切り替わる(front#204) -->
+                    <label (click)="$event.preventDefault()">
+                      <input [type]="q.type === 'multi' ? 'checkbox' : 'radio'" [checked]="mockExam.isSelected(globalIndex(i), ci)">
                       <span>{{ choice }}</span>
                     </label>
                   </li>
