@@ -1,16 +1,31 @@
-<app-header [pageTitle]="(genre()?.genreName ?? 'ジャンル') + 'のまとめ'"></app-header>
+<app-header [pageTitle]="pageTitle()"></app-header>
 
 <main class="page">
   @if (subject(); as subject) {
     @if (genre(); as genre) {
       <div class="breadcrumb">
-        <a routerLink="/study">資格学習</a> › {{ subject.name }} › {{ genre.genreName }}(まとめ)
+        <a routerLink="/study">資格学習</a> › {{ subject.name }} › {{ isGlossary() ? genre.genreName : genre.genreName + '(まとめ)' }}
       </div>
 
       <div class="page-layout">
         <aside class="sidebar">
           <nav class="sidebar-card" aria-label="ジャンルと目次">
             <div class="sidebar-label">ジャンル・目次</div>
+            <!-- 用語集はジャンルより上に置き、開いているときは目次の代わりに50音の索引を出す -->
+            @if (glossary(); as g) {
+              <div class="sb-glossary">
+                <a class="sb-genre" [class.open]="isGlossary()" [routerLink]="[subject.path, 'genre', g.genreKey]" [attr.aria-current]="isGlossary() ? 'page' : null">
+                  <span>📖 {{ g.genreName }}</span><span class="chev" aria-hidden="true">›</span>
+                </a>
+                @if (isGlossary() && doc(); as doc) {
+                  <div class="sb-kana" aria-label="50音の索引">
+                    @for (title of doc.topicTitles; track $index; let i = $index) {
+                      <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">{{ kanaLabel(title) }}</a>
+                    }
+                  </div>
+                }
+              </div>
+            }
             @for (group of categoryGroups(); track group.category) {
               <div class="sb-cat">{{ group.category }}</div>
               @for (g of group.genres; track g.genreKey) {
@@ -41,6 +56,9 @@
         <div class="sp-nav">
           <label for="sp-genre-select">ジャンル</label>
           <select id="sp-genre-select" [value]="genre.genreKey" (change)="selectGenre($any($event.target).value)">
+            @if (glossary(); as g) {
+              <option [value]="g.genreKey" [selected]="isGlossary()">📖 {{ g.genreName }}</option>
+            }
             @for (group of categoryGroups(); track group.category) {
               <optgroup [label]="group.category">
                 @for (g of group.genres; track g.genreKey) {
@@ -52,7 +70,7 @@
           @if (doc(); as doc) {
             <div class="sp-chips">
               @for (title of doc.topicTitles; track $index; let i = $index) {
-                <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">{{ i + 1 }}. {{ title }}</a>
+                <a [href]="'#topic-' + i" [class.active]="activeTopicIndex() === i" (click)="scrollToTopic(i, $event)">{{ isGlossary() ? kanaLabel(title) : i + 1 + '. ' + title }}</a>
               }
             </div>
           }
@@ -60,7 +78,7 @@
 
         <div class="main-content">
           <div class="page-header">
-            <h1>{{ genre.genreName }}のまとめ</h1>
+            <h1>{{ pageTitle() }}</h1>
             @if (doc(); as doc) {
               <p>{{ doc.description }}</p>
             }
@@ -75,7 +93,7 @@
             }
             @case ('loaded') {
               <!-- 本文は docs/ の静的HTML(共通のスタイルは docs/assets/study.css) -->
-              <div class="genre-article" [innerHTML]="doc()!.html"></div>
+              <div class="genre-article" [class.glossary]="isGlossary()" [innerHTML]="doc()!.html" (click)="onArticleClick($event)"></div>
             }
           }
 

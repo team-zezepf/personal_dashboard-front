@@ -68,6 +68,43 @@
   margin-top: 0;
 }
 
+/* 用語集(ジャンルより上に置き、ジャンルとは線で分ける) */
+.sb-glossary {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+/* 用語集を開いているときの50音の索引 */
+.sb-kana {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 6px 4px 4px 10px;
+}
+
+.sb-kana a {
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 3px 0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--primary-dark);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.sb-kana a:hover {
+  background: var(--surface);
+}
+
+.sb-kana a.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
+}
+
 .sb-genre {
   display: flex;
   align-items: center;

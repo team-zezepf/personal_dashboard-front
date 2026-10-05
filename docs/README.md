@@ -93,3 +93,16 @@ docs/
 1. `docs/<examType>/<genreKey>.html` を追加する(既存のページをコピーすると早い)
 2. アプリのジャンル一覧 `src/app/config/genre-content.ts` の `GENRES` に登録する(並び順がサイドバーと前後のジャンルの順になる)
 3. `docs/index.html` の目次と、前後のジャンルのページの「前のジャンル／次のジャンル」のリンクを更新する
+
+## 用語集(docs/<examType>/glossary.html)
+
+まとめに出てくる用語を50音順に並べたページです(front#209)。アプリではまとめページのサイドバーの一番上に「用語集」として表示します。
+
+- `glossary.html` は生成物なので直接編集しない。用語は `scripts/glossary/<examType>/<genreKey>.json` に書き、front で `npm run docs:glossary` を実行して生成し直す(生成は `scripts/build-glossary.mjs`)
+- 1語の書き方: `{ "term": "用語", "reading": "ひらがなの読み", "en": "英語の正式名(任意)", "desc": "1〜2行の説明", "topic": 関連する見出しの番号(1始まり。複数なら [1, 3]) }`
+  - 読みは50音の行を決めるのに使う。英字で始まる用語は「A–Z」に並ぶので省略してよい
+  - 同じ用語が別のジャンルにも出てくるときは、2つ目以降のジャンルでは `term` と `topic` だけ書く(関連リンクが追加される)。説明は最初のジャンル(`genre-content.ts` の並び順)に書く
+  - 見出しの番号がまとめにないとエラーになる。まとめの見出しを増減したら、用語集も生成し直す
+- 応用情報(oyojoho)には、基本情報(kihonjoho)の用語集にない用語だけを書く(重なる用語は生成時に除かれ、基本情報の用語集へのリンクを置く)
+- 検索・分野の絞り込みは `assets/glossary.js`(アプリでは `angular.json` の `scripts` で読み込む)、見た目は `assets/study.css`
+- 関連リンクは `data-genre-key` / `data-topic-index` を持ち、アプリではまとめページのその見出しへ移動する

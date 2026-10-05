@@ -7,7 +7,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { findExamSubject } from '../../config/exam-subjects';
-import { GenreEntry, adjacentGenres, findGenre, genreDocPath, groupGenresByCategory } from '../../config/genre-content';
+import { GLOSSARY_KEY, GenreEntry, adjacentGenres, findGenre, genreDocPath, glossaryOf, groupGenresByCategory } from '../../config/genre-content';
 
 // docs/ のHTMLから取り出した、アプリで表示する本文
 interface GenreDoc {
@@ -45,6 +45,14 @@ export class GenreStudyPageComponent implements OnDestroy {
   readonly genre = computed(() => findGenre(this.examType(), this.genreKey()));
   readonly categoryGroups = computed(() => groupGenresByCategory(this.examType()));
   readonly adjacent = computed(() => adjacentGenres(this.examType(), this.genreKey()));
+  readonly glossary = computed(() => glossaryOf(this.examType()));
+  readonly isGlossary = computed(() => this.genreKey() === GLOSSARY_KEY);
+  // 画面の見出し(ジャンルは「〇〇のまとめ」、用語集は「用語集」)
+  readonly pageTitle = computed(() => {
+    const genre = this.genre();
+    if (!genre) return 'ジャンルのまとめ';
+    return this.isGlossary() ? genre.genreName : `${genre.genreName}のまとめ`;
+  });
 
   // 本文は docs/<examType>/<genreKey>.html から読み込む。ジャンルを素早く切り替えたときは前の読み込みを取り消す
   readonly docState = toSignal(
@@ -114,14 +122,27 @@ export class GenreStudyPageComponent implements OnDestroy {
       genreKey: genre.genreKey,
       description: article.querySelector('.genre-description')?.textContent?.trim() ?? '',
       topicTitles,
-      // 自前の docs/ のHTML(図のSVGを含む)であり、利用者の入力ではないため、サニタイズをバイパスする
-      html: this.sanitizer.bypassSecurityTrustHtml(sections.map((s) => s.outerHTML).join('\n'))
+      // 自前の docs/ のHTML(図のSVGを含む)であり、利用者の入力ではないため、サニタイズをバイパスする。
+      // 用語集は、見出し(50音の行)の前に検索欄(.gl-tools。動きは docs/assets/glossary.js)を置く
+      html: this.sanitizer.bypassSecurityTrustHtml(
+        [article.querySelector('.gl-tools'), ...sections]
+          .filter((el): el is Element => !!el)
+          .map((el) => el.outerHTML)
+          .join('\n')
+      )
     };
   }
 
   private onGenreRendered(): void {
     const host = this.elementRef.nativeElement as HTMLElement;
-    window.scrollTo({ top: 0 });
+    // 用語集の関連リンクから来たときは、その見出し(#topic-N)の位置に合わせる
+    const fragment = this.route.snapshot.fragment;
+    const target = fragment && /^topic-\d+$/.test(fragment) ? host.querySelector<HTMLElement>(`#${fragment}`) : null;
+    if (target) {
+      target.scrollIntoView({ block: 'start' });
+    } else {
+      window.scrollTo({ top: 0 });
+    }
     this.observeTopics(host);
 
     // サイドバーの中だけをスクロールして、開いているジャンルが見える位置に合わせる(ページ全体はスクロールさせない)
@@ -137,13 +158,21 @@ export class GenreStudyPageComponent implements OnDestroy {
     const sections = Array.from(host.querySelectorAll('section.topic')) as HTMLElement[];
     if (sections.length === 0) return;
 
+    // 判定の帯に2つの見出しがかかっているとき(前の節の末尾と次の節の先頭など)は、後ろの見出しを現在の見出しにする。
+    // 変化した順に採用すると、索引で上に戻ったときに1つ前の見出しが選ばれてしまうため
+    const intersecting = new Set<number>();
     this.observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          const index = Number((entry.target as HTMLElement).dataset['topicIndex']);
           if (entry.isIntersecting) {
-            const index = Number((entry.target as HTMLElement).dataset['topicIndex']);
-            this.activeTopicIndex.set(index);
+            intersecting.add(index);
+          } else {
+            intersecting.delete(index);
           }
+        }
+        if (intersecting.size > 0) {
+          this.activeTopicIndex.set(Math.max(...intersecting));
         }
       },
       { rootMargin: '-15% 0px -70% 0px', threshold: 0 }
@@ -165,6 +194,23 @@ export class GenreStudyPageComponent implements OnDestroy {
     event.preventDefault();
     const target = this.elementRef.nativeElement.querySelector(`#topic-${index}`);
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // 用語集の索引の文字(見出しの「あ行」→「あ」。「A–Z」はそのまま)
+  kanaLabel(title: string): string {
+    return title.replace(/行$/, '');
+  }
+
+  // 本文中のまとめへのリンク(用語集の関連リンクなど)。docs/ では相対パスのリンクなので、アプリの画面への移動に置き換える
+  onArticleClick(event: MouseEvent): void {
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-genre-key]');
+    if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const subject = findExamSubject(link.dataset['examType'] ?? this.examType());
+    const genreKey = link.dataset['genreKey'];
+    if (!subject || !genreKey) return;
+    event.preventDefault();
+    const topicIndex = link.dataset['topicIndex'];
+    this.router.navigate([subject.path, 'genre', genreKey], topicIndex ? { fragment: `topic-${topicIndex}` } : {});
   }
 
   // スマホ幅のプルダウンでジャンルを選んだとき

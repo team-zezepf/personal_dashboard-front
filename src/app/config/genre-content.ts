@@ -53,7 +53,17 @@ export function genreDocPath(genre: Pick<GenreEntry, 'examType' | 'genreKey'>): 
   return `docs/${genre.examType}/${genre.genreKey}.html`;
 }
 
+// 用語集(docs/<examType>/glossary.html)。ジャンルと同じページで表示し、サイドバーではジャンルより上に置く(front#209)。
+// まとめがある科目には用語集もある(用語は scripts/glossary/ にあり、npm run docs:glossary で docs/ に書き出す)
+export const GLOSSARY_KEY = 'glossary';
+
+export function glossaryOf(examType: string): GenreEntry | undefined {
+  if (getGenreContentsForSubject(examType).length === 0) return undefined;
+  return { examType, genreKey: GLOSSARY_KEY, genreName: '用語集', category: '' };
+}
+
 export function findGenre(examType: string, genreKey: string): GenreEntry | undefined {
+  if (genreKey === GLOSSARY_KEY) return glossaryOf(examType);
   return GENRES.find((c) => c.examType === examType && c.genreKey === genreKey);
 }
 
@@ -85,9 +95,10 @@ export function firstGenreOf(examType: string): GenreEntry | undefined {
   return groupGenresByCategory(examType)[0]?.genres[0];
 }
 
-// サイドバーと同じ並び(カテゴリごとにまとめた順)での前後のジャンル
+// サイドバーと同じ並び(用語集 → カテゴリごとにまとめたジャンルの順)での前後のジャンル
 export function adjacentGenres(examType: string, genreKey: string): { prev?: GenreEntry; next?: GenreEntry } {
-  const ordered = groupGenresByCategory(examType).flatMap((g) => g.genres);
+  const glossary = glossaryOf(examType);
+  const ordered = [...(glossary ? [glossary] : []), ...groupGenresByCategory(examType).flatMap((g) => g.genres)];
   const index = ordered.findIndex((g) => g.genreKey === genreKey);
   if (index < 0) return {};
   return { prev: ordered[index - 1], next: ordered[index + 1] };
