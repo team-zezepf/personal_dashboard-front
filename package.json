@@ -14,7 +14,8 @@
     "test": "ng test",
     "test:coverage": "ng test --watch=false --coverage --coverage-include=src/app/**/*.ts --coverage-reporters=html --coverage-reporters=json-summary",
     "e2e": "playwright test",
-    "docs:practice": "node scripts/build-practice-questions.mjs"
+    "docs:practice": "node scripts/build-practice-questions.mjs",
+    "docs:glossary": "node scripts/build-glossary.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.8",

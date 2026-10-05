@@ -402,6 +402,181 @@
   }
 }
 
+/* ===== 用語集(docs/<examType>/glossary.html。動きは assets/glossary.js) ===== */
+.genre-article .gl-tools {
+  background: var(--ga-card);
+  border: 1px solid var(--ga-line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+}
+
+.genre-article .gl-base {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+}
+
+.genre-article .gl-search {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 9px 12px;
+  border: 1px solid var(--ga-line);
+  border-radius: 10px;
+  background: #fbfcfd;
+  color: var(--ga-text);
+}
+
+.genre-article .gl-search:focus {
+  outline: 2px solid var(--ga-primary);
+  border-color: transparent;
+  background: #fff;
+}
+
+.genre-article .gl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.genre-article .gl-filters-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ga-muted);
+  margin-right: 2px;
+}
+
+.genre-article .gl-filters button {
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ga-line);
+  background: #fff;
+  color: var(--ga-muted);
+  cursor: pointer;
+}
+
+.genre-article .gl-filters button.on {
+  background: var(--ga-primary);
+  border-color: var(--ga-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.genre-article .gl-count {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-empty {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-list {
+  margin: 0;
+}
+
+.genre-article .gl-term {
+  padding: 12px 0;
+  border-top: 1px solid var(--ga-line);
+}
+
+.genre-article .gl-term:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.genre-article .gl-term:last-child {
+  padding-bottom: 0;
+}
+
+.genre-article .gl-term dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.genre-article .gl-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.genre-article .gl-reading {
+  font-size: 0.75rem;
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-cat {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ga-muted);
+  border: 1px solid var(--ga-line);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.genre-article .gl-term dd {
+  margin: 4px 0 0;
+}
+
+.genre-article section.topic .gl-desc {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.genre-article section.topic .gl-rel {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-rel a,
+.genre-article .gl-base a {
+  color: var(--ga-primary-dark);
+  text-decoration: none;
+}
+
+.genre-article .gl-rel a:hover,
+.genre-article .gl-base a:hover {
+  text-decoration: underline;
+}
+
+.genre-article mark.gl-hit {
+  background: #fff1b8;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* PC幅では、検索と分野のボタンをスクロールしても上部に残す(スマホ幅はアプリの上部のナビと重なるため残さない) */
+@media (min-width: 761px) {
+  .genre-article .gl-tools {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  /* 索引で行に移動したとき、行の見出しが上部に残した検索欄に隠れないようにする */
+  .genre-article section.gl-row {
+    scroll-margin-top: 160px;
+  }
+}
+
+@media (max-width: 760px) {
+  .genre-article .gl-cat {
+    display: none;
+  }
+}
+
 /* ===== 単体表示用の外枠(GitHub Pages など) ===== */
 .docs-page {
   margin: 0;

@@ -34,7 +34,8 @@
               "docs/assets/study.css"
             ],
             "scripts": [
-              "docs/assets/quiz.js"
+              "docs/assets/quiz.js",
+              "docs/assets/glossary.js"
             ]
           },
           "configurations": {

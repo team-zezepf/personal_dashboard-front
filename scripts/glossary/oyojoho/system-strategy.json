@@ -1,0 +1,5 @@
+[
+  { "term": "BDAT", "desc": "EAで組織全体をとらえる4つの観点。ビジネス・データ・アプリケーション・テクノロジの各アーキテクチャ。", "topic": 1 },
+  { "term": "RFQ(見積依頼書)", "reading": "あーるえふきゅー", "en": "Request For Quotation", "desc": "提案内容ではなく、価格・見積りの提示だけをベンダーに依頼する文書。", "topic": 2 },
+  { "term": "DaaS", "reading": "だーす", "en": "Desktop as a Service", "desc": "仮想デスクトップ環境そのものをインターネット経由で提供するクラウドサービス。", "topic": 3 }
+]
