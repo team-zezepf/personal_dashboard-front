@@ -558,6 +558,247 @@
   padding: 0 1px;
 }
 
+/* ===== 用語テスト(front#211。動きは assets/glossary.js) ===== */
+.genre-article .gl-quiz-start {
+  margin-top: 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ga-primary);
+  background: #fff;
+  color: var(--ga-primary-dark);
+  cursor: pointer;
+}
+
+.genre-article .gl-quiz-start:hover {
+  background: #eaf7fd;
+}
+
+/* テスト中は、検索欄と用語の一覧を隠してテストだけを表示する */
+.genre-article.gl-quiz-active .gl-tools,
+.genre-article.gl-quiz-active section.gl-row {
+  display: none;
+}
+
+.genre-article .gl-quiz {
+  background: var(--ga-card);
+  border: 1px solid var(--ga-line);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.045);
+  scroll-margin-top: 16px;
+}
+
+.genre-article .gl-quiz-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ga-muted);
+  margin-bottom: 10px;
+}
+
+.genre-article .gl-quiz-progress {
+  height: 6px;
+  background: var(--ga-line);
+  border-radius: 3px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.genre-article .gl-quiz-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ga-primary);
+}
+
+.genre-article .gl-quiz-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ga-muted);
+  margin: 0 0 4px;
+}
+
+.genre-article .gl-quiz-desc {
+  font-size: 1rem;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border-left: 4px solid var(--ga-primary);
+}
+
+.genre-article .gl-quiz-form {
+  display: flex;
+  gap: 8px;
+}
+
+.genre-article .gl-quiz-input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 10px 12px;
+  border: 1px solid var(--ga-line);
+  border-radius: 10px;
+  background: #fbfcfd;
+  color: var(--ga-text);
+}
+
+.genre-article .gl-quiz-input:focus {
+  outline: 2px solid var(--ga-primary);
+  border-color: transparent;
+  background: #fff;
+}
+
+.genre-article .gl-quiz-input.is-correct {
+  border-color: #22a06b;
+  background: #e9f8f0;
+}
+
+.genre-article .gl-quiz-input.is-wrong {
+  border-color: #e5484d;
+  background: #fdecec;
+}
+
+.genre-article .gl-quiz-sub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.genre-article .gl-quiz-sub button {
+  font-family: inherit;
+  font-size: 0.8rem;
+  border: none;
+  background: none;
+  color: var(--ga-primary-dark);
+  cursor: pointer;
+  padding: 0;
+}
+
+.genre-article .gl-quiz-sub button:disabled {
+  color: var(--ga-muted);
+  cursor: default;
+}
+
+.genre-article .gl-quiz-sub .gl-quiz-giveup {
+  margin-left: auto;
+}
+
+.genre-article .gl-quiz-hint {
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-quiz-result {
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.genre-article .gl-quiz-ok {
+  color: #178a55;
+  font-weight: 700;
+}
+
+.genre-article .gl-quiz-ng {
+  color: #c2373c;
+  font-weight: 700;
+}
+
+.genre-article .gl-quiz-answer {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.genre-article .gl-quiz-reading {
+  font-size: 0.75rem;
+  color: var(--ga-muted);
+  margin-left: 6px;
+}
+
+.genre-article .gl-quiz-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.genre-article .gl-quiz-actions button,
+.genre-article .gl-quiz-form button {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--ga-line);
+  background: #fff;
+  color: var(--ga-muted);
+  white-space: nowrap;
+}
+
+.genre-article .gl-quiz-actions button.primary,
+.genre-article .gl-quiz-form button.primary {
+  background: var(--ga-primary);
+  border-color: var(--ga-primary);
+  color: #fff;
+}
+
+.genre-article .gl-quiz-form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.genre-article .gl-quiz-score {
+  text-align: center;
+  margin: 4px 0 18px;
+}
+
+.genre-article .gl-quiz-score strong {
+  display: block;
+  font-size: 2rem;
+  color: var(--ga-primary-dark);
+}
+
+.genre-article .gl-quiz-missed h3 {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+.genre-article .gl-quiz-yours {
+  font-size: 0.78rem;
+  color: #c2373c;
+  margin: 2px 0 0;
+}
+
+.genre-article .gl-quiz .gl-desc,
+.genre-article .gl-quiz .gl-rel {
+  margin: 4px 0 0;
+}
+
+.genre-article .gl-quiz .gl-desc {
+  font-size: 0.9rem;
+}
+
+.genre-article .gl-quiz .gl-rel {
+  font-size: 0.78rem;
+  color: var(--ga-muted);
+}
+
+.genre-article .gl-quiz-perfect {
+  text-align: center;
+  color: #178a55;
+  font-weight: 700;
+}
+
 /* PC幅では、検索と分野のボタンをスクロールしても上部に残す(スマホ幅はアプリの上部のナビと重なるため残さない) */
 @media (min-width: 761px) {
   .genre-article .gl-tools {

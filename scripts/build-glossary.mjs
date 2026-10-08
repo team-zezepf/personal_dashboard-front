@@ -34,6 +34,8 @@ const ROWS = [
   ['わ', 'わをん']
 ];
 const LATIN_ROW = 'A–Z';
+// 用語テストの1回の問題数(assets/glossary.js の QUESTIONS と合わせる)
+const QUIZ_QUESTIONS = 10;
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const collator = new Intl.Collator('ja');
@@ -159,7 +161,8 @@ function renderPage({ examType, examName, rows, categories, count, base }) {
       ).join('、');
       const reading = [t.reading, t.en].filter(Boolean).map(escapeHtml).join(' / ');
       return [
-        `        <div class="gl-term" data-category="${escapeHtml(t.category)}">`,
+        // data-reading は用語テスト(assets/glossary.js)で、読みでの回答を正解にするのに使う
+        `        <div class="gl-term" data-category="${escapeHtml(t.category)}" data-reading="${escapeHtml(t.reading)}">`,
         `          <dt><span class="gl-name">${escapeHtml(t.term)}</span><span class="gl-reading">${reading}</span><span class="gl-cat">${escapeHtml(t.category)}</span></dt>`,
         `          <dd><p class="gl-desc">${escapeHtml(t.desc)}</p><p class="gl-rel">関連: ${links}</p></dd>`,
         `        </div>`
@@ -209,6 +212,7 @@ function renderPage({ examType, examName, rows, categories, count, base }) {
       <input type="search" class="gl-search" placeholder="用語・読み・英語名・説明で探す" aria-label="用語を探す">${categoryFilter}
       <p class="gl-count" aria-live="polite">${count}語</p>
       <p class="gl-empty" hidden>一致する用語がありません</p>
+      <button type="button" class="gl-quiz-start">📝 用語テスト(${QUIZ_QUESTIONS}問)</button>
     </div>
 
 ${sections}
