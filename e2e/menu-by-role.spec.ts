@@ -7,7 +7,8 @@ test(
     expected: [
       'ヘッダーの画面切り替えのメニューに「ユーザー管理」が出ない',
       'ユーザー管理(/users)を直接開いても、ユーザーの一覧は表示されない(API が拒否する。api#67)',
-      'カード登録(/cards/admin)を直接開いても、カード・パックは表示されない(API が拒否する。api#67)'
+      'カード登録(/cards/admin)を直接開いても、カード・パックは表示されない(API が拒否する。api#67)',
+      'RPGマップ作成(/rpg/admin)を直接開いても、マップは編集できない(front#217)'
     ]
   }),
   async ({ page }) => {
@@ -30,6 +31,12 @@ test(
     await step('カード登録(/cards/admin)を直接開く', '「カード・パックの取得に失敗しました」と表示される', async () => {
       await page.goto('/cards/admin');
       await expect(page.getByText('カード・パックの取得に失敗しました')).toBeVisible();
+    });
+
+    await step('RPGマップ作成(/rpg/admin)を直接開く', '「この画面は、管理者・開発者だけが使えます。」と表示され、マップは出ない', async () => {
+      await page.goto('/rpg/admin');
+      await expect(page.getByText('この画面は、管理者・開発者だけが使えます。')).toBeVisible();
+      await expect(page.getByLabel('マップ', { exact: true })).toHaveCount(0);
     });
   }
 );

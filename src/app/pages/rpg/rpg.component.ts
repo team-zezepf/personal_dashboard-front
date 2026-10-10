@@ -1,10 +1,12 @@
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgPointShopItem } from '../../models/rpg.models';
+import { RpgMap, RpgPointShopItem } from '../../models/rpg.models';
 import { environment } from '../../../environments/environment';
-import { AREAS, AreaDef, ITEMS, POINT_SHOP_ICONS, SHOP_ITEMS, itemStatLabel } from '../../rpg/rpg-data';
+import { ITEMS, POINT_SHOP_ICONS, SHOP_ITEMS, itemStatLabel, recLabel } from '../../rpg/rpg-data';
 import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState } from '../../rpg/rpg-cursor';
@@ -36,6 +38,11 @@ export class RpgPageComponent implements OnDestroy {
   private rpgService = inject(RpgService);
   private authService = inject(AuthService);
 
+  // マップ作成画面の「この場所からテストプレイ」で開いたとき(/rpg?test=<エリアのID>)。
+  // そのエリアの出発地点から始め、セーブデータは保存しない
+  readonly testArea = inject(ActivatedRoute).snapshot.queryParamMap.get('test');
+  readonly recLabel = recLabel;
+
   private readonly gameArea = viewChild.required<ElementRef<HTMLDivElement>>('gameArea');
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly gemCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('gemCanvas');
@@ -47,9 +54,9 @@ export class RpgPageComponent implements OnDestroy {
   // 表示に関わる変化があったときだけ version を上げて、サイド欄などを描き直す
   private readonly version = signal(0);
   readonly logs = signal<string[]>([]);
-  readonly area = signal<AreaDef>(AREAS.plain);
+  readonly area = signal<RpgMap | null>(null);
   readonly fading = signal(false);
-  readonly areaTitle = signal<AreaDef | null>(null);
+  readonly areaTitle = signal<RpgMap | null>(null);
   readonly knockedOut = signal(false);
 
   // 会話中の村人と、表示しているセリフの番号
@@ -175,24 +182,38 @@ export class RpgPageComponent implements OnDestroy {
       this.isLoading.set(false);
       return;
     }
-    const game = new RpgGame(this.createEvents());
-    this.game = game;
     this.renderer = new RpgRenderer(ctx);
     this.gem = new GemCursor(this.gemCanvas().nativeElement);
-    this.resize();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this.gameArea().nativeElement);
     window.addEventListener('pagehide', this.onPageHide);
     this.exposeForTest();
 
-    this.rpgService.getSave().subscribe({
-      next: (save) => {
+    // マップ(地形)とセーブデータがそろってからゲームを作る
+    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave() }).subscribe({
+      next: ({ maps, save }) => {
+        if (maps.length === 0) {
+          this.loadError.set('エリアがまだ1つもありません');
+          this.isLoading.set(false);
+          return;
+        }
+        const game = new RpgGame(this.createEvents(), maps);
+        this.game = game;
+        this.resize();
         game.loadSave(save);
+        const test = this.testArea ? game.mapById(this.testArea) : undefined;
+        if (test) {
+          game.loadMap(test);
+          game.player.x = test.startX;
+          game.player.y = test.startY;
+        }
+        // テストプレイでは保存しない
+        this.loaded = !this.testArea;
         this.area.set(game.area);
-        this.loaded = true;
         this.isLoading.set(false);
         this.log(game.area.id === 'plain' ? `${game.area.name}にやってきた。村長に話しかけてみよう` : `${game.area.name}にやってきた`);
         this.showAreaTitle(game.area);
+        this.startLoop(game);
       },
       error: () => {
         this.loadError.set('セーブデータの読み込みに失敗しました。時間をおいて開き直してください');
@@ -201,12 +222,14 @@ export class RpgPageComponent implements OnDestroy {
     });
     this.rpgService.getPointShop().subscribe({ next: (items) => this.pointShop.set(items), error: () => undefined });
     this.autosaveTimer = setInterval(() => this.saveIfDirty(), AUTOSAVE_MS);
+  }
 
+  private startLoop(game: RpgGame): void {
     this.lastFrame = performance.now();
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - this.lastFrame) / 1000);
       this.lastFrame = now;
-      if (this.loaded) game.update(dt);
+      game.update(dt);
       this.renderer!.draw(game, this.dpr);
       this.drawGem(dt);
       this.frameId = requestAnimationFrame(loop);
@@ -326,7 +349,7 @@ export class RpgPageComponent implements OnDestroy {
       return;
     }
     this.talking.set(null);
-    if (current.npc.after) this.openShop(current.npc.after);
+    if (current.npc.role !== 'talk') this.openShop(current.npc.role);
     this.syncLock();
   }
 
@@ -362,6 +385,11 @@ export class RpgPageComponent implements OnDestroy {
     const game = this.game;
     const item = this.pointShop().find((i) => i.id === itemId);
     if (!game || !item || this.exchanging()) return;
+    // 交換はポイントを減らしてセーブデータも保存するため、テストプレイではできない
+    if (this.testArea) {
+      this.shopError.set('テストプレイ中はポイント交換できません');
+      return;
+    }
     this.exchanging.set(true);
     this.shopError.set('');
     this.rpgService.exchangePoints(itemId, game.toSaveInput()).subscribe({
@@ -395,7 +423,7 @@ export class RpgPageComponent implements OnDestroy {
     this.logs.update((logs) => [message, ...logs].slice(0, MAX_LOGS));
   }
 
-  private showAreaTitle(area: AreaDef): void {
+  private showAreaTitle(area: RpgMap): void {
     this.areaTitle.set(area);
     if (this.areaTitleTimer) clearTimeout(this.areaTitleTimer);
     this.areaTitleTimer = setTimeout(() => this.areaTitle.set(null), AREA_TITLE_MS);

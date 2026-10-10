@@ -75,6 +75,11 @@
   background: rgba(245, 158, 11, 0.9);
 }
 
+.chip.test {
+  font-weight: 700;
+  background: rgba(239, 91, 91, 0.92);
+}
+
 .area-title {
   position: absolute;
   top: 26%;

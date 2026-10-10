@@ -1,4 +1,4 @@
-import { AREAS, ENEMIES, G, ITEMS, N, StaticObj, TH, TW } from './rpg-data';
+import { ENEMIES, G, ITEMS, StaticObj, TH, TW } from './rpg-data';
 import { Enemy, RpgGame, iso } from './rpg-game';
 
 type Pt = [number, number];
@@ -22,6 +22,13 @@ interface ChibiOptions {
   slash?: number;
 }
 
+// #rrggbb の色を暗くする(家の屋根の影の面)
+export function shade(hex: string, factor: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.round(v * factor);
+  return `rgb(${c(n >> 16)}, ${c((n >> 8) & 255)}, ${c(n & 255)})`;
+}
+
 const ARMOR_COLORS: Record<string, string> = {
   star_robe: '#8b5cf6',
   leather: '#a16207',
@@ -35,7 +42,8 @@ const ARMOR_COLORS: Record<string, string> = {
  */
 export class RpgRenderer {
   private game!: RpgGame;
-  private readonly fireflies = Array.from({ length: 40 }, () => ({ x: Math.random() * N, y: Math.random() * N, ph: Math.random() * 6 }));
+  // ホタルの位置はマップの広さに対する割合(0〜1)で持つ
+  private readonly fireflies = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6 }));
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
 
   constructor(private ctx: CanvasRenderingContext2D) {}
@@ -49,7 +57,7 @@ export class RpgRenderer {
     const ctx = this.ctx;
     const w = game.viewW;
     const h = game.viewH;
-    const pal = game.area.pal;
+    const pal = game.theme;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const sky = ctx.createLinearGradient(0, 0, 0, h);
@@ -70,13 +78,16 @@ export class RpgRenderer {
 
     ctx.save();
     ctx.translate(game.camX, game.camY);
+    ctx.scale(game.zoom, game.zoom);
     this.drawGround();
     this.drawCursorTile();
     this.drawEntities();
     if (pal.fireflies) this.drawFireflies();
     for (const p of game.area.portals) {
+      const dest = game.mapById(p.to);
+      if (!dest) continue;
       const [sx, sy] = iso(p.x, p.y);
-      this.label(`▶ ${AREAS[p.to].name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
+      this.label(`▶ ${dest.name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
     }
     this.drawEffects();
     ctx.restore();
@@ -114,11 +125,11 @@ export class RpgRenderer {
   private drawGround(): void {
     const ctx = this.ctx;
     const { map, area } = this.game;
-    const pal = area.pal;
-    for (let s = 0; s < N * 2 - 1; s++) {
-      for (let x = 0; x < N; x++) {
+    const pal = this.game.theme;
+    for (let s = 0; s < map.w + map.h - 1; s++) {
+      for (let x = 0; x < map.w; x++) {
         const y = s - x;
-        if (y < 0 || y >= N) continue;
+        if (y < 0 || y >= map.h) continue;
         const g = map.ground[y][x];
         if (g === G.VOID) continue;
         const [cx, cy] = iso(x, y);
@@ -163,13 +174,14 @@ export class RpgRenderer {
         }
       }
     }
-    if (area.decal) this.drawMagicCircle(...iso(...area.decal));
+    // ボス(闇の魔導士)の出る場所には魔法陣を描く
+    for (const e of area.enemies) if (ENEMIES[e.type]?.boss) this.drawMagicCircle(...iso(e.x, e.y));
     for (const p of area.portals) this.drawPortal(...iso(p.x, p.y));
   }
 
   private drawFlower(cx: number, cy: number, x: number, y: number): void {
     const ctx = this.ctx;
-    const pal = this.game.area.pal;
+    const pal = this.game.theme;
     if (pal.flower === 'flower' || pal.flower === 'glow') {
       for (let i = 0; i < 3; i++) {
         const c = pal.flowers[(x + y + i) % 3];
@@ -290,7 +302,7 @@ export class RpgRenderer {
         this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
         if (o.notice) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3);
       } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
-      else this.drawPlayer(sx, sy);
+      else if (!game.hidePlayer) this.drawPlayer(sx, sy);
     }
   }
 
@@ -330,7 +342,7 @@ export class RpgRenderer {
 
   private drawTree(cx: number, cy: number): void {
     const ctx = this.ctx;
-    const p = this.game.area.tree;
+    const p = this.game.theme.tree;
     const s = p.scale;
     this.shadow(cx, cy, 18 * s, 7 * s);
     ctx.fillStyle = p.trunk;
@@ -345,7 +357,7 @@ export class RpgRenderer {
   }
 
   private drawRock(cx: number, cy: number): void {
-    const [dark, light] = this.game.area.rock;
+    const [dark, light] = this.game.theme.rock;
     this.shadow(cx, cy, 15, 6, 0.15);
     this.poly([[cx - 14, cy], [cx - 10, cy - 14], [cx + 2, cy - 18], [cx + 13, cy - 9], [cx + 14, cy]], dark);
     this.poly([[cx - 10, cy - 14], [cx + 2, cy - 18], [cx + 13, cy - 9], [cx, cy - 8]], light);
@@ -454,7 +466,7 @@ export class RpgRenderer {
     const apex: Pt = [cx, cy - h - 34];
     const eave = ([x, y]: Pt): Pt => [cx + (x - cx) * e, cy - h + (y - cy) * e];
     const roof = o.roof ?? '#e0605a';
-    const roofDark = o.roofDark ?? '#c24a45';
+    const roofDark = shade(roof, 0.86);
     this.poly([eave(T), eave(L), apex], roofDark);
     this.poly([eave(T), eave(R), apex], roofDark);
     this.poly([eave(L), eave(B), apex], roof);
@@ -796,8 +808,9 @@ export class RpgRenderer {
 
   private drawFireflies(): void {
     const ctx = this.ctx;
+    const { w, h } = this.game.map;
     for (const f of this.fireflies) {
-      const [sx, sy] = iso(f.x + Math.sin(this.time * 0.5 + f.ph) * 0.6, f.y + Math.cos(this.time * 0.4 + f.ph) * 0.6);
+      const [sx, sy] = iso(f.x * w + Math.sin(this.time * 0.5 + f.ph) * 0.6, f.y * h + Math.cos(this.time * 0.4 + f.ph) * 0.6);
       ctx.globalAlpha = 0.45 + Math.sin(this.time * 3 + f.ph) * 0.45;
       ctx.fillStyle = '#e6ffb3';
       ctx.beginPath();

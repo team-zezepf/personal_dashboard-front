@@ -17,15 +17,20 @@
     ></canvas>
 
     <div class="hud">
-      <div class="chip place">{{ area().name }}</div>
-      <div class="chip rec">{{ area().rec }}</div>
+      @if (area(); as a) {
+        <div class="chip place">{{ a.name }}</div>
+        <div class="chip rec">{{ recLabel(a.recommendedLevel) }}</div>
+      }
+      @if (testArea) {
+        <div class="chip test">テストプレイ中（保存されません）</div>
+      }
       <div class="chip">クリック：移動 ／ 敵：攻撃 ／ 人：話す ／ 光る場所：エリア移動 ／ [1]キー：回復薬</div>
     </div>
 
     @if (areaTitle(); as title) {
       <div class="area-title">
         <div class="area-title-name">{{ title.name }}</div>
-        <div class="area-title-rec">{{ title.rec }}</div>
+        <div class="area-title-rec">{{ recLabel(title.recommendedLevel) }}</div>
       </div>
     }
 
