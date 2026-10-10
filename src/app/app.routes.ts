@@ -26,6 +26,7 @@ import { TimelinePageComponent } from './pages/timeline/timeline.component';
 import { PostThreadPageComponent } from './pages/post-thread/post-thread.component';
 import { OfflineSettingsPageComponent } from './pages/offline-settings/offline-settings.component';
 import { DataTransferPageComponent } from './pages/data-transfer/data-transfer.component';
+import { RpgPageComponent } from './pages/rpg/rpg.component';
 import { environment } from '../environments/environment';
 
 const allRoutes: Routes = [
@@ -62,6 +63,8 @@ const allRoutes: Routes = [
   { path: 'interview-prep/:id', component: InterviewPrepEditPageComponent, canActivate: [authGuard] },
   { path: 'timeline', component: TimelinePageComponent, canActivate: [authGuard] },
   { path: 'timeline/:id', component: PostThreadPageComponent, canActivate: [authGuard] },
+  // アイソメトリックRPG(front#215)。PC向けのみで、Android版(OFFLINE_PATHS)には入れない
+  { path: 'rpg', component: RpgPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];
 

@@ -1,0 +1,154 @@
+<app-header pageTitle="RPG"></app-header>
+
+<main class="rpg-layout">
+  <div
+    #gameArea
+    class="game"
+    (mousemove)="onAreaMouseMove($event)"
+    (mouseleave)="onAreaMouseLeave()"
+  >
+    <canvas
+      #canvas
+      class="game-canvas"
+      aria-label="RPGのゲーム画面"
+      (mousemove)="onMouseMove($event)"
+      (mouseleave)="onMouseLeave()"
+      (click)="onClick($event)"
+    ></canvas>
+
+    <div class="hud">
+      <div class="chip place">{{ area().name }}</div>
+      <div class="chip rec">{{ area().rec }}</div>
+      <div class="chip">クリック：移動 ／ 敵：攻撃 ／ 人：話す ／ 光る場所：エリア移動 ／ [1]キー：回復薬</div>
+    </div>
+
+    @if (areaTitle(); as title) {
+      <div class="area-title">
+        <div class="area-title-name">{{ title.name }}</div>
+        <div class="area-title-rec">{{ title.rec }}</div>
+      </div>
+    }
+
+    @if (talking(); as talk) {
+      <div class="dialog" role="dialog" [attr.aria-label]="talk.npc.name + 'との会話'" (click)="nextLine()">
+        <div class="dialog-name">{{ talk.npc.name }}</div>
+        <p class="dialog-text">{{ talk.npc.lines[talk.index] }}</p>
+        <div class="dialog-next">▼ クリックで次へ</div>
+      </div>
+    }
+
+    @if (shopMode(); as mode) {
+      <div class="modal">
+        <div class="modal-card" role="dialog" [attr.aria-label]="mode === 'shop' ? '道具屋' : 'ポイント交換所'">
+          <div class="modal-head">
+            <span>{{ mode === 'shop' ? '🏪 道具屋' : '★ ポイント交換所' }}</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeShop()">×</button>
+          </div>
+          <p class="modal-sub">
+            @if (mode === 'shop') {
+              所持ゴールド：{{ stats()?.gold }} G
+            } @else {
+              ダッシュボードのポイント：{{ points() }} pt（交換するとポイントが減ります）
+            }
+          </p>
+          @if (shopError()) {
+            <p class="shop-error">{{ shopError() }}</p>
+          }
+          @for (row of shopRows(); track row.id) {
+            <div class="shop-row">
+              <span class="shop-icon">{{ row.icon }}</span>
+              <div class="shop-info">
+                <div class="shop-name">{{ row.name }}</div>
+                <div class="shop-desc">{{ row.desc }}</div>
+              </div>
+              <span class="shop-price" [class.pt]="mode === 'exchange'">{{ row.price }}</span>
+              <button
+                type="button"
+                class="btn"
+                [class.purple]="mode === 'exchange'"
+                [disabled]="row.disabled"
+                [attr.aria-label]="row.name + 'を' + row.buttonLabel"
+                (click)="onShopButton(row.id)"
+              >
+                {{ row.buttonLabel }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (knockedOut()) {
+      <div class="banner">たおれてしまった…</div>
+    }
+    <div class="fade" [class.on]="fading()"></div>
+
+    @if (isLoading()) {
+      <div class="banner">読み込み中…</div>
+    } @else if (loadError()) {
+      <div class="banner error">{{ loadError() }}</div>
+    }
+
+    <canvas
+      #gemCanvas
+      class="gem-cursor"
+      [class.hidden]="!gemVisible()"
+      [style.width.px]="gemSize[0]"
+      [style.height.px]="gemSize[1]"
+      [style.transform]="'translate(' + gemPosition()[0] + 'px, ' + gemPosition()[1] + 'px)'"
+    ></canvas>
+  </div>
+
+  <aside class="side">
+    @if (stats(); as s) {
+      <section class="card" aria-label="ステータス">
+        <div class="lv-row">
+          <span class="who">あなた</span>
+          <span class="lv">Lv {{ s.level }}</span>
+        </div>
+        <div class="bar-label"><span>HP</span><span>{{ s.hp }} / {{ s.maxHp }}</span></div>
+        <div class="bar"><div class="hp" [class.low]="s.hpRate <= 30" [style.width.%]="s.hpRate"></div></div>
+        <div class="bar-label"><span>経験値</span><span>{{ s.exp }} / {{ s.nextExp }}</span></div>
+        <div class="bar"><div class="exp" [style.width.%]="s.expRate"></div></div>
+        <div class="stats">
+          <div class="stat"><div class="k">攻撃</div><div class="v">{{ s.atk }}</div></div>
+          <div class="stat"><div class="k">防御</div><div class="v">{{ s.def }}</div></div>
+          <div class="stat"><div class="k">ゴールド</div><div class="v">{{ s.gold }}G</div></div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="装備">
+        <h2>装備</h2>
+        <div class="slot"><span class="k">武器</span><span class="icon">{{ s.weapon.icon }}</span>{{ s.weapon.name }}<span class="plus">{{ s.weapon.plus }}</span></div>
+        <div class="slot"><span class="k">防具</span><span class="icon">{{ s.armor.icon }}</span>{{ s.armor.name }}<span class="plus">{{ s.armor.plus }}</span></div>
+      </section>
+
+      <section class="card" aria-label="持ち物">
+        <h2>持ち物</h2>
+        @for (item of inventory(); track item.id) {
+          <div class="inv-row">
+            <span class="icon">{{ item.icon }}</span>
+            <span class="name">{{ item.name }}</span>
+            @if (item.usable) {
+              <span class="count">×{{ item.count }}</span>
+              <button type="button" class="btn" [attr.aria-label]="item.name + 'を使う'" (click)="useItem(item.id)">使う</button>
+            } @else if (item.equipped) {
+              <span class="badge">装備中</span>
+            } @else {
+              <button type="button" class="btn ghost" [attr.aria-label]="item.name + 'を装備する'" (click)="equip(item.id)">装備する</button>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <section class="card" aria-label="ログ">
+      <h2>ログ</h2>
+      <div class="log">
+        @for (message of logs(); track $index) {
+          <div>{{ message }}</div>
+        }
+      </div>
+    </section>
+  </aside>
+</main>

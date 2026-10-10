@@ -21,6 +21,7 @@ export const TOOLS: ToolRow[] = [
   { name: 'カード登録', path: '/cards/admin', roles: TOOL_ACCESS['/cards/admin'] },
   { name: '面接準備', path: '/interview-prep', roles: TOOL_ACCESS['/interview-prep'] },
   { name: 'つぶやき', path: '/timeline', roles: TOOL_ACCESS['/timeline'] },
+  { name: 'RPG', path: '/rpg', roles: TOOL_ACCESS['/rpg'] },
   { name: 'テーマ設定', path: '/settings/theme', roles: TOOL_ACCESS['/settings/theme'] }
 ];
 
