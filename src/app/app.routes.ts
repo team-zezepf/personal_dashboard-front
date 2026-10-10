@@ -27,6 +27,7 @@ import { PostThreadPageComponent } from './pages/post-thread/post-thread.compone
 import { OfflineSettingsPageComponent } from './pages/offline-settings/offline-settings.component';
 import { DataTransferPageComponent } from './pages/data-transfer/data-transfer.component';
 import { RpgPageComponent } from './pages/rpg/rpg.component';
+import { RpgAdminPageComponent } from './pages/rpg-admin/rpg-admin.component';
 import { environment } from '../environments/environment';
 
 const allRoutes: Routes = [
@@ -65,6 +66,13 @@ const allRoutes: Routes = [
   { path: 'timeline/:id', component: PostThreadPageComponent, canActivate: [authGuard] },
   // アイソメトリックRPG(front#215)。PC向けのみで、Android版(OFFLINE_PATHS)には入れない
   { path: 'rpg', component: RpgPageComponent, canActivate: [authGuard] },
+  // RPGのマップ作成(front#217)。管理者・開発者向け。保存していない変更があれば、離れる前に確かめる
+  {
+    path: 'rpg/admin',
+    component: RpgAdminPageComponent,
+    canActivate: [authGuard],
+    canDeactivate: [(page: RpgAdminPageComponent) => page.confirmLeave()]
+  },
   { path: '**', redirectTo: '' }
 ];
 

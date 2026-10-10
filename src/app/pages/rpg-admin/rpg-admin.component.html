@@ -1,0 +1,286 @@
+<app-header pageTitle="RPGマップ作成"></app-header>
+
+@if (!allowed) {
+  <main class="message-page">
+    <div class="message-card">この画面は、管理者・開発者だけが使えます。</div>
+  </main>
+} @else if (isLoading()) {
+  <main class="message-page"><p class="muted">読み込み中…</p></main>
+} @else if (errorMessage()) {
+  <main class="message-page">
+    <div class="message-card error">{{ errorMessage() }}</div>
+  </main>
+} @else {
+  <div class="editor">
+    <div class="toolbar">
+      <label class="toolbar-label">
+        エリア
+        <select [ngModel]="currentId()" (ngModelChange)="selectArea($event)" aria-label="エリア">
+          @for (m of maps(); track m.id) {
+            <option [value]="m.id">{{ m.name }}{{ dirtyIds().has(m.id) ? ' ●' : '' }}</option>
+          }
+        </select>
+      </label>
+      <button type="button" class="btn" (click)="openNewArea()">＋ 新しいエリア</button>
+      <span class="sep"></span>
+      <button type="button" class="btn" [disabled]="!canUndo()" (click)="undo()" title="Ctrl+Z">↶ 元に戻す</button>
+      <button type="button" class="btn" [disabled]="!canRedo()" (click)="redo()" title="Ctrl+Y">↷ やり直す</button>
+      <span class="sep"></span>
+      <label class="toolbar-label">
+        <input type="checkbox" [ngModel]="showGrid()" (ngModelChange)="showGrid.set($event)" /> マス目を表示
+      </label>
+      <span class="spacer"></span>
+      @if (isDirty()) {
+        <span class="dirty">● 保存していない変更があります</span>
+      }
+      <button
+        type="button"
+        class="btn"
+        [disabled]="isDirty()"
+        [title]="isDirty() ? '保存してからテストプレイできます' : '新しいタブで、このエリアの出発地点からゲームを開きます'"
+        (click)="testPlay()"
+      >
+        ▶ この場所からテストプレイ
+      </button>
+      <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
+        {{ saving() ? '保存中…' : '保存する' }}
+      </button>
+    </div>
+
+    <div class="workspace">
+      <aside class="palette" aria-label="パレット">
+        <div class="tabs">
+          @for (t of palette; track t.id) {
+            <button type="button" class="tab" [class.active]="tab() === t.id" (click)="selectTab(t.id)">{{ t.label }}</button>
+          }
+        </div>
+        <div class="palette-body">
+          <p class="hint">{{ tabHint() }}</p>
+          <div class="items">
+            @for (item of tabItems(); track item.id) {
+              <button type="button" class="item" [class.active]="tool().id === item.id" (click)="tool.set(item)">
+                @if (item.icon) {
+                  <span class="item-icon">{{ item.icon }}</span>
+                } @else if (item.tool.kind === 'enemy') {
+                  <span class="item-dot" [style.background]="swatch(item)"></span>
+                } @else {
+                  <span class="item-swatch" [style.background]="swatch(item)"></span>
+                }
+                <span>{{ itemLabel(item) }}</span>
+              </button>
+            }
+          </div>
+          @if (tab() === 'ground') {
+            <div class="brush">
+              <span>筆の大きさ</span>
+              <button type="button" class="btn small" [class.on]="brush() === 1" (click)="brush.set(1)">1マス</button>
+              <button type="button" class="btn small" [class.on]="brush() === 3" (click)="brush.set(3)">3×3</button>
+            </div>
+          }
+        </div>
+      </aside>
+
+      <div #stage class="stage">
+        <canvas
+          #canvas
+          aria-label="マップ"
+          (mousedown)="onMouseDown($event)"
+          (mousemove)="onMouseMove($event)"
+          (mouseleave)="onMouseLeave()"
+          (wheel)="onWheel($event)"
+          (contextmenu)="$event.preventDefault()"
+        ></canvas>
+        <div class="zoom">
+          <button type="button" class="btn small" (click)="zoomBy(1 / 1.15)" aria-label="縮小">－</button>
+          <button type="button" class="btn small" (click)="fitView()">全体</button>
+          <button type="button" class="btn small" (click)="zoomBy(1.15)" aria-label="拡大">＋</button>
+        </div>
+        <div class="stage-hint">左クリック・ドラッグ：塗る／置く　右ドラッグ：画面を動かす　ホイール：拡大・縮小</div>
+        @if (hoverTile(); as t) {
+          <div class="coord">x {{ t[0] }} ・ y {{ t[1] }}</div>
+        }
+      </div>
+
+      <aside class="props">
+        @if (current(); as map) {
+          <section aria-label="エリアの設定">
+            <h2>エリアの設定</h2>
+            <label class="field">
+              <span>名前</span>
+              <input type="text" maxlength="30" [ngModel]="map.name" (focus)="beginEdit()" (ngModelChange)="map.name = $event; edited()" />
+            </label>
+            <div class="row2">
+              <label class="field">
+                <span>推奨レベル</span>
+                <input type="number" min="1" max="99" [ngModel]="map.recommendedLevel" (focus)="beginEdit()" (ngModelChange)="map.recommendedLevel = $event; edited()" />
+              </label>
+              <label class="field">
+                <span>見た目</span>
+                <select [ngModel]="map.theme" (ngModelChange)="changeTheme($event)">
+                  @for (t of themes; track t.id) {
+                    <option [value]="t.id">{{ t.label }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <div class="row2">
+              <label class="field">
+                <span>幅（マス）</span>
+                <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.width" (change)="changeSize($any($event.target).value, map.height)" />
+              </label>
+              <label class="field">
+                <span>奥行き（マス）</span>
+                <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
+              </label>
+            </div>
+            <label class="field">
+              <span>BGM</span>
+              <select disabled><option>（BGMは #218 で追加します）</option></select>
+            </label>
+          </section>
+
+          <section aria-label="選んでいるもの">
+            <h2>選んでいるもの</h2>
+            <div class="selected-box">
+              @if (selected(); as sel) {
+                @switch (sel.kind) {
+                  @case ('npc') {
+                    <div class="selected-title">🧑 村人 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <label class="field">
+                      <span>名前</span>
+                      <input type="text" maxlength="30" [ngModel]="sel.ref.name" (focus)="beginEdit()" (ngModelChange)="sel.ref.name = $event; edited()" />
+                    </label>
+                    <label class="field">
+                      <span>役割</span>
+                      <select [ngModel]="sel.ref.role" (focus)="beginEdit()" (ngModelChange)="sel.ref.role = $event; edited()">
+                        @for (r of roles; track r[0]) {
+                          <option [value]="r[0]">{{ r[1] }}</option>
+                        }
+                      </select>
+                    </label>
+                    <div class="field">
+                      <span>髪の色</span>
+                      <div class="colors">
+                        @for (c of hairColors; track c) {
+                          <button type="button" class="color" [class.on]="sel.ref.hair === c" [style.background]="c" [attr.aria-label]="'髪の色 ' + c" (click)="setColor(sel, 'hair', c)"></button>
+                        }
+                      </div>
+                    </div>
+                    <div class="field">
+                      <span>服の色</span>
+                      <div class="colors">
+                        @for (c of bodyColors; track c) {
+                          <button type="button" class="color" [class.on]="sel.ref.body === c" [style.background]="c" [attr.aria-label]="'服の色 ' + c" (click)="setColor(sel, 'body', c)"></button>
+                        }
+                      </div>
+                    </div>
+                    <label class="field">
+                      <span>セリフ（1行が1回分。クリックで次の行へ進む）</span>
+                      <textarea rows="5" [ngModel]="npcLines(sel)" (focus)="beginEdit()" (ngModelChange)="setNpcLines(sel, $event)"></textarea>
+                    </label>
+                    <label class="check">
+                      <input type="checkbox" [ngModel]="sel.ref.notice" (ngModelChange)="beginEdit(); sel.ref.notice = $event; edited()" />
+                      話しかけるまで頭に「!」を出す
+                    </label>
+                    <p class="muted small">役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。</p>
+                    <button type="button" class="btn small" (click)="deleteSelected()">この村人を消す</button>
+                  }
+                  @case ('portal') {
+                    <div class="selected-title">🌀 ポータル <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <label class="field">
+                      <span>行き先のエリア</span>
+                      <select [ngModel]="sel.ref.to ?? ''" (ngModelChange)="setPortalDestination(sel, $event)">
+                        <option value="">（選んでください）</option>
+                        @for (m of otherMaps(); track m.id) {
+                          <option [value]="m.id">{{ m.name }}</option>
+                        }
+                      </select>
+                    </label>
+                    <div class="row2">
+                      <label class="field">
+                        <span>着く位置 x</span>
+                        <input type="number" min="0" [ngModel]="sel.ref.toX" (focus)="beginEdit()" (ngModelChange)="sel.ref.toX = $event; edited()" />
+                      </label>
+                      <label class="field">
+                        <span>着く位置 y</span>
+                        <input type="number" min="0" [ngModel]="sel.ref.toY" (focus)="beginEdit()" (ngModelChange)="sel.ref.toY = $event; edited()" />
+                      </label>
+                    </div>
+                    @if (sel.ref.to) {
+                      <p class="muted small">
+                        行き先：{{ mapName(sel.ref.to) }}（{{ mapSize(sel.ref.to) }}）。行き先のエリアにも、戻ってくるポータルを置くと行き来できます。
+                      </p>
+                    }
+                    <button type="button" class="btn small" (click)="deleteSelected()">このポータルを消す</button>
+                  }
+                  @case ('enemy') {
+                    <div class="selected-title">👾 敵の出る場所 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <label class="field">
+                      <span>敵の種類</span>
+                      <select [ngModel]="sel.ref.type" (focus)="beginEdit()" (ngModelChange)="sel.ref.type = $event; edited()">
+                        @for (e of enemyTypes; track e.id) {
+                          <option [value]="e.id">{{ e.name }}</option>
+                        }
+                      </select>
+                    </label>
+                    <p class="muted small">強さ・落とすアイテムは、種類ごとに決まっています。</p>
+                    <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
+                  }
+                }
+              } @else {
+                <p class="muted small">
+                  「その他」の「選ぶ・動かす」で、置いた村人・ポータル・敵をクリックすると、ここで中身を変えられます。
+                </p>
+              }
+            </div>
+          </section>
+
+          <section aria-label="保存する前の確認">
+            <h2>保存する前の確認</h2>
+            <ul class="checks">
+              @for (c of checks(); track c.text) {
+                <li>
+                  <span [class.ok]="c.ok" [class.ng]="!c.ok">{{ c.ok ? '✔' : '⚠' }}</span>
+                  <span>{{ c.text }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </aside>
+    </div>
+  </div>
+
+  @if (newAreaOpen()) {
+    <div class="modal">
+      <div class="modal-card" role="dialog" aria-label="新しいエリア">
+        <h2>新しいエリア</h2>
+        <label class="field"><span>名前</span><input type="text" maxlength="30" [(ngModel)]="newArea.name" /></label>
+        <div class="row2">
+          <label class="field">
+            <span>見た目</span>
+            <select [(ngModel)]="newArea.theme">
+              @for (t of themes; track t.id) {
+                <option [value]="t.id">{{ t.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="field"><span>推奨レベル</span><input type="number" min="1" max="99" [(ngModel)]="newArea.recommendedLevel" /></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span>幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.width" /></label>
+          <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.height" /></label>
+        </div>
+        <p class="muted small">一面の地面だけのエリアができます。ほかのエリアからポータルでつなぐと、ゲームから行けるようになります。</p>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="newAreaOpen.set(false)">やめる</button>
+          <button type="button" class="btn primary" [disabled]="saving()" (click)="createArea()">作る</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (toastMessage()) {
+    <div class="toast" role="status">{{ toastMessage() }}</div>
+  }
+}

@@ -21,6 +21,7 @@ export const TOOL_ACCESS: Record<string, ReadonlySet<Role>> = {
   '/interview-prep': ALL_ROLES,
   '/timeline': ALL_ROLES,
   '/rpg': ALL_ROLES,
+  '/rpg/admin': ELEVATED_ROLES,
   '/settings/theme': ALL_ROLES
 };
 

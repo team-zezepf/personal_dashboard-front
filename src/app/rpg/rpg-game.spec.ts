@@ -1,28 +1,49 @@
-import { RpgSave } from '../models/rpg.models';
-import { AREAS, buildAreaMap, maxHpOf } from './rpg-data';
+import { RpgMap, RpgSave } from '../models/rpg.models';
+import { buildAreaMap, maxHpOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 
-function events(): RpgGameEvents & { messages: string[]; dirtyCount: number } {
+function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[] } {
   const result = {
     messages: [] as string[],
     dirtyCount: 0,
+    entered: [] as string[],
     log: (message: string) => result.messages.push(message),
     statsChanged: () => undefined,
     inventoryChanged: () => undefined,
     dirty: () => result.dirtyCount++,
     talk: () => undefined,
     fade: () => undefined,
-    areaEntered: () => undefined,
+    areaEntered: (area: RpgMap) => result.entered.push(area.id),
     knockedOut: () => undefined
   };
   return result;
 }
 
+// 一面が草の 12×12 のエリア
+function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
+  return {
+    id, name: id, recommendedLevel: 1, theme: 'plain', width: 12, height: 12,
+    ground: Array.from({ length: 12 }, () => 'g'.repeat(12)),
+    objects: [], npcs: [], enemies: [], portals: [], startX: 6, startY: 7, sortOrder: 1,
+    ...partial
+  };
+}
+
+const MAPS: RpgMap[] = [
+  map('plain', {
+    portals: [
+      { x: 8, y: 7, to: 'forest', toX: 2, toY: 3 },
+      { x: 6, y: 9, to: null, toX: 0, toY: 0 }
+    ]
+  }),
+  map('forest', { theme: 'forest', startX: 2, startY: 3, sortOrder: 2 })
+];
+
 function save(partial: Partial<RpgSave> = {}): RpgSave {
   return {
     level: 3, exp: 10, hp: 60, gold: 100, weapon: 'copper_sword', armor: 'cloth',
     items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
-    area: 'forest', x: 2, y: 12,
+    area: 'forest', x: 4, y: 5,
     ...partial
   };
 }
@@ -33,10 +54,22 @@ describe('RpgGame', () => {
 
   beforeEach(() => {
     ev = events();
-    game = new RpgGame(ev);
+    game = new RpgGame(ev, MAPS);
+    game.viewW = 800;
+    game.viewH = 600;
   });
 
-  afterEach(() => game.dispose());
+  afterEach(() => {
+    game.dispose();
+    vi.useRealTimers();
+  });
+
+  // 画面上のマスをクリックする
+  function clickTile(x: number, y: number): void {
+    game.update(0);
+    const [sx, sy] = game.screenPositionOf({ x, y });
+    game.click(sx, sy);
+  }
 
   describe('セーブデータ', () => {
     it('読み込んだ状態をそのまま保存用の形に戻せる', () => {
@@ -46,15 +79,15 @@ describe('RpgGame', () => {
       expect(game.toSaveInput()).toEqual({
         level: 3, exp: 10, hp: 60, gold: 100, weapon: 'copper_sword', armor: 'cloth',
         items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
-        area: 'forest', x: 2, y: 12
+        area: 'forest', x: 4, y: 5
       });
     });
 
-    it('知らないエリア・アイテムや通れない位置は使わず、始まりの草原の村から始める', () => {
-      game.loadSave(save({ area: 'moon', x: 0, y: 0, items: [{ itemId: 'unknown', count: 1 }] }));
+    it('知らないエリア・アイテムや通れない位置は使わず、始まりの草原の出発地点から始める', () => {
+      game.loadSave(save({ area: 'moon', x: 30, y: 30, items: [{ itemId: 'unknown', count: 1 }] }));
 
       expect(game.area.id).toBe('plain');
-      expect([game.player.x, game.player.y]).toEqual(AREAS.plain.start);
+      expect([game.player.x, game.player.y]).toEqual([6, 7]);
       expect(game.player.inv['unknown']).toBeUndefined();
       // 装備中のものは持ち物から消えない
       expect(game.player.inv['copper_sword']).toBe(1);
@@ -67,12 +100,7 @@ describe('RpgGame', () => {
 
     it('歩いている途中なら、向かっているマスの位置で保存する', () => {
       game.loadSave(save({ area: 'plain', x: 6, y: 7 }));
-      game.viewW = 800;
-      game.viewH = 600;
-      game.update(0);
-      // 1つ右のマス(7,7)をクリックする
-      const [sx, sy] = game.screenPositionOf({ x: 7, y: 7 });
-      game.click(sx, sy);
+      clickTile(7, 7);
       game.update(0.05);
 
       expect(game.toSaveInput()).toMatchObject({ x: 7, y: 7 });
@@ -124,17 +152,53 @@ describe('RpgGame', () => {
     });
   });
 
-  describe('マップ', () => {
-    it('どのエリアも、出発地点・ポータル・ポータルの移動先が通れるマスになっている', () => {
-      for (const area of Object.values(AREAS)) {
-        const map = buildAreaMap(area);
-        expect(map.walkable(...area.start)).toBe(true);
-        for (const p of area.portals) {
-          expect(map.walkable(p.x, p.y)).toBe(true);
-          // 移動先で立つ位置も通れる
-          expect(buildAreaMap(AREAS[p.to]).walkable(p.tx, p.ty)).toBe(true);
-        }
-      }
+  describe('エリア移動', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      game.loadSave(save({ area: 'plain', x: 6, y: 7 }));
+    });
+
+    function walk(): void {
+      for (let i = 0; i < 40; i++) game.update(0.05);
+    }
+
+    it('ポータルの上で止まると、行き先のエリアの着く位置に移る', () => {
+      clickTile(8, 7);
+      walk();
+      vi.advanceTimersByTime(500);
+
+      expect(game.area.id).toBe('forest');
+      expect([game.player.x, game.player.y]).toEqual([2, 3]);
+      expect(ev.entered).toEqual(['forest']);
+    });
+
+    it('行き先が決まっていないポータルでは移らない', () => {
+      clickTile(6, 9);
+      walk();
+      vi.advanceTimersByTime(500);
+
+      expect(game.area.id).toBe('plain');
+      expect([game.player.x, game.player.y]).toEqual([6, 9]);
+    });
+  });
+
+  describe('マップのデータから作る地形', () => {
+    it('水・なしの地面と、置物・村人のマスは通れない。火山はまわり1マスも通れない', () => {
+      const area = buildAreaMap(map('test', {
+        ground: ['wvg' + 'g'.repeat(9), ...Array.from({ length: 11 }, () => 'g'.repeat(12))],
+        objects: [{ type: 'tree', x: 3, y: 0, torch: false }, { type: 'volcano', x: 6, y: 6, torch: false }],
+        npcs: [{ name: '村人', x: 4, y: 0, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [] }]
+      }));
+
+      expect([0, 1, 2, 3, 4].map((x) => area.walkable(x, 0))).toEqual([false, false, true, false, false]);
+      expect(area.walkable(5, 5)).toBe(false);
+      expect(area.walkable(7, 7)).toBe(false);
+      expect(area.walkable(8, 8)).toBe(true);
+    });
+
+    it('知らない種類の敵は出さない', () => {
+      game.loadMap(map('test', { enemies: [{ type: 'slime', x: 2, y: 2 }, { type: 'dragon', x: 3, y: 3 }] }));
+      expect(game.enemies.map((e) => e.type)).toEqual(['slime']);
     });
   });
 });

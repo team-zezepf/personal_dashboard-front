@@ -3,12 +3,21 @@ import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
-import { RpgExchangeResult, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
 
 const SAVE_FIELDS = `
   level exp hp gold weapon armor
   items { itemId count }
   area x y updatedAt
+`;
+
+const MAP_FIELDS = `
+  id name recommendedLevel theme width height ground
+  objects { type x y roof torch }
+  npcs { name x y hair body role notice lines }
+  enemies { type x y }
+  portals { x y to toX toY }
+  startX startY sortOrder updatedAt
 `;
 
 const SAVE_MUTATION = `
@@ -25,6 +34,21 @@ export class RpgService {
   getSave(): Observable<RpgSave> {
     const query = `query GetRpgSave { rpgSave { ${SAVE_FIELDS} } }`;
     return this.graphql.query<{ rpgSave: RpgSave }>(query).pipe(map((res) => res.rpgSave));
+  }
+
+  getMaps(): Observable<RpgMap[]> {
+    const query = `query GetRpgMaps { rpgMaps { ${MAP_FIELDS} } }`;
+    return this.graphql.query<{ rpgMaps: RpgMap[] }>(query).pipe(map((res) => res.rpgMaps));
+  }
+
+  // 管理者・開発者だけが保存できる(api#82)
+  saveMap(input: RpgMapInput): Observable<RpgMap> {
+    const mutation = `
+      mutation SaveRpgMap($input: RpgMapInput!) {
+        saveRpgMap(input: $input) { ${MAP_FIELDS} }
+      }
+    `;
+    return this.graphql.mutation<{ saveRpgMap: RpgMap }>(mutation, { input }).pipe(map((res) => res.saveRpgMap));
   }
 
   getPointShop(): Observable<RpgPointShopItem[]> {

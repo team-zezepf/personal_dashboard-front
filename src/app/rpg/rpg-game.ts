@@ -1,20 +1,17 @@
-import { RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
 import {
-  AREAS,
-  AreaDef,
-  AreaId,
   AreaMap,
   ENEMIES,
   ITEMS,
-  NpcDef,
   TH,
   TW,
+  ThemeDef,
   baseAtkOf,
   baseDefOf,
   buildAreaMap,
-  isAreaId,
   maxHpOf,
-  nextExpOf
+  nextExpOf,
+  themeOf
 } from './rpg-data';
 import { cheb, findPath, octile } from './rpg-path';
 
@@ -28,7 +25,7 @@ export interface Mover {
   moving: boolean;
 }
 
-export interface Npc extends NpcDef, Mover {
+export interface Npc extends RpgMapNpc, Mover {
   kind: 'npc';
 }
 
@@ -101,7 +98,7 @@ export interface RpgGameEvents {
   talk(npc: Npc): void;
   fade(on: boolean): void;
   // 新しいエリアに入った(暗転が明けたとき)
-  areaEntered(area: AreaDef): void;
+  areaEntered(area: RpgMap): void;
   // たおれた(true)/村に戻った(false)
   knockedOut(on: boolean): void;
 }
@@ -111,7 +108,8 @@ const ATTACK_RANGE = 1.35;
 const LEASH = 8;
 const FADE_MS = 380;
 const KNOCKOUT_MS = 1500;
-const HOME: { area: AreaId; x: number; y: number } = { area: 'plain', x: 6, y: 7 };
+// たおれたときに戻るエリア(なければ並び順で最初のエリア)
+const HOME_AREA = 'plain';
 
 const randi = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) / 2, ((x + y) * TH) / 2];
@@ -121,12 +119,13 @@ export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) /
  * 1人用なので計算はすべてここで行い、APIへはセーブデータ(toSaveInput)だけを送る。
  */
 export class RpgGame {
-  area: AreaDef = AREAS.plain;
-  map: AreaMap = buildAreaMap(AREAS.plain);
+  area!: RpgMap;
+  theme!: ThemeDef;
+  map!: AreaMap;
   npcs: Npc[] = [];
   enemies: Enemy[] = [];
   readonly player: Player = {
-    kind: 'player', x: HOME.x, y: HOME.y, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
+    kind: 'player', x: 0, y: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
     level: 1, exp: 0, hp: maxHpOf(1), gold: 30, weapon: 'wood_sword', armor: 'cloth',
     inv: { potion: 3, wood_sword: 1, cloth: 1 }, lastCombat: -99, regen: 0, dead: false
   };
@@ -136,11 +135,14 @@ export class RpgGame {
   readonly particles: Particle[] = [];
   clickMarker: { x: number; y: number; t: number } | null = null;
 
-  // 画面の大きさとカメラ(プレイヤーが中央に来る位置)
+  // 画面の大きさとカメラ(プレイヤーが中央に来る位置)。zoom はマップ作成画面で拡大・縮小するときだけ変える
   viewW = 0;
   viewH = 0;
   camX = 0;
   camY = 0;
+  zoom = 1;
+  // マップ作成画面ではプレイヤーを描かない
+  hidePlayer = false;
   mouse: { x: number; y: number } | null = null;
   hover: Npc | Enemy | null = null;
 
@@ -151,8 +153,20 @@ export class RpgGame {
   private talkedTo = new Set<string>();
   private timers: ReturnType<typeof setTimeout>[] = [];
 
-  constructor(private events: RpgGameEvents) {
-    this.loadArea('plain');
+  /** maps は全エリアのマップのデータ(並び順)。1つ以上あること */
+  constructor(private events: RpgGameEvents, public maps: RpgMap[]) {
+    const home = this.homeArea();
+    this.loadMap(home);
+    this.player.x = home.startX;
+    this.player.y = home.startY;
+  }
+
+  mapById(id: string | null): RpgMap | undefined {
+    return this.maps.find((m) => m.id === id);
+  }
+
+  private homeArea(): RpgMap {
+    return this.mapById(HOME_AREA) ?? this.maps[0];
   }
 
   dispose(): void {
@@ -183,9 +197,8 @@ export class RpgGame {
     p.inv[p.armor] = Math.max(1, p.inv[p.armor] ?? 0);
     // たおれたまま保存されていたら、村で全回復した状態から始める
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
-    const areaId: AreaId = isAreaId(save.area) ? save.area : HOME.area;
-    this.loadArea(areaId);
-    const [x, y] = this.map.walkable(save.x, save.y) ? [save.x, save.y] : this.area.start;
+    this.loadMap(this.mapById(save.area) ?? this.homeArea());
+    const [x, y] = this.map.walkable(save.x, save.y) ? [save.x, save.y] : [this.area.startX, this.area.startY];
     p.x = x;
     p.y = y;
     p.path = [];
@@ -223,35 +236,42 @@ export class RpgGame {
 
   // ===== エリア =====
 
-  private loadArea(id: AreaId): void {
-    this.area = AREAS[id];
-    this.map = buildAreaMap(this.area);
-    this.npcs = this.area.npcs.map((n) => ({
-      ...n, kind: 'npc', path: [], dir: 1, moving: false, notice: !!n.notice && !this.talkedTo.has(n.name)
+  /** マップのデータからエリアを作る(マップ作成画面は、編集中のデータを渡して描き直すのにも使う) */
+  loadMap(area: RpgMap): void {
+    this.area = area;
+    this.theme = themeOf(area.theme);
+    this.map = buildAreaMap(area);
+    this.npcs = area.npcs.map((n) => ({
+      ...n, kind: 'npc', path: [], dir: 1, moving: false, notice: n.notice && !this.talkedTo.has(n.name)
     }));
-    this.enemies = this.area.spawns.map(([type, sx, sy]) => {
-      const [x, y] = this.map.nearestWalkable(sx, sy);
-      return {
-        kind: 'enemy', type, x, y, hx: x, hy: y, hp: ENEMIES[type].hp, alive: true, path: [], dir: -1, moving: false,
-        wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6
-      };
-    });
+    this.enemies = area.enemies
+      .filter((e) => ENEMIES[e.type])
+      .map((e) => {
+        const [x, y] = this.map.nearestWalkable(e.x, e.y);
+        return {
+          kind: 'enemy', type: e.type, x, y, hx: x, hy: y, hp: ENEMIES[e.type].hp, alive: true, path: [], dir: -1, moving: false,
+          wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6
+        };
+      });
     this.floats.length = 0;
     this.particles.length = 0;
     this.clickMarker = null;
     this.hover = null;
   }
 
-  goArea(id: AreaId, x: number, y: number, after?: () => void): void {
-    if (this.transitioning) return;
+  goArea(id: string, x: number, y: number, after?: () => void): void {
+    const dest = this.mapById(id);
+    if (this.transitioning || !dest) return;
     this.transitioning = true;
     this.player.path = [];
     this.player.target = null;
     this.events.fade(true);
     this.later(FADE_MS, () => {
-      this.loadArea(id);
-      this.player.x = x;
-      this.player.y = y;
+      this.loadMap(dest);
+      // 着く位置が通れなければ(マップを作り直したときなど)、出発地点に立つ
+      const [tx, ty] = this.map.walkable(x, y) ? [x, y] : [dest.startX, dest.startY];
+      this.player.x = tx;
+      this.player.y = ty;
       after?.();
       this.transitioning = false;
       this.events.fade(false);
@@ -271,7 +291,7 @@ export class RpgGame {
     // 歩いている途中なら、向かっているマスから探し直す(マスの途中で向きを変えない)
     const moving = ent.path.length > 0;
     const [sx, sy] = moving ? ent.path[0] : [Math.round(ent.x), Math.round(ent.y)];
-    const path = findPath((x, y) => this.map.walkable(x, y), sx, sy, isGoal, h);
+    const path = findPath((x, y) => this.map.walkable(x, y), sx, sy, isGoal, h, this.map.w);
     if (path === null) return false;
     ent.path = moving ? [[sx, sy], ...path] : path;
     return true;
@@ -317,15 +337,15 @@ export class RpgGame {
   // ===== 入力 =====
 
   screenToTile(mx: number, my: number): [number, number] {
-    const a = (mx - this.camX) / (TW / 2);
-    const b = (my - this.camY) / (TH / 2);
+    const a = (mx - this.camX) / this.zoom / (TW / 2);
+    const b = (my - this.camY) / this.zoom / (TH / 2);
     return [Math.round((a + b) / 2), Math.round((b - a) / 2)];
   }
 
   /** 画面上の位置にいる村人・敵(重なっていれば手前のもの) */
   pickEntity(mx: number, my: number): Npc | Enemy | null {
-    const wx = mx - this.camX;
-    const wy = my - this.camY;
+    const wx = (mx - this.camX) / this.zoom;
+    const wy = (my - this.camY) / this.zoom;
     let best: Npc | Enemy | null = null;
     let bestDepth = -Infinity;
     for (const e of [...this.npcs, ...this.enemies.filter((e) => e.alive)]) {
@@ -344,7 +364,7 @@ export class RpgGame {
   /** 村人・敵の足元の画面上の位置(E2Eテストでクリックする位置を求めるのに使う) */
   screenPositionOf(e: { x: number; y: number }): [number, number] {
     const [sx, sy] = iso(e.x, e.y);
-    return [sx + this.camX, sy + this.camY];
+    return [sx * this.zoom + this.camX, sy * this.zoom + this.camY];
   }
 
   mouseMove(mx: number, my: number): void {
@@ -503,7 +523,8 @@ export class RpgGame {
     this.events.knockedOut(true);
     this.later(KNOCKOUT_MS, () => {
       this.events.knockedOut(false);
-      this.goArea(HOME.area, HOME.x, HOME.y, () => {
+      const home = this.homeArea();
+      this.goArea(home.id, home.startX, home.startY, () => {
         p.hp = this.maxHp();
         p.dead = false;
         this.events.log('村にもどってきた。HPが全回復した');
@@ -530,8 +551,8 @@ export class RpgGame {
     if (this.clickMarker && (this.clickMarker.t += dt) > 0.6) this.clickMarker = null;
 
     const [px, py] = iso(this.player.x, this.player.y);
-    this.camX = Math.round(this.viewW / 2 - px);
-    this.camY = Math.round(this.viewH / 2 - py + 20);
+    this.camX = Math.round(this.viewW / 2 - px * this.zoom);
+    this.camY = Math.round(this.viewH / 2 - (py - 20) * this.zoom);
   }
 
   private updatePlayer(dt: number): void {
@@ -570,8 +591,9 @@ export class RpgGame {
 
     // 光る場所(ポータル)の上で止まったらエリア移動
     if (!p.path.length) {
-      const portal = this.area.portals.find((q) => Math.abs(p.x - q.x) < 0.1 && Math.abs(p.y - q.y) < 0.1);
-      if (portal) this.goArea(portal.to, portal.tx, portal.ty);
+      // 行き先がまだ決まっていない・なくなったポータルでは何も起きない
+      const portal = this.area.portals.find((q) => Math.abs(p.x - q.x) < 0.1 && Math.abs(p.y - q.y) < 0.1 && this.mapById(q.to));
+      if (portal?.to) this.goArea(portal.to, portal.toX, portal.toY);
     }
 
     // 戦っていないときは少しずつ回復する
