@@ -3,8 +3,9 @@ import { API_URL, E2E_ACCOUNT } from './support/env';
 import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence';
 
 // 前回の実行の続きにならないよう、セーブデータを最初の状態(始まりの草原の村・30G・回復薬×3)に戻す。
+// level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
-async function resetRpg(): Promise<void> {
+async function resetRpg(level = 1): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -22,9 +23,10 @@ async function resetRpg(): Promise<void> {
   };
   await graphql('mutation($input: RpgSaveInput!) { saveRpg(input: $input) { level } }', {
     input: {
-      level: 1, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
+      level, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
-      area: 'plain', x: 6, y: 7
+      area: 'plain', x: 6, y: 7,
+      stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3
     }
   });
   await graphql('mutation($amount: Int!, $reason: String) { addPoints(amount: $amount, reason: $reason) { id } }', {
@@ -40,6 +42,14 @@ async function clickNpc(page: Page, name: string): Promise<void> {
   const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
   // 足元より少し上(体のあたり)をクリックする
   await page.mouse.click(box.x + position[0], box.y + position[1] - 25);
+}
+
+// ステータスのモーダルを開き、その項目の値を読んで閉じる
+async function statValue(page: Page, label: string): Promise<string> {
+  await page.getByRole('button', { name: /ステータス/ }).click();
+  const value = (await page.getByRole('dialog', { name: 'ステータス' }).getByLabel(label, { exact: true }).innerText()).trim();
+  await page.getByRole('dialog', { name: 'ステータス' }).getByRole('button', { name: '閉じる' }).click();
+  return value;
 }
 
 async function headerPoints(page: Page): Promise<number> {
@@ -107,7 +117,8 @@ test(
     const step = startSteps(page);
     await resetRpg();
     await loginAsE2E(page, step);
-    const status = page.getByRole('region', { name: 'ステータス' });
+    // ゲーム画面の左下のパネル(レベル・お金・HP・経験値)
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
     const equipment = page.getByRole('region', { name: '装備' });
     const items = page.getByRole('region', { name: '持ち物' });
     let pointsBefore = 0;
@@ -151,11 +162,11 @@ test(
       await page.getByRole('button', { name: '閉じる' }).click();
     });
 
-    await step('持ち物の銅の剣の「装備する」を押す', '装備欄の武器が銅の剣になり、攻撃が 8 から 12 に上がる', async () => {
-      await expect(status.getByText('8', { exact: true })).toBeVisible();
+    await step('持ち物の銅の剣の「装備する」を押す', '装備欄の武器が銅の剣になり、ステータスの攻撃が 8 から 12 に上がる', async () => {
+      expect(await statValue(page, '攻撃')).toBe('8');
       await page.getByRole('button', { name: '銅の剣を装備する' }).click();
       await expect(equipment.getByText('銅の剣')).toBeVisible();
-      await expect(status.getByText('12', { exact: true })).toBeVisible();
+      expect(await statValue(page, '攻撃')).toBe('12');
     });
 
     await step('ダッシュボードへ移ってから、RPG(/rpg)を開き直す', '85G のままで、銅の剣を装備している', async () => {
@@ -165,6 +176,55 @@ test(
       await expect(status.getByText('85G')).toBeVisible();
       await expect(equipment.getByText('銅の剣')).toBeVisible();
       await expect(items.getByText('装備中').first()).toBeVisible();
+    });
+  }
+);
+
+test(
+  'E2E-10 RPGで、レベルアップでもらったポイントをステータスに振り分けると、開き直しても残っている',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを Lv2・振り分けていないポイント3 にしてある'],
+    expected: [
+      'ゲーム画面の左下のパネルに Lv 2 と出て、「ステータス」ボタンに振り分けていないポイント「+3」が出る',
+      'ステータスを開き、攻撃を2・HPを1増やすと「のこり 0 ポイント」になり、攻撃 14・HP 62 と出る',
+      '「決める」を押すと、ボタンの「+3」が消える',
+      '画面を開き直しても、攻撃 14・HP 62 のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetRpg(2);
+    await loginAsE2E(page, step);
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const modal = page.getByRole('dialog', { name: 'ステータス' });
+
+    await step('RPG(/rpg)を開く', '左下のパネルに Lv 2 と、振り分けていないポイント「+3」が出る', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByText('Lv 2')).toBeVisible();
+      await expect(status.getByLabel('振り分けていないポイント 3')).toBeVisible();
+    });
+
+    await step('「ステータス」を開き、攻撃の＋を2回・HPの＋を1回押す', '「のこり 0 ポイント」になり、攻撃 14・HP 62 と出る', async () => {
+      await status.getByRole('button', { name: /ステータス/ }).click();
+      await modal.getByRole('button', { name: '攻撃を増やす' }).click();
+      await modal.getByRole('button', { name: '攻撃を増やす' }).click();
+      await modal.getByRole('button', { name: 'HPを増やす' }).click();
+      await expect(modal.getByText('のこり 0 ポイント')).toBeVisible();
+      await expect(modal.getByLabel('攻撃', { exact: true })).toContainText('14');
+      await expect(modal.getByLabel('HP', { exact: true })).toContainText('62');
+    });
+
+    await step('「決める」を押して閉じる', 'ボタンの「+3」が消える', async () => {
+      await modal.getByRole('button', { name: '決める' }).click();
+      await modal.getByRole('button', { name: '閉じる' }).click();
+      await expect(status.getByLabel('振り分けていないポイント 3')).toHaveCount(0);
+    });
+
+    await step('画面を読み込み直す', '攻撃 14・HP 62 のまま', async () => {
+      await page.reload();
+      await expect(status.getByText('Lv 2')).toBeVisible();
+      expect(await statValue(page, '攻撃')).toBe('14');
+      expect(await statValue(page, 'HP')).toBe('62');
     });
   }
 );

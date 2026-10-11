@@ -18,7 +18,22 @@ export interface RpgSave {
   area: string;
   x: number;
   y: number;
+  // 振り分けたステータスのポイントと、まだ振り分けていないポイント(front#223)。合計は (level - 1) * 3
+  stats: RpgStats;
+  statPoints: number;
   updatedAt?: string | null;
+}
+
+export interface RpgStats {
+  hp: number;
+  atk: number;
+  def: number;
+  // 魔力
+  mag: number;
+  // 速さ
+  spd: number;
+  // 運(99まで)
+  luk: number;
 }
 
 export type RpgSaveInput = Omit<RpgSave, 'updatedAt'>;

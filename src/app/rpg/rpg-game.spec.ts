@@ -1,5 +1,5 @@
 import { RpgMap, RpgSave } from '../models/rpg.models';
-import { buildAreaMap, maxHpOf } from './rpg-data';
+import { ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 
 function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[] } {
@@ -41,9 +41,11 @@ const MAPS: RpgMap[] = [
 
 function save(partial: Partial<RpgSave> = {}): RpgSave {
   return {
-    level: 3, exp: 10, hp: 60, gold: 100, weapon: 'copper_sword', armor: 'cloth',
+    level: 3, exp: 10, hp: 45, gold: 100, weapon: 'copper_sword', armor: 'cloth',
     items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
     area: 'forest', x: 4, y: 5,
+    // Lv3 なので合計6ポイント(まだ振り分けていない)
+    stats: { ...ZERO_STATS }, statPoints: 6,
     ...partial
   };
 }
@@ -77,9 +79,10 @@ describe('RpgGame', () => {
 
       expect(game.area.id).toBe('forest');
       expect(game.toSaveInput()).toEqual({
-        level: 3, exp: 10, hp: 60, gold: 100, weapon: 'copper_sword', armor: 'cloth',
+        level: 3, exp: 10, hp: 45, gold: 100, weapon: 'copper_sword', armor: 'cloth',
         items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
-        area: 'forest', x: 4, y: 5
+        area: 'forest', x: 4, y: 5,
+        stats: { ...ZERO_STATS }, statPoints: 6
       });
     });
 
@@ -95,7 +98,7 @@ describe('RpgGame', () => {
 
     it('HPが0のまま保存されていたら、全回復した状態で始める', () => {
       game.loadSave(save({ hp: 0 }));
-      expect(game.player.hp).toBe(maxHpOf(3));
+      expect(game.player.hp).toBe(maxHpOf(ZERO_STATS));
     });
 
     it('歩いている途中なら、向かっているマスの位置で保存する', () => {
@@ -104,6 +107,46 @@ describe('RpgGame', () => {
       game.update(0.05);
 
       expect(game.toSaveInput()).toMatchObject({ x: 7, y: 7 });
+    });
+  });
+
+  describe('ステータスの振り分け', () => {
+    beforeEach(() => game.loadSave(save({ area: 'plain', x: 6, y: 7, hp: 30 })));
+
+    it('振り分けると能力が上がり、最大HPが増えた分は今のHPにも足す。振り分けた分のポイントは減る', () => {
+      expect(game.allocate({ hp: 2, atk: 1 })).toBe(true);
+
+      expect(game.player.stats).toEqual({ ...ZERO_STATS, hp: 2, atk: 1 });
+      expect(game.player.statPoints).toBe(3);
+      expect(game.maxHp()).toBe(50 + 24);
+      expect(game.player.hp).toBe(30 + 24);
+      expect(ev.dirtyCount).toBeGreaterThan(0);
+    });
+
+    it('持っているより多いポイントや、マイナスは振り分けられない', () => {
+      expect(game.allocate({ hp: 7 })).toBe(false);
+      expect(game.allocate({ hp: 2, atk: -1 })).toBe(false);
+      expect(game.allocate({})).toBe(false);
+      expect(game.player.statPoints).toBe(6);
+    });
+
+    it('運は99まで', () => {
+      // Lv50 は合計147ポイント(運に98、残り49)
+      game.loadSave(save({ level: 50, statPoints: 49, stats: { ...ZERO_STATS, luk: 98 }, hp: 50 }));
+      expect(game.allocate({ luk: 2 })).toBe(false);
+      expect(game.allocate({ luk: 1 })).toBe(true);
+    });
+
+    it('ポイントの合計がレベルと合わないセーブデータは、全部を振り分けていないポイントにする', () => {
+      game.loadSave(save({ stats: { ...ZERO_STATS, atk: 10 }, statPoints: 6 }));
+      expect(game.player.stats).toEqual(ZERO_STATS);
+      expect(game.player.statPoints).toBe(6);
+    });
+
+    it('Lv1(速さ0)の歩く速さは3.0マス/秒で、速さを上げると速くなる', () => {
+      expect(walkSpeedOf(game.player.stats)).toBe(3);
+      game.allocate({ spd: 3 });
+      expect(walkSpeedOf(game.player.stats)).toBeGreaterThan(3);
     });
   });
 

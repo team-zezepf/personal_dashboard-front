@@ -7,7 +7,27 @@ import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
 import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
-import { ITEMS, POINT_SHOP_ICONS, SHOP_ITEMS, itemStatLabel, recLabel } from '../../rpg/rpg-data';
+import {
+  ITEMS,
+  MAX_LUCK,
+  POINT_SHOP_ICONS,
+  SHOP_ITEMS,
+  STAT_DEFS,
+  StatKey,
+  Stats,
+  ZERO_STATS,
+  attackIntervalOf,
+  baseAtkOf,
+  baseDefOf,
+  critRateOf,
+  dropRateOf,
+  evadeRateOf,
+  healRateOf,
+  itemStatLabel,
+  maxHpOf,
+  recLabel,
+  walkSpeedOf
+} from '../../rpg/rpg-data';
 import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState } from '../../rpg/rpg-cursor';
@@ -103,8 +123,55 @@ export class RpgPageComponent implements OnDestroy {
       atk: game.atk(),
       def: game.def(),
       gold: p.gold,
+      statPoints: p.statPoints,
       weapon: { icon: weapon.icon, name: weapon.name, plus: `攻撃 +${weapon.atk ?? 0}` },
       armor: { icon: armor.icon, name: armor.name, plus: `防御 +${armor.def ?? 0}` }
+    };
+  });
+
+  // ===== ステータス(front#223)。左下のパネルの「ステータス」で開くモーダルで、見る・振り分ける =====
+  readonly statusOpen = signal(false);
+  // モーダルで＋を押した数(「決める」まではゲームに反映しない)
+  readonly draft = signal<Stats>({ ...ZERO_STATS });
+
+  readonly statusView = computed(() => {
+    this.version();
+    const game = this.game;
+    if (!game) return null;
+    const p = game.player;
+    const draft = this.draft();
+    const after: Stats = { ...p.stats };
+    for (const def of STAT_DEFS) after[def.key] += draft[def.key];
+    const used = STAT_DEFS.reduce((n, def) => n + draft[def.key], 0);
+    const left = p.statPoints - used;
+    const weaponAtk = ITEMS[p.weapon]?.atk ?? 0;
+    const armorDef = ITEMS[p.armor]?.def ?? 0;
+    const value = (s: Stats, key: StatKey): number =>
+      key === 'hp' ? maxHpOf(s) : key === 'atk' ? baseAtkOf(s) + weaponAtk : key === 'def' ? baseDefOf(s) + armorDef : s[key];
+    const unit = (key: StatKey) => (key === 'luk' ? `/${MAX_LUCK}` : key === 'mag' || key === 'spd' ? 'pt' : '');
+    // 歩く速さ・攻撃の間隔などは、おまけの情報として小さく出す(振り分け中は、変わる前 → 後)
+    const meta = (label: string, f: (s: Stats) => string) => ({ label, before: f(p.stats), after: f(after) });
+    return {
+      level: p.level,
+      allocating: p.statPoints > 0,
+      left,
+      used,
+      rows: STAT_DEFS.map((def) => ({
+        ...def,
+        value: value(after, def.key),
+        changed: draft[def.key] > 0,
+        unit: unit(def.key),
+        added: draft[def.key],
+        canAdd: left > 0 && (def.max === undefined || after[def.key] < def.max)
+      })),
+      meta: [
+        meta('歩く速さ', (s) => `${walkSpeedOf(s).toFixed(1)}マス/秒`),
+        meta('攻撃の間隔', (s) => `${attackIntervalOf(s).toFixed(2)}秒`),
+        meta('会心', (s) => `${Math.round(critRateOf(s) * 100)}%`),
+        meta('回避', (s) => `${Math.round(evadeRateOf(s) * 100)}%`),
+        meta('アイテム', (s) => `×${dropRateOf(s).toFixed(2)}`),
+        meta('回復量', (s) => `×${healRateOf(s).toFixed(2)}`)
+      ]
     };
   });
 
@@ -387,6 +454,7 @@ export class RpgPageComponent implements OnDestroy {
     if (event.key === 'Escape') {
       this.talking.set(null);
       this.closeShop();
+      this.closeStatus();
     }
   }
 
@@ -406,7 +474,37 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
   private syncLock(): void {
-    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode();
+    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen();
+  }
+
+  // ===== ステータス =====
+
+  openStatus(): void {
+    this.draft.set({ ...ZERO_STATS });
+    this.statusOpen.set(true);
+    this.syncLock();
+  }
+
+  closeStatus(): void {
+    this.statusOpen.set(false);
+    this.syncLock();
+  }
+
+  addStat(key: StatKey): void {
+    if (this.statusView()?.rows.find((r) => r.key === key)?.canAdd) this.draft.update((d) => ({ ...d, [key]: d[key] + 1 }));
+  }
+
+  subStat(key: StatKey): void {
+    this.draft.update((d) => ({ ...d, [key]: Math.max(0, d[key] - 1) }));
+  }
+
+  resetDraft(): void {
+    this.draft.set({ ...ZERO_STATS });
+  }
+
+  // 振り直しはできないので、決めたら振り分けた分はもう戻せない
+  confirmAllocate(): void {
+    if (this.game?.allocate(this.draft())) this.draft.set({ ...ZERO_STATS });
   }
 
   // ===== お店・ポイント交換所 =====
