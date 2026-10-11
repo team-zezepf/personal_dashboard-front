@@ -83,7 +83,7 @@ export const PALETTE: PaletteTab[] = [
 export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所' };
 export const HAIR_COLORS = ['#6b3f1f', '#8b5a2b', '#e5e7eb', '#fcd34d', '#374151', '#a7f3d0', '#f472b6'];
 export const BODY_COLORS = ['#3b82f6', '#4b9e5f', '#f08a4b', '#8b5cf6', '#10b981', '#ef4444', '#64748b'];
-export const MAP_SIZE = { min: 12, max: 40 };
+export const MAP_SIZE = { min: 12, max: 50 };
 
 export type Selection =
   | { kind: 'npc'; ref: RpgMapNpc }

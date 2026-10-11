@@ -101,6 +101,16 @@ export class RpgRenderer {
     }
   }
 
+  // マップ上の位置(cx, cy)が画面に映るか。margin はその位置から絵がはみ出す大きさ。
+  // 50×50 マスのマップでも、画面の外のマスを描かないことで重くならないようにする
+  private onScreen(cx: number, cy: number, margin: number): boolean {
+    const g = this.game;
+    const x = cx * g.zoom + g.camX;
+    const y = cy * g.zoom + g.camY;
+    const m = margin * g.zoom;
+    return x > -m && x < g.viewW + m && y > -m && y < g.viewH + m;
+  }
+
   // ===== 地面 =====
 
   private diamond(cx: number, cy: number, s = 1): void {
@@ -133,6 +143,7 @@ export class RpgRenderer {
         const g = map.ground[y][x];
         if (g === G.VOID) continue;
         const [cx, cy] = iso(x, y);
+        if (!this.onScreen(cx, cy, TW)) continue;
         // 島のふち(手前の側面)
         if (map.isVoid(x, y + 1)) this.poly([[cx - TW / 2, cy], [cx, cy + TH / 2], [cx, cy + TH / 2 + 22], [cx - TW / 2, cy + 22]], pal.edge[0]);
         if (map.isVoid(x + 1, y)) this.poly([[cx, cy + TH / 2], [cx + TW / 2, cy], [cx + TW / 2, cy + 22], [cx, cy + TH / 2 + 22]], pal.edge[1]);
@@ -296,6 +307,8 @@ export class RpgRenderer {
     list.sort((a, b) => a.x + a.y - (b.x + b.y) || (a.kind === 'static' ? -1 : 1));
     for (const o of list) {
       const [sx, sy] = iso(o.x, o.y);
+      // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
+      if (!this.onScreen(sx, sy, 160)) continue;
       if (o.kind === 'static') this.drawStatic(o, sx, sy);
       else if (o.kind === 'npc') {
         this.drawChibi(sx, sy, { body: o.body, hair: o.hair, dir: o.dir, phase: o.x });

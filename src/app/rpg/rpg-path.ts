@@ -32,7 +32,7 @@ export function findPath(
   const open: { x: number; y: number; f: number }[] = [{ x: sx, y: sy, f: h(sx, sy) }];
 
   while (open.length) {
-    // マップは最大40×40と小さいので、優先度付きキューを使わず線形に最小を探す
+    // マップは最大50×50と小さいので、優先度付きキューを使わず線形に最小を探す
     let best = 0;
     for (let i = 1; i < open.length; i++) if (open[i].f < open[best].f) best = i;
     const cur = open.splice(best, 1)[0];
