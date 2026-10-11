@@ -1,10 +1,10 @@
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { concat, toArray } from 'rxjs';
+import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
-import { RpgService } from '../../services/rpg.service';
+import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgMap, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgMap, RpgNpcRole } from '../../models/rpg.models';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import { ENEMIES, G, GROUND_CHARS, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
@@ -112,6 +112,29 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   newArea = { name: '新しいエリア', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
 
+  // ===== BGM(front#218) =====
+  readonly page = signal<'map' | 'bgm'>('map');
+  readonly bgms = signal<RpgBgm[]>([]);
+  readonly bgmAccept = RPG_BGM_ACCEPT;
+  readonly uploading = signal(false);
+  readonly bgmError = signal('');
+  readonly previewId = signal<string | null>(null);
+  readonly renamingId = signal<string | null>(null);
+  renameText = '';
+  uploadName = '';
+  readonly dragOver = signal(false);
+  private previewAudio: HTMLAudioElement | null = null;
+
+  // 曲ごとの、使っているエリアの名前
+  readonly bgmUsage = computed(() => {
+    this.version();
+    const usage = new Map<string, string[]>();
+    for (const m of this.maps()) {
+      if (m.bgmId) usage.set(m.bgmId, [...(usage.get(m.bgmId) ?? []), m.name]);
+    }
+    return usage;
+  });
+
   private editor: RpgMapEditor | null = null;
   private game: RpgGame | null = null;
   private renderer: RpgRenderer | null = null;
@@ -132,9 +155,10 @@ export class RpgAdminPageComponent implements OnDestroy {
   constructor() {
     afterNextRender(() => {
       if (!this.allowed) return;
-      this.rpgService.getMaps().subscribe({
-        next: (maps) => {
+      forkJoin({ maps: this.rpgService.getMaps(), bgms: this.rpgService.getBgms() }).subscribe({
+        next: ({ maps, bgms }) => {
           this.maps.set(maps.map(cloneMap));
+          this.bgms.set(bgms);
           this.isLoading.set(false);
           // 画面(キャンバス)が出てから描き始める
           setTimeout(() => this.start());
@@ -154,6 +178,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     window.removeEventListener('beforeunload', this.onBeforeUnload);
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.game?.dispose();
+    this.stopPreview();
   }
 
   /** 保存していない変更があるとき、ほかの画面へ移る前に確かめる(ルートの canDeactivate から呼ぶ) */
@@ -193,11 +218,14 @@ export class RpgAdminPageComponent implements OnDestroy {
     const stage = this.stage()?.nativeElement;
     const canvas = this.canvas()?.nativeElement;
     if (!stage || !canvas || !this.game) return;
+    // BGMタブから戻ったとき(隠れていて大きさが0だったとき)は、全体が見えるように合わせ直す
+    const wasHidden = this.game.viewW === 0;
     this.dpr = window.devicePixelRatio || 1;
     this.game.viewW = stage.clientWidth;
     this.game.viewH = stage.clientHeight;
     canvas.width = Math.round(stage.clientWidth * this.dpr);
     canvas.height = Math.round(stage.clientHeight * this.dpr);
+    if (wasHidden && stage.clientWidth > 0) this.fitView();
   }
 
   // ===== エリア =====
@@ -448,6 +476,113 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.editor.removeAt(sel.ref.x, sel.ref.y);
     this.selection.set(null);
     this.markDirty();
+  }
+
+  // ===== BGM =====
+
+  // エリアで流す曲を選ぶ(マップ作成の「エリアの設定」と、BGMタブの「エリアごとの曲」の両方から)
+  setAreaBgm(map: RpgMap, bgmId: string): void {
+    if (map === this.editor?.map) this.editor.checkpoint();
+    map.bgmId = bgmId || null;
+    if (!this.dirtyIds().has(map.id)) this.dirtyIds.set(new Set([...this.dirtyIds(), map.id]));
+    this.refresh();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) this.uploadBgm(file);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.uploadBgm(file);
+  }
+
+  private uploadBgm(file: File): void {
+    this.bgmError.set('');
+    if (file.size > RPG_BGM_MAX_BYTES) {
+      this.bgmError.set('1曲 10MB までのファイルにしてください');
+      return;
+    }
+    this.uploading.set(true);
+    this.rpgService.uploadBgm(file, this.uploadName).subscribe({
+      next: (bgm) => {
+        this.uploading.set(false);
+        this.uploadName = '';
+        this.bgms.set([...this.bgms(), bgm]);
+        this.toast(`「${bgm.name}」を登録しました`);
+      },
+      error: (err: Error) => {
+        this.uploading.set(false);
+        this.bgmError.set(err.message);
+      }
+    });
+  }
+
+  // 試聴。もう一度押すか、ほかの曲を試聴すると止める
+  togglePreview(bgm: RpgBgm): void {
+    const playing = this.previewId() === bgm.id;
+    this.stopPreview();
+    if (playing) return;
+    const audio = new Audio(this.rpgService.bgmUrl(bgm));
+    audio.volume = 0.6;
+    audio.onended = () => this.stopPreview();
+    void audio.play().catch(() => this.bgmError.set('この曲を再生できませんでした'));
+    this.previewAudio = audio;
+    this.previewId.set(bgm.id);
+  }
+
+  private stopPreview(): void {
+    this.previewAudio?.pause();
+    this.previewAudio = null;
+    this.previewId.set(null);
+  }
+
+  startRename(bgm: RpgBgm): void {
+    this.renameText = bgm.name;
+    this.renamingId.set(bgm.id);
+  }
+
+  rename(bgm: RpgBgm): void {
+    const name = this.renameText.trim();
+    if (!name || name === bgm.name) {
+      this.renamingId.set(null);
+      return;
+    }
+    this.rpgService.renameBgm(bgm.id, name).subscribe({
+      next: (renamed) => {
+        this.bgms.set(this.bgms().map((b) => (b.id === renamed.id ? renamed : b)));
+        this.renamingId.set(null);
+      },
+      error: (err: Error) => this.bgmError.set(err.message)
+    });
+  }
+
+  deleteBgm(bgm: RpgBgm): void {
+    const used = this.bgmUsage().get(bgm.id) ?? [];
+    const message = used.length
+      ? `「${bgm.name}」は ${used.join('・')} で使っています。消すと、そのエリアは曲なしになります。消しますか？`
+      : `「${bgm.name}」を消しますか？`;
+    if (!confirm(message)) return;
+    if (this.previewId() === bgm.id) this.stopPreview();
+    this.rpgService.deleteBgm(bgm.id).subscribe({
+      next: () => {
+        this.bgms.set(this.bgms().filter((b) => b.id !== bgm.id));
+        // API側で、保存済みのエリアは曲なしになっている。画面の中のエリアも合わせる
+        for (const m of this.maps()) if (m.bgmId === bgm.id) m.bgmId = null;
+        this.refresh();
+        this.toast(`「${bgm.name}」を消しました`);
+      },
+      error: (err: Error) => this.bgmError.set(err.message)
+    });
+  }
+
+  formatSize(bytes: number): string {
+    return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
   }
 
   // ===== 新しいエリア・保存・テストプレイ =====

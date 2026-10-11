@@ -6,6 +6,7 @@
     class="game"
     (mousemove)="onAreaMouseMove($event)"
     (mouseleave)="onAreaMouseLeave()"
+    (pointerdown)="onAreaPointerDown()"
   >
     <canvas
       #canvas
@@ -26,6 +27,42 @@
       }
       <div class="chip">クリック：移動 ／ 敵：攻撃 ／ 人：話す ／ 光る場所：エリア移動 ／ [1]キー：回復薬</div>
     </div>
+
+    <div class="settings">
+      <button
+        type="button"
+        class="gear"
+        [class.open]="settingsOpen()"
+        aria-label="設定"
+        [attr.aria-expanded]="settingsOpen()"
+        (click)="toggleSettings()"
+      >
+        ⚙
+      </button>
+      @if (settingsOpen()) {
+        <div class="settings-panel" role="dialog" aria-label="設定">
+          <h2>BGM</h2>
+          <div class="volume-row">
+            <button type="button" class="mute" [attr.aria-label]="bgmMuted() ? '音を出す' : '音を消す'" (click)="toggleMute()">
+              {{ bgmMuted() ? '🔇' : '🔊' }}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              aria-label="音量"
+              [value]="bgmVolume()"
+              (input)="changeVolume(+$any($event.target).value)"
+            />
+          </div>
+          <div class="now-playing">♪ {{ areaBgm()?.name ?? '（曲なし）' }}</div>
+        </div>
+      }
+    </div>
+
+    @if (!bgmUnlocked() && areaBgm()) {
+      <div class="bgm-hint">🎵 画面をクリックすると BGM が流れます</div>
+    }
 
     @if (areaTitle(); as title) {
       <div class="area-title">

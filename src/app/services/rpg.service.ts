@@ -1,9 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
-import { RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgBgm, RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
+
+// BGMの音楽ファイルの大きさの上限(APIと合わせる)
+export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
+export const RPG_BGM_ACCEPT = '.mp3,.ogg,.m4a,.wav';
 
 const SAVE_FIELDS = `
   level exp hp gold weapon armor
@@ -17,8 +22,10 @@ const MAP_FIELDS = `
   npcs { name x y hair body role notice lines }
   enemies { type x y }
   portals { x y to toX toY }
-  startX startY sortOrder updatedAt
+  startX startY sortOrder bgmId updatedAt
 `;
+
+const BGM_FIELDS = `id name filename size createdAt`;
 
 const SAVE_MUTATION = `
   mutation SaveRpg($input: RpgSaveInput!) {
@@ -30,6 +37,41 @@ const SAVE_MUTATION = `
 export class RpgService {
   private graphql = inject(GraphQLService);
   private authService = inject(AuthService);
+  private http = inject(HttpClient);
+
+  // ===== BGM(front#218) =====
+
+  getBgms(): Observable<RpgBgm[]> {
+    const query = `query GetRpgBgms { rpgBgms { ${BGM_FIELDS} } }`;
+    return this.graphql.query<{ rpgBgms: RpgBgm[] }>(query).pipe(map((res) => res.rpgBgms));
+  }
+
+  // 音楽ファイルは <audio> でプレーンに読むため、カードのイラストと同じくREST(multipart)でアップロードする
+  uploadBgm(file: File, name: string): Observable<RpgBgm> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    if (name.trim()) formData.append('name', name.trim());
+    return this.http.post<RpgBgm>(`${environment.apiBaseUrl}/api/rpg-bgm`, formData).pipe(
+      map((bgm) => ({ ...bgm, id: String(bgm.id) })),
+      catchError((err: HttpErrorResponse) =>
+        throwError(() => new Error(err.error?.message ?? (err.status === 413 ? '1曲 10MB までのファイルにしてください' : 'BGMの登録に失敗しました')))
+      )
+    );
+  }
+
+  renameBgm(id: string, name: string): Observable<RpgBgm> {
+    const mutation = `mutation RenameRpgBgm($id: ID!, $name: String!) { renameRpgBgm(id: $id, name: $name) { ${BGM_FIELDS} } }`;
+    return this.graphql.mutation<{ renameRpgBgm: RpgBgm }>(mutation, { id, name }).pipe(map((res) => res.renameRpgBgm));
+  }
+
+  deleteBgm(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgBgm($id: ID!) { deleteRpgBgm(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgBgm: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgBgm));
+  }
+
+  bgmUrl(bgm: RpgBgm): string {
+    return `${environment.apiBaseUrl}/rpg-bgm/${encodeURIComponent(bgm.filename)}`;
+  }
 
   getSave(): Observable<RpgSave> {
     const query = `query GetRpgSave { rpgSave { ${SAVE_FIELDS} } }`;

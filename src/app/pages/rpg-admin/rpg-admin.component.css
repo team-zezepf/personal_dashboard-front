@@ -139,6 +139,177 @@ textarea {
   display: flex;
 }
 
+/* BGMタブのあいだもマップの描画は残しておく(切り替えたときに描き直さなくてよいように) */
+.workspace.hidden {
+  display: none;
+}
+
+.page-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.page-tab {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.page-tab.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ===== BGM ===== */
+.bgm-page {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  align-items: start;
+  gap: 16px;
+  padding: 20px;
+}
+
+.bgm-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.bgm-card h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.drop {
+  border: 2px dashed var(--indigo-soft);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.drop.over {
+  border-color: var(--indigo);
+}
+
+.drop-icon {
+  font-size: 28px;
+}
+
+.drop small {
+  color: var(--muted);
+}
+
+.field.inline {
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+}
+
+.file-button {
+  display: inline-block;
+}
+
+.file-button input {
+  display: none;
+}
+
+.bgm-error {
+  font-size: 12.5px;
+  color: var(--red-text);
+  background: var(--red-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.song {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.play {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--indigo);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.play.on {
+  background: var(--orange);
+}
+
+.song-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.used {
+  font-size: 11px;
+  background: var(--indigo-soft);
+  color: var(--indigo-text);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.btn.danger {
+  color: var(--red-text);
+}
+
+.area-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.area-table th {
+  text-align: left;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.area-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.area-table select {
+  width: 100%;
+}
+
 /* パレット */
 .palette {
   width: 232px;
