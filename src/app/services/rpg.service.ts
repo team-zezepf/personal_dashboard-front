@@ -13,7 +13,9 @@ export const RPG_BGM_ACCEPT = '.mp3,.ogg,.m4a,.wav';
 const SAVE_FIELDS = `
   level exp hp gold weapon armor
   items { itemId count }
-  area x y updatedAt
+  area x y
+  stats { hp atk def mag spd luk }
+  statPoints updatedAt
 `;
 
 const MAP_FIELDS = `

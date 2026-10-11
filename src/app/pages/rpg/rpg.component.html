@@ -120,6 +120,83 @@
       </div>
     }
 
+    <!-- 左下: レベル・お金・ステータスのボタンと、HP・経験値のバー(front#223) -->
+    @if (stats(); as s) {
+      <section class="vitals" aria-label="プレイヤーの状態">
+        <div class="vitals-top">
+          <span class="vitals-lv">Lv {{ s.level }}</span>
+          <span class="vitals-name">あなた</span>
+          <span class="vitals-gold" aria-label="ゴールド">💰 {{ s.gold }}G</span>
+          <button type="button" class="status-button" (click)="openStatus()">
+            📊 ステータス
+            @if (s.statPoints > 0) {
+              <span class="points-badge" [attr.aria-label]="'振り分けていないポイント ' + s.statPoints">+{{ s.statPoints }}</span>
+            }
+          </button>
+        </div>
+        <div class="vitals-row">
+          <span>HP</span>
+          <div class="vitals-bar"><div class="hp" [class.low]="s.hpRate <= 30" [style.width.%]="s.hpRate"></div></div>
+          <span class="vitals-num">{{ s.hp }} / {{ s.maxHp }}</span>
+        </div>
+        <div class="vitals-row">
+          <span>EXP</span>
+          <div class="vitals-bar"><div class="exp" [style.width.%]="s.expRate"></div></div>
+          <span class="vitals-num">{{ s.exp }} / {{ s.nextExp }}</span>
+        </div>
+      </section>
+    }
+
+    @if (statusOpen() && statusView(); as v) {
+      <div class="modal" (click)="closeStatus()">
+        <div class="modal-card status-card" role="dialog" aria-label="ステータス" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <span>📊 ステータス</span>
+            <span class="status-lv">Lv {{ v.level }}</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeStatus()">×</button>
+          </div>
+          @if (v.allocating) {
+            <p class="remain">のこり <b>{{ v.left }}</b> ポイント（＋で振り分ける）</p>
+          }
+          @for (row of v.rows; track row.key) {
+            <div class="status-row" [class.viewing]="!v.allocating">
+              <div class="status-label">{{ row.label }}<small>{{ row.desc }}</small></div>
+              <div class="status-value" [attr.aria-label]="row.label">
+                {{ row.value }}<small>{{ row.unit }}</small>
+                @if (row.changed) {
+                  <span class="up">↑</span>
+                }
+              </div>
+              @if (v.allocating) {
+                <div class="stepper">
+                  <button type="button" [disabled]="row.added <= 0" [attr.aria-label]="row.label + 'を減らす'" (click)="subStat(row.key)">−</button>
+                  <span>{{ row.added ? '+' + row.added : 0 }}</span>
+                  <button type="button" class="add" [disabled]="!row.canAdd" [attr.aria-label]="row.label + 'を増やす'" (click)="addStat(row.key)">＋</button>
+                </div>
+              }
+            </div>
+          }
+          <div class="status-meta">
+            @for (m of v.meta; track m.label) {
+              <span>
+                {{ m.label }} <b>{{ m.before }}</b>
+                @if (m.after !== m.before) {
+                  → <b class="up">{{ m.after }}</b>
+                }
+              </span>
+            }
+          </div>
+          @if (v.allocating) {
+            <p class="status-warn">「決める」を押したあとは、振り直せません。</p>
+            <div class="status-actions">
+              <button type="button" class="btn ghost" [disabled]="v.used === 0" (click)="resetDraft()">戻す</button>
+              <button type="button" class="btn" [disabled]="v.used === 0" (click)="confirmAllocate()">決める</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     @if (knockedOut()) {
       <div class="banner">たおれてしまった…</div>
     }
@@ -143,22 +220,6 @@
 
   <aside class="side">
     @if (stats(); as s) {
-      <section class="card" aria-label="ステータス">
-        <div class="lv-row">
-          <span class="who">あなた</span>
-          <span class="lv">Lv {{ s.level }}</span>
-        </div>
-        <div class="bar-label"><span>HP</span><span>{{ s.hp }} / {{ s.maxHp }}</span></div>
-        <div class="bar"><div class="hp" [class.low]="s.hpRate <= 30" [style.width.%]="s.hpRate"></div></div>
-        <div class="bar-label"><span>経験値</span><span>{{ s.exp }} / {{ s.nextExp }}</span></div>
-        <div class="bar"><div class="exp" [style.width.%]="s.expRate"></div></div>
-        <div class="stats">
-          <div class="stat"><div class="k">攻撃</div><div class="v">{{ s.atk }}</div></div>
-          <div class="stat"><div class="k">防御</div><div class="v">{{ s.def }}</div></div>
-          <div class="stat"><div class="k">ゴールド</div><div class="v">{{ s.gold }}G</div></div>
-        </div>
-      </section>
-
       <section class="card" aria-label="装備">
         <h2>装備</h2>
         <div class="slot"><span class="k">武器</span><span class="icon">{{ s.weapon.icon }}</span>{{ s.weapon.name }}<span class="plus">{{ s.weapon.plus }}</span></div>

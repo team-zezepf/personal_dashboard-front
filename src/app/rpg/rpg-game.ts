@@ -5,13 +5,25 @@ import {
   ITEMS,
   TH,
   TW,
+  MAX_LUCK,
+  STAT_POINTS_PER_LEVEL,
+  StatKey,
+  Stats,
   ThemeDef,
+  ZERO_STATS,
+  attackIntervalOf,
   baseAtkOf,
   baseDefOf,
   buildAreaMap,
+  critRateOf,
+  dropRateOf,
+  evadeRateOf,
+  healRateOf,
   maxHpOf,
   nextExpOf,
-  themeOf
+  themeOf,
+  totalStatPointsOf,
+  walkSpeedOf
 } from './rpg-data';
 import { cheb, findPath, octile } from './rpg-path';
 
@@ -61,6 +73,9 @@ export interface Player extends Mover {
   weapon: string;
   armor: string;
   inv: Record<string, number>;
+  // 振り分けたステータスのポイントと、まだ振り分けていないポイント(front#223)
+  stats: Stats;
+  statPoints: number;
   lastCombat: number;
   regen: number;
   dead: boolean;
@@ -103,7 +118,6 @@ export interface RpgGameEvents {
   knockedOut(on: boolean): void;
 }
 
-const PLAYER_SPEED = 4.2;
 const ATTACK_RANGE = 1.35;
 const LEASH = 8;
 const FADE_MS = 380;
@@ -126,8 +140,8 @@ export class RpgGame {
   enemies: Enemy[] = [];
   readonly player: Player = {
     kind: 'player', x: 0, y: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
-    level: 1, exp: 0, hp: maxHpOf(1), gold: 30, weapon: 'wood_sword', armor: 'cloth',
-    inv: { potion: 3, wood_sword: 1, cloth: 1 }, lastCombat: -99, regen: 0, dead: false
+    level: 1, exp: 0, hp: maxHpOf(ZERO_STATS), gold: 30, weapon: 'wood_sword', armor: 'cloth',
+    inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, lastCombat: -99, regen: 0, dead: false
   };
 
   time = 0;
@@ -175,10 +189,10 @@ export class RpgGame {
   }
 
   // ===== 能力値 =====
-  maxHp = () => maxHpOf(this.player.level);
+  maxHp = () => maxHpOf(this.player.stats);
   nextExp = () => nextExpOf(this.player.level);
-  atk = () => baseAtkOf(this.player.level) + (ITEMS[this.player.weapon]?.atk ?? 0);
-  def = () => baseDefOf(this.player.level) + (ITEMS[this.player.armor]?.def ?? 0);
+  atk = () => baseAtkOf(this.player.stats) + (ITEMS[this.player.weapon]?.atk ?? 0);
+  def = () => baseDefOf(this.player.stats) + (ITEMS[this.player.armor]?.def ?? 0);
   owned = (id: string) => (this.player.inv[id] ?? 0) > 0;
 
   // ===== セーブデータ =====
@@ -195,6 +209,14 @@ export class RpgGame {
     p.armor = ITEMS[save.armor]?.type === 'armor' ? save.armor : 'cloth';
     p.inv[p.weapon] = Math.max(1, p.inv[p.weapon] ?? 0);
     p.inv[p.armor] = Math.max(1, p.inv[p.armor] ?? 0);
+    p.stats = { ...ZERO_STATS, ...save.stats };
+    p.statPoints = Math.max(0, save.statPoints);
+    // 合計がレベルと合わないとき(ふつうはAPIが保存しない)は、振り分けを戻して全部を振り分けていないポイントにする
+    const used = Object.values(p.stats).reduce((n, v) => n + v, 0);
+    if (used + p.statPoints !== totalStatPointsOf(p.level)) {
+      p.stats = { ...ZERO_STATS };
+      p.statPoints = totalStatPointsOf(p.level);
+    }
     // たおれたまま保存されていたら、村で全回復した状態から始める
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
     this.loadMap(this.mapById(save.area) ?? this.homeArea());
@@ -221,8 +243,33 @@ export class RpgGame {
       items: Object.entries(p.inv).filter(([, count]) => count > 0).map(([itemId, count]) => ({ itemId, count })),
       area: this.area.id,
       x,
-      y
+      y,
+      stats: { ...p.stats },
+      statPoints: p.statPoints
     };
+  }
+
+  // ===== ステータスの振り分け(front#223) =====
+
+  /**
+   * 振り分けていないポイントを、ステータスに振り分ける(add は項目ごとに足すポイント)。
+   * 振り直しはできないので、足すだけ。ポイントが足りない・運が上限を超えるときは何もしない
+   */
+  allocate(add: Partial<Stats>): boolean {
+    const p = this.player;
+    const entries = Object.entries(add) as [StatKey, number][];
+    const total = entries.reduce((n, [, v]) => n + v, 0);
+    if (total <= 0 || total > p.statPoints || entries.some(([, v]) => v < 0 || !Number.isInteger(v))) return false;
+    if (p.stats.luk + (add.luk ?? 0) > MAX_LUCK) return false;
+    const beforeMaxHp = this.maxHp();
+    for (const [key, v] of entries) p.stats[key] += v;
+    p.statPoints -= total;
+    // 最大HPが増えた分は、今のHPにも足す
+    p.hp += this.maxHp() - beforeMaxHp;
+    this.events.log(`ステータスに${total}ポイントを振り分けた`);
+    this.events.statsChanged();
+    this.events.dirty();
+    return true;
   }
 
   /** ポイント交換の結果(APIが品物を足したセーブデータ)のうち、ゴールドと持ち物を反映する */
@@ -403,7 +450,7 @@ export class RpgGame {
     }
     p.inv[id]--;
     const before = p.hp;
-    p.hp = Math.min(this.maxHp(), p.hp + (item.heal ?? 0));
+    p.hp = Math.min(this.maxHp(), p.hp + Math.round((item.heal ?? 0) * healRateOf(p.stats)));
     this.floatText(p.x, p.y, `+${p.hp - before}`, '#4ade80', 17);
     this.events.log(`${item.name}を使った。HPが${p.hp - before}回復した`);
     this.events.statsChanged();
@@ -450,11 +497,11 @@ export class RpgGame {
   private playerAttack(e: Enemy): void {
     const def = ENEMIES[e.type];
     const p = this.player;
-    p.atkCd = 0.85;
+    p.atkCd = attackIntervalOf(p.stats);
     p.lunge = 1;
     p.lastCombat = this.time;
     let dmg = Math.max(1, Math.round(this.atk() - def.def * 0.6 + randi(-2, 2)));
-    const crit = Math.random() < 0.12;
+    const crit = Math.random() < critRateOf(p.stats);
     if (crit) dmg = Math.round(dmg * 1.6);
     e.hp -= dmg;
     e.flash = 0.12;
@@ -481,17 +528,19 @@ export class RpgGame {
     p.target = null;
     this.floatText(e.x, e.y, `+${def.exp} EXP`, '#a5f3fc', 13, -18);
     this.events.log(`${def.name}をたおした！ 経験値+${def.exp}・ゴールド+${def.gold}`);
-    if (Math.random() < def.drop.rate) {
+    if (Math.random() < Math.min(1, def.drop.rate * dropRateOf(p.stats))) {
       p.inv[def.drop.id] = (p.inv[def.drop.id] ?? 0) + 1;
       this.events.log(`${ITEMS[def.drop.id].name}を手に入れた！`);
       this.events.inventoryChanged();
     }
+    // レベルが上がっても能力は自動では上がらず、ステータスのポイントをもらう(front#223)
     while (p.exp >= this.nextExp()) {
       p.exp -= this.nextExp();
       p.level++;
+      p.statPoints += STAT_POINTS_PER_LEVEL;
       p.hp = this.maxHp();
       this.floatText(p.x, p.y, 'LEVEL UP!', '#ffd54a', 22, -24);
-      this.events.log(`レベル${p.level}になった！ 最大HP・攻撃・防御が上がった`);
+      this.events.log(`レベル${p.level}になった！ ステータスのポイントを${STAT_POINTS_PER_LEVEL}もらった`);
     }
     this.events.statsChanged();
     this.events.dirty();
@@ -500,8 +549,14 @@ export class RpgGame {
   private enemyAttack(e: Enemy): void {
     const def = ENEMIES[e.type];
     const p = this.player;
-    const dmg = Math.max(1, Math.round(def.atk - this.def() * 0.6 + randi(-1, 2)));
     e.lunge = 1;
+    p.lastCombat = this.time;
+    // 運が高いほど、敵の攻撃をよけやすい
+    if (Math.random() < evadeRateOf(p.stats)) {
+      this.floatText(p.x, p.y, 'MISS', '#a5f3fc', 15);
+      return;
+    }
+    const dmg = Math.max(1, Math.round(def.atk - this.def() * 0.6 + randi(-1, 2)));
     p.hp -= dmg;
     p.hurt = 0.2;
     p.lastCombat = this.time;
@@ -586,7 +641,7 @@ export class RpgGame {
       }
     }
     const wasMoving = p.path.length > 0;
-    p.moving = this.moveAlong(p, PLAYER_SPEED, dt);
+    p.moving = this.moveAlong(p, walkSpeedOf(p.stats), dt);
     if (wasMoving && !p.path.length) this.events.dirty();
 
     // 光る場所(ポータル)の上で止まったらエリア移動

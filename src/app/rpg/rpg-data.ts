@@ -42,10 +42,42 @@ export function itemStatLabel(item: ItemDef): string {
 }
 
 // ===== 能力値 =====
-export const maxHpOf = (level: number) => 50 + (level - 1) * 12;
+// レベルが上がると STAT_POINTS_PER_LEVEL ポイントもらえ、プレイヤーが振り分ける(front#223)。
+// HP・攻撃・防御を1ずつ振ると、以前の自動の上がり方(1レベルで最大HP+12・攻撃+3・防御+2)と同じになる
+export const STAT_POINTS_PER_LEVEL = 3;
+export const MAX_LUCK = 99;
 export const nextExpOf = (level: number) => 12 * level + level * level * 3;
-export const baseAtkOf = (level: number) => 6 + (level - 1) * 3;
-export const baseDefOf = (level: number) => 2 + (level - 1) * 2;
+export const totalStatPointsOf = (level: number) => (level - 1) * STAT_POINTS_PER_LEVEL;
+
+export type StatKey = 'hp' | 'atk' | 'def' | 'mag' | 'spd' | 'luk';
+export type Stats = Record<StatKey, number>;
+export const ZERO_STATS: Stats = { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 };
+
+export const STAT_DEFS: { key: StatKey; label: string; desc: string; max?: number }[] = [
+  { key: 'hp', label: 'HP', desc: '最大HP' },
+  { key: 'atk', label: '攻撃', desc: 'あたえるダメージ' },
+  { key: 'def', label: '防御', desc: '受けるダメージを減らす' },
+  { key: 'mag', label: '魔力', desc: '回復薬の回復量（あとで魔法の威力にも）' },
+  { key: 'spd', label: '速さ', desc: '歩く速さ・攻撃の間隔' },
+  { key: 'luk', label: '運', desc: '会心・回避・アイテム', max: MAX_LUCK }
+];
+
+// 速さ・運の効果は99で最大(それ以上振っても変わらない)
+const rate99 = (n: number) => Math.min(Math.max(n, 0), 99) / 99;
+export const maxHpOf = (s: Stats) => 50 + s.hp * 12;
+export const baseAtkOf = (s: Stats) => 6 + s.atk * 3;
+export const baseDefOf = (s: Stats) => 2 + s.def * 2;
+// 回復薬の回復量の倍率
+export const healRateOf = (s: Stats) => 1 + s.mag * 0.02;
+// 歩く速さ(マス/秒): 3.0 → 6.0
+export const walkSpeedOf = (s: Stats) => 3 + 3 * rate99(s.spd);
+// 攻撃の間隔(秒): 0.85 → 0.425
+export const attackIntervalOf = (s: Stats) => 0.85 * (1 - 0.5 * rate99(s.spd));
+// 会心率 5% → 70%、回避率 0% → 60%(0〜1)
+export const critRateOf = (s: Stats) => 0.05 + 0.65 * rate99(s.luk);
+export const evadeRateOf = (s: Stats) => 0.6 * rate99(s.luk);
+// アイテムを落とす確率の倍率 ×1 → ×2
+export const dropRateOf = (s: Stats) => 1 + rate99(s.luk);
 
 // ===== 敵 =====
 export type EnemyDraw = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord';
