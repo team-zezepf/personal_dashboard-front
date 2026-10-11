@@ -48,6 +48,50 @@ async function headerPoints(page: Page): Promise<number> {
 }
 
 test(
+  'E2E-09 RPGの設定(歯車)で BGM の音を消すと、画面を開き直しても消えたまま',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'この端末のブラウザに覚えた BGM の設定を消してある'],
+    expected: [
+      '右上の歯車を押すと設定が開き、BGM の「音を消す」ボタンと音量のスライダーがある',
+      '「音を消す」を押すと「音を出す」に変わる',
+      'ゲーム画面をクリックすると設定が閉じる',
+      '画面を開き直して設定を開いても、音を消したまま(「音を出す」)になっている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    const settings = page.getByRole('dialog', { name: '設定' });
+
+    await step('RPG(/rpg)を開き、右上の歯車(設定)を押す', '設定が開き、「音を消す」ボタンと音量のスライダーがある', async () => {
+      await page.goto('/rpg');
+      await page.evaluate(() => localStorage.removeItem('rpgBgmSettings'));
+      await page.reload();
+      await page.getByRole('button', { name: '設定' }).click();
+      await expect(settings.getByRole('button', { name: '音を消す' })).toBeVisible();
+      await expect(settings.getByRole('slider', { name: '音量' })).toBeVisible();
+    });
+
+    await step('「音を消す」を押す', '「音を出す」に変わる', async () => {
+      await settings.getByRole('button', { name: '音を消す' }).click();
+      await expect(settings.getByRole('button', { name: '音を出す' })).toBeVisible();
+    });
+
+    await step('ゲーム画面をクリックする', '設定が閉じる', async () => {
+      await page.getByLabel('RPGのゲーム画面').click({ position: { x: 40, y: 200 } });
+      await expect(settings).toHaveCount(0);
+    });
+
+    await step('画面を読み込み直して、歯車(設定)を押す', '音を消したまま(「音を出す」)になっている', async () => {
+      await page.reload();
+      await page.getByRole('button', { name: '設定' }).click();
+      await expect(settings.getByRole('button', { name: '音を出す' })).toBeVisible();
+      await page.evaluate(() => localStorage.removeItem('rpgBgmSettings'));
+    });
+  }
+);
+
+test(
   'E2E-08 RPGで、ポイント交換・買い物・装備をして、画面を開き直しても残っている',
   caseOf({
     precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを最初の状態に戻し、10ptを足してある'],

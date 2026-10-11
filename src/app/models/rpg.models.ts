@@ -82,11 +82,23 @@ export interface RpgMap {
   startX: number;
   startY: number;
   sortOrder: number;
+  // エリアで流すBGM(RpgBgm の id)。なければ何も流さない(front#218)
+  bgmId?: string | null;
   updatedAt?: string | null;
 }
 
+// RPGのBGM(front#218 / api#83)。音楽ファイルは /rpg-bgm/{filename} で配られる
+export interface RpgBgm {
+  id: string;
+  name: string;
+  filename: string;
+  // ファイルの大きさ(バイト)
+  size: number;
+  createdAt: string;
+}
+
 // id が null なら新しいエリアとして追加する
-export type RpgMapInput = Omit<RpgMap, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
+export type RpgMapInput = Omit<RpgMap, 'id' | 'sortOrder' | 'updatedAt' | 'bgmId'> & { id: string | null; bgmId: string | null };
 
 // ポイント交換所の品物(値段と中身はAPIが決める)
 export interface RpgPointShopItem {

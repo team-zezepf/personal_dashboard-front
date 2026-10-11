@@ -1,10 +1,11 @@
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { RpgBgm, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
 import { ITEMS, POINT_SHOP_ICONS, SHOP_ITEMS, itemStatLabel, recLabel } from '../../rpg/rpg-data';
 import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
@@ -65,6 +66,16 @@ export class RpgPageComponent implements OnDestroy {
   readonly pointShop = signal<RpgPointShopItem[]>([]);
   readonly exchanging = signal(false);
   readonly shopError = signal('');
+
+  // ===== BGM(front#218) =====
+  private readonly bgmPlayer = new BgmPlayer();
+  private bgms: RpgBgm[] = [];
+  readonly settingsOpen = signal(false);
+  readonly bgmVolume = signal(Math.round(this.bgmPlayer.settings.volume * 100));
+  readonly bgmMuted = signal(this.bgmPlayer.settings.muted);
+  readonly bgmUnlocked = signal(false);
+  // 今のエリアの曲(なければ null)
+  readonly areaBgm = signal<RpgBgm | null>(null);
 
   readonly gemVisible = signal(false);
   readonly gemPosition = signal<[number, number]>([0, 0]);
@@ -190,8 +201,11 @@ export class RpgPageComponent implements OnDestroy {
     this.exposeForTest();
 
     // マップ(地形)とセーブデータがそろってからゲームを作る
-    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave() }).subscribe({
-      next: ({ maps, save }) => {
+    // BGMの一覧が読めなくても、曲なしで遊べるようにする
+    const bgms$ = this.rpgService.getBgms().pipe(catchError(() => of([] as RpgBgm[])));
+    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave(), bgms: bgms$ }).subscribe({
+      next: ({ maps, save, bgms }) => {
+        this.bgms = bgms;
         if (maps.length === 0) {
           this.loadError.set('エリアがまだ1つもありません');
           this.isLoading.set(false);
@@ -210,6 +224,7 @@ export class RpgPageComponent implements OnDestroy {
         // テストプレイでは保存しない
         this.loaded = !this.testArea;
         this.area.set(game.area);
+        this.playAreaBgm(game.area);
         this.isLoading.set(false);
         this.log(game.area.id === 'plain' ? `${game.area.name}にやってきた。村長に話しかけてみよう` : `${game.area.name}にやってきた`);
         this.showAreaTitle(game.area);
@@ -246,6 +261,7 @@ export class RpgPageComponent implements OnDestroy {
     // ほかの画面へ移るときは、まだ保存していない分を保存する
     this.saveIfDirty();
     this.game?.dispose();
+    this.bgmPlayer.dispose();
     if (!environment.production) delete (window as unknown as Record<string, unknown>)['rpgTest'];
   }
 
@@ -263,6 +279,7 @@ export class RpgPageComponent implements OnDestroy {
       areaEntered: (area) => {
         this.area.set(area);
         this.showAreaTitle(area);
+        this.playAreaBgm(area);
       },
       knockedOut: (on) => this.knockedOut.set(on)
     };
@@ -309,7 +326,41 @@ export class RpgPageComponent implements OnDestroy {
   }
 
   onClick(event: MouseEvent): void {
+    // ゲーム画面をクリックしたら、開いている設定は閉じる
+    if (this.settingsOpen()) {
+      this.settingsOpen.set(false);
+      return;
+    }
     this.game?.click(event.offsetX, event.offsetY);
+  }
+
+  // ===== BGM =====
+
+  private playAreaBgm(area: RpgMap): void {
+    const bgm = this.bgms.find((b) => b.id === area.bgmId) ?? null;
+    this.areaBgm.set(bgm);
+    this.bgmPlayer.play(bgm ? this.rpgService.bgmUrl(bgm) : null);
+  }
+
+  // ブラウザは、画面を一度クリックするまで音を出せない。ゲーム画面の最初のクリックで流し始める
+  onAreaPointerDown(): void {
+    if (this.bgmUnlocked()) return;
+    this.bgmPlayer.unlock();
+    this.bgmUnlocked.set(true);
+  }
+
+  toggleSettings(): void {
+    this.settingsOpen.update((open) => !open);
+  }
+
+  toggleMute(): void {
+    this.bgmMuted.update((muted) => !muted);
+    this.bgmPlayer.setMuted(this.bgmMuted());
+  }
+
+  changeVolume(value: number): void {
+    this.bgmVolume.set(value);
+    this.bgmPlayer.setVolume(value / 100);
   }
 
   // 宝石のカーソルは、ゲーム画面の中(会話・お店の上も含む)ならどこでもマウスに付いていく
@@ -437,7 +488,9 @@ export class RpgPageComponent implements OnDestroy {
         const npc = this.game?.npcs.find((n) => n.name === name);
         return npc && this.game ? this.game.screenPositionOf(npc) : null;
       },
-      isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning
+      isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
+      // 流しているBGMの音楽ファイルのURL(流していなければ null)
+      bgmUrl: (): string | null => this.bgmPlayer.playingUrl
     };
   }
 }

@@ -13,6 +13,11 @@
 } @else {
   <div class="editor">
     <div class="toolbar">
+      <div class="page-tabs" role="tablist">
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM</button>
+      </div>
+      <span class="sep"></span>
       <label class="toolbar-label">
         エリア
         <select [ngModel]="currentId()" (ngModelChange)="selectArea($event)" aria-label="エリア">
@@ -47,7 +52,100 @@
       </button>
     </div>
 
-    <div class="workspace">
+    @if (page() === 'bgm') {
+      <div class="bgm-page">
+        <section class="bgm-card" aria-label="曲の一覧">
+          <h2>曲の一覧</h2>
+          <p class="muted small">ゲームで流す曲を登録します。ほかのエリアと同じ曲を使うこともできます。</p>
+          <div
+            class="drop"
+            [class.over]="dragOver()"
+            (dragover)="$event.preventDefault(); dragOver.set(true)"
+            (dragleave)="dragOver.set(false)"
+            (drop)="onDrop($event)"
+          >
+            <div class="drop-icon">🎵</div>
+            <label class="field inline">
+              <span>曲の名前（空ならファイル名）</span>
+              <input type="text" maxlength="40" [(ngModel)]="uploadName" placeholder="例：そよ風の草原" />
+            </label>
+            <div>
+              ここに音楽ファイルをドラッグするか、
+              <label class="btn small file-button">
+                {{ uploading() ? '登録中…' : 'ファイルを選ぶ' }}
+                <input type="file" [accept]="bgmAccept" [disabled]="uploading()" (change)="onFileSelected($event)" />
+              </label>
+            </div>
+            <small>mp3・ogg・m4a・wav、1曲 10MB まで。著作権の決まりを守って使える曲（フリー素材など）にしてください。</small>
+          </div>
+          @if (bgmError()) {
+            <p class="bgm-error">{{ bgmError() }}</p>
+          }
+          @for (bgm of bgms(); track bgm.id) {
+            <div class="song">
+              <button
+                type="button"
+                class="play"
+                [class.on]="previewId() === bgm.id"
+                [attr.aria-label]="(previewId() === bgm.id ? '止める ' : '試聴 ') + bgm.name"
+                (click)="togglePreview(bgm)"
+              >
+                {{ previewId() === bgm.id ? '■' : '▶' }}
+              </button>
+              <div class="song-info">
+                @if (renamingId() === bgm.id) {
+                  <input type="text" maxlength="40" [(ngModel)]="renameText" aria-label="曲の名前" (keydown.enter)="rename(bgm)" />
+                } @else {
+                  <div class="song-name">
+                    {{ bgm.name }}
+                    @for (area of bgmUsage().get(bgm.id) ?? []; track area) {
+                      <span class="used">{{ area }}</span>
+                    }
+                  </div>
+                }
+                <div class="muted small">{{ formatSize(bgm.size) }}</div>
+              </div>
+              @if (renamingId() === bgm.id) {
+                <button type="button" class="btn small primary" (click)="rename(bgm)">決める</button>
+                <button type="button" class="btn small" (click)="renamingId.set(null)">やめる</button>
+              } @else {
+                <button type="button" class="btn small" (click)="startRename(bgm)">名前を変える</button>
+                <button type="button" class="btn small danger" (click)="deleteBgm(bgm)">消す</button>
+              }
+            </div>
+          } @empty {
+            <p class="muted small">まだ曲がありません。</p>
+          }
+        </section>
+
+        <section class="bgm-card" aria-label="エリアごとの曲">
+          <h2>エリアごとの曲</h2>
+          <p class="muted small">エリアに入ったときに流す曲です。変えたら「保存する」を押してください。マップの「エリアの設定」でも選べます。</p>
+          <table class="area-table">
+            <thead>
+              <tr><th>エリア</th><th>曲</th></tr>
+            </thead>
+            <tbody>
+              @for (m of maps(); track m.id) {
+                <tr>
+                  <td>{{ m.name }}</td>
+                  <td>
+                    <select [attr.aria-label]="m.name + 'の曲'" [ngModel]="m.bgmId ?? ''" (ngModelChange)="setAreaBgm(m, $event)">
+                      <option value="">（曲なし）</option>
+                      @for (bgm of bgms(); track bgm.id) {
+                        <option [value]="bgm.id">{{ bgm.name }}</option>
+                      }
+                    </select>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+      </div>
+    }
+
+    <div class="workspace" [class.hidden]="page() === 'bgm'">
       <aside class="palette" aria-label="パレット">
         <div class="tabs">
           @for (t of palette; track t.id) {
@@ -135,7 +233,12 @@
             </div>
             <label class="field">
               <span>BGM</span>
-              <select disabled><option>（BGMは #218 で追加します）</option></select>
+              <select [ngModel]="map.bgmId ?? ''" (ngModelChange)="setAreaBgm(map, $event)">
+                <option value="">（曲なし）</option>
+                @for (bgm of bgms(); track bgm.id) {
+                  <option [value]="bgm.id">{{ bgm.name }}</option>
+                }
+              </select>
             </label>
           </section>
 

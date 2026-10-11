@@ -115,7 +115,8 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
     enemies: map.enemies.map((e) => ({ ...e })),
     portals: map.portals.map((p) => ({ ...p })),
-    startX: map.startX, startY: map.startY
+    startX: map.startX, startY: map.startY,
+    bgmId: map.bgmId ?? null
   };
 }
 
