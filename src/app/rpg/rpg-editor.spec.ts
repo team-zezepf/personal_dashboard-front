@@ -79,9 +79,9 @@ describe('RpgMapEditor', () => {
     editor.resize(12, 12);
     expect(editor.map.width).toBe(12);
     expect(editor.map.objects).toEqual([]);
-    // 範囲の外の値は、12〜40に収める
+    // 範囲の外の値は、12〜50に収める
     editor.resize(100, 5);
-    expect([editor.map.width, editor.map.height]).toEqual([40, 12]);
+    expect([editor.map.width, editor.map.height]).toEqual([50, 12]);
   });
 
   describe('保存する前の確認', () => {
