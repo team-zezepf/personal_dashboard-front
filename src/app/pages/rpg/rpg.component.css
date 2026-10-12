@@ -65,16 +65,6 @@
   border-radius: 999px;
 }
 
-.chip.place {
-  font-weight: 700;
-  background: rgba(96, 118, 224, 0.9);
-}
-
-.chip.rec {
-  font-weight: 700;
-  background: rgba(245, 158, 11, 0.9);
-}
-
 .chip.test {
   font-weight: 700;
   background: rgba(239, 91, 91, 0.92);
@@ -142,14 +132,6 @@
 .volume-row input[type='range'] {
   flex: 1;
   accent-color: #6076e0;
-}
-
-.now-playing {
-  margin-top: 8px;
-  color: #7b8794;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .bgm-hint {
