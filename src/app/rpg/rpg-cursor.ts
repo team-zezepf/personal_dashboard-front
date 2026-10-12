@@ -82,3 +82,96 @@ export class GemCursor {
     ctx.fill();
   }
 }
+
+// ===== ゲーム用の手(front#252) =====
+// ボタン・音量バーなど押せる部品の上で、宝石の代わりに出す。白い手袋で人差し指を立てた形。
+// 宝石と同じ canvas(40×44 の座標・GEM_SCALE 倍)に描き、人差し指の先がクリック位置
+export const HAND_TIP: [number, number] = [16 * GEM_SCALE, 3 * GEM_SCALE];
+
+const OUTLINE = '#2a2342';
+
+export class HandCursor {
+  constructor(private canvas: HTMLCanvasElement) {}
+
+  draw(time: number, dpr: number): void {
+    const ctx = this.canvas.getContext('2d');
+    if (!ctx) return;
+    const k = dpr * GEM_SCALE;
+    const width = Math.round(GEM_W * k);
+    if (this.canvas.width !== width) {
+      this.canvas.width = width;
+      this.canvas.height = Math.round(GEM_H * k);
+    }
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.clearRect(0, 0, GEM_W, GEM_H);
+    // 押すように、少しだけ上下に動く
+    ctx.translate(0, (1 - Math.cos(time * 6)) * 0.7);
+
+    // 手袋の形(人差し指・にぎった手・折った指の関節・親指)
+    const shapes: ((c: CanvasRenderingContext2D) => void)[] = [
+      (c) => c.roundRect(12, 3, 8, 20, 4),
+      (c) => c.roundRect(9, 16, 22, 17, 7),
+      (c) => c.arc(22.5, 18, 3.6, 0, Math.PI * 2),
+      (c) => c.arc(27, 19.5, 3.3, 0, Math.PI * 2),
+      (c) => c.ellipse(10, 24, 3.6, 5.6, -0.5, 0, Math.PI * 2)
+    ];
+    const pathOf = (shape: (c: CanvasRenderingContext2D) => void) => {
+      ctx.beginPath();
+      shape(ctx);
+    };
+    // 太いふちを先に描き、その上を塗ると、形どうしの境目に線が出ず、外側だけがふちになる
+    ctx.lineWidth = 3.6;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = OUTLINE;
+    for (const s of shapes) {
+      pathOf(s);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.roundRect(11, 32, 18, 6, 2);
+    ctx.stroke();
+    const glove = ctx.createLinearGradient(8, 0, 32, 0);
+    glove.addColorStop(0, '#ffffff');
+    glove.addColorStop(0.55, '#f4f6fb');
+    glove.addColorStop(1, '#cfd8e8');
+    ctx.fillStyle = glove;
+    for (const s of shapes) {
+      pathOf(s);
+      ctx.fill();
+    }
+    // 折った指のすじ
+    ctx.strokeStyle = '#9aa6bd';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    for (const x of [20.2, 25]) {
+      ctx.beginPath();
+      ctx.moveTo(x, 21);
+      ctx.lineTo(x, 24.5);
+      ctx.stroke();
+    }
+    // 手首の金色の飾り
+    ctx.fillStyle = '#f5b942';
+    ctx.beginPath();
+    ctx.roundRect(11, 32, 18, 6, 2);
+    ctx.fill();
+    ctx.fillStyle = '#d9912a';
+    ctx.fillRect(11.5, 35.5, 17, 1.4);
+    // 指先のきらり
+    ctx.fillStyle = `rgba(255,255,255,${0.55 + Math.sin(time * 4) * 0.35})`;
+    ctx.beginPath();
+    ctx.ellipse(14.6, 7.5, 1.1, 2.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 右上に小さな星がまたたく
+    const a = 0.35 + Math.max(0, Math.sin(time * 3)) * 0.65;
+    ctx.fillStyle = `rgba(253, 224, 71, ${a})`;
+    ctx.beginPath();
+    const [sx, sy, r] = [31, 7, 3.2];
+    for (let i = 0; i < 8; i++) {
+      const rr = i % 2 ? r * 0.35 : r;
+      const t = (i * Math.PI) / 4;
+      ctx[i ? 'lineTo' : 'moveTo'](sx + Math.cos(t) * rr, sy + Math.sin(t) * rr);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+}
