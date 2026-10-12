@@ -42,6 +42,8 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  /* 画面が狭いときは、項目の中で折り返さずにツールバーを2段にする */
+  flex-wrap: wrap;
   gap: 8px;
   padding: 10px 16px;
   background: var(--card);
@@ -54,6 +56,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .sep {
@@ -157,6 +160,7 @@ textarea {
   padding: 5px 12px;
   font-size: 12.5px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .page-tab.active {
@@ -488,6 +492,54 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* エリアの配置(ダンジョンの中のマス目。front#234) */
+.layout-grid {
+  display: grid;
+  grid-auto-rows: 44px;
+  gap: 6px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+.cell {
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.25;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.cell.area {
+  border: 1px solid #a7d7b5;
+  background: #e6f4ea;
+  color: #1f5130;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cell.area.active {
+  border-color: #6076e0;
+  background: #6076e0;
+  color: #fff;
+}
+
+.cell.add {
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.cell.add:hover {
+  border-color: #6076e0;
+  color: #6076e0;
 }
 
 .field input,

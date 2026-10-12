@@ -175,6 +175,47 @@ export const THEMES: Record<string, ThemeDef> = {
 export const themeOf = (theme: string): ThemeDef => THEMES[theme] ?? THEMES['plain'];
 export const recLabel = (level: number) => `推奨 Lv${level}〜`;
 
+// ===== ダンジョンの中のエリアのつながり(front#234) =====
+// エリアはダンジョンの中で縦横のマス目(gridX, gridY)に並び、隣り合うエリアは向かい合う端でつながる。
+// 向きはマップの x・y の向き([1, 0] は x が大きい側の端 = 画面の右下)
+
+export type Side = readonly [number, number];
+export const SIDES: readonly Side[] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+// 画面上の向きの呼び名(マップ作成画面)
+export function sideLabel([dx, dy]: Side): string {
+  if (dx === 1) return '右下';
+  if (dx === -1) return '左上';
+  return dy === 1 ? '左下' : '右上';
+}
+
+/** 同じダンジョンの中で、area の side の向きに隣り合うエリア */
+export function neighborOf(maps: readonly RpgMap[], area: RpgMap, [dx, dy]: Side): RpgMap | undefined {
+  return maps.find((m) => m.id !== area.id && m.dungeonId === area.dungeonId && m.gridX === area.gridX + dx && m.gridY === area.gridY + dy);
+}
+
+/** 端のマス(x, y)が、隣のエリアへの出口になる向き(隣にエリアがある側の端だけ)。出口でなければ null */
+export function exitSideAt(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): Side | null {
+  for (const side of SIDES) {
+    const [dx, dy] = side;
+    const onEdge = (dx === 1 && x === area.width - 1) || (dx === -1 && x === 0) || (dy === 1 && y === area.height - 1) || (dy === -1 && y === 0);
+    if (onEdge && neighborOf(maps, area, side)) return side;
+  }
+  return null;
+}
+
+/**
+ * 出口(from の (x, y))から隣のエリア(to)へ移ったときに立つマス。
+ * 反対側の端の同じ位置の1マス内側(広さが違えば、はみ出さないところ)
+ */
+export function arrivalOf(from: Side, to: RpgMap, x: number, y: number): [number, number] {
+  const clamp = (v: number, max: number) => Math.min(max - 1, Math.max(0, v));
+  const [dx, dy] = from;
+  const ax = dx === 1 ? Math.min(1, to.width - 1) : dx === -1 ? Math.max(0, to.width - 2) : clamp(x, to.width);
+  const ay = dy === 1 ? Math.min(1, to.height - 1) : dy === -1 ? Math.max(0, to.height - 2) : clamp(y, to.height);
+  return [ax, ay];
+}
+
 /** 1エリア分の地面・地面の高さ・通れないマス・置物。マップのデータから作る */
 export class AreaMap {
   readonly ground: number[][];

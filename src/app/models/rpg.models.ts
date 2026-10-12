@@ -14,7 +14,7 @@ export interface RpgSave {
   armor: string;
   // 持ち物(装備も含む)
   items: RpgItemCount[];
-  // plain / forest / valley / tower
+  // いるエリア(RpgMap の id)
   area: string;
   x: number;
   y: number;
@@ -53,6 +53,22 @@ export interface RpgStats {
 }
 
 export type RpgSaveInput = Omit<RpgSave, 'updatedAt'>;
+
+// RPGのダンジョン(front#234 / api#96)。名前・推奨レベル・見た目・BGMを持つ、エリアのまとまり
+export interface RpgDungeon {
+  id: string;
+  name: string;
+  recommendedLevel: number;
+  // plain / forest / valley / tower
+  theme: string;
+  // ダンジョンで流すBGM(RpgBgm の id)。なければ何も流さない(front#218)
+  bgmId?: string | null;
+  sortOrder: number;
+  updatedAt?: string | null;
+}
+
+// id が null なら新しいダンジョンとして追加する
+export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'recommendedLevel' | 'theme'> & { id: string | null; bgmId: string | null };
 
 // RPGのマップ(エリア)(front#217 / api#82)。マップ作成画面で作り、ゲームはこれを読んで地形を作る
 export interface RpgMapObject {
@@ -101,9 +117,10 @@ export interface RpgMapPortal {
 export interface RpgMap {
   id: string;
   name: string;
-  recommendedLevel: number;
-  // plain / forest / valley / tower
-  theme: string;
+  // どのダンジョンのエリアか。ダンジョンの中では縦横のマス目(gridX, gridY)に並び、隣り合うエリアは向かい合う端でつながる(front#234)
+  dungeonId: string;
+  gridX: number;
+  gridY: number;
   width: number;
   height: number;
   // 1行が奥行き1マス分の文字列で、1文字が1マス(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし)
@@ -117,8 +134,6 @@ export interface RpgMap {
   startX: number;
   startY: number;
   sortOrder: number;
-  // エリアで流すBGM(RpgBgm の id)。なければ何も流さない(front#218)
-  bgmId?: string | null;
   updatedAt?: string | null;
 }
 
@@ -177,7 +192,7 @@ export interface RpgBgm {
 }
 
 // id が null なら新しいエリアとして追加する
-export type RpgMapInput = Omit<RpgMap, 'id' | 'sortOrder' | 'updatedAt' | 'bgmId'> & { id: string | null; bgmId: string | null };
+export type RpgMapInput = Omit<RpgMap, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
 
 // ポイント交換所の品物(値段と中身はAPIが決める)
 export interface RpgPointShopItem {

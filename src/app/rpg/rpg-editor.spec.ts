@@ -8,7 +8,7 @@ describe('RpgMapEditor', () => {
   let editor: RpgMapEditor;
 
   beforeEach(() => {
-    editor = new RpgMapEditor(blankMap('area5', '海辺の洞くつ', 'plain', 14, 12, 3));
+    editor = new RpgMapEditor(blankMap('area5', '海辺の洞くつ', 'sea', 0, 0, 14, 12));
   });
 
   it('新しいエリアは一面の草で、出発地点がまんなかにある', () => {
@@ -107,7 +107,7 @@ describe('RpgMapEditor', () => {
   });
 
   describe('保存する前の確認', () => {
-    const plain = (): RpgMap => ({ ...blankMap('plain', '始まりの草原', 'plain', 12, 12, 1), portals: [] });
+    const plain = (): RpgMap => ({ ...blankMap('plain', '始まりの草原', 'plain', 0, 0, 12, 12), portals: [] });
 
     it('問題がなければすべて ✔', () => {
       const maps = [plain(), editor.map];
@@ -127,8 +127,20 @@ describe('RpgMapEditor', () => {
         '行き先が決まっていないポータルが 1 個あります',
         '着く位置が通れないマスのポータルが 1 個あります',
         '名前かセリフが空の村人が 1 人います',
-        'まだどのエリアからも来られません（ほかのエリアに、このエリアへのポータルを置いてください）'
+        'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンにこのエリアへのポータルを置いてください）'
       ]);
+    });
+
+    it('同じダンジョンの隣のエリアから来られ、隣へつながる端に通れるマスがなければ知らせる(front#234)', () => {
+      const next = blankMap('area6', '奥の広場', 'sea', 1, 0, 12, 12);
+      const ok = editor.checks([editor.map, next]);
+      expect(ok.every((c) => c.ok)).toBe(true);
+      expect(ok.map((c) => c.text)).toContain('右下の「奥の広場」へ出られる');
+
+      // 右下の端(x = 13)をすべて水にする
+      editor.map.ground = editor.map.ground.map((row) => row.slice(0, 13) + 'w');
+      const failed = editor.checks([editor.map, next]).filter((c) => !c.ok).map((c) => c.text);
+      expect(failed).toEqual(['右下の端に通れるマスがなく、「奥の広場」へ出られません']);
     });
   });
 
@@ -158,6 +170,7 @@ describe('RpgMapEditor', () => {
 
     const input = toMapInput(editor.map);
     expect(input.id).toBe('area5');
+    expect([input.dungeonId, input.gridX, input.gridY]).toEqual(['sea', 0, 0]);
     expect(input.npcs[0].lines).toEqual(['こんにちは']);
     expect(toMapInput(editor.map, null).id).toBeNull();
   });

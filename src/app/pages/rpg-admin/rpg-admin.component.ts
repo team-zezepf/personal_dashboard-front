@@ -4,10 +4,10 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
-import { ENEMIES, G, GROUND_CHARS, HZ, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
+import { ENEMIES, G, GROUND_CHARS, HZ, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
@@ -34,14 +34,25 @@ const NO_EVENTS: RpgGameEvents = {
   dirty: () => undefined,
   talk: () => undefined,
   fade: () => undefined,
-  areaEntered: () => undefined,
+  dungeonEntered: () => undefined,
+  captureScreen: () => null,
   knockedOut: () => undefined
 };
 
 const ZOOM = { min: 0.3, max: 2 };
 
+// エリアの配置(ダンジョンの中のマス目)の1マス
+export interface LayoutCell {
+  x: number;
+  y: number;
+  area: RpgMap | null;
+  // 今のエリアの上下左右の空いたマス(新しいエリアを作れる)
+  addable: boolean;
+}
+
 /**
  * RPGのマップ作成画面(front#217)。管理者・開発者だけが使う。
+ * ダンジョン(front#234)を選び、その中に縦横のマス目で並ぶエリアを1つずつ編集する。
  * マップはゲームと同じ描画(RpgRenderer)で出し、その上にマス目・選んでいるもの・マウスの下のマスを重ねる。
  */
 @Component({
@@ -76,10 +87,13 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly saving = signal(false);
   readonly toastMessage = signal('');
 
-  // 編集中の全エリア(保存するまでは画面の中だけで変わる)
+  // 編集中の全エリア・全ダンジョン(保存するまでは画面の中だけで変わる)
   readonly maps = signal<RpgMap[]>([]);
+  readonly dungeons = signal<RpgDungeon[]>([]);
+  readonly currentDungeonId = signal<string | null>(null);
   readonly currentId = signal<string | null>(null);
   readonly dirtyIds = signal<ReadonlySet<string>>(new Set());
+  readonly dirtyDungeonIds = signal<ReadonlySet<string>>(new Set());
   readonly tab = signal('ground');
   readonly tool = signal<PaletteItem>(PALETTE[0].items[0]);
   readonly brush = signal(1);
@@ -90,20 +104,44 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly selection = signal<Selection | null>(null);
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
+  readonly newDungeonOpen = signal(false);
   // 編集するたびに上げて、右側の欄・確認を描き直す
   private readonly version = signal(0);
 
   readonly current = computed(() => this.maps().find((m) => m.id === this.currentId()) ?? null);
+  readonly currentDungeon = computed(() => {
+    this.version();
+    return this.dungeons().find((d) => d.id === this.currentDungeonId()) ?? null;
+  });
   readonly currentTheme = computed(() => {
     this.version();
-    return themeOf(this.current()?.theme ?? 'plain');
+    return themeOf(this.currentDungeon()?.theme ?? 'plain');
+  });
+  // エリアの配置: 今のダンジョンのエリアのまわりを1マスずつ広げたマス目
+  readonly layout = computed<{ columns: number; cells: LayoutCell[] }>(() => {
+    this.version();
+    const areas = this.maps().filter((m) => m.dungeonId === this.currentDungeonId());
+    const cur = this.current();
+    if (!areas.length) return { columns: 1, cells: [{ x: 0, y: 0, area: null, addable: true }] };
+    const xs = areas.map((a) => a.gridX);
+    const ys = areas.map((a) => a.gridY);
+    const [minX, maxX, minY, maxY] = [Math.min(...xs) - 1, Math.max(...xs) + 1, Math.min(...ys) - 1, Math.max(...ys) + 1];
+    const cells: LayoutCell[] = [];
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const area = areas.find((a) => a.gridX === x && a.gridY === y) ?? null;
+        const addable = !area && !!cur && Math.abs(cur.gridX - x) + Math.abs(cur.gridY - y) === 1;
+        cells.push({ x, y, area, addable });
+      }
+    }
+    return { columns: maxX - minX + 1, cells };
   });
   readonly tabHint = computed(() => PALETTE.find((t) => t.id === this.tab())?.hint ?? '');
   readonly tabItems = computed(() => {
     this.enemies();
     return PALETTE.find((t) => t.id === this.tab())?.items ?? [];
   });
-  readonly isDirty = computed(() => this.dirtyIds().size > 0);
+  readonly isDirty = computed(() => this.dirtyIds().size > 0 || this.dirtyDungeonIds().size > 0);
   readonly canUndo = computed(() => {
     this.version();
     return !!this.editor?.canUndo;
@@ -116,13 +154,13 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.version();
     return this.editor ? this.editor.checks(this.maps()) : [];
   });
-  readonly otherMaps = computed(() => this.maps().filter((m) => m.id !== this.currentId()));
   readonly selected = computed(() => {
     this.version();
     return this.selection();
   });
 
-  newArea = { name: '新しいエリア', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
+  newArea = { name: '新しいエリア', width: 20, height: 20, gridX: 0, gridY: 0 };
+  newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
   readonly page = signal<'map' | 'bgm' | 'enemy'>('map');
@@ -137,12 +175,12 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly dragOver = signal(false);
   private previewAudio: HTMLAudioElement | null = null;
 
-  // 曲ごとの、使っているエリアの名前
+  // 曲ごとの、使っているダンジョンの名前
   readonly bgmUsage = computed(() => {
     this.version();
     const usage = new Map<string, string[]>();
-    for (const m of this.maps()) {
-      if (m.bgmId) usage.set(m.bgmId, [...(usage.get(m.bgmId) ?? []), m.name]);
+    for (const d of this.dungeons()) {
+      if (d.bgmId) usage.set(d.bgmId, [...(usage.get(d.bgmId) ?? []), d.name]);
     }
     return usage;
   });
@@ -167,11 +205,17 @@ export class RpgAdminPageComponent implements OnDestroy {
   constructor() {
     afterNextRender(() => {
       if (!this.allowed) return;
-      forkJoin({ maps: this.rpgService.getMaps(), bgms: this.rpgService.getBgms(), enemies: this.rpgService.getEnemies() }).subscribe({
-        next: ({ maps, bgms, enemies }) => {
+      forkJoin({
+        maps: this.rpgService.getMaps(),
+        dungeons: this.rpgService.getDungeons(),
+        bgms: this.rpgService.getBgms(),
+        enemies: this.rpgService.getEnemies()
+      }).subscribe({
+        next: ({ maps, dungeons, bgms, enemies }) => {
           setEnemies(enemies);
           this.enemies.set(enemies);
           this.maps.set(maps.map(cloneMap));
+          this.dungeons.set(dungeons.map((d) => ({ ...d })));
           this.bgms.set(bgms);
           this.isLoading.set(false);
           // 画面(キャンバス)が出てから描き始める
@@ -213,7 +257,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     const first = this.maps()[0];
     if (!canvas || !stage || !ctx || !first) return;
     this.renderer = new RpgRenderer(ctx);
-    this.game = new RpgGame(NO_EVENTS, this.maps());
+    this.game = new RpgGame(NO_EVENTS, this.maps(), this.dungeons());
     this.game.hidePlayer = true;
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(stage);
@@ -248,11 +292,27 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (wasHidden && stage.clientWidth > 0) this.fitView();
   }
 
-  // ===== エリア =====
+  // ===== ダンジョン・エリア =====
+
+  // ダンジョンを選ぶと、その中の最初のエリア(並び順)を編集する
+  selectDungeon(id: string): void {
+    const first = this.maps().find((m) => m.dungeonId === id);
+    if (first) {
+      this.selectArea(first.id);
+      return;
+    }
+    // エリアがまだないダンジョン(作りかけ)は、エリアの配置から最初のエリアを作る
+    this.currentDungeonId.set(id);
+    this.currentId.set(null);
+    this.editor = null;
+    this.selection.set(null);
+    this.version.update((v) => v + 1);
+  }
 
   selectArea(id: string): void {
     const map = this.maps().find((m) => m.id === id);
     if (!map || !this.game) return;
+    this.currentDungeonId.set(map.dungeonId);
     this.currentId.set(id);
     this.editor = new RpgMapEditor(map);
     this.selection.set(null);
@@ -264,6 +324,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   private refresh(): void {
     if (this.game && this.editor) {
       this.game.maps = this.maps();
+      this.game.dungeons = this.dungeons();
       this.game.loadMap(this.editor.map);
     }
     this.version.update((v) => v + 1);
@@ -436,10 +497,23 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
-  changeTheme(theme: string): void {
-    this.editor?.checkpoint();
-    this.editor!.map.theme = theme;
-    this.markDirty();
+  // ダンジョンの設定(名前・推奨レベル・見た目・BGM)を変えた。ダンジョンの中のすべてのエリアで共通
+  editDungeon(dungeon: RpgDungeon, change: Partial<RpgDungeon>): void {
+    Object.assign(dungeon, change);
+    if (!this.dirtyDungeonIds().has(dungeon.id)) this.dirtyDungeonIds.set(new Set([...this.dirtyDungeonIds(), dungeon.id]));
+    this.refresh();
+  }
+
+  dungeonName(id: string): string {
+    return this.dungeons().find((d) => d.id === id)?.name ?? '';
+  }
+
+  // 隣のエリアへつながる向きと、隣のエリア(マップの上に名前を出す)
+  private neighbors(map: RpgMap): { side: readonly [number, number]; area: RpgMap }[] {
+    return SIDES.flatMap((side) => {
+      const area = neighborOf(this.maps(), map, side);
+      return area ? [{ side, area }] : [];
+    });
   }
 
   changeSize(width: number, height: number): void {
@@ -475,6 +549,20 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
+  // ポータルの行き先は、ダンジョン → エリアの順に選ぶ
+  portalDungeonId(sel: Selection): string {
+    return sel.kind === 'portal' ? (this.maps().find((m) => m.id === sel.ref.to)?.dungeonId ?? '') : '';
+  }
+
+  // 行き先に選べるエリア(今のエリアは選べない)
+  portalAreas(dungeonId: string): RpgMap[] {
+    return this.maps().filter((m) => m.dungeonId === dungeonId && m.id !== this.currentId());
+  }
+
+  setPortalDungeon(sel: Selection, dungeonId: string): void {
+    this.setPortalDestination(sel, this.portalAreas(dungeonId)[0]?.id ?? '');
+  }
+
   setPortalDestination(sel: Selection, to: string): void {
     if (sel.kind !== 'portal') return;
     this.editor?.checkpoint();
@@ -489,7 +577,8 @@ export class RpgAdminPageComponent implements OnDestroy {
   }
 
   mapName(id: string | null): string {
-    return this.maps().find((m) => m.id === id)?.name ?? '';
+    const map = this.maps().find((m) => m.id === id);
+    return map ? `${this.dungeonName(map.dungeonId)} ／ ${map.name}` : '';
   }
 
   mapSize(id: string | null): string {
@@ -508,12 +597,9 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   // ===== BGM =====
 
-  // エリアで流す曲を選ぶ(マップ作成の「エリアの設定」と、BGMタブの「エリアごとの曲」の両方から)
-  setAreaBgm(map: RpgMap, bgmId: string): void {
-    if (map === this.editor?.map) this.editor.checkpoint();
-    map.bgmId = bgmId || null;
-    if (!this.dirtyIds().has(map.id)) this.dirtyIds.set(new Set([...this.dirtyIds(), map.id]));
-    this.refresh();
+  // ダンジョンで流す曲を選ぶ(マップ作成の「ダンジョンの設定」と、BGMタブの「ダンジョンごとの曲」の両方から)
+  setDungeonBgm(dungeon: RpgDungeon, bgmId: string): void {
+    this.editDungeon(dungeon, { bgmId: bgmId || null });
   }
 
   onFileSelected(event: Event): void {
@@ -593,15 +679,15 @@ export class RpgAdminPageComponent implements OnDestroy {
   deleteBgm(bgm: RpgBgm): void {
     const used = this.bgmUsage().get(bgm.id) ?? [];
     const message = used.length
-      ? `「${bgm.name}」は ${used.join('・')} で使っています。消すと、そのエリアは曲なしになります。消しますか？`
+      ? `「${bgm.name}」は ${used.join('・')} で使っています。消すと、そのダンジョンは曲なしになります。消しますか？`
       : `「${bgm.name}」を消しますか？`;
     if (!confirm(message)) return;
     if (this.previewId() === bgm.id) this.stopPreview();
     this.rpgService.deleteBgm(bgm.id).subscribe({
       next: () => {
         this.bgms.set(this.bgms().filter((b) => b.id !== bgm.id));
-        // API側で、保存済みのエリアは曲なしになっている。画面の中のエリアも合わせる
-        for (const m of this.maps()) if (m.bgmId === bgm.id) m.bgmId = null;
+        // API側で、保存済みのダンジョンは曲なしになっている。画面の中のダンジョンも合わせる
+        for (const d of this.dungeons()) if (d.bgmId === bgm.id) d.bgmId = null;
         this.refresh();
         this.toast(`「${bgm.name}」を消しました`);
       },
@@ -613,18 +699,32 @@ export class RpgAdminPageComponent implements OnDestroy {
     return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
   }
 
-  // ===== 新しいエリア・保存・テストプレイ =====
+  // ===== 新しいダンジョン・エリア、保存・テストプレイ =====
 
-  openNewArea(): void {
-    this.newArea = { name: '新しいエリア', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
+  // エリアの配置で、空いたマス(x, y)に新しいエリアを作る
+  openNewArea(x: number, y: number): void {
+    this.newArea = { name: '新しいエリア', width: 20, height: 20, gridX: x, gridY: y };
     this.newAreaOpen.set(true);
   }
 
-  // 新しいエリアはすぐに保存して、IDを決めてもらう(ほかのエリアのポータルの行き先に選べるように)
+  // 新しいエリアを、今のエリアのどちら側に作るか(ダイアログの説明)
+  newAreaWhere(): string {
+    const cur = this.current();
+    if (!cur) return `「${this.currentDungeon()?.name ?? ''}」の最初のエリアを作ります。`;
+    const side = [this.newArea.gridX - cur.gridX, this.newArea.gridY - cur.gridY] as const;
+    return `「${cur.name}」の${sideLabel(side)}の端につながるエリアを作ります。`;
+  }
+
+  private clampSize(v: number): number {
+    return Math.min(MAP_SIZE.max, Math.max(MAP_SIZE.min, Math.round(Number(v) || MAP_SIZE.min)));
+  }
+
+  // 新しいエリアはすぐに保存して、IDを決めてもらう(ほかのダンジョンのポータルの行き先に選べるように)
   createArea(): void {
     const a = this.newArea;
-    const clamp = (v: number) => Math.min(MAP_SIZE.max, Math.max(MAP_SIZE.min, Math.round(Number(v) || MAP_SIZE.min)));
-    const map = blankMap('', a.name.trim() || '新しいエリア', a.theme, clamp(a.width), clamp(a.height), Math.max(1, Number(a.recommendedLevel) || 1));
+    const dungeonId = this.currentDungeonId();
+    if (!dungeonId) return;
+    const map = blankMap('', a.name.trim() || '新しいエリア', dungeonId, a.gridX, a.gridY, this.clampSize(a.width), this.clampSize(a.height));
     this.saving.set(true);
     this.rpgService.saveMap(toMapInput(map, null)).subscribe({
       next: (created) => {
@@ -632,7 +732,7 @@ export class RpgAdminPageComponent implements OnDestroy {
         this.newAreaOpen.set(false);
         this.maps.set([...this.maps(), cloneMap(created)]);
         this.selectArea(created.id);
-        this.toast(`「${created.name}」を作りました。ほかのエリアにポータルを置いて、つなげてください`);
+        this.toast(`「${created.name}」を作りました。隣のエリアとは、向かい合う端でつながります`);
       },
       error: (err: Error) => {
         this.saving.set(false);
@@ -641,18 +741,51 @@ export class RpgAdminPageComponent implements OnDestroy {
     });
   }
 
-  // 変更のあったエリアを順番に保存する
-  save(): void {
-    const ids = [...this.dirtyIds()];
-    const targets = this.maps().filter((m) => ids.includes(m.id));
-    if (!targets.length || this.saving()) return;
+  openNewDungeon(): void {
+    this.newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
+    this.newDungeonOpen.set(true);
+  }
+
+  // 新しいダンジョンと、その最初のエリア(位置 0, 0)をすぐに保存する
+  createDungeon(): void {
+    const d = this.newDungeon;
+    const input = { id: null, name: d.name.trim() || '新しいダンジョン', theme: d.theme, recommendedLevel: Math.max(1, Number(d.recommendedLevel) || 1), bgmId: null };
     this.saving.set(true);
-    concat(...targets.map((m) => this.rpgService.saveMap(toMapInput(m))))
+    this.rpgService.saveDungeon(input).subscribe({
+      next: (dungeon) => {
+        this.dungeons.set([...this.dungeons(), { ...dungeon }]);
+        this.currentDungeonId.set(dungeon.id);
+        this.newArea = { name: '入口', width: d.width, height: d.height, gridX: 0, gridY: 0 };
+        this.newDungeonOpen.set(false);
+        this.createArea();
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.toast(err.message || 'ダンジョンを作れませんでした');
+      }
+    });
+  }
+
+  // 変更のあったダンジョン・エリアを順番に保存する
+  save(): void {
+    const dungeonIds = [...this.dirtyDungeonIds()];
+    const ids = [...this.dirtyIds()];
+    const dungeons = this.dungeons().filter((d) => dungeonIds.includes(d.id));
+    const targets = this.maps().filter((m) => ids.includes(m.id));
+    if ((!targets.length && !dungeons.length) || this.saving()) return;
+    this.saving.set(true);
+    concat(
+      ...dungeons.map((d) =>
+        this.rpgService.saveDungeon({ id: d.id, name: d.name, recommendedLevel: d.recommendedLevel, theme: d.theme, bgmId: d.bgmId ?? null })
+      ),
+      ...targets.map((m) => this.rpgService.saveMap(toMapInput(m)))
+    )
       .pipe(toArray())
       .subscribe({
         next: () => {
           this.saving.set(false);
           this.dirtyIds.set(new Set());
+          this.dirtyDungeonIds.set(new Set());
           this.toast('保存しました。ゲームに反映されます');
         },
         error: (err: Error) => {
@@ -759,6 +892,15 @@ export class RpgAdminPageComponent implements OnDestroy {
     ctx.fill();
     const [fx, fy] = top(map.startX, map.startY);
     this.label(ctx, '🚩 出発地点', fx - TW * 0.3, fy + TH * 0.3, 'rgba(34,181,115,0.92)');
+
+    // 隣のエリアへつながる端に、隣のエリアの名前(端の真ん中の外側)
+    for (const { side, area: next } of this.neighbors(map)) {
+      const [dx, dy] = side;
+      const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
+      const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
+      const [lx, ly] = iso(ex, ey);
+      this.label(ctx, `▶ ${next.name}`, lx, ly, 'rgba(8,145,178,0.92)');
+    }
 
     // 行き先が決まっていないポータル
     for (const p of map.portals) {

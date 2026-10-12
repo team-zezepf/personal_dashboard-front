@@ -21,14 +21,14 @@
       @if (page() !== 'enemy') {
       <span class="sep"></span>
       <label class="toolbar-label">
-        エリア
-        <select [ngModel]="currentId()" (ngModelChange)="selectArea($event)" aria-label="エリア">
-          @for (m of maps(); track m.id) {
-            <option [value]="m.id">{{ m.name }}{{ dirtyIds().has(m.id) ? ' ●' : '' }}</option>
+        ダンジョン
+        <select [ngModel]="currentDungeonId()" (ngModelChange)="selectDungeon($event)" aria-label="ダンジョン">
+          @for (d of dungeons(); track d.id) {
+            <option [value]="d.id">{{ d.name }}{{ dirtyDungeonIds().has(d.id) ? ' ●' : '' }}</option>
           }
         </select>
       </label>
-      <button type="button" class="btn" (click)="openNewArea()">＋ 新しいエリア</button>
+      <button type="button" class="btn" (click)="openNewDungeon()">＋ 新しいダンジョン</button>
       <span class="sep"></span>
       <button type="button" class="btn" [disabled]="!canUndo()" (click)="undo()" title="Ctrl+Z">↶ 元に戻す</button>
       <button type="button" class="btn" [disabled]="!canRedo()" (click)="redo()" title="Ctrl+Y">↷ やり直す</button>
@@ -49,7 +49,7 @@
       <button
         type="button"
         class="btn"
-        [disabled]="isDirty()"
+        [disabled]="isDirty() || !current()"
         [title]="isDirty() ? '保存してからテストプレイできます' : '新しいタブで、このエリアの出発地点からゲームを開きます'"
         (click)="testPlay()"
       >
@@ -74,7 +74,7 @@
       <div class="bgm-page">
         <section class="bgm-card" aria-label="曲の一覧">
           <h2>曲の一覧</h2>
-          <p class="muted small">ゲームで流す曲を登録します。ほかのエリアと同じ曲を使うこともできます。</p>
+          <p class="muted small">ゲームで流す曲を登録します。ほかのダンジョンと同じ曲を使うこともできます。</p>
           <div
             class="drop"
             [class.over]="dragOver()"
@@ -136,19 +136,19 @@
           }
         </section>
 
-        <section class="bgm-card" aria-label="エリアごとの曲">
-          <h2>エリアごとの曲</h2>
-          <p class="muted small">エリアに入ったときに流す曲です。変えたら「保存する」を押してください。マップの「エリアの設定」でも選べます。</p>
+        <section class="bgm-card" aria-label="ダンジョンごとの曲">
+          <h2>ダンジョンごとの曲</h2>
+          <p class="muted small">ダンジョンに入ったときに流す曲です（ダンジョンの中のエリアを移っても流れ続けます）。変えたら「保存する」を押してください。マップの「ダンジョンの設定」でも選べます。</p>
           <table class="area-table">
             <thead>
-              <tr><th>エリア</th><th>曲</th></tr>
+              <tr><th>ダンジョン</th><th>曲</th></tr>
             </thead>
             <tbody>
-              @for (m of maps(); track m.id) {
+              @for (d of dungeons(); track d.id) {
                 <tr>
-                  <td>{{ m.name }}</td>
+                  <td>{{ d.name }}</td>
                   <td>
-                    <select [attr.aria-label]="m.name + 'の曲'" [ngModel]="m.bgmId ?? ''" (ngModelChange)="setAreaBgm(m, $event)">
+                    <select [attr.aria-label]="d.name + 'の曲'" [ngModel]="d.bgmId ?? ''" (ngModelChange)="setDungeonBgm(d, $event)">
                       <option value="">（曲なし）</option>
                       @for (bgm of bgms(); track bgm.id) {
                         <option [value]="bgm.id">{{ bgm.name }}</option>
@@ -218,27 +218,73 @@
       </div>
 
       <aside class="props">
-        @if (current(); as map) {
-          <section aria-label="エリアの設定">
-            <h2>エリアの設定</h2>
+        @if (currentDungeon(); as dungeon) {
+          <section aria-label="ダンジョンの設定">
+            <h2>ダンジョンの設定</h2>
             <label class="field">
               <span>名前</span>
-              <input type="text" maxlength="30" [ngModel]="map.name" (focus)="beginEdit()" (ngModelChange)="map.name = $event; edited()" />
+              <input type="text" maxlength="30" [ngModel]="dungeon.name" (ngModelChange)="editDungeon(dungeon, { name: $event })" />
             </label>
             <div class="row2">
               <label class="field">
                 <span>推奨レベル</span>
-                <input type="number" min="1" max="99" [ngModel]="map.recommendedLevel" (focus)="beginEdit()" (ngModelChange)="map.recommendedLevel = $event; edited()" />
+                <input type="number" min="1" max="99" [ngModel]="dungeon.recommendedLevel" (ngModelChange)="editDungeon(dungeon, { recommendedLevel: $event })" />
               </label>
               <label class="field">
                 <span>見た目</span>
-                <select [ngModel]="map.theme" (ngModelChange)="changeTheme($event)">
+                <select [ngModel]="dungeon.theme" (ngModelChange)="editDungeon(dungeon, { theme: $event })">
                   @for (t of themes; track t.id) {
                     <option [value]="t.id">{{ t.label }}</option>
                   }
                 </select>
               </label>
             </div>
+            <label class="field">
+              <span>BGM</span>
+              <select [ngModel]="dungeon.bgmId ?? ''" (ngModelChange)="setDungeonBgm(dungeon, $event)">
+                <option value="">（曲なし）</option>
+                @for (bgm of bgms(); track bgm.id) {
+                  <option [value]="bgm.id">{{ bgm.name }}</option>
+                }
+              </select>
+            </label>
+            <p class="muted small">ダンジョンの中のすべてのエリアで共通です。</p>
+          </section>
+
+          <section aria-label="エリアの配置">
+            <h2>エリアの配置</h2>
+            <div class="layout-grid" [style.grid-template-columns]="'repeat(' + layout().columns + ', 56px)'">
+              @for (cell of layout().cells; track cell.x + ',' + cell.y) {
+                @if (cell.area; as a) {
+                  <button
+                    type="button"
+                    class="cell area"
+                    [class.active]="a.id === currentId()"
+                    [attr.aria-pressed]="a.id === currentId()"
+                    [title]="a.name"
+                    (click)="selectArea(a.id)"
+                  >
+                    {{ a.name }}{{ dirtyIds().has(a.id) ? ' ●' : '' }}
+                  </button>
+                } @else if (cell.addable) {
+                  <button type="button" class="cell add" title="ここに新しいエリアを作る" aria-label="ここに新しいエリアを作る" (click)="openNewArea(cell.x, cell.y)">＋</button>
+                } @else {
+                  <span class="cell empty"></span>
+                }
+              }
+            </div>
+            <p class="muted small">
+              隣り合うエリアは、向かい合う端でつながります（右の列は画面の右下の端、下の行は画面の左下の端）。クリックで編集するエリアを切り替え、「＋」で隣に新しいエリアを作ります。
+            </p>
+          </section>
+        }
+        @if (current(); as map) {
+          <section aria-label="エリアの設定">
+            <h2>エリアの設定</h2>
+            <label class="field">
+              <span>エリアの名前</span>
+              <input type="text" maxlength="30" [ngModel]="map.name" (focus)="beginEdit()" (ngModelChange)="map.name = $event; edited()" />
+            </label>
             <div class="row2">
               <label class="field">
                 <span>幅（マス）</span>
@@ -249,15 +295,6 @@
                 <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
               </label>
             </div>
-            <label class="field">
-              <span>BGM</span>
-              <select [ngModel]="map.bgmId ?? ''" (ngModelChange)="setAreaBgm(map, $event)">
-                <option value="">（曲なし）</option>
-                @for (bgm of bgms(); track bgm.id) {
-                  <option [value]="bgm.id">{{ bgm.name }}</option>
-                }
-              </select>
-            </label>
           </section>
 
           <section aria-label="選んでいるもの">
@@ -296,15 +333,27 @@
                   }
                   @case ('portal') {
                     <div class="selected-title">🌀 ポータル <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <label class="field">
-                      <span>行き先のエリア</span>
-                      <select [ngModel]="sel.ref.to ?? ''" (ngModelChange)="setPortalDestination(sel, $event)">
-                        <option value="">（選んでください）</option>
-                        @for (m of otherMaps(); track m.id) {
-                          <option [value]="m.id">{{ m.name }}</option>
-                        }
-                      </select>
-                    </label>
+                    <div class="row2">
+                      <label class="field">
+                        <span>行き先のダンジョン</span>
+                        <select [ngModel]="portalDungeonId(sel)" (ngModelChange)="setPortalDungeon(sel, $event)">
+                          <option value="">（選んでください）</option>
+                          @for (d of dungeons(); track d.id) {
+                            <option [value]="d.id">{{ d.name }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label class="field">
+                        <span>行き先のエリア</span>
+                        <select [ngModel]="sel.ref.to ?? ''" (ngModelChange)="setPortalDestination(sel, $event)">
+                          <option value="">（選んでください）</option>
+                          @for (m of portalAreas(portalDungeonId(sel)); track m.id) {
+                            <option [value]="m.id">{{ m.name }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                    <p class="muted small">光る場所は、ほかのダンジョンへ行くときに使います。同じダンジョンの中は端でつながるので、置かなくても行き来できます。</p>
                     <div class="row2">
                       <label class="field">
                         <span>着く位置 x</span>
@@ -364,26 +413,45 @@
     <div class="modal">
       <div class="modal-card" role="dialog" aria-label="新しいエリア">
         <h2>新しいエリア</h2>
-        <label class="field"><span>名前</span><input type="text" maxlength="30" [(ngModel)]="newArea.name" /></label>
+        <p class="muted small">{{ newAreaWhere() }}</p>
+        <label class="field"><span>エリアの名前</span><input type="text" maxlength="30" [(ngModel)]="newArea.name" /></label>
+        <div class="row2">
+          <label class="field"><span>幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.width" /></label>
+          <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.height" /></label>
+        </div>
+        <p class="muted small">一面の地面だけのエリアができ、隣のエリアと端でつながります。</p>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="newAreaOpen.set(false)">やめる</button>
+          <button type="button" class="btn primary" [disabled]="saving()" (click)="createArea()">作る</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (newDungeonOpen()) {
+    <div class="modal">
+      <div class="modal-card" role="dialog" aria-label="新しいダンジョン">
+        <h2>新しいダンジョン</h2>
+        <label class="field"><span>名前</span><input type="text" maxlength="30" [(ngModel)]="newDungeon.name" /></label>
         <div class="row2">
           <label class="field">
             <span>見た目</span>
-            <select [(ngModel)]="newArea.theme">
+            <select [(ngModel)]="newDungeon.theme">
               @for (t of themes; track t.id) {
                 <option [value]="t.id">{{ t.label }}</option>
               }
             </select>
           </label>
-          <label class="field"><span>推奨レベル</span><input type="number" min="1" max="99" [(ngModel)]="newArea.recommendedLevel" /></label>
+          <label class="field"><span>推奨レベル</span><input type="number" min="1" max="99" [(ngModel)]="newDungeon.recommendedLevel" /></label>
         </div>
         <div class="row2">
-          <label class="field"><span>幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.width" /></label>
-          <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newArea.height" /></label>
+          <label class="field"><span>最初のエリアの幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.width" /></label>
+          <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.height" /></label>
         </div>
-        <p class="muted small">一面の地面だけのエリアができます。ほかのエリアからポータルでつなぐと、ゲームから行けるようになります。</p>
+        <p class="muted small">一面の地面だけのエリア（入口）が1つあるダンジョンができます。ほかのダンジョンからポータルでつなぐと、ゲームから行けるようになります。</p>
         <div class="modal-actions">
-          <button type="button" class="btn" (click)="newAreaOpen.set(false)">やめる</button>
-          <button type="button" class="btn primary" [disabled]="saving()" (click)="createArea()">作る</button>
+          <button type="button" class="btn" (click)="newDungeonOpen.set(false)">やめる</button>
+          <button type="button" class="btn primary" [disabled]="saving()" (click)="createDungeon()">作る</button>
         </div>
       </div>
     </div>

@@ -4,7 +4,19 @@ import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
-import { RpgBgm, RpgEnemy, RpgEnemyInput, RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import {
+  RpgBgm,
+  RpgDungeon,
+  RpgDungeonInput,
+  RpgEnemy,
+  RpgEnemyInput,
+  RpgExchangeResult,
+  RpgMap,
+  RpgMapInput,
+  RpgPointShopItem,
+  RpgSave,
+  RpgSaveInput
+} from '../models/rpg.models';
 
 // BGMの音楽ファイルの大きさの上限(APIと合わせる)
 export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
@@ -22,13 +34,15 @@ const SAVE_FIELDS = `
 `;
 
 const MAP_FIELDS = `
-  id name recommendedLevel theme width height ground heights
+  id name dungeonId gridX gridY width height ground heights
   objects { type x y roof torch }
   npcs { name x y hair body role notice lines look { ${LOOK_FIELDS} } }
   enemies { type x y }
   portals { x y to toX toY }
-  startX startY sortOrder bgmId updatedAt
+  startX startY sortOrder updatedAt
 `;
+
+const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt`;
 
 const BGM_FIELDS = `id name filename size createdAt`;
 
@@ -119,6 +133,19 @@ export class RpgService {
       }
     `;
     return this.graphql.mutation<{ saveRpgMap: RpgMap }>(mutation, { input }).pipe(map((res) => res.saveRpgMap));
+  }
+
+  // ===== ダンジョン(front#234 / api#96) =====
+
+  getDungeons(): Observable<RpgDungeon[]> {
+    const query = `query GetRpgDungeons { rpgDungeons { ${DUNGEON_FIELDS} } }`;
+    return this.graphql.query<{ rpgDungeons: RpgDungeon[] }>(query).pipe(map((res) => res.rpgDungeons));
+  }
+
+  // 管理者・開発者だけが保存できる
+  saveDungeon(input: RpgDungeonInput): Observable<RpgDungeon> {
+    const mutation = `mutation SaveRpgDungeon($input: RpgDungeonInput!) { saveRpgDungeon(input: $input) { ${DUNGEON_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgDungeon: RpgDungeon }>(mutation, { input }).pipe(map((res) => res.saveRpgDungeon));
   }
 
   getPointShop(): Observable<RpgPointShopItem[]> {

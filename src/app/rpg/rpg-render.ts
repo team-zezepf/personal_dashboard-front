@@ -1,5 +1,5 @@
-import { ENEMIES, G, HZ, StaticObj, TH, TW, swordColorOf } from './rpg-data';
-import { Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
+import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, swordColorOf } from './rpg-data';
+import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, chargeShake, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
@@ -13,6 +13,21 @@ export function shade(hex: string, factor: number): string {
   return `rgb(${c(n >> 16)}, ${c((n >> 8) & 255)}, ${c(n & 255)})`;
 }
 
+// スライドの始めはゆっくり、途中は速く、終わりはゆっくり(0〜1)
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+
+/**
+ * スライドで、前のエリアの画面が押し出されて動く量(画面上)。
+ * 画面の外まで出きる長さの半分にし、前の画面は薄くしながら動かす(新しいエリアが早くから見えるように)
+ */
+function slideVector(slide: AreaSlide, w: number, h: number): [number, number] {
+  const [sx, sy] = iso(slide.side[0], slide.side[1]);
+  const len = Math.hypot(sx, sy);
+  const [ux, uy] = [sx / len, sy / len];
+  const distance = (Math.abs(ux) * w + Math.abs(uy) * h) * 0.5;
+  return [ux * distance, uy * distance];
+}
+
 /**
  * RPGの画面を Canvas 2D に描く。絵は図形だけの仮の絵(あとでドット絵に差し替えられるよう、描き分けは種類ごとの関数にしておく)。
  * 地面 → 置物・人・敵(奥から手前の順) → 数字・演出の順に重ねる。
@@ -22,6 +37,8 @@ export class RpgRenderer {
   // ホタルの位置はマップの広さに対する割合(0〜1)で持つ
   private readonly fireflies = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6 }));
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
+  // 隣のエリアへスライドしている間、新しいエリアをずらして描く量(画面上の位置)
+  private shift: [number, number] = [0, 0];
 
   constructor(private ctx: CanvasRenderingContext2D) {}
 
@@ -53,8 +70,20 @@ export class RpgRenderer {
       ctx.globalAlpha = 1;
     }
 
+    // 隣のエリアへスライドしている間は、新しいエリアを進む向きから滑り込ませる(front#234)
+    const slide = game.slide;
+    const [vx, vy] = slide ? slideVector(slide, w, h) : [0, 0];
+    const eased = slide ? easeInOut(slide.t) : 1;
+    this.shift = [vx * (1 - eased), vy * (1 - eased)];
+    // 前のエリアの画面を、進む向きと反対へ押し出す。新しいエリアの下に描き、空の色の境目が目立たないよう、だんだん薄くする
+    if (slide?.image) {
+      ctx.globalAlpha = 1 - eased;
+      ctx.drawImage(slide.image, this.shift[0] - vx, this.shift[1] - vy, w, h);
+      ctx.globalAlpha = 1;
+    }
+
     ctx.save();
-    ctx.translate(game.camX, game.camY);
+    ctx.translate(game.camX + this.shift[0], game.camY + this.shift[1]);
     ctx.scale(game.zoom, game.zoom);
     this.drawGround();
     // 高いマスがあるときは、マスを描き終えてから重ねる(高いマスの下に隠れないように)
@@ -67,10 +96,13 @@ export class RpgRenderer {
       const dest = game.mapById(p.to);
       if (!dest) continue;
       const [sx, sy] = this.at(p.x, p.y);
-      this.label(`▶ ${dest.name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
+      // ほかのダンジョンへのポータルは、ダンジョンの名前を出す
+      const name = dest.dungeonId === game.area.dungeonId ? dest.name : game.dungeonOf(dest).name;
+      this.label(`▶ ${name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
     }
     this.drawEffects();
     ctx.restore();
+    this.shift = [0, 0];
 
     if (pal.vignette) {
       const v = ctx.createRadialGradient(w / 2, h / 2 + 20, 120, w / 2, h / 2 + 20, Math.max(w, h) * 0.7);
@@ -85,8 +117,8 @@ export class RpgRenderer {
   // 50×50 マスのマップでも、画面の外のマスを描かないことで重くならないようにする
   private onScreen(cx: number, cy: number, margin: number): boolean {
     const g = this.game;
-    const x = cx * g.zoom + g.camX;
-    const y = cy * g.zoom + g.camY;
+    const x = cx * g.zoom + g.camX + this.shift[0];
+    const y = cy * g.zoom + g.camY + this.shift[1];
     const m = margin * g.zoom;
     return x > -m && x < g.viewW + m && y > -m && y < g.viewH + m;
   }
@@ -129,6 +161,38 @@ export class RpgRenderer {
       }
     }
     for (const p of area.portals) if (map.heightAt(p.x, p.y) === 0) this.drawPortal(...iso(p.x, p.y));
+    this.drawExits();
+  }
+
+  // 隣のエリアへの出口(隣にエリアがある側の、端の通れるマス)に、進む向きの矢印を出す(front#234)
+  private drawExits(): void {
+    const { map, area, maps } = this.game;
+    const ctx = this.ctx;
+    const alpha = 0.6 + Math.sin(this.time * 3) * 0.2;
+    const edges: [number, number][] = [];
+    for (let x = 0; x < map.w; x++) edges.push([x, 0], [x, map.h - 1]);
+    for (let y = 1; y < map.h - 1; y++) edges.push([0, y], [map.w - 1, y]);
+    for (const [x, y] of edges) {
+      if (!map.walkable(x, y)) continue;
+      const side = exitSideAt(maps, area, x, y);
+      if (!side) continue;
+      const [cx, cy] = this.at(x, y);
+      if (!this.onScreen(cx, cy, TW)) continue;
+      this.diamond(cx, cy, 0.86);
+      ctx.fillStyle = `rgba(180,248,255,${alpha * 0.45})`;
+      ctx.fill();
+      // 矢印(画面上の進む向き)
+      const [sx, sy] = iso(side[0], side[1]);
+      const len = Math.hypot(sx, sy);
+      const [ux, uy] = [sx / len, sy / len];
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(cx + ux * 9, cy + uy * 9);
+      ctx.lineTo(cx - ux * 5 - uy * 7, cy - uy * 5 + ux * 7);
+      ctx.lineTo(cx - ux * 5 + uy * 7, cy - uy * 5 - ux * 7);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   // 1マス分の地面。高いマスは、上の面と手前の2つの側面(土台)を描く

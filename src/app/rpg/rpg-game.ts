@@ -1,4 +1,4 @@
-import { RpgLook, RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
 import {
   AreaMap,
   ENEMIES,
@@ -8,10 +8,12 @@ import {
   TW,
   MAX_LUCK,
   STAT_POINTS_PER_LEVEL,
+  Side,
   StatKey,
   Stats,
   ThemeDef,
   ZERO_STATS,
+  arrivalOf,
   attackIntervalOf,
   baseAtkOf,
   baseDefOf,
@@ -19,8 +21,10 @@ import {
   critRateOf,
   dropRateOf,
   evadeRateOf,
+  exitSideAt,
   healRateOf,
   maxHpOf,
+  neighborOf,
   nextExpOf,
   themeOf,
   totalStatPointsOf,
@@ -137,8 +141,10 @@ export interface RpgGameEvents {
   dirty(): void;
   talk(npc: Npc): void;
   fade(on: boolean): void;
-  // 新しいエリアに入った(暗転が明けたとき)
-  areaEntered(area: RpgMap): void;
+  // ほかのダンジョンに入った(暗転が明けたとき)。同じダンジョンの中のエリアの移動では呼ばない(front#234)
+  dungeonEntered(dungeon: RpgDungeon): void;
+  // 隣のエリアへスライドする直前の画面(スライドで押し出す絵)。描く画面がなければ null
+  captureScreen(): CanvasImageSource | null;
   // たおれた(true)/村に戻った(false)
   knockedOut(on: boolean): void;
 }
@@ -147,11 +153,20 @@ const ATTACK_RANGE = 1.35;
 const LEASH = 8;
 const FADE_MS = 380;
 const KNOCKOUT_MS = 1500;
+// 隣のエリアへスライドする時間(秒)
+const SLIDE_SEC = 0.45;
 // たおれたときに戻るエリア(なければ並び順で最初のエリア)
 const HOME_AREA = 'plain';
 
 const randi = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) / 2, ((x + y) * TH) / 2];
+
+/** 隣のエリアへのスライド(front#234)。t は 0→1 で進み、image は前のエリアの画面 */
+export interface AreaSlide {
+  side: Side;
+  t: number;
+  image: CanvasImageSource | null;
+}
 
 /**
  * RPGの状態と動き(移動・会話・戦闘・アイテム・エリア移動)。描画は RpgRenderer が行う。
@@ -159,6 +174,8 @@ export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) /
  */
 export class RpgGame {
   area!: RpgMap;
+  // area が入っているダンジョン。見た目(theme)・BGM・推奨レベルはダンジョンで決まる
+  dungeon!: RpgDungeon;
   theme!: ThemeDef;
   map!: AreaMap;
   npcs: Npc[] = [];
@@ -188,12 +205,13 @@ export class RpgGame {
   // 会話・お店を開いている間はクリックで動かない
   locked = false;
   transitioning = false;
+  slide: AreaSlide | null = null;
   // 話しかけて「!」を消した村人(エリアを出入りしても消えたままにする)
   private talkedTo = new Set<string>();
   private timers: ReturnType<typeof setTimeout>[] = [];
 
-  /** maps は全エリアのマップのデータ(並び順)。1つ以上あること */
-  constructor(private events: RpgGameEvents, public maps: RpgMap[]) {
+  /** maps は全エリアのマップのデータ(並び順)。1つ以上あること。dungeons は全ダンジョン */
+  constructor(private events: RpgGameEvents, public maps: RpgMap[], public dungeons: RpgDungeon[] = []) {
     const home = this.homeArea();
     this.loadMap(home);
     this.player.x = home.startX;
@@ -203,6 +221,11 @@ export class RpgGame {
 
   mapById(id: string | null): RpgMap | undefined {
     return this.maps.find((m) => m.id === id);
+  }
+
+  /** エリアが入っているダンジョン(見つからなければ、エリアの名前で最初の見た目のダンジョンとして扱う) */
+  dungeonOf(area: RpgMap): RpgDungeon {
+    return this.dungeons.find((d) => d.id === area.dungeonId) ?? { id: area.dungeonId, name: area.name, recommendedLevel: 1, theme: 'plain', sortOrder: 0 };
   }
 
   private homeArea(): RpgMap {
@@ -321,7 +344,8 @@ export class RpgGame {
   /** マップのデータからエリアを作る(マップ作成画面は、編集中のデータを渡して描き直すのにも使う) */
   loadMap(area: RpgMap): void {
     this.area = area;
-    this.theme = themeOf(area.theme);
+    this.dungeon = this.dungeonOf(area);
+    this.theme = themeOf(this.dungeon.theme);
     this.map = buildAreaMap(area);
     this.npcs = area.npcs.map((n) => ({
       ...n, kind: 'npc', path: [], dir: 1, moving: false, z: this.map.heightAt(n.x, n.y), notice: n.notice && !this.talkedTo.has(n.name)
@@ -348,6 +372,7 @@ export class RpgGame {
     this.player.path = [];
     this.player.target = null;
     this.events.fade(true);
+    const before = this.dungeon.id;
     this.later(FADE_MS, () => {
       this.loadMap(dest);
       // 着く位置が通れなければ(マップを作り直したときなど)、出発地点に立つ
@@ -358,10 +383,36 @@ export class RpgGame {
       after?.();
       this.transitioning = false;
       this.events.fade(false);
-      this.events.areaEntered(this.area);
-      this.events.log(`${this.area.name}にやってきた`);
+      // 同じダンジョンの中の移動(倒れて村に戻ったときなど)では、ダンジョン名を出さない
+      if (this.dungeon.id !== before) {
+        this.events.dungeonEntered(this.dungeon);
+        this.events.log(`${this.dungeon.name}にやってきた`);
+      }
       this.events.dirty();
     });
+  }
+
+  /**
+   * 端の出口(x, y)から、side の向きに隣り合うエリアへ移る(front#234)。
+   * 画面は進む向きにスライドし、ダンジョン名は出さない(BGMも変えない)
+   */
+  goNeighbor(side: Side, x: number, y: number): void {
+    const dest = neighborOf(this.maps, this.area, side);
+    if (this.transitioning || !dest) return;
+    const image = this.events.captureScreen();
+    this.player.path = [];
+    this.player.target = null;
+    this.loadMap(dest);
+    const [ax, ay] = arrivalOf(side, dest, x, y);
+    // 着くマスが通れなければ近くの通れるマス、それもなければ出発地点に立つ
+    const [nx, ny] = this.map.nearestWalkable(ax, ay);
+    const [tx, ty] = this.map.walkable(nx, ny) ? [nx, ny] : [dest.startX, dest.startY];
+    this.player.x = tx;
+    this.player.y = ty;
+    this.snapZ(this.player);
+    this.slide = { side, t: 0, image };
+    this.transitioning = true;
+    this.events.dirty();
   }
 
   private later(ms: number, fn: () => void): void {
@@ -665,6 +716,10 @@ export class RpgGame {
 
   update(dt: number): void {
     this.time += dt;
+    if (this.slide && (this.slide.t += dt / SLIDE_SEC) >= 1) {
+      this.slide = null;
+      this.transitioning = false;
+    }
     this.updatePlayer(dt);
     if (!this.transitioning) this.enemies.forEach((e) => this.updateEnemy(e, dt));
     for (const f of this.floats) f.t += dt;
@@ -716,7 +771,17 @@ export class RpgGame {
     const wasMoving = p.path.length > 0;
     p.moving = this.moveAlong(p, walkSpeedOf(p.stats), dt);
     this.settleZ(p, dt);
-    if (wasMoving && !p.path.length) this.events.dirty();
+    if (wasMoving && !p.path.length) {
+      this.events.dirty();
+      // 歩いてきて、隣のエリアへの出口(端のマス)で止まったら、隣のエリアへ移る(front#234)。
+      // 着いたマスや、敵を追いかけて止まったマスでは移らない
+      const [ex, ey] = [Math.round(p.x), Math.round(p.y)];
+      const side = p.target ? null : exitSideAt(this.maps, this.area, ex, ey);
+      if (side) {
+        this.goNeighbor(side, ex, ey);
+        return;
+      }
+    }
 
     // 光る場所(ポータル)の上で止まったらエリア移動
     if (!p.path.length) {
