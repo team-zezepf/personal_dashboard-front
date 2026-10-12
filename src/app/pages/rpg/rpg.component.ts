@@ -40,6 +40,8 @@ import { GEM_SIZE, GEM_TIP, GemCursor, GemState } from '../../rpg/rpg-cursor';
 const AUTOSAVE_MS = 30_000;
 const MAX_LOGS = 8;
 const AREA_TITLE_MS = 1800;
+// 宝石のカーソルを隠し、手の形にする押せる部品(front#244)
+const CONTROL_SELECTOR = 'button, input, select, a';
 
 interface ShopRow {
   id: string;
@@ -471,11 +473,12 @@ export class RpgPageComponent implements OnDestroy {
     this.bgmPlayer.setVolume(value / 100);
   }
 
-  // 宝石のカーソルは、ゲーム画面の中(会話・お店の上も含む)ならどこでもマウスに付いていく
+  // 宝石のカーソルは、ゲーム画面の中(会話・お店の上も含む)ならどこでもマウスに付いていく。
+  // ただしボタン・音量バーなど押せる部品の上では隠し、手の形のカーソルにする(front#244)
   onAreaMouseMove(event: MouseEvent): void {
     const rect = this.gameArea().nativeElement.getBoundingClientRect();
     this.gemPosition.set([event.clientX - rect.left - GEM_TIP[0], event.clientY - rect.top - GEM_TIP[1]]);
-    this.gemVisible.set(true);
+    this.gemVisible.set(!(event.target as Element | null)?.closest?.(CONTROL_SELECTOR));
   }
 
   onAreaMouseLeave(): void {
