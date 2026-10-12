@@ -1,5 +1,5 @@
 import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { RpgMapEditor, blankMap, toMapInput } from './rpg-editor';
+import { RpgMapEditor, blankMap, blankQuest, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
 import { PALETTE } from './rpg-editor';
@@ -192,7 +192,7 @@ describe('RpgMapEditor', () => {
       const dest = plain();
       dest.ground[3] = 'www' + 'g'.repeat(9);
       editor.map.portals.push({ x: 1, y: 1, to: null, toX: 0, toY: 0 }, { x: 2, y: 1, to: 'plain', toX: 1, toY: 3 });
-      editor.map.npcs.push({ name: '村人', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [' '], look: lookFromColors('#000000', '#000000') });
+      editor.map.npcs.push({ name: '村人', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [' '], look: lookFromColors('#000000', '#000000'), quests: [] });
 
       const failed = editor.checks([dest, editor.map]).filter((c) => !c.ok).map((c) => c.text);
       expect(failed).toEqual([
@@ -225,6 +225,34 @@ describe('RpgMapEditor', () => {
     // 2人目は別の色にする
     expect([b.hair, b.body]).not.toEqual([a.hair, a.body]);
     expect(toMapInput(editor.map).npcs[0].look).toEqual(a.look);
+  });
+
+  describe('クエスト(front#239)', () => {
+    it('保存する形では、クエストはクエスト依頼のNPCだけが持つ', () => {
+      editor.apply({ kind: 'npc' }, 2, 2, true);
+      editor.apply({ kind: 'npc' }, 3, 2, true);
+      const [giver, other] = editor.map.npcs;
+      giver.role = 'quest';
+      giver.quests = [blankQuest()];
+      other.quests = [blankQuest()];
+
+      const input = toMapInput(editor.map);
+      expect(input.npcs[0].quests).toHaveLength(1);
+      expect(input.npcs[0].quests[0]).toMatchObject({ id: null, kind: 'defeat', count: 3 });
+      expect(input.npcs[1].quests).toEqual([]);
+    });
+
+    it('クエストのないクエスト依頼・会う相手のいないクエストを知らせる', () => {
+      editor.apply({ kind: 'npc' }, 2, 2, true);
+      const giver = editor.map.npcs[0];
+      giver.role = 'quest';
+      expect(editor.checks([editor.map]).filter((c) => !c.ok).map((c) => c.text)).toContain('クエストを1つも持っていないクエスト依頼のNPCが 1 人います');
+
+      giver.quests = [{ ...blankQuest(), kind: 'visit', target: 'だれか', targetArea: 'area5', count: 1 }];
+      expect(editor.checks([editor.map]).filter((c) => !c.ok).map((c) => c.text)).toContain('会う相手のNPCが見つからないクエストが 1 個あります');
+      giver.quests[0].target = giver.name;
+      expect(editor.checks([editor.map]).some((c) => c.text.includes('会う相手'))).toBe(false);
+    });
   });
 
   it('パレットの「敵」には、そのときの敵の種類が並ぶ(front#229)', () => {

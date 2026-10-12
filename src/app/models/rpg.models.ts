@@ -23,7 +23,41 @@ export interface RpgSave {
   statPoints: number;
   // プレイヤーの見た目(front#224)
   look: RpgLook;
+  // 受けた・終わったクエストの進み具合(front#239)
+  quests: RpgQuestProgress[];
   updatedAt?: string | null;
+}
+
+// クエストの進み具合(front#239)。active(受けている) / cleared(達成して報告待ち) / completed(報告済み)
+export type RpgQuestState = 'active' | 'cleared' | 'completed';
+
+export interface RpgQuestProgress {
+  id: string;
+  state: RpgQuestState;
+  // 敵を倒すクエストで、たおした数
+  count: number;
+}
+
+export type RpgQuestKind = 'defeat' | 'collect' | 'visit';
+
+// NPCのクエスト(front#239)。1人1回きりで、報告先は依頼主
+export interface RpgQuest {
+  // 新しいクエストは null(保存するときにAPIが決める)
+  id: string | null;
+  title: string;
+  kind: RpgQuestKind;
+  // 敵の種類 / アイテムのID / 会うNPCの名前
+  target: string;
+  // 会うNPCのいるエリア(visit のときだけ)
+  targetArea?: string | null;
+  // たおす数・集める個数(visit は 1)
+  count: number;
+  // 依頼のセリフ(最後の行のあとに「引き受ける/やめておく」)・受けたあとのセリフ・報告のセリフ
+  offerLines: string[];
+  progressLines: string[];
+  doneLines: string[];
+  rewardGold: number;
+  rewardItems: RpgItemCount[];
 }
 
 // キャラクター(プレイヤー・村人)の見た目(front#224 / api#89)。部品の一覧と描き方は rpg/rpg-look.ts
@@ -87,7 +121,8 @@ export interface RpgMapObject {
   lowRoof?: boolean | null;
 }
 
-export type RpgNpcRole = 'talk' | 'shop' | 'exchange';
+// quest はクエスト依頼(front#239)
+export type RpgNpcRole = 'talk' | 'shop' | 'exchange' | 'quest';
 
 export interface RpgMapNpc {
   name: string;
@@ -98,10 +133,12 @@ export interface RpgMapNpc {
   body: string;
   // shop・exchange は、会話のあとにお店を開く
   role: RpgNpcRole;
-  // 話しかけるまで頭に「!」を出す
+  // 話しかけるまで頭に「!」を出す(クエストができる前の項目。今は使わず、「!」は受けられるクエストがあるときに出す)
   notice: boolean;
   lines: string[];
   look: RpgLook;
+  // クエスト依頼(role = quest)のクエスト。上から順に受けられる(front#239)
+  quests: RpgQuest[];
 }
 
 export interface RpgMapEnemy {

@@ -1,4 +1,5 @@
-import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { QuestEntry, QuestLog, QuestMark, allQuests } from './rpg-quest';
 import {
   AreaMap,
   ENEMIES,
@@ -206,8 +207,8 @@ export class RpgGame {
   locked = false;
   transitioning = false;
   slide: AreaSlide | null = null;
-  // 話しかけて「!」を消した村人(エリアを出入りしても消えたままにする)
-  private talkedTo = new Set<string>();
+  // 受けた・終わったクエストの進み具合(front#239)
+  readonly questLog = new QuestLog();
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   /** maps は全エリアのマップのデータ(並び順)。1つ以上あること。dungeons は全ダンジョン */
@@ -267,6 +268,7 @@ export class RpgGame {
       p.statPoints = totalStatPointsOf(p.level);
     }
     p.look = { ...DEFAULT_LOOK, ...save.look };
+    this.questLog.load(save.quests);
     // たおれたまま保存されていたら、村で全回復した状態から始める
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
     this.loadMap(this.mapById(save.area) ?? this.homeArea());
@@ -297,7 +299,8 @@ export class RpgGame {
       y,
       stats: { ...p.stats },
       statPoints: p.statPoints,
-      look: { ...p.look }
+      look: { ...p.look },
+      quests: this.questLog.toList()
     };
   }
 
@@ -348,7 +351,7 @@ export class RpgGame {
     this.theme = themeOf(this.dungeon.theme);
     this.map = buildAreaMap(area);
     this.npcs = area.npcs.map((n) => ({
-      ...n, kind: 'npc', path: [], dir: 1, moving: false, z: this.map.heightAt(n.x, n.y), notice: n.notice && !this.talkedTo.has(n.name)
+      ...n, kind: 'npc', path: [], dir: 1, moving: false, z: this.map.heightAt(n.x, n.y)
     }));
     this.enemies = area.enemies
       .filter((e) => ENEMIES[e.type])
@@ -652,6 +655,9 @@ export class RpgGame {
     p.target = null;
     this.floatText(e.x, e.y, `+${def.exp} EXP`, '#a5f3fc', 13, -18);
     this.events.log(`${def.name}をたおした！ 経験値+${def.exp}・ゴールド+${def.gold}`);
+    for (const done of this.questLog.onDefeat(e.type, this.questEntries())) {
+      this.events.log(`クエスト「${done.quest.title}」の目標を達成した。${done.giver}に報告しよう`);
+    }
     if (def.drop && ITEMS[def.drop] && Math.random() < Math.min(1, def.dropRate * dropRateOf(p.stats))) {
       p.inv[def.drop] = (p.inv[def.drop] ?? 0) + 1;
       this.events.log(`${ITEMS[def.drop].name}を手に入れた！`);
@@ -802,10 +808,52 @@ export class RpgGame {
   }
 
   private startTalk(npc: Npc): void {
-    npc.notice = false;
-    this.talkedTo.add(npc.name);
     npc.dir = this.player.x - this.player.y - (npc.x - npc.y) > 0 ? 1 : -1;
+    // 「NPCに会う」クエストの相手なら、会えたことにする
+    for (const done of this.questLog.onTalk(this.area.id, npc.name, this.questEntries())) {
+      this.events.log(`${npc.name}に会えた。クエスト「${done.quest.title}」を${done.giver}に報告しよう`);
+      this.events.statsChanged();
+      this.events.dirty();
+    }
     this.events.talk(npc);
+  }
+
+  // ===== クエスト(front#239) =====
+
+  questEntries(): QuestEntry[] {
+    return allQuests(this.maps);
+  }
+
+  /** NPCの頭の印(受けられる新しいクエストは「!」、報告できるクエストは「?」) */
+  questMark(npc: RpgMapNpc): QuestMark {
+    return this.questLog.markOf(npc, this.player.inv);
+  }
+
+  acceptQuest(quest: RpgQuest): void {
+    if (this.questLog.stateOf(quest)) return;
+    this.questLog.accept(quest);
+    this.events.log(`クエスト「${quest.title}」を引き受けた`);
+    this.events.statsChanged();
+    this.events.dirty();
+  }
+
+  /** 報告して報酬をもらう(アイテムを集めるクエストは、そのアイテムを渡す)。達成していなければ何もしない */
+  reportQuest(quest: RpgQuest): boolean {
+    const p = this.player;
+    if (!this.questLog.isCleared(quest, p.inv)) return false;
+    if (quest.kind === 'collect') p.inv[quest.target] = Math.max(0, (p.inv[quest.target] ?? 0) - quest.count);
+    p.gold += quest.rewardGold;
+    for (const r of quest.rewardItems) if (ITEMS[r.itemId]) p.inv[r.itemId] = (p.inv[r.itemId] ?? 0) + r.count;
+    this.questLog.complete(quest);
+    const rewards = [
+      ...(quest.rewardGold ? [`${quest.rewardGold}G`] : []),
+      ...quest.rewardItems.filter((r) => ITEMS[r.itemId]).map((r) => `${ITEMS[r.itemId].name}×${r.count}`)
+    ];
+    this.events.log(`クエスト「${quest.title}」を達成した！${rewards.length ? ` ${rewards.join('・')} を手に入れた` : ''}`);
+    this.events.statsChanged();
+    this.events.inventoryChanged();
+    this.events.dirty();
+    return true;
   }
 
   private updateEnemy(e: Enemy, dt: number): void {

@@ -450,27 +450,161 @@
               </label>
               <label class="field">
                 <span>役割</span>
-                <select [ngModel]="sel.ref.role" (focus)="beginEdit()" (ngModelChange)="sel.ref.role = $event; edited()">
+                <select [ngModel]="sel.ref.role" (ngModelChange)="setNpcRole(sel.ref, $event)">
                   @for (r of roles; track r[0]) {
                     <option [value]="r[0]">{{ r[1] }}</option>
                   }
                 </select>
               </label>
               <label class="field">
-                <span>セリフ（1行が1回分。クリックで次の行へ進む）</span>
+                <span>{{ sel.ref.role === 'quest' ? 'ふだんのセリフ（クエストがすべて終わったあと）' : 'セリフ（1行が1回分。クリックで次の行へ進む）' }}</span>
                 <textarea rows="6" [ngModel]="npcLines(sel)" (focus)="beginEdit()" (ngModelChange)="setNpcLines(sel, $event)"></textarea>
               </label>
-              <label class="check">
-                <input type="checkbox" [ngModel]="sel.ref.notice" (ngModelChange)="beginEdit(); sel.ref.notice = $event; edited()" />
-                話しかけるまで頭に「!」を出す
-              </label>
-              <p class="muted small">役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。</p>
+              <p class="muted small">
+                役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。
+                頭の「!」は、受けられる新しいクエストがあるときに出ます。
+              </p>
             </div>
             <div class="field look-field" role="region" aria-label="NPCの見た目">
               <span>見た目</span>
               <app-rpg-look-editor [look]="npcLook(sel.ref)" (lookChange)="setNpcLook(sel, $event)" />
             </div>
           </div>
+          @if (sel.ref.role === 'quest') {
+            <section class="quest-editor" aria-label="クエスト">
+              <h3>クエスト <span class="muted small">（上から順に受けられます。1人1回きりで、報告先はこのNPC）</span></h3>
+              <div class="quest-editor-body">
+                <div class="quest-list">
+                  @for (q of sel.ref.quests; track $index) {
+                    <button type="button" class="quest-item" [class.active]="editingQuest(sel.ref) === q" (click)="questIndex.set($index)">
+                      {{ $index + 1 }}. {{ q.title }}
+                      <small>{{ questSummary(q) }}</small>
+                    </button>
+                  }
+                  <button type="button" class="btn small" (click)="addQuest(sel.ref)">＋ クエストを足す</button>
+                  <div class="quest-list-actions">
+                    <button type="button" class="btn small" aria-label="上へ" (click)="moveQuest(sel.ref, -1)">↑</button>
+                    <button type="button" class="btn small" aria-label="下へ" (click)="moveQuest(sel.ref, 1)">↓</button>
+                    <button type="button" class="btn small danger" (click)="removeQuest(sel.ref)">消す</button>
+                  </div>
+                </div>
+                @if (editingQuest(sel.ref); as q) {
+                  <div class="quest-form">
+                    <div class="row-wide">
+                      <label class="field">
+                        <span>クエストの名前</span>
+                        <input type="text" maxlength="30" [ngModel]="q.title" (focus)="beginEdit()" (ngModelChange)="q.title = $event; edited()" />
+                      </label>
+                      <label class="field">
+                        <span>種類</span>
+                        <select [ngModel]="q.kind" (ngModelChange)="setQuestKind(q, $event)">
+                          @for (k of questKinds; track k[0]) {
+                            <option [value]="k[0]">{{ k[1] }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                    @switch (q.kind) {
+                      @case ('defeat') {
+                        <div class="row-wide">
+                          <label class="field">
+                            <span>たおす敵</span>
+                            <select [ngModel]="q.target" (focus)="beginEdit()" (ngModelChange)="q.target = $event; edited()">
+                              @for (e of enemyTypes(); track e.id) {
+                                <option [value]="e.id">{{ e.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>数</span>
+                            <input type="number" min="1" max="99" [ngModel]="q.count" (focus)="beginEdit()" (ngModelChange)="q.count = $event; edited()" />
+                          </label>
+                        </div>
+                      }
+                      @case ('collect') {
+                        <div class="row-wide">
+                          <label class="field">
+                            <span>集めるアイテム（報告するときに渡す）</span>
+                            <select [ngModel]="q.target" (focus)="beginEdit()" (ngModelChange)="q.target = $event; edited()">
+                              @for (i of itemOptions; track i.id) {
+                                <option [value]="i.id">{{ i.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>個数</span>
+                            <input type="number" min="1" max="99" [ngModel]="q.count" (focus)="beginEdit()" (ngModelChange)="q.count = $event; edited()" />
+                          </label>
+                        </div>
+                      }
+                      @default {
+                        <div class="row3">
+                          <label class="field">
+                            <span>会うNPCのダンジョン</span>
+                            <select [ngModel]="visitDungeonId(q)" (ngModelChange)="setVisitDungeon(q, $event)">
+                              <option value="">（選んでください）</option>
+                              @for (d of dungeons(); track d.id) {
+                                <option [value]="d.id">{{ d.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>エリア</span>
+                            <select [ngModel]="q.targetArea ?? ''" (ngModelChange)="setVisitArea(q, $event)">
+                              @for (a of areasOf(visitDungeonId(q)); track a.id) {
+                                <option [value]="a.id">{{ a.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>会うNPC</span>
+                            <select [ngModel]="q.target" (focus)="beginEdit()" (ngModelChange)="q.target = $event; edited()">
+                              @for (n of npcNamesOf(q.targetArea); track n) {
+                                <option [value]="n">{{ n }}</option>
+                              }
+                            </select>
+                          </label>
+                        </div>
+                      }
+                    }
+                    <label class="field">
+                      <span>依頼のセリフ（最後の行のあとに「引き受ける／やめておく」を出す）</span>
+                      <textarea rows="3" [ngModel]="questLines(q.offerLines)" (focus)="beginEdit()" (ngModelChange)="setQuestLines(q, 'offerLines', $event)"></textarea>
+                    </label>
+                    <div class="row2">
+                      <label class="field">
+                        <span>受けたあとのセリフ（進み具合を付けて言う）</span>
+                        <textarea rows="2" [ngModel]="questLines(q.progressLines)" (focus)="beginEdit()" (ngModelChange)="setQuestLines(q, 'progressLines', $event)"></textarea>
+                      </label>
+                      <label class="field">
+                        <span>報告のセリフ</span>
+                        <textarea rows="2" [ngModel]="questLines(q.doneLines)" (focus)="beginEdit()" (ngModelChange)="setQuestLines(q, 'doneLines', $event)"></textarea>
+                      </label>
+                    </div>
+                    <div class="field">
+                      <span>報酬</span>
+                      <div class="reward-row">
+                        💰 <input type="number" min="0" max="99999" aria-label="報酬のゴールド" [ngModel]="q.rewardGold" (focus)="beginEdit()" (ngModelChange)="q.rewardGold = $event; edited()" /> G
+                      </div>
+                      @for (r of q.rewardItems; track $index) {
+                        <div class="reward-row">
+                          <select [attr.aria-label]="'報酬のアイテム' + ($index + 1)" [ngModel]="r.itemId" (focus)="beginEdit()" (ngModelChange)="r.itemId = $event; edited()">
+                            @for (i of itemOptions; track i.id) {
+                              <option [value]="i.id">{{ i.name }}</option>
+                            }
+                          </select>
+                          ×
+                          <input type="number" min="1" max="99" [attr.aria-label]="'報酬の個数' + ($index + 1)" [ngModel]="r.count" (focus)="beginEdit()" (ngModelChange)="r.count = $event; edited()" />
+                          <button type="button" class="btn small" (click)="removeReward(q, $index)">消す</button>
+                        </div>
+                      }
+                      <div><button type="button" class="btn small" (click)="addReward(q)">＋ アイテムを足す</button></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
           <div class="modal-actions spread">
             <button type="button" class="btn danger" (click)="deleteSelected()">このNPCを消す</button>
             <button type="button" class="btn primary" (click)="closeModal()">閉じる</button>
