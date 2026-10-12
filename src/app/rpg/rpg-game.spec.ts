@@ -27,6 +27,7 @@ function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
   return {
     id, name: id, recommendedLevel: 1, theme: 'plain', width: 12, height: 12,
     ground: Array.from({ length: 12 }, () => 'g'.repeat(12)),
+    heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
     objects: [], npcs: [], enemies: [], portals: [], startX: 6, startY: 7, sortOrder: 1,
     ...partial
   };
@@ -242,6 +243,44 @@ describe('RpgGame', () => {
     });
   });
 
+  describe('段差(front#225)', () => {
+    // x >= 8 が2段の台地のエリア。まわりとの境目は崖で、(7, 3) だけ1段の段になっている
+    const heights = Array.from({ length: 12 }, (_, y) => '0000000' + (y === 3 ? '1' : '0') + '2222');
+
+    beforeEach(() => {
+      game.loadMap(map('hill', { heights }));
+      game.player.x = 6;
+      game.player.y = 7;
+    });
+
+    it('1段の差は登り降りでき、2段以上の差(崖)は通れない', () => {
+      expect(game.map.canStep(6, 3, 7, 3)).toBe(true);
+      expect(game.map.canStep(7, 3, 8, 3)).toBe(true);
+      expect(game.map.canStep(7, 7, 8, 7)).toBe(false);
+    });
+
+    it('崖の上の台地へは、1段ずつの段を回って登る', () => {
+      clickTile(10, 7);
+      // 段(7, 3)を通り、どの1歩も高さの差は1段まで
+      const path = [[6, 7], ...game.player.path];
+      expect(path).toContainEqual([7, 3]);
+      for (let i = 1; i < path.length; i++) {
+        expect(Math.abs(game.map.heightAt(path[i][0], path[i][1]) - game.map.heightAt(path[i - 1][0], path[i - 1][1]))).toBeLessThanOrEqual(1);
+      }
+
+      for (let i = 0; i < 120; i++) game.update(0.05);
+      expect([game.player.x, game.player.y]).toEqual([10, 7]);
+      // 登り終えたら、台地の高さに立っている
+      expect(game.player.z).toBeCloseTo(2);
+    });
+
+    it('高いマスをクリックすると、その上の面に当たる', () => {
+      game.update(0);
+      const [sx, sy] = game.screenPositionOf({ x: 10, y: 7 });
+      expect(game.screenToTile(sx, sy)).toEqual([10, 7]);
+    });
+  });
+
   describe('マップのデータから作る地形', () => {
     it('水・なしの地面と、置物・村人のマスは通れない。火山はまわり1マスも通れない', () => {
       const area = buildAreaMap(map('test', {
@@ -254,6 +293,12 @@ describe('RpgGame', () => {
       expect(area.walkable(5, 5)).toBe(false);
       expect(area.walkable(7, 7)).toBe(false);
       expect(area.walkable(8, 8)).toBe(true);
+    });
+
+    it('高さのないマップは、すべて0段として読む', () => {
+      const area = buildAreaMap({ ...map('test'), heights: undefined as unknown as string[] });
+      expect(area.hasHeights).toBe(false);
+      expect(area.heightAt(3, 3)).toBe(0);
     });
 
     it('知らない種類の敵は出さない', () => {

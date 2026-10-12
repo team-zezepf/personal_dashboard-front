@@ -618,6 +618,11 @@ export class RpgPageComponent implements OnDestroy {
         const npc = this.game?.npcs.find((n) => n.name === name);
         return npc && this.game ? this.game.screenPositionOf(npc) : null;
       },
+      // マスの上の面の中心の画面上の位置(高いマスは、その高さの分だけ上)
+      tilePosition: (x: number, y: number): [number, number] | null => (this.game ? this.game.screenPositionOf({ x, y }) : null),
+      // プレイヤーが立っているマスと高さ
+      playerTile: (): [number, number, number] | null =>
+        this.game ? [Math.round(this.game.player.x), Math.round(this.game.player.y), this.game.player.z] : null,
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl

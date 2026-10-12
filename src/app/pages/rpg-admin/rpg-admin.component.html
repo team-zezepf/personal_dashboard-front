@@ -34,6 +34,12 @@
       <label class="toolbar-label">
         <input type="checkbox" [ngModel]="showGrid()" (ngModelChange)="showGrid.set($event)" /> マス目を表示
       </label>
+      <label class="toolbar-label">
+        <input type="checkbox" [ngModel]="showHeights()" (ngModelChange)="showHeights.set($event)" /> 高さを数字で表示
+      </label>
+      <label class="toolbar-label">
+        <input type="checkbox" [ngModel]="showCliffs()" (ngModelChange)="showCliffs.set($event)" /> 通れない段差（崖）に印
+      </label>
       <span class="spacer"></span>
       @if (isDirty()) {
         <span class="dirty">● 保存していない変更があります</span>
@@ -168,7 +174,7 @@
               </button>
             }
           </div>
-          @if (tab() === 'ground') {
+          @if (tab() === 'ground' || tab() === 'height') {
             <div class="brush">
               <span>筆の大きさ</span>
               <button type="button" class="btn small" [class.on]="brush() === 1" (click)="brush.set(1)">1マス</button>

@@ -108,6 +108,8 @@ export interface RpgMap {
   height: number;
   // 1行が奥行き1マス分の文字列で、1文字が1マス(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし)
   ground: string[];
+  // 地面の高さ(front#225)。ground と同じ形で、1文字が1マス(0〜3段)
+  heights: string[];
   objects: RpgMapObject[];
   npcs: RpgMapNpc[];
   enemies: RpgMapEnemy[];

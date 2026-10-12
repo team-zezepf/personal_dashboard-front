@@ -22,7 +22,7 @@ const SAVE_FIELDS = `
 `;
 
 const MAP_FIELDS = `
-  id name recommendedLevel theme width height ground
+  id name recommendedLevel theme width height ground heights
   objects { type x y roof torch }
   npcs { name x y hair body role notice lines look { ${LOOK_FIELDS} } }
   enemies { type x y }
