@@ -33,15 +33,15 @@ import {
 } from '../../rpg/rpg-data';
 import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
-import { GEM_SIZE, GEM_TIP, GemCursor, GemState } from '../../rpg/rpg-cursor';
+import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '../../rpg/rpg-cursor';
 
 // 保存はデータのリポジトリへの自動コミットになるため、変更があっても30秒に1回までにする
 // (画面を離れるとき・ポイント交換のときはすぐ保存する)
 const AUTOSAVE_MS = 30_000;
 const MAX_LOGS = 8;
 const AREA_TITLE_MS = 1800;
-// 宝石のカーソルを隠し、手の形にする押せる部品(front#244)
-const CONTROL_SELECTOR = 'button, input, select, a';
+// 宝石のカーソルの代わりに、ゲーム用の手を出す押せる部品(front#244 / front#252)。押せないボタンの上は宝石のまま
+const CONTROL_SELECTOR = 'button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]';
 
 interface ShopRow {
   id: string;
@@ -129,6 +129,8 @@ export class RpgPageComponent implements OnDestroy {
 
   readonly gemVisible = signal(false);
   readonly gemPosition = signal<[number, number]>([0, 0]);
+  // 押せる部品の上にいる(宝石の代わりに手を描く)(front#252)
+  private overControl = false;
   readonly gemSize = GEM_SIZE;
 
   readonly points = computed(() => this.authService.currentUser()?.points ?? 0);
@@ -267,6 +269,7 @@ export class RpgPageComponent implements OnDestroy {
   private game: RpgGame | null = null;
   private renderer: RpgRenderer | null = null;
   private gem: GemCursor | null = null;
+  private hand: HandCursor | null = null;
   private frameId = 0;
   private lastFrame = 0;
   private dpr = 1;
@@ -297,6 +300,7 @@ export class RpgPageComponent implements OnDestroy {
     }
     this.renderer = new RpgRenderer(ctx);
     this.gem = new GemCursor(this.gemCanvas().nativeElement);
+    this.hand = new HandCursor(this.gemCanvas().nativeElement);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this.gameArea().nativeElement);
     window.addEventListener('pagehide', this.onPageHide);
@@ -474,11 +478,13 @@ export class RpgPageComponent implements OnDestroy {
   }
 
   // 宝石のカーソルは、ゲーム画面の中(会話・お店の上も含む)ならどこでもマウスに付いていく。
-  // ただしボタン・音量バーなど押せる部品の上では隠し、手の形のカーソルにする(front#244)
+  // ボタン・音量バーなど押せる部品の上では、宝石の代わりにゲーム用の手を描く(front#252)。描いたものの先がクリック位置
   onAreaMouseMove(event: MouseEvent): void {
     const rect = this.gameArea().nativeElement.getBoundingClientRect();
-    this.gemPosition.set([event.clientX - rect.left - GEM_TIP[0], event.clientY - rect.top - GEM_TIP[1]]);
-    this.gemVisible.set(!(event.target as Element | null)?.closest?.(CONTROL_SELECTOR));
+    this.overControl = !!(event.target as Element | null)?.closest?.(CONTROL_SELECTOR);
+    const [tx, ty] = this.overControl ? HAND_TIP : GEM_TIP;
+    this.gemPosition.set([event.clientX - rect.left - tx, event.clientY - rect.top - ty]);
+    this.gemVisible.set(true);
   }
 
   onAreaMouseLeave(): void {
@@ -488,6 +494,10 @@ export class RpgPageComponent implements OnDestroy {
   private drawGem(dt: number): void {
     const game = this.game;
     if (!this.gem || !game || !this.gemVisible()) return;
+    if (this.overControl) {
+      this.hand?.draw(game.time, this.dpr);
+      return;
+    }
     const state: GemState = game.hover ? (game.hover.kind === 'npc' ? 'talk' : 'attack') : 'normal';
     this.gem.draw(state, dt, game.time, this.dpr);
   }
