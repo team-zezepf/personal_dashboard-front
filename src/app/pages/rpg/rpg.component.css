@@ -30,6 +30,15 @@
   cursor: none;
 }
 
+/* ボタン・音量バーなど押せる部品の上では、宝石を隠して手の形にする(front#244) */
+.game :is(button, input, select, a) {
+  cursor: pointer;
+}
+
+.game button:disabled {
+  cursor: default;
+}
+
 .game-canvas {
   display: block;
   width: 100%;
