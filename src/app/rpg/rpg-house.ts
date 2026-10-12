@@ -11,7 +11,7 @@ export const HOUSE_SHAPES: { id: HouseShape; label: string }[] = [
 export const HOUSE_ROTATIONS = 4;
 export const DEFAULT_ROOF = '#e0605a';
 // 屋根の色の見本(好きな色も選べる)
-export const ROOF_COLORS = ['#e0605a', '#5b8def', '#45b36b', '#f2a33a', '#a78bfa', '#6b7280'];
+export const ROOF_COLORS = ['#e0605a', '#5b8def', '#45b36b', '#f2a33a', '#a78bfa', '#6b7280', '#8b5a2b'];
 // 壁の色(front#250)。最初の色(クリーム)と見本(好きな色も選べる)
 export const DEFAULT_WALL = '#f4e4c9';
 export const WALL_COLORS: { color: string; label: string }[] = [
