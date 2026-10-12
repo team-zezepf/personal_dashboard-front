@@ -80,6 +80,11 @@ export interface RpgMapObject {
   roof?: string | null;
   // 柱にたいまつを付ける
   torch: boolean;
+  // 家の形(1x1 / 2x1 / 2x2 / L)と向き(0〜3。90°ずつ)(front#236)。x, y は占めるマスのいちばん左上。なければ 1×1・向き0
+  shape?: string | null;
+  rotation?: number | null;
+  // 家の屋根を低く(つぶした形に)する(front#238)。なければふつう
+  lowRoof?: boolean | null;
 }
 
 export type RpgNpcRole = 'talk' | 'shop' | 'exchange';

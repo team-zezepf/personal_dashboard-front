@@ -1,4 +1,5 @@
-import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
+import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
+import { DEFAULT_ROOF, houseTiles, objectTiles } from './rpg-house';
 import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
@@ -55,14 +56,12 @@ export const PALETTE: PaletteTab[] = [
     ]
   },
   {
-    id: 'object', label: '置物', hint: '木・岩・家などを置きます。置物のマスは通れません。',
+    id: 'object', label: '置物', hint: '木・岩・家などを置きます。置物のマスは通れません。家は置いたあと、形・向き・屋根の色を選べます。',
     items: [
       { id: 'tree', label: '木', icon: '🌳', tool: { kind: 'object', type: 'tree' } },
       { id: 'rock', label: '岩', icon: '🪨', tool: { kind: 'object', type: 'rock' } },
-      { id: 'house-red', label: '家（赤）', icon: '🏠', tool: { kind: 'object', type: 'house', roof: '#e0605a' } },
-      { id: 'house-blue', label: '家（青）', icon: '🏠', tool: { kind: 'object', type: 'house', roof: '#5b8def' } },
-      { id: 'house-green', label: '家（緑）', icon: '🏠', tool: { kind: 'object', type: 'house', roof: '#45b36b' } },
-      { id: 'house-orange', label: '家（橙）', icon: '🏠', tool: { kind: 'object', type: 'house', roof: '#f2a33a' } },
+      // 形・向き・屋根の色は、置いたあとにモーダルで選ぶ(front#236)
+      { id: 'house', label: '家', icon: '🏠', tool: { kind: 'object', type: 'house' } },
       { id: 'cliff', label: '崖', icon: '⛰️', tool: { kind: 'object', type: 'cliff' } },
       { id: 'fern', label: 'シダ', icon: '🌿', tool: { kind: 'object', type: 'fern' } },
       { id: 'crystal', label: '水晶', icon: '💎', tool: { kind: 'object', type: 'crystal' } },
@@ -79,15 +78,15 @@ export const PALETTE: PaletteTab[] = [
     }
   },
   {
-    id: 'npc', label: '人', hint: '村人を置きます。置いたあと、右側で名前・役割・セリフを決めます。',
-    items: [{ id: 'npc', label: '村人を置く', icon: '🧑', tool: { kind: 'npc' } }]
+    id: 'npc', label: 'NPC', hint: 'NPCを置きます。置いたあと、名前・役割・セリフ・見た目を決めます。',
+    items: [{ id: 'npc', label: 'NPCを置く', icon: '🧑', tool: { kind: 'npc' } }]
   },
   {
     id: 'portal', label: 'ポータル', hint: 'ほかのエリアへ移動する光る場所を置きます。右側で行き先を決めます。',
     items: [{ id: 'portal', label: 'ポータルを置く', icon: '🌀', tool: { kind: 'portal' } }]
   },
   {
-    id: 'other', label: 'その他', hint: '「選ぶ・動かす」で、置いた村人・ポータル・敵をクリックして選び、ドラッグで動かせます。',
+    id: 'other', label: 'その他', hint: '「選ぶ・動かす」で、置いたNPC・家・ポータル・敵をクリックすると中身を変えられ、ドラッグで動かせます。',
     items: [
       { id: 'select', label: '選ぶ・動かす', icon: '👆', tool: { kind: 'select' } },
       { id: 'start', label: '出発地点', icon: '🚩', tool: { kind: 'start' } },
@@ -101,6 +100,7 @@ export const MAP_SIZE = { min: 12, max: 50 };
 
 export type Selection =
   | { kind: 'npc'; ref: RpgMapNpc }
+  | { kind: 'house'; ref: RpgMapObject }
   | { kind: 'portal'; ref: RpgMapPortal }
   | { kind: 'enemy'; ref: RpgMapEnemy };
 
@@ -133,7 +133,11 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     id, name: map.name, dungeonId: map.dungeonId, gridX: map.gridX, gridY: map.gridY, width: map.width, height: map.height,
     ground: map.ground,
     heights: map.heights ?? flatHeights(map.width, map.height),
-    objects: map.objects.map((o) => ({ type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch })),
+    objects: map.objects.map((o) => ({
+      type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch,
+      shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
+      lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null
+    })),
     npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
     enemies: map.enemies.map((e) => ({ ...e })),
     portals: map.portals.map((p) => ({ ...p })),
@@ -215,11 +219,16 @@ export class RpgMapEditor {
 
   occupied(x: number, y: number): 'object' | 'npc' | 'enemy' | 'portal' | null {
     const at = (o: { x: number; y: number }) => o.x === x && o.y === y;
-    if (this.map.objects.some(at)) return 'object';
+    if (this.objectAt(x, y)) return 'object';
     if (this.map.npcs.some(at)) return 'npc';
     if (this.map.enemies.some(at)) return 'enemy';
     if (this.map.portals.some(at)) return 'portal';
     return null;
+  }
+
+  // そのマスを占める置物(家は占めるマスのどれか)
+  objectAt(x: number, y: number, except?: RpgMapObject): RpgMapObject | undefined {
+    return this.map.objects.find((o) => o !== except && objectTiles(o).some(([tx, ty]) => tx === x && ty === y));
   }
 
   entityAt(x: number, y: number): Selection | null {
@@ -230,14 +239,16 @@ export class RpgMapEditor {
     if (portal) return { kind: 'portal', ref: portal };
     const enemy = this.map.enemies.find(at);
     if (enemy) return { kind: 'enemy', ref: enemy };
+    const house = this.objectAt(x, y);
+    if (house?.type === 'house') return { kind: 'house', ref: house };
     return null;
   }
 
-  /** そのマスに置いたものを消す。消したものがあれば true */
+  /** そのマスに置いたものを消す(家は、占めるマスのどれかなら家ごと)。消したものがあれば true */
   removeAt(x: number, y: number): boolean {
     const keep = (o: { x: number; y: number }) => o.x !== x || o.y !== y;
     const before = this.countAll();
-    this.map.objects = this.map.objects.filter(keep);
+    this.map.objects = this.map.objects.filter((o) => !objectTiles(o).some(([tx, ty]) => tx === x && ty === y));
     this.map.npcs = this.map.npcs.filter(keep);
     this.map.enemies = this.map.enemies.filter(keep);
     this.map.portals = this.map.portals.filter(keep);
@@ -256,9 +267,41 @@ export class RpgMapEditor {
     return tiles;
   }
 
+  // ===== 家(front#236) =====
+
   /**
-   * クリック・ドラッグしたマスに道具を使う。first はドラッグの最初のマス(村人・ポータルは最初の1回だけ置く)。
-   * 村人・ポータルを置いたときは、置いたものを返す(右側で中身を決めるため選んだ状態にする)
+   * 家をその形・向きで (x, y) に置けるか。置けなければ、その理由を返す。
+   * 占めるマスがすべてマップの中の通れる地面で、ほかの置物・NPC・敵・ポータルと重ならないこと
+   */
+  houseProblem(house: RpgMapObject | null, x: number, y: number, shape: string, rotation: number): string | null {
+    const tiles = houseTiles(x, y, shape, rotation);
+    if (tiles.some(([tx, ty]) => !this.inMap(tx, ty))) return 'マップの外にはみ出します';
+    if (tiles.some(([tx, ty]) => !this.walkableGround(tx, ty))) return '水・「なし」のマスにかかります';
+    for (const [tx, ty] of tiles) {
+      const at = (o: { x: number; y: number }) => o.x === tx && o.y === ty;
+      const npc = this.map.npcs.find(at);
+      if (npc) return `NPC「${npc.name}」と重なります`;
+      const other = this.objectAt(tx, ty, house ?? undefined);
+      if (other) return other.type === 'house' ? 'ほかの家と重なります' : '置物と重なります';
+      if (this.map.enemies.some(at)) return '敵の出る場所と重なります';
+      if (this.map.portals.some(at)) return 'ポータルと重なります';
+    }
+    return null;
+  }
+
+  /** 家の形・向き・屋根の色・屋根の高さを変える。置けない形・向きなら変えずに false */
+  setHouse(house: RpgMapObject, shape: string, rotation: number, roof: string, lowRoof = false): boolean {
+    if (this.houseProblem(house, house.x, house.y, shape, rotation)) return false;
+    house.shape = shape;
+    house.rotation = rotation;
+    house.roof = roof;
+    house.lowRoof = lowRoof;
+    return true;
+  }
+
+  /**
+   * クリック・ドラッグしたマスに道具を使う。first はドラッグの最初のマス(NPC・家・ポータルは最初の1回だけ置く)。
+   * NPC・家・ポータルを置いたときは、置いたものを返す(続けて中身を決めるため選んだ状態にする)
    */
   apply(tool: EditorTool, x: number, y: number, first: boolean, brush = 1): Selection | null {
     if (!this.inMap(x, y)) return null;
@@ -282,22 +325,30 @@ export class RpgMapEditor {
           this.setHeight(tx, ty, tool.op === 'up' ? h + 1 : tool.op === 'down' ? h - 1 : (tool.value ?? 0));
         }
         return null;
-      case 'object':
+      case 'object': {
+        if (tool.type === 'house') {
+          // 家はまず1×1で、空いたマスに置く(形・向き・屋根の色は、置いたあとに選ぶ)
+          if (!first || this.houseProblem(null, x, y, '1x1', 0)) return null;
+          const house: RpgMapObject = { type: 'house', x, y, roof: tool.roof ?? DEFAULT_ROOF, torch: false, shape: '1x1', rotation: 0 };
+          this.map.objects.push(house);
+          return { kind: 'house', ref: house };
+        }
         if (!this.walkableGround(x, y)) return null;
         this.removeAt(x, y);
         this.map.objects.push({ type: tool.type, x, y, roof: tool.roof ?? null, torch: !!tool.torch });
         return null;
+      }
       case 'enemy':
         if (canPlace) this.map.enemies.push({ type: tool.type, x, y });
         return null;
       case 'npc': {
         if (!first || !canPlace) return null;
         const n = this.map.npcs.length;
-        // 置くたびに髪の色・服の色を変える(見た目は右側の欄で選び直せる)
+        // 置くたびに髪の色・服の色を変える(見た目はモーダルで選び直せる)
         const hair = HAIR_COLORS[n % HAIR_COLORS.length];
         const body = CLOTHES_COLORS[n % CLOTHES_COLORS.length];
         const npc: RpgMapNpc = {
-          name: `村人${n + 1}`, x, y, hair, body, role: 'talk', notice: false, lines: ['こんにちは！'], look: lookFromColors(hair, body)
+          name: `NPC${n + 1}`, x, y, hair, body, role: 'talk', notice: false, lines: ['こんにちは！'], look: lookFromColors(hair, body)
         };
         this.map.npcs.push(npc);
         return { kind: 'npc', ref: npc };
@@ -324,8 +375,15 @@ export class RpgMapEditor {
     }
   }
 
-  /** 選んだもの(村人・ポータル・敵)を動かす。置けないマスなら動かさない */
+  /** 選んだもの(NPC・家・ポータル・敵)を動かす。家は (x, y) を左上の角にする。置けないマスなら動かさない */
   moveTo(selection: Selection, x: number, y: number): boolean {
+    if (selection.kind === 'house') {
+      const { ref } = selection;
+      if (this.houseProblem(ref, x, y, ref.shape ?? '1x1', ref.rotation ?? 0)) return false;
+      ref.x = x;
+      ref.y = y;
+      return true;
+    }
     if (!this.walkableGround(x, y) || this.occupied(x, y)) return false;
     selection.ref.x = x;
     selection.ref.y = y;
@@ -349,7 +407,7 @@ export class RpgMapEditor {
     this.map.width = w;
     this.map.height = h;
     const inside = (o: { x: number; y: number }) => o.x < w && o.y < h;
-    this.map.objects = this.map.objects.filter(inside);
+    this.map.objects = this.map.objects.filter((o) => objectTiles(o).every(([tx, ty]) => tx < w && ty < h));
     this.map.npcs = this.map.npcs.filter(inside);
     this.map.enemies = this.map.enemies.filter(inside);
     this.map.portals = this.map.portals.filter(inside);
@@ -387,7 +445,7 @@ export class RpgMapEditor {
     const emptyNpc = m.npcs.filter((n) => !n.name.trim() || !n.lines.some((l) => l.trim()));
     checks.push({
       ok: emptyNpc.length === 0,
-      text: emptyNpc.length ? `名前かセリフが空の村人が ${emptyNpc.length} 人います` : '村人の名前とセリフが入っている'
+      text: emptyNpc.length ? `名前かセリフが空のNPCが ${emptyNpc.length} 人います` : 'NPCの名前とセリフが入っている'
     });
 
     // 隣のエリアがある側の端に、通れるマス(出口)があるか(front#234)

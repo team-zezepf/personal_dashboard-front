@@ -4,12 +4,13 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole } from '../../models/rpg.models';
+import { DEFAULT_ROOF, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import { ENEMIES, G, GROUND_CHARS, HZ, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
-import { RpgRenderer } from '../../rpg/rpg-render';
+import { RpgRenderer, shade } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
@@ -105,6 +106,23 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
   readonly newDungeonOpen = signal(false);
+  // NPC・家の中身を変えるモーダル(front#236)。家は、決めるまでは下書き(houseDraft)を変える
+  readonly npcModal = signal<RpgMapNpc | null>(null);
+  readonly houseModal = signal<RpgMapObject | null>(null);
+  readonly houseDraft = signal<{ shape: string; rotation: number; roof: string; lowRoof: boolean }>({ shape: '1x1', rotation: 0, roof: DEFAULT_ROOF, lowRoof: false });
+  readonly houseShapes = HOUSE_SHAPES;
+  readonly roofColors = ROOF_COLORS;
+  // 家を下書きの形・向きにしたときに置けない理由(置ければ空)
+  readonly houseProblem = computed(() => {
+    this.version();
+    const house = this.houseModal();
+    const d = this.houseDraft();
+    return house && this.editor ? (this.editor.houseProblem(house, house.x, house.y, d.shape, d.rotation) ?? '') : '';
+  });
+  readonly houseDoorLabel = computed(() => {
+    const d = this.houseDraft();
+    return doorLabel(houseGeometry(d.shape, d.rotation).door.normal);
+  });
   // 編集するたびに上げて、右側の欄・確認を描き直す
   private readonly version = signal(0);
 
@@ -197,6 +215,11 @@ export class RpgAdminPageComponent implements OnDestroy {
   private painting = false;
   private panning: { x: number; y: number; camX: number; camY: number } | null = null;
   private dragging: Selection | null = null;
+  // 選んだものをつかんだマスの、家の左上の角からのずれ・ドラッグで動かしたか(動かさずに離したら、モーダルを開く)
+  private dragOffset: [number, number] = [0, 0];
+  private dragMoved = false;
+  // 置いたばかりのNPC・家。マウスを離したときにモーダルを開く(押したときに開くと、離したクリックがモーダルの外側に当たって閉じてしまう)
+  private placedToOpen: Selection | null = null;
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
     if (this.isDirty() || this.enemyDirty()) e.preventDefault();
@@ -405,6 +428,8 @@ export class RpgAdminPageComponent implements OnDestroy {
       if (hit) {
         editor.checkpoint();
         this.dragging = hit;
+        this.dragOffset = [x - hit.ref.x, y - hit.ref.y];
+        this.dragMoved = false;
       }
       this.version.update((v) => v + 1);
       return;
@@ -416,9 +441,13 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   @HostListener('window:mouseup')
   onMouseUp(): void {
+    // 「選ぶ・動かす」でNPC・家をクリックした(動かさずに離した)ら、中身を変えるモーダルを開く
+    const clicked = this.dragging && !this.dragMoved ? this.dragging : this.placedToOpen;
     this.painting = false;
     this.panning = null;
     this.dragging = null;
+    this.placedToOpen = null;
+    if (clicked) this.openModal(clicked);
   }
 
   onMouseMove(event: MouseEvent): void {
@@ -435,7 +464,10 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (!prev || prev[0] !== x || prev[1] !== y) this.hoverTile.set([x, y]);
     const tool = this.tool().tool;
     if (this.painting && tool.kind !== 'npc' && tool.kind !== 'portal') this.useTool(tool, x, y, false);
-    if (this.dragging && editor.moveTo(this.dragging, x, y)) this.markDirty();
+    if (this.dragging && editor.moveTo(this.dragging, x - this.dragOffset[0], y - this.dragOffset[1])) {
+      this.dragMoved = true;
+      this.markDirty();
+    }
   }
 
   onMouseLeave(): void {
@@ -451,7 +483,14 @@ export class RpgAdminPageComponent implements OnDestroy {
     const editor = this.editor!;
     if (!editor.inMap(x, y)) return;
     const placed = editor.apply(tool, x, y, first, this.brush());
-    if (placed) this.selection.set(placed);
+    if (placed) {
+      this.selection.set(placed);
+      // NPC・家は、置いた直後(マウスを離したとき)に中身を決めるモーダルを開く
+      if (placed.kind === 'npc' || placed.kind === 'house') {
+        this.painting = false;
+        this.placedToOpen = placed;
+      }
+    }
     // 消したものを選んだままにしない
     const sel = this.selection();
     if (sel && !editor.entityAt(sel.ref.x, sel.ref.y)) this.selection.set(null);
@@ -592,7 +631,89 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.editor.checkpoint();
     this.editor.removeAt(sel.ref.x, sel.ref.y);
     this.selection.set(null);
+    this.npcModal.set(null);
+    this.houseModal.set(null);
     this.markDirty();
+  }
+
+  // ===== NPC・家のモーダル(front#236) =====
+
+  openModal(sel: Selection): void {
+    this.selection.set(sel);
+    if (sel.kind === 'npc') {
+      this.npcModal.set(sel.ref);
+    } else if (sel.kind === 'house') {
+      const h = sel.ref;
+      this.houseDraft.set({ shape: h.shape ?? '1x1', rotation: h.rotation ?? 0, roof: h.roof ?? DEFAULT_ROOF, lowRoof: !!h.lowRoof });
+      this.houseModal.set(h);
+    }
+    this.version.update((v) => v + 1);
+  }
+
+  closeModal(): void {
+    this.npcModal.set(null);
+    this.houseModal.set(null);
+  }
+
+  setHouseShape(shape: string): void {
+    this.houseDraft.update((d) => ({ ...d, shape }));
+  }
+
+  rotateHouse(): void {
+    this.houseDraft.update((d) => ({ ...d, rotation: (d.rotation + 1) % HOUSE_ROTATIONS }));
+  }
+
+  setRoof(roof: string): void {
+    this.houseDraft.update((d) => ({ ...d, roof }));
+  }
+
+  setLowRoof(lowRoof: boolean): void {
+    this.houseDraft.update((d) => ({ ...d, lowRoof }));
+  }
+
+  // 家の下書きを決める(置けない形・向きのときは、ボタンを押せない)
+  applyHouse(): void {
+    const house = this.houseModal();
+    const d = this.houseDraft();
+    if (!house || !this.editor) return;
+    this.editor.checkpoint();
+    if (!this.editor.setHouse(house, d.shape, d.rotation, d.roof, d.lowRoof)) return;
+    this.houseModal.set(null);
+    this.markDirty();
+  }
+
+  /**
+   * 家の見本の絵(SVG の多角形)。マップと同じ形の計算(rpg-house.ts)で、マスごとの壁 → 屋根を奥から並べる。
+   * withGround のときは、まわりの地面と扉の前の印も描く
+   */
+  housePolygons(shape: string, rotation: number, roof: string, scale: number, withGround = false, lowRoof = false): { points: string; fill: string }[] {
+    const geo = houseGeometry(shape, rotation);
+    const wall = 34;
+    const top = wall + roofRise(geo.ridge, lowRoof);
+    // 家の真ん中を (0, 0) にする
+    const cx = geo.tiles.reduce((a, t) => a + t[0], 0) / geo.tiles.length;
+    const cy = geo.tiles.reduce((a, t) => a + t[1], 0) / geo.tiles.length;
+    const at = (x: number, y: number, z = 0) => {
+      const [sx, sy] = iso(x - cx, y - cy);
+      return `${(sx * scale).toFixed(1)},${((sy - z) * scale).toFixed(1)}`;
+    };
+    const tile = (x: number, y: number) => [at(x - 0.5, y - 0.5), at(x + 0.5, y - 0.5), at(x + 0.5, y + 0.5), at(x - 0.5, y + 0.5)].join(' ');
+    const polys: { points: string; fill: string }[] = [];
+    if (withGround) {
+      for (let y = -1; y <= 2; y++) for (let x = -1; x <= 2; x++) polys.push({ points: tile(x, y), fill: (x + y) % 2 ? '#8fd16a' : '#88cb63' });
+      const [dx, dy] = [geo.door.at[0] + geo.door.normal[0] * 0.5, geo.door.at[1] + geo.door.normal[1] * 0.5];
+      polys.push({ points: tile(dx, dy), fill: 'rgba(124,195,238,0.8)' });
+    }
+    for (const piece of housePieces(geo)) {
+      for (const w of piece.walls) {
+        polys.push({ points: [at(...w.a), at(...w.b), at(...w.b, wall), at(...w.a, wall)].join(' '), fill: w.normal[1] === 1 ? '#f4e4c9' : '#e3cda8' });
+      }
+      for (const f of piece.roof) {
+        const k = f.normal[1] === 1 ? 1 : f.normal[0] === 1 ? 0.86 : f.normal[1] === -1 ? 0.78 : 0.82;
+        polys.push({ points: f.points.map((p) => at(p.x, p.y, wall + p.z * (top - wall))).join(' '), fill: k === 1 ? roof : shade(roof, k) });
+      }
+    }
+    return polys;
   }
 
   // ===== BGM =====
@@ -915,8 +1036,12 @@ export class RpgAdminPageComponent implements OnDestroy {
       ctx.strokeStyle = '#6076e0';
       ctx.lineWidth = 3;
       ctx.setLineDash([6, 4]);
-      diamond(sel.ref.x, sel.ref.y, 1.05);
-      ctx.stroke();
+      // 家は占めるマスすべてに印を付ける
+      const tiles = sel.kind === 'house' ? objectTiles(sel.ref) : [[sel.ref.x, sel.ref.y]];
+      for (const [tx, ty] of tiles) {
+        diamond(tx, ty, 1.05);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
     }
 
