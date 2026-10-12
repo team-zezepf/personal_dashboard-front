@@ -10,18 +10,21 @@ import { RpgBgm, RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSa
 export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
 export const RPG_BGM_ACCEPT = '.mp3,.ogg,.m4a,.wav';
 
+const LOOK_FIELDS = `hair hairColor skin eyes eyeColor mouth clothes clothesColor accentColor`;
+
 const SAVE_FIELDS = `
   level exp hp gold weapon armor
   items { itemId count }
   area x y
   stats { hp atk def mag spd luk }
   statPoints updatedAt
+  look { ${LOOK_FIELDS} }
 `;
 
 const MAP_FIELDS = `
   id name recommendedLevel theme width height ground
   objects { type x y roof torch }
-  npcs { name x y hair body role notice lines }
+  npcs { name x y hair body role notice lines look { ${LOOK_FIELDS} } }
   enemies { type x y }
   portals { x y to toX toY }
   startX startY sortOrder bgmId updatedAt

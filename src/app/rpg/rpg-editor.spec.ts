@@ -1,5 +1,6 @@
 import { RpgMap } from '../models/rpg.models';
 import { RpgMapEditor, blankMap, toMapInput } from './rpg-editor';
+import { lookFromColors } from './rpg-look';
 
 describe('RpgMapEditor', () => {
   let editor: RpgMapEditor;
@@ -98,7 +99,7 @@ describe('RpgMapEditor', () => {
       const dest = plain();
       dest.ground[3] = 'www' + 'g'.repeat(9);
       editor.map.portals.push({ x: 1, y: 1, to: null, toX: 0, toY: 0 }, { x: 2, y: 1, to: 'plain', toX: 1, toY: 3 });
-      editor.map.npcs.push({ name: '村人', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [' '] });
+      editor.map.npcs.push({ name: '村人', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [' '], look: lookFromColors('#000000', '#000000') });
 
       const failed = editor.checks([dest, editor.map]).filter((c) => !c.ok).map((c) => c.text);
       expect(failed).toEqual([
@@ -108,6 +109,17 @@ describe('RpgMapEditor', () => {
         'まだどのエリアからも来られません（ほかのエリアに、このエリアへのポータルを置いてください）'
       ]);
     });
+  });
+
+  it('置いた村人は、髪の色・服の色と同じ色の見た目を持つ', () => {
+    editor.apply({ kind: 'npc' }, 2, 2, true);
+    editor.apply({ kind: 'npc' }, 3, 2, true);
+
+    const [a, b] = editor.map.npcs;
+    expect(a.look).toMatchObject({ hairColor: a.hair, clothesColor: a.body });
+    // 2人目は別の色にする
+    expect([b.hair, b.body]).not.toEqual([a.hair, a.body]);
+    expect(toMapInput(editor.map).npcs[0].look).toEqual(a.look);
   });
 
   it('保存する形では、空のセリフを除く', () => {

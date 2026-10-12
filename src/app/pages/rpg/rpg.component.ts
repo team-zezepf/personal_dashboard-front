@@ -2,9 +2,10 @@ import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, comput
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
+import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { RpgBgm, RpgLook, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
 import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
 import {
@@ -26,6 +27,7 @@ import {
   itemStatLabel,
   maxHpOf,
   recLabel,
+  swordColorOf,
   walkSpeedOf
 } from '../../rpg/rpg-data';
 import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
@@ -51,7 +53,7 @@ interface ShopRow {
 @Component({
   selector: 'app-rpg-page',
   standalone: true,
-  imports: [HeaderComponent],
+  imports: [HeaderComponent, RpgLookEditorComponent],
   templateUrl: './rpg.component.html',
   styleUrl: './rpg.component.css'
 })
@@ -128,6 +130,11 @@ export class RpgPageComponent implements OnDestroy {
       armor: { icon: armor.icon, name: armor.name, plus: `防御 +${armor.def ?? 0}` }
     };
   });
+
+  // ===== 見た目(front#224)。サイド欄の「見た目を変える」で開くモーダルで選び、「決める」で保存する =====
+  // 選んでいる途中の見た目(null なら閉じている)
+  readonly lookDraft = signal<RpgLook | null>(null);
+  readonly lookSwordColor = signal('#c08a52');
 
   // ===== ステータス(front#223)。左下のパネルの「ステータス」で開くモーダルで、見る・振り分ける =====
   readonly statusOpen = signal(false);
@@ -455,6 +462,7 @@ export class RpgPageComponent implements OnDestroy {
       this.talking.set(null);
       this.closeShop();
       this.closeStatus();
+      this.closeLook();
     }
   }
 
@@ -474,7 +482,31 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
   private syncLock(): void {
-    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen();
+    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft();
+  }
+
+  // ===== 見た目 =====
+
+  openLook(): void {
+    if (!this.game) return;
+    this.lookDraft.set({ ...this.game.player.look });
+    this.lookSwordColor.set(swordColorOf(this.game.player.weapon));
+    this.syncLock();
+  }
+
+  closeLook(): void {
+    this.lookDraft.set(null);
+    this.syncLock();
+  }
+
+  // 見た目はすぐに保存する(30秒ごとの保存を待たない)
+  confirmLook(): void {
+    const look = this.lookDraft();
+    if (!this.game || !look) return;
+    this.game.setLook(look);
+    this.log('見た目を変えた');
+    this.closeLook();
+    this.saveIfDirty();
   }
 
   // ===== ステータス =====

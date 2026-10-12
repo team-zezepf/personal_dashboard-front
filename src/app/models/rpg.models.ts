@@ -21,7 +21,23 @@ export interface RpgSave {
   // 振り分けたステータスのポイントと、まだ振り分けていないポイント(front#223)。合計は (level - 1) * 3
   stats: RpgStats;
   statPoints: number;
+  // プレイヤーの見た目(front#224)
+  look: RpgLook;
   updatedAt?: string | null;
+}
+
+// キャラクター(プレイヤー・村人)の見た目(front#224 / api#89)。部品の一覧と描き方は rpg/rpg-look.ts
+export interface RpgLook {
+  hair: string;
+  hairColor: string;
+  skin: string;
+  eyes: string;
+  eyeColor: string;
+  mouth: string;
+  clothes: string;
+  clothesColor: string;
+  // 差し色(襟・ふち・帯など)
+  accentColor: string;
 }
 
 export interface RpgStats {
@@ -56,6 +72,7 @@ export interface RpgMapNpc {
   name: string;
   x: number;
   y: number;
+  // 髪の色・服の色(look の色と同じ。見た目を選べるようになる前からある項目)
   hair: string;
   body: string;
   // shop・exchange は、会話のあとにお店を開く
@@ -63,6 +80,7 @@ export interface RpgMapNpc {
   // 話しかけるまで頭に「!」を出す
   notice: boolean;
   lines: string[];
+  look: RpgLook;
 }
 
 export interface RpgMapEnemy {

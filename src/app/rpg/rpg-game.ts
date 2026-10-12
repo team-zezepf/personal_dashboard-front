@@ -1,4 +1,4 @@
-import { RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgLook, RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg.models';
 import {
   AreaMap,
   ENEMIES,
@@ -25,6 +25,7 @@ import {
   totalStatPointsOf,
   walkSpeedOf
 } from './rpg-data';
+import { DEFAULT_LOOK } from './rpg-look';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -76,6 +77,8 @@ export interface Player extends Mover {
   // 振り分けたステータスのポイントと、まだ振り分けていないポイント(front#223)
   stats: Stats;
   statPoints: number;
+  // 見た目(front#224)
+  look: RpgLook;
   lastCombat: number;
   regen: number;
   dead: boolean;
@@ -141,7 +144,7 @@ export class RpgGame {
   readonly player: Player = {
     kind: 'player', x: 0, y: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
     level: 1, exp: 0, hp: maxHpOf(ZERO_STATS), gold: 30, weapon: 'wood_sword', armor: 'cloth',
-    inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, lastCombat: -99, regen: 0, dead: false
+    inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, look: { ...DEFAULT_LOOK }, lastCombat: -99, regen: 0, dead: false
   };
 
   time = 0;
@@ -217,6 +220,7 @@ export class RpgGame {
       p.stats = { ...ZERO_STATS };
       p.statPoints = totalStatPointsOf(p.level);
     }
+    p.look = { ...DEFAULT_LOOK, ...save.look };
     // たおれたまま保存されていたら、村で全回復した状態から始める
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
     this.loadMap(this.mapById(save.area) ?? this.homeArea());
@@ -245,8 +249,15 @@ export class RpgGame {
       x,
       y,
       stats: { ...p.stats },
-      statPoints: p.statPoints
+      statPoints: p.statPoints,
+      look: { ...p.look }
     };
+  }
+
+  /** 見た目を変える(front#224) */
+  setLook(look: RpgLook): void {
+    this.player.look = { ...look };
+    this.events.dirty();
   }
 
   // ===== ステータスの振り分け(front#223) =====

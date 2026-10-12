@@ -4,16 +4,16 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgMap, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import { ENEMIES, G, GROUND_CHARS, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
+import { lookFromColors } from '../../rpg/rpg-look';
+import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import {
-  BODY_COLORS,
   EditorTool,
-  HAIR_COLORS,
   MAP_SIZE,
   NPC_ROLES,
   PALETTE,
@@ -45,7 +45,7 @@ const ZOOM = { min: 0.3, max: 2 };
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule],
+  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -60,8 +60,6 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly palette = PALETTE;
   readonly themes = Object.entries(THEMES).map(([id, t]) => ({ id, label: t.label }));
   readonly roles = Object.entries(NPC_ROLES) as [RpgNpcRole, string][];
-  readonly hairColors = HAIR_COLORS;
-  readonly bodyColors = BODY_COLORS;
   readonly enemyTypes = Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
   readonly sizeRange = MAP_SIZE;
 
@@ -440,10 +438,18 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
-  setColor(sel: Selection, key: 'hair' | 'body', color: string): void {
+  // 見た目を選ぶ前の村人は、髪の色・服の色から作った見た目を出す
+  npcLook(npc: RpgMapNpc): RpgLook {
+    return npc.look ?? lookFromColors(npc.hair, npc.body);
+  }
+
+  // 見た目を変える(front#224)。前からある髪の色・服の色も合わせる
+  setNpcLook(sel: Selection, look: RpgLook): void {
     if (sel.kind !== 'npc') return;
     this.editor?.checkpoint();
-    sel.ref[key] = color;
+    sel.ref.look = look;
+    sel.ref.hair = look.hairColor;
+    sel.ref.body = look.clothesColor;
     this.markDirty();
   }
 

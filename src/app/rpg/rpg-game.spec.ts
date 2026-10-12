@@ -1,6 +1,9 @@
 import { RpgMap, RpgSave } from '../models/rpg.models';
 import { ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
+import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
+
+const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
 function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[] } {
   const result = {
@@ -46,6 +49,7 @@ function save(partial: Partial<RpgSave> = {}): RpgSave {
     area: 'forest', x: 4, y: 5,
     // Lv3 なので合計6ポイント(まだ振り分けていない)
     stats: { ...ZERO_STATS }, statPoints: 6,
+    look: LOOK,
     ...partial
   };
 }
@@ -82,7 +86,8 @@ describe('RpgGame', () => {
         level: 3, exp: 10, hp: 45, gold: 100, weapon: 'copper_sword', armor: 'cloth',
         items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
         area: 'forest', x: 4, y: 5,
-        stats: { ...ZERO_STATS }, statPoints: 6
+        stats: { ...ZERO_STATS }, statPoints: 6,
+        look: LOOK
       });
     });
 
@@ -94,6 +99,18 @@ describe('RpgGame', () => {
       expect(game.player.inv['unknown']).toBeUndefined();
       // 装備中のものは持ち物から消えない
       expect(game.player.inv['copper_sword']).toBe(1);
+    });
+
+    it('見た目を変えると、保存が必要になり、保存用の形にも入る', () => {
+      game.loadSave(save());
+      const look = { ...LOOK, hair: 'spiky', mouth: 'cat' };
+      game.setLook(look);
+
+      expect(ev.dirtyCount).toBe(1);
+      expect(game.toSaveInput().look).toEqual(look);
+      // 渡した見た目をあとで書き換えても、ゲームの見た目は変わらない
+      look.hair = 'bald';
+      expect(game.player.look.hair).toBe('spiky');
     });
 
     it('HPが0のまま保存されていたら、全回復した状態で始める', () => {
@@ -230,7 +247,7 @@ describe('RpgGame', () => {
       const area = buildAreaMap(map('test', {
         ground: ['wvg' + 'g'.repeat(9), ...Array.from({ length: 11 }, () => 'g'.repeat(12))],
         objects: [{ type: 'tree', x: 3, y: 0, torch: false }, { type: 'volcano', x: 6, y: 6, torch: false }],
-        npcs: [{ name: '村人', x: 4, y: 0, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [] }]
+        npcs: [{ name: '村人', x: 4, y: 0, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [], look: lookFromColors('#000000', '#000000') }]
       }));
 
       expect([0, 1, 2, 3, 4].map((x) => area.walkable(x, 0))).toEqual([false, false, true, false, false]);

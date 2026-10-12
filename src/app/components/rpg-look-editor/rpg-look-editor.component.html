@@ -1,0 +1,55 @@
+<div class="designer" [class.narrow]="layout() === 'narrow'">
+  <div class="preview-card">
+    <div class="preview-wrap"><canvas #preview width="400" height="400" aria-label="見た目のプレビュー"></canvas></div>
+    <div class="preview-tools">
+      <button type="button" class="tool" (click)="turn()">↔ 向きを変える</button>
+      <button type="button" class="tool" [class.on]="walking()" [attr.aria-pressed]="walking()" (click)="toggleWalk()">歩く</button>
+      <button type="button" class="tool" (click)="random()">🎲 おまかせ</button>
+    </div>
+  </div>
+
+  <div class="groups">
+    @for (part of parts; track part.key) {
+      <div class="group" role="group" [attr.aria-label]="part.label">
+        <h3>{{ part.label }}</h3>
+        <div class="options">
+          @for (o of part.list; track o[0]) {
+            <button
+              type="button"
+              class="opt"
+              [class.active]="look()[part.key] === o[0]"
+              [attr.aria-pressed]="look()[part.key] === o[0]"
+              [attr.aria-label]="part.label + ' ' + o[1]"
+              (click)="set(part.key, o[0])"
+            >
+              <canvas #thumb width="112" height="112" [attr.data-key]="part.key" [attr.data-id]="o[0]"></canvas>
+              <span>{{ o[1] }}</span>
+            </button>
+          }
+        </div>
+      </div>
+      @if (colorKeys(part.colors).length) {
+        <div class="colors-row">
+          @for (key of colorKeys(part.colors); track key) {
+            <div class="group" role="group" [attr.aria-label]="colorLists[key].label">
+              <h3>{{ colorLists[key].label }}</h3>
+              <div class="colors">
+                @for (c of colorLists[key].list; track c) {
+                  <button
+                    type="button"
+                    class="color"
+                    [class.active]="look()[key] === c"
+                    [attr.aria-pressed]="look()[key] === c"
+                    [style.background]="c"
+                    [attr.aria-label]="colorLists[key].label + ' ' + c"
+                    (click)="set(key, c)"
+                  ></button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

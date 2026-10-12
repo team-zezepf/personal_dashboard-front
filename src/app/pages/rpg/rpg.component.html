@@ -197,6 +197,23 @@
       </div>
     }
 
+    @if (lookDraft(); as look) {
+      <div class="modal" (click)="closeLook()">
+        <div class="modal-card look-card" role="dialog" aria-label="見た目" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <span>🧑 見た目を変える</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeLook()">×</button>
+          </div>
+          <p class="modal-sub">武器は装備しているものを持ちます。</p>
+          <app-rpg-look-editor [look]="look" [swordColor]="lookSwordColor()" (lookChange)="lookDraft.set($event)" />
+          <div class="status-actions">
+            <button type="button" class="btn ghost" (click)="closeLook()">やめる</button>
+            <button type="button" class="btn" (click)="confirmLook()">決める</button>
+          </div>
+        </div>
+      </div>
+    }
+
     @if (knockedOut()) {
       <div class="banner">たおれてしまった…</div>
     }
@@ -224,6 +241,7 @@
         <h2>装備</h2>
         <div class="slot"><span class="k">武器</span><span class="icon">{{ s.weapon.icon }}</span>{{ s.weapon.name }}<span class="plus">{{ s.weapon.plus }}</span></div>
         <div class="slot"><span class="k">防具</span><span class="icon">{{ s.armor.icon }}</span>{{ s.armor.name }}<span class="plus">{{ s.armor.plus }}</span></div>
+        <button type="button" class="btn ghost look-button" (click)="openLook()">🧑 見た目を変える</button>
       </section>
 
       <section class="card" aria-label="持ち物">

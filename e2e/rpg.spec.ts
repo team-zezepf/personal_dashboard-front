@@ -4,6 +4,7 @@ import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence
 
 // 前回の実行の続きにならないよう、セーブデータを最初の状態(始まりの草原の村・30G・回復薬×3)に戻す。
 // level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
+// 見た目も最初の見た目(ショート・シャツ)に戻す。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
 async function resetRpg(level = 1): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
@@ -26,7 +27,11 @@ async function resetRpg(level = 1): Promise<void> {
       level, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
       area: 'plain', x: 6, y: 7,
-      stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3
+      stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3,
+      look: {
+        hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
+        mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc'
+      }
     }
   });
   await graphql('mutation($amount: Int!, $reason: String) { addPoints(amount: $amount, reason: $reason) { id } }', {
@@ -225,6 +230,69 @@ test(
       await expect(status.getByText('Lv 2')).toBeVisible();
       expect(await statValue(page, '攻撃')).toBe('14');
       expect(await statValue(page, 'HP')).toBe('62');
+    });
+  }
+);
+
+test(
+  'E2E-11 RPGで、プレイヤーの見た目を変えると、開き直しても残っている',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを最初の状態(ショート・ふつうの目・シャツ)に戻してある'],
+    expected: [
+      'サイド欄の「見た目を変える」を押すと「見た目」の画面が開き、今の見た目(ショート・ふつう・シャツ)が選ばれている',
+      '目を「メガネ」にすると、目の色の欄が消える',
+      '「やめる」で閉じると、見た目は変わらない',
+      '髪型・目・服・服の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
+      '画面を読み込み直して「見た目を変える」を開いても、選んだ見た目のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetRpg();
+    await loginAsE2E(page, step);
+    const dialog = page.getByRole('dialog', { name: '見た目' });
+    const option = (group: string, name: string) => dialog.getByRole('group', { name: group, exact: true }).getByRole('button', { name: `${group} ${name}` });
+
+    await step('RPG(/rpg)を開き、サイド欄の「見た目を変える」を押す', '「見た目」の画面が開き、ショート・ふつう・シャツが選ばれている', async () => {
+      await page.goto('/rpg');
+      await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
+      await expect(option('髪型', 'ショート')).toHaveAttribute('aria-pressed', 'true');
+      await expect(option('目', 'ふつう')).toHaveAttribute('aria-pressed', 'true');
+      await expect(option('服', 'シャツ')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step('目の「メガネ」を押す', '目の色の欄が消える', async () => {
+      await expect(dialog.getByRole('group', { name: '目の色' })).toBeVisible();
+      await option('目', 'メガネ').click();
+      await expect(dialog.getByRole('group', { name: '目の色' })).toHaveCount(0);
+    });
+
+    await step('「やめる」で閉じて、もう一度開く', '目は「ふつう」のまま', async () => {
+      await dialog.getByRole('button', { name: 'やめる' }).click();
+      await expect(dialog).toHaveCount(0);
+      await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
+      await expect(option('目', 'ふつう')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step('ポニーテール・メガネ・ローブ・紫の服を選んで「決める」を押す', '画面が閉じ、ログに「見た目を変えた」と出る', async () => {
+      await option('髪型', 'ポニーテール').click();
+      await option('目', 'メガネ').click();
+      await option('服', 'ローブ').click();
+      await dialog.getByRole('button', { name: '服の色 #8b5cf6' }).click();
+      await dialog.getByRole('button', { name: '決める' }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('region', { name: 'ログ' }).getByText('見た目を変えた')).toBeVisible();
+    });
+
+    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール・メガネ・ローブ・紫の服のまま', async () => {
+      // 見た目は「決める」ですぐ保存する。保存が終わるのを待ってから読み込み直す
+      await page.waitForLoadState('networkidle');
+      await page.reload();
+      await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
+      await expect(option('髪型', 'ポニーテール')).toHaveAttribute('aria-pressed', 'true');
+      await expect(option('目', 'メガネ')).toHaveAttribute('aria-pressed', 'true');
+      await expect(option('服', 'ローブ')).toHaveAttribute('aria-pressed', 'true');
+      await expect(dialog.getByRole('button', { name: '服の色 #8b5cf6' })).toHaveAttribute('aria-pressed', 'true');
     });
   }
 );

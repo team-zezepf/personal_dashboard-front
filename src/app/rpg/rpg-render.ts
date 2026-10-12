@@ -1,5 +1,7 @@
-import { ENEMIES, G, ITEMS, StaticObj, TH, TW } from './rpg-data';
+import { ENEMIES, G, StaticObj, TH, TW, swordColorOf } from './rpg-data';
 import { Enemy, RpgGame, iso } from './rpg-game';
+import { LookPose, drawLook, lookFromColors } from './rpg-look';
+import { RpgLook } from '../models/rpg.models';
 
 type Pt = [number, number];
 
@@ -28,13 +30,6 @@ export function shade(hex: string, factor: number): string {
   const c = (v: number) => Math.round(v * factor);
   return `rgb(${c(n >> 16)}, ${c((n >> 8) & 255)}, ${c(n & 255)})`;
 }
-
-const ARMOR_COLORS: Record<string, string> = {
-  star_robe: '#8b5cf6',
-  leather: '#a16207',
-  chain_mail: '#64748b',
-  magic_armor: '#0ea5e9'
-};
 
 /**
  * RPGの画面を Canvas 2D に描く。絵は図形だけの仮の絵(あとでドット絵に差し替えられるよう、描き分けは種類ごとの関数にしておく)。
@@ -311,7 +306,7 @@ export class RpgRenderer {
       if (!this.onScreen(sx, sy, 160)) continue;
       if (o.kind === 'static') this.drawStatic(o, sx, sy);
       else if (o.kind === 'npc') {
-        this.drawChibi(sx, sy, { body: o.body, hair: o.hair, dir: o.dir, phase: o.x });
+        this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
         this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
         if (o.notice) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3);
       } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
@@ -486,7 +481,16 @@ export class RpgRenderer {
     this.poly([eave(B), eave(R), apex], roofDark);
   }
 
-  // 二頭身のキャラクター(プレイヤー・村人・ダークナイト・闇の魔導士)
+  // プレイヤー・村人(見た目を選べるキャラクター。front#224)
+  private drawLook(sx: number, sy: number, look: RpgLook, pose: LookPose): void {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.translate(sx, sy);
+    drawLook(ctx, look, pose);
+    ctx.restore();
+  }
+
+  // 二頭身の敵(ダークナイト・闇の魔導士)
   private drawChibi(sx: number, sy: number, o: ChibiOptions): void {
     const ctx = this.ctx;
     const sc = o.scale ?? 1;
@@ -581,17 +585,13 @@ export class RpgRenderer {
     const p = this.game.player;
     const ctx = this.ctx;
     if (p.dead) ctx.globalAlpha = 0.45;
-    const weapon = ITEMS[p.weapon];
-    const swordColor =
-      p.weapon === 'star_sword' ? '#fde047' : p.weapon === 'mithril_sword' ? '#a5f3fc' : (weapon?.atk ?? 0) >= 6 ? '#cbd5e1' : '#c08a52';
-    this.drawChibi(sx + p.lunge * 7 * p.dir, sy, {
-      body: ARMOR_COLORS[p.armor] ?? '#3b82f6',
-      hair: '#6b3f1f',
+    this.drawLook(sx + p.lunge * 7 * p.dir, sy, p.look, {
       dir: p.dir,
+      time: this.time,
       moving: p.moving,
       hurt: p.hurt > 0,
       sword: true,
-      swordColor,
+      swordColor: swordColorOf(p.weapon),
       slash: p.lunge
     });
     ctx.globalAlpha = 1;

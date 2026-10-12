@@ -37,6 +37,13 @@ export const SHOP_ITEMS = ['potion', 'hipotion', 'copper_sword', 'iron_sword', '
 // ポイント交換所の品物のアイコン(名前・値段はAPIから受け取る)
 export const POINT_SHOP_ICONS: Record<string, string> = { star_sword: '🌟', star_robe: '✨', gold_100: '💰' };
 
+// 手に持つ剣の色(ゲーム画面と、見た目を選ぶ欄のプレビュー)
+export function swordColorOf(weapon: string): string {
+  if (weapon === 'star_sword') return '#fde047';
+  if (weapon === 'mithril_sword') return '#a5f3fc';
+  return (ITEMS[weapon]?.atk ?? 0) >= 6 ? '#cbd5e1' : '#c08a52';
+}
+
 export function itemStatLabel(item: ItemDef): string {
   return item.atk ? `攻撃 +${item.atk}` : `防御 +${item.def ?? 0}`;
 }

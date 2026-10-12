@@ -519,26 +519,6 @@ textarea {
   margin-bottom: 10px;
 }
 
-.colors {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.color {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--card);
-  box-shadow: 0 0 0 1px var(--line);
-  cursor: pointer;
-  padding: 0;
-}
-
-.color.on {
-  box-shadow: 0 0 0 2px var(--indigo);
-}
-
 .checks {
   list-style: none;
   margin: 0;
