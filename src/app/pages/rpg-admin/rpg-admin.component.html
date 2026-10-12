@@ -261,22 +261,6 @@
                         }
                       </select>
                     </label>
-                    <div class="field">
-                      <span>髪の色</span>
-                      <div class="colors">
-                        @for (c of hairColors; track c) {
-                          <button type="button" class="color" [class.on]="sel.ref.hair === c" [style.background]="c" [attr.aria-label]="'髪の色 ' + c" (click)="setColor(sel, 'hair', c)"></button>
-                        }
-                      </div>
-                    </div>
-                    <div class="field">
-                      <span>服の色</span>
-                      <div class="colors">
-                        @for (c of bodyColors; track c) {
-                          <button type="button" class="color" [class.on]="sel.ref.body === c" [style.background]="c" [attr.aria-label]="'服の色 ' + c" (click)="setColor(sel, 'body', c)"></button>
-                        }
-                      </div>
-                    </div>
                     <label class="field">
                       <span>セリフ（1行が1回分。クリックで次の行へ進む）</span>
                       <textarea rows="5" [ngModel]="npcLines(sel)" (focus)="beginEdit()" (ngModelChange)="setNpcLines(sel, $event)"></textarea>
@@ -286,6 +270,10 @@
                       話しかけるまで頭に「!」を出す
                     </label>
                     <p class="muted small">役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。</p>
+                    <div class="field look-field" role="region" aria-label="村人の見た目">
+                      <span>見た目</span>
+                      <app-rpg-look-editor layout="narrow" [look]="npcLook(sel.ref)" (lookChange)="setNpcLook(sel, $event)" />
+                    </div>
                     <button type="button" class="btn small" (click)="deleteSelected()">この村人を消す</button>
                   }
                   @case ('portal') {

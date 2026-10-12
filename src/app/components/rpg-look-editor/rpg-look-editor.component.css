@@ -1,0 +1,189 @@
+:host {
+  display: block;
+}
+
+.designer {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* プレビューは、選ぶ欄をスクロールしても画面に残す */
+.preview-card {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+}
+
+.preview-wrap {
+  position: relative;
+  height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(#8fd0f5, #d6f2fd);
+}
+
+/* 足元の芝生(ゲームのマスと同じひし形) */
+.preview-wrap::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 180px;
+  height: 90px;
+  transform: translateX(-50%);
+  background: repeating-conic-gradient(#8fd16a 0 25%, #88cb63 0 50%) 0 0 / 30px 30px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.preview-wrap canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 100%;
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.preview-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.tool {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tool.on {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: var(--on-primary);
+}
+
+.group {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.groups > .group:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.group h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.colors-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0 16px;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 70px;
+  padding: 4px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.opt canvas {
+  width: 52px;
+  height: 52px;
+}
+
+.opt.active {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+  font-weight: 700;
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--card);
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+
+.color.active {
+  box-shadow: 0 0 0 2px var(--indigo);
+}
+
+/* マップ作成画面の右側の欄: プレビューを上に、選ぶ欄を下に縦に並べる */
+.designer.narrow {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
+.designer.narrow .preview-wrap {
+  height: 170px;
+}
+
+.designer.narrow .preview-wrap::after {
+  width: 130px;
+  height: 65px;
+  bottom: 8px;
+}
+
+.designer.narrow .opt {
+  width: 60px;
+  font-size: 10px;
+}
+
+.designer.narrow .opt canvas {
+  width: 44px;
+  height: 44px;
+}
+
+.designer.narrow .colors-row {
+  grid-template-columns: 1fr;
+}
+
+/* 右側の欄の上の余白(14px)の分だけ上で止め、その間に下の部品がのぞかないよう余白も塗る */
+.designer.narrow .preview-card {
+  top: -14px;
+  padding-top: 14px;
+  background: var(--surface);
+}
+
+.designer.narrow .tool {
+  padding: 4px 7px;
+  font-size: 11px;
+}

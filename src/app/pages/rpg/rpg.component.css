@@ -276,6 +276,8 @@
 .modal {
   position: absolute;
   inset: 0;
+  /* 左下のパネル・歯車の設定より手前に出す(カーソルの宝石はさらに手前) */
+  z-index: 6;
   background: rgba(17, 24, 39, 0.35);
   display: flex;
   align-items: center;
@@ -608,6 +610,16 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   opacity: 0.9;
+}
+
+/* ===== 見た目のモーダル(front#224) ===== */
+.look-card {
+  width: min(860px, calc(100% - 36px));
+}
+
+.look-button {
+  width: 100%;
+  margin-top: 8px;
 }
 
 /* ===== ステータスのモーダル ===== */

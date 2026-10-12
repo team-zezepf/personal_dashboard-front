@@ -1,5 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
 import { ENEMIES, StaticType } from './rpg-data';
+import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
 
@@ -81,8 +82,6 @@ export const PALETTE: PaletteTab[] = [
 ];
 
 export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所' };
-export const HAIR_COLORS = ['#6b3f1f', '#8b5a2b', '#e5e7eb', '#fcd34d', '#374151', '#a7f3d0', '#f472b6'];
-export const BODY_COLORS = ['#3b82f6', '#4b9e5f', '#f08a4b', '#8b5cf6', '#10b981', '#ef4444', '#64748b'];
 export const MAP_SIZE = { min: 12, max: 50 };
 
 export type Selection =
@@ -249,9 +248,11 @@ export class RpgMapEditor {
       case 'npc': {
         if (!first || !canPlace) return null;
         const n = this.map.npcs.length;
+        // 置くたびに髪の色・服の色を変える(見た目は右側の欄で選び直せる)
+        const hair = HAIR_COLORS[n % HAIR_COLORS.length];
+        const body = CLOTHES_COLORS[n % CLOTHES_COLORS.length];
         const npc: RpgMapNpc = {
-          name: `村人${n + 1}`, x, y, hair: HAIR_COLORS[n % HAIR_COLORS.length], body: BODY_COLORS[n % BODY_COLORS.length],
-          role: 'talk', notice: false, lines: ['こんにちは！']
+          name: `村人${n + 1}`, x, y, hair, body, role: 'talk', notice: false, lines: ['こんにちは！'], look: lookFromColors(hair, body)
         };
         this.map.npcs.push(npc);
         return { kind: 'npc', ref: npc };
