@@ -1,4 +1,5 @@
-import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, swordColorOf } from './rpg-data';
+import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
+import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
@@ -37,6 +38,8 @@ export class RpgRenderer {
   // ホタルの位置はマップの広さに対する割合(0〜1)で持つ
   private readonly fireflies = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6 }));
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
+  // 家の形・向きごとの部品(front#236。毎回求めないよう、覚えておく)
+  private readonly houses = new Map<string, { pieces: HousePiece[]; ridge: number; door: { at: readonly [number, number]; normal: readonly [number, number] } }>();
   // 隣のエリアへスライドしている間、新しいエリアをずらして描く量(画面上の位置)
   private shift: [number, number] = [0, 0];
 
@@ -360,8 +363,9 @@ export class RpgRenderer {
     const map = game.map;
     type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player;
     const list: Drawable[] = [...map.statics, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
-    // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物を先に
-    list.sort((a, b) => a.x + a.y - (b.x + b.y) || (a.kind === 'static' ? -1 : 1));
+    // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物を先に。大きな家は、いちばん手前のマスで並べる
+    const depth = (o: Drawable) => (o.kind === 'static' ? staticDepth(o) : o.x + o.y);
+    list.sort((a, b) => depth(a) - depth(b) || (a.kind === 'static' ? -1 : 1));
     if (!map.hasHeights) {
       for (const o of list) this.drawEntity(o);
       return;
@@ -370,7 +374,7 @@ export class RpgRenderer {
     // 手前の高いマスがあとから描かれて、奥のものを隠す(front#225)
     const rows: Drawable[][] = Array.from({ length: map.w + map.h - 1 }, () => []);
     for (const o of list) {
-      const s = Math.min(rows.length - 1, Math.max(0, Math.round(o.x) + Math.round(o.y)));
+      const s = Math.min(rows.length - 1, Math.max(0, o.kind === 'static' ? depth(o) : Math.round(o.x) + Math.round(o.y)));
       rows[s].push(o);
     }
     for (let s = 0; s < rows.length; s++) {
@@ -544,27 +548,52 @@ export class RpgRenderer {
     }
   }
 
+  /**
+   * 家(front#236)。形(1×1・2×1・2×2・L字)と向きは rpg-house.ts で求め、(cx, cy) は占めるマスのいちばん左上。
+   * 屋根は寄棟で、マスごとの部品(壁 → 屋根)を奥のマスから順に描く(L字の谷や棟の重なりが正しくなる)
+   */
   private drawHouse(o: StaticObj, cx: number, cy: number): void {
-    const h = 34;
-    const s = 0.82;
-    const L: Pt = [cx - (TW / 2) * s, cy];
-    const R: Pt = [cx + (TW / 2) * s, cy];
-    const B: Pt = [cx, cy + (TH / 2) * s];
-    const T: Pt = [cx, cy - (TH / 2) * s];
-    const up = ([x, y]: Pt, d: number): Pt => [x, y - d];
-    this.poly([L, B, up(B, h), up(L, h)], '#f4e4c9');
-    this.poly([B, R, up(R, h), up(B, h)], '#e3cda8');
-    this.poly([[cx - 22, cy - 8], [cx - 12, cy - 3], [cx - 12, cy - 15], [cx - 22, cy - 20]], '#7cc3ee');
-    this.poly([[cx + 8, cy + 9], [cx + 17, cy + 4.5], [cx + 17, cy - 13], [cx + 8, cy - 8.5]], '#9b6a3e');
-    const e = 1.18;
-    const apex: Pt = [cx, cy - h - 34];
-    const eave = ([x, y]: Pt): Pt => [cx + (x - cx) * e, cy - h + (y - cy) * e];
-    const roof = o.roof ?? '#e0605a';
-    const roofDark = shade(roof, 0.86);
-    this.poly([eave(T), eave(L), apex], roofDark);
-    this.poly([eave(T), eave(R), apex], roofDark);
-    this.poly([eave(L), eave(B), apex], roof);
-    this.poly([eave(B), eave(R), apex], roofDark);
+    const key = `${o.shape ?? '1x1'}:${o.rotation ?? 0}`;
+    let house = this.houses.get(key);
+    if (!house) {
+      const geo = houseGeometry(o.shape, o.rotation);
+      house = { pieces: housePieces(geo), ridge: geo.ridge, door: geo.door };
+      this.houses.set(key, house);
+    }
+    const wall = 34;
+    const top = wall + 34 + (house.ridge - 0.5) * 28;
+    const roof = o.roof ?? DEFAULT_ROOF;
+    const at = ([x, y]: readonly [number, number], z = 0): Pt => {
+      const [sx, sy] = iso(x, y);
+      return [cx + sx, cy + sy - z];
+    };
+    const ctx = this.ctx;
+    for (const piece of house.pieces) {
+      for (const w of piece.walls) {
+        this.poly([at(w.a), at(w.b), at(w.b, wall), at(w.a, wall)], w.normal[1] === 1 ? '#f4e4c9' : '#e3cda8');
+        // 壁の1マス分の真ん中に、扉(扉のある壁)か窓
+        const c: [number, number] = [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2];
+        const { at: door, normal } = house.door;
+        const isDoor = normal[0] === w.normal[0] && normal[1] === w.normal[1] && Math.hypot(c[0] - door[0], c[1] - door[1]) < 0.2;
+        const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
+        const d = [(w.b[0] - w.a[0]) / len, (w.b[1] - w.a[1]) / len];
+        const [hw, z0, z1] = isDoor ? [0.15, 0, 22] : [0.13, 13, 25];
+        const p1: [number, number] = [c[0] - d[0] * hw, c[1] - d[1] * hw];
+        const p2: [number, number] = [c[0] + d[0] * hw, c[1] + d[1] * hw];
+        this.poly([at(p1, z0), at(p2, z0), at(p2, z1), at(p1, z1)], isDoor ? '#9b6a3e' : '#7cc3ee');
+      }
+      for (const f of piece.roof) {
+        // 左下を向いた面がいちばん明るい
+        const k = f.normal[1] === 1 ? 1 : f.normal[0] === 1 ? 0.86 : f.normal[1] === -1 ? 0.78 : 0.82;
+        const color = k === 1 ? roof : shade(roof, k);
+        this.poly(f.points.map((p) => at([p.x, p.y], wall + p.z * (top - wall))), color);
+        // マスごとに切り分けたつなぎ目に、すき間が見えないようにする
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.8;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+    }
   }
 
   // プレイヤー・村人(見た目を選べるキャラクター。front#224)

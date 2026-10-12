@@ -1,6 +1,7 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
 import { RpgMap } from '../models/rpg.models';
+import { objectTiles } from './rpg-house';
 
 export type ItemType = 'use' | 'weapon' | 'armor';
 
@@ -115,6 +116,14 @@ export interface StaticObj {
   y: number;
   torch?: boolean;
   roof?: string;
+  // 家の形と向き(front#236)。x, y は占めるマスのいちばん左上
+  shape?: string;
+  rotation?: number;
+}
+
+/** 奥から順に描くときの奥行き。大きな家は、いちばん手前のマスで並べる */
+export function staticDepth(o: StaticObj): number {
+  return Math.max(...objectTiles(o).map(([x, y]) => x + y));
 }
 
 export interface ThemeDef {
@@ -233,9 +242,11 @@ export class AreaMap {
     this.hasHeights = this.heights.some((row) => row.some((v) => v > 0));
     this.solid = Array.from({ length: h }, () => Array<boolean>(w).fill(false));
     for (const o of statics) {
-      // 火山は大きいので、まわり1マスも通れない
+      // 火山は大きいので、まわり1マスも通れない。家は占めるマスがすべて通れない
       const r = o.type === 'volcano' ? 1 : 0;
-      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (this.inMap(o.x + dx, o.y + dy)) this.solid[o.y + dy][o.x + dx] = true;
+      for (const [tx, ty] of objectTiles(o)) {
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (this.inMap(tx + dx, ty + dy)) this.solid[ty + dy][tx + dx] = true;
+      }
     }
   }
 
@@ -279,7 +290,10 @@ export function buildAreaMap(map: RpgMap): AreaMap {
   );
   const statics: StaticObj[] = map.objects
     .filter((o) => (STATIC_TYPES as string[]).includes(o.type))
-    .map((o) => ({ kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined }));
+    .map((o) => ({
+      kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
+      shape: o.shape ?? undefined, rotation: o.rotation ?? undefined
+    }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>
     Array.from({ length: map.width }, (_, x) => Math.min(MAX_HEIGHT, Math.max(0, Number(map.heights?.[y]?.[x] ?? 0) || 0)))

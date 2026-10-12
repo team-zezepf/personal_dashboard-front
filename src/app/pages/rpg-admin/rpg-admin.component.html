@@ -303,33 +303,13 @@
               @if (selected(); as sel) {
                 @switch (sel.kind) {
                   @case ('npc') {
-                    <div class="selected-title">🧑 村人 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <label class="field">
-                      <span>名前</span>
-                      <input type="text" maxlength="30" [ngModel]="sel.ref.name" (focus)="beginEdit()" (ngModelChange)="sel.ref.name = $event; edited()" />
-                    </label>
-                    <label class="field">
-                      <span>役割</span>
-                      <select [ngModel]="sel.ref.role" (focus)="beginEdit()" (ngModelChange)="sel.ref.role = $event; edited()">
-                        @for (r of roles; track r[0]) {
-                          <option [value]="r[0]">{{ r[1] }}</option>
-                        }
-                      </select>
-                    </label>
-                    <label class="field">
-                      <span>セリフ（1行が1回分。クリックで次の行へ進む）</span>
-                      <textarea rows="5" [ngModel]="npcLines(sel)" (focus)="beginEdit()" (ngModelChange)="setNpcLines(sel, $event)"></textarea>
-                    </label>
-                    <label class="check">
-                      <input type="checkbox" [ngModel]="sel.ref.notice" (ngModelChange)="beginEdit(); sel.ref.notice = $event; edited()" />
-                      話しかけるまで頭に「!」を出す
-                    </label>
-                    <p class="muted small">役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。</p>
-                    <div class="field look-field" role="region" aria-label="村人の見た目">
-                      <span>見た目</span>
-                      <app-rpg-look-editor layout="narrow" [look]="npcLook(sel.ref)" (lookChange)="setNpcLook(sel, $event)" />
-                    </div>
-                    <button type="button" class="btn small" (click)="deleteSelected()">この村人を消す</button>
+                    <div class="selected-title">🧑 NPC <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <p class="muted small">{{ sel.ref.name }}</p>
+                    <button type="button" class="btn small" (click)="openModal(sel)">NPCの中身を変える</button>
+                  }
+                  @case ('house') {
+                    <div class="selected-title">🏠 家 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <button type="button" class="btn small" (click)="openModal(sel)">家の形・向き・色を変える</button>
                   }
                   @case ('portal') {
                     <div class="selected-title">🌀 ポータル <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
@@ -387,7 +367,7 @@
                 }
               } @else {
                 <p class="muted small">
-                  「その他」の「選ぶ・動かす」で、置いた村人・ポータル・敵をクリックすると、ここで中身を変えられます。
+                  「その他」の「選ぶ・動かす」で、置いたポータル・敵をクリックすると、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
                 </p>
               }
             </div>
@@ -452,6 +432,121 @@
         <div class="modal-actions">
           <button type="button" class="btn" (click)="newDungeonOpen.set(false)">やめる</button>
           <button type="button" class="btn primary" [disabled]="saving()" (click)="createDungeon()">作る</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (npcModal() && selected(); as sel) {
+    @if (sel.kind === 'npc') {
+      <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+        <div class="modal-card wide" role="dialog" aria-label="NPC">
+          <h2>🧑 NPC <span class="muted small">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></h2>
+          <div class="npc-modal-body">
+            <div>
+              <label class="field">
+                <span>名前</span>
+                <input type="text" maxlength="30" [ngModel]="sel.ref.name" (focus)="beginEdit()" (ngModelChange)="sel.ref.name = $event; edited()" />
+              </label>
+              <label class="field">
+                <span>役割</span>
+                <select [ngModel]="sel.ref.role" (focus)="beginEdit()" (ngModelChange)="sel.ref.role = $event; edited()">
+                  @for (r of roles; track r[0]) {
+                    <option [value]="r[0]">{{ r[1] }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field">
+                <span>セリフ（1行が1回分。クリックで次の行へ進む）</span>
+                <textarea rows="6" [ngModel]="npcLines(sel)" (focus)="beginEdit()" (ngModelChange)="setNpcLines(sel, $event)"></textarea>
+              </label>
+              <label class="check">
+                <input type="checkbox" [ngModel]="sel.ref.notice" (ngModelChange)="beginEdit(); sel.ref.notice = $event; edited()" />
+                話しかけるまで頭に「!」を出す
+              </label>
+              <p class="muted small">役割が「道具屋」「ポイント交換所」のときは、セリフのあとにお店が開きます。</p>
+            </div>
+            <div class="field look-field" role="region" aria-label="NPCの見た目">
+              <span>見た目</span>
+              <app-rpg-look-editor [look]="npcLook(sel.ref)" (lookChange)="setNpcLook(sel, $event)" />
+            </div>
+          </div>
+          <div class="modal-actions spread">
+            <button type="button" class="btn danger" (click)="deleteSelected()">このNPCを消す</button>
+            <button type="button" class="btn primary" (click)="closeModal()">閉じる</button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  @if (houseModal(); as house) {
+    <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+      <div class="modal-card house-card" role="dialog" aria-label="家">
+        <h2>🏠 家 <span class="muted small">（x {{ house.x }} ・ y {{ house.y }}）</span></h2>
+        <div class="house-modal-body">
+          <div>
+            <div class="field">
+              <span>形</span>
+              <div class="shapes">
+                @for (s of houseShapes; track s.id) {
+                  <button type="button" class="shape" [class.active]="houseDraft().shape === s.id" [attr.aria-pressed]="houseDraft().shape === s.id" (click)="setHouseShape(s.id)">
+                    <svg viewBox="-60 -70 120 90" aria-hidden="true">
+                      @for (p of housePolygons(s.id, s.id === houseDraft().shape ? houseDraft().rotation : 0, houseDraft().roof, 0.55); track $index) {
+                        <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
+                      }
+                    </svg>
+                    {{ s.label }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="field">
+              <span>向き</span>
+              <div class="rotate-row">
+                <button type="button" class="btn" (click)="rotateHouse()">↻ 回す</button>
+                <span class="muted small">{{ houseDraft().rotation * 90 }}°（扉は{{ houseDoorLabel() }}）</span>
+              </div>
+            </div>
+            <div class="field">
+              <span>屋根の色</span>
+              <div class="roof-colors">
+                @for (c of roofColors; track c) {
+                  <button
+                    type="button"
+                    class="roof-color"
+                    [class.active]="houseDraft().roof === c"
+                    [style.background]="c"
+                    [attr.aria-label]="'屋根の色 ' + c"
+                    (click)="setRoof(c)"
+                  ></button>
+                }
+                <label class="muted small custom-color">
+                  好きな色 <input type="color" [value]="houseDraft().roof" (input)="setRoof($any($event.target).value)" />
+                </label>
+              </div>
+            </div>
+            @if (houseProblem()) {
+              <p class="house-problem" role="alert">{{ houseProblem() }}。向きか形を変えてください。</p>
+            }
+          </div>
+          <div>
+            <div class="house-preview">
+              <svg viewBox="-150 -130 300 220" aria-label="家の見本">
+                @for (p of housePolygons(houseDraft().shape, houseDraft().rotation, houseDraft().roof, 1.2, true); track $index) {
+                  <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
+                }
+              </svg>
+            </div>
+            <p class="muted small">家が占めるマスはすべて通れません。うすい青の印が扉の前のマスです。</p>
+          </div>
+        </div>
+        <div class="modal-actions spread">
+          <button type="button" class="btn danger" (click)="deleteSelected()">この家を消す</button>
+          <span>
+            <button type="button" class="btn" (click)="closeModal()">やめる</button>
+            <button type="button" class="btn primary" [disabled]="!!houseProblem()" (click)="applyHouse()">決める</button>
+          </span>
         </div>
       </div>
     </div>

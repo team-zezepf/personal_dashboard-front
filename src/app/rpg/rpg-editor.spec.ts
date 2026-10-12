@@ -1,4 +1,4 @@
-import { RpgMap } from '../models/rpg.models';
+import { RpgMap, RpgMapObject } from '../models/rpg.models';
 import { RpgMapEditor, blankMap, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
@@ -43,14 +43,78 @@ describe('RpgMapEditor', () => {
 
   it('置物は同じマスのものと置き換わり、敵は空いている通れるマスにだけ置ける', () => {
     editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
-    editor.apply({ kind: 'object', type: 'house', roof: '#5b8def' }, 1, 1, true);
+    editor.apply({ kind: 'object', type: 'rock' }, 1, 1, true);
     editor.apply({ kind: 'enemy', type: 'slime' }, 1, 1, true);
     editor.apply({ kind: 'ground', ground: 'v' }, 2, 2, true);
     editor.apply({ kind: 'enemy', type: 'slime' }, 2, 2, true);
     editor.apply({ kind: 'enemy', type: 'slime' }, 3, 3, true);
 
-    expect(editor.map.objects).toEqual([{ type: 'house', x: 1, y: 1, roof: '#5b8def', torch: false }]);
+    expect(editor.map.objects).toEqual([{ type: 'rock', x: 1, y: 1, roof: null, torch: false }]);
     expect(editor.map.enemies).toEqual([{ type: 'slime', x: 3, y: 3 }]);
+  });
+
+  describe('家(front#236)', () => {
+    it('家は空いたマスに1×1で置き、置いた家を選んだ状態にする。ふさがったマス・ドラッグの途中には置かない', () => {
+      editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
+      expect(editor.apply({ kind: 'object', type: 'house' }, 1, 1, true)).toBeNull();
+
+      const sel = editor.apply({ kind: 'object', type: 'house' }, 4, 4, true);
+      expect(sel?.kind).toBe('house');
+      expect(sel?.ref).toEqual({ type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0 });
+      expect(editor.apply({ kind: 'object', type: 'house' }, 6, 6, false)).toBeNull();
+    });
+
+    it('形・向きを変えると、占めるマスすべてで重なり・はみ出しを確かめる', () => {
+      const house = editor.apply({ kind: 'object', type: 'house' }, 4, 4, true)!.ref as RpgMapObject;
+      editor.apply({ kind: 'npc' }, 5, 5, true);
+
+      // 2×2 は NPC(5,5) と重なる
+      expect(editor.houseProblem(house, 4, 4, '2x2', 0)).toBe('NPC「NPC1」と重なります');
+      expect(editor.setHouse(house, '2x2', 0, '#5b8def')).toBe(false);
+      expect(house.shape).toBe('1x1');
+      // L字(向き0)は (5,5) が欠けるので置ける
+      expect(editor.setHouse(house, 'L', 0, '#5b8def')).toBe(true);
+      expect(house).toMatchObject({ shape: 'L', rotation: 0, roof: '#5b8def' });
+      // 占めるマスのどこでも、家として選べ・ふさがっている
+      expect(editor.entityAt(5, 4)).toEqual({ kind: 'house', ref: house });
+      expect(editor.occupied(4, 5)).toBe('object');
+      expect(editor.occupied(5, 5)).toBe('npc');
+      // 右の端・水のマスにかかる
+      expect(editor.houseProblem(house, 13, 0, '2x1', 0)).toBe('マップの外にはみ出します');
+      editor.apply({ kind: 'ground', ground: 'w' }, 9, 1, true);
+      expect(editor.houseProblem(house, 8, 0, '2x2', 0)).toBe('水・「なし」のマスにかかります');
+    });
+
+    it('家は、占めるマスのどこを消しても家ごと消え、動かすときも重なるマスには動かせない', () => {
+      const house = editor.apply({ kind: 'object', type: 'house' }, 4, 4, true)!.ref as RpgMapObject;
+      editor.setHouse(house, '2x2', 0, '#e0605a');
+      editor.apply({ kind: 'object', type: 'tree' }, 8, 8, true);
+
+      expect(editor.moveTo({ kind: 'house', ref: house }, 7, 7)).toBe(false);
+      expect(editor.moveTo({ kind: 'house', ref: house }, 1, 1)).toBe(true);
+      expect([house.x, house.y]).toEqual([1, 1]);
+
+      expect(editor.removeAt(2, 2)).toBe(true);
+      expect(editor.map.objects.map((o) => o.type)).toEqual(['tree']);
+    });
+
+    it('広さを変えて、はみ出す家は消す', () => {
+      const house = editor.apply({ kind: 'object', type: 'house' }, 11, 10, true)!.ref as RpgMapObject;
+      editor.setHouse(house, '2x2', 0, '#e0605a');
+      editor.resize(14, 12);
+      expect(editor.map.objects).toHaveLength(1);
+      editor.resize(12, 12);
+      expect(editor.map.objects).toHaveLength(0);
+    });
+
+    it('保存する形では、形・向きは家だけが持つ', () => {
+      editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
+      editor.apply({ kind: 'object', type: 'house' }, 4, 4, true);
+      expect(toMapInput(editor.map).objects).toEqual([
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0 }
+      ]);
+    });
   });
 
   it('村人・ポータルを置くと選んだ状態になり、ポータルのマスは道になる。ドラッグの途中では増えない', () => {
@@ -126,7 +190,7 @@ describe('RpgMapEditor', () => {
       expect(failed).toEqual([
         '行き先が決まっていないポータルが 1 個あります',
         '着く位置が通れないマスのポータルが 1 個あります',
-        '名前かセリフが空の村人が 1 人います',
+        '名前かセリフが空のNPCが 1 人います',
         'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンにこのエリアへのポータルを置いてください）'
       ]);
     });
