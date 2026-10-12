@@ -459,6 +459,21 @@ describe('RpgGame', () => {
       expect(game.player.hp).toBeLessThan(hp);
     });
 
+    it('会話・お店などを開いている(locked)間は、敵が止まって攻撃してこない。閉じると攻撃してくる(front#243)', () => {
+      setup(test({ attack: 'tackle', dash: 1, charge: 0 }), [4, 7], [5, 7]);
+      const hp = game.player.hp;
+      game.locked = true;
+      run(2.0);
+
+      expect(game.enemies[0].act).toBeNull();
+      expect([game.enemies[0].x, game.enemies[0].y]).toEqual([4, 7]);
+      expect(game.player.hp).toBe(hp);
+
+      game.locked = false;
+      run(1.5);
+      expect(game.player.hp).toBeLessThan(hp);
+    });
+
     it('炎は、予告のあいだに別のマスへ動けば当たらない', () => {
       setup(test({ attack: 'fire', range: 5, interval: 5 }), [2, 7], [6, 7]);
       const hp = game.player.hp;
