@@ -1,4 +1,4 @@
-import { RpgDungeon, RpgMap, RpgSave } from '../models/rpg.models';
+import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
 import { THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
@@ -67,6 +67,7 @@ function save(partial: Partial<RpgSave> = {}): RpgSave {
     // Lv3 なので合計6ポイント(まだ振り分けていない)
     stats: { ...ZERO_STATS }, statPoints: 6,
     look: LOOK,
+    quests: [],
     ...partial
   };
 }
@@ -104,7 +105,8 @@ describe('RpgGame', () => {
         items: [{ itemId: 'potion', count: 2 }, { itemId: 'copper_sword', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
         area: 'forest', x: 4, y: 5,
         stats: { ...ZERO_STATS }, statPoints: 6,
-        look: LOOK
+        look: LOOK,
+        quests: []
       });
     });
 
@@ -329,6 +331,63 @@ describe('RpgGame', () => {
     });
   });
 
+  describe('クエスト(front#239)', () => {
+    const slimeQuest: RpgQuest = {
+      id: 'q1', title: 'スライム退治', kind: 'defeat', target: 'slime', targetArea: null, count: 2,
+      offerLines: ['たのむ'], progressLines: ['まだか'], doneLines: ['ありがとう'], rewardGold: 50, rewardItems: [{ itemId: 'hipotion', count: 1 }]
+    };
+    const giftQuest: RpgQuest = { ...slimeQuest, id: 'q2', title: '回復薬あつめ', kind: 'collect', target: 'potion', count: 2, rewardItems: [] };
+
+    beforeEach(() => {
+      const chief = {
+        name: '村長', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'quest' as const, notice: false, lines: ['ふだん'],
+        look: lookFromColors('#000000', '#000000'), quests: [slimeQuest, giftQuest]
+      };
+      game.maps = [map('plain', { npcs: [chief], enemies: [{ type: 'slime', x: 8, y: 8 }, { type: 'slime', x: 9, y: 9 }, { type: 'slime', x: 10, y: 9 }] }), ...MAPS.slice(1)];
+      game.loadSave(save({ area: 'plain', x: 6, y: 7, gold: 10, quests: [] }));
+    });
+
+    // 敵をたおす(戦う動きは「戦闘」で見ているので、ここでは直接たおす)
+    const defeat = () => {
+      const enemy = game.enemies.find((e) => e.alive && e.type === 'slime')!;
+      (game as unknown as { killEnemy(e: unknown): void }).killEnemy(enemy);
+    };
+
+    it('引き受けてから敵をたおすと数え、目標に届くと「?」が出て、報告すると報酬をもらえる', () => {
+      const chief = game.npcs[0];
+      expect(game.questMark(chief)).toBe('!');
+      defeat();
+      expect(game.questLog.progressOf(slimeQuest, game.player.inv)).toBe(0);
+
+      game.acceptQuest(slimeQuest);
+      expect(ev.messages).toContain('クエスト「スライム退治」を引き受けた');
+      defeat();
+      expect(game.questMark(chief)).toBeNull();
+      defeat();
+      expect(ev.messages).toContain('クエスト「スライム退治」の目標を達成した。村長に報告しよう');
+      expect(game.questMark(chief)).toBe('?');
+
+      expect(game.reportQuest(slimeQuest)).toBe(true);
+      expect(game.player.gold).toBeGreaterThanOrEqual(60);
+      expect(game.player.inv['hipotion']).toBe(1);
+      expect(ev.messages).toContain('クエスト「スライム退治」を達成した！ 50G・上回復薬×1 を手に入れた');
+      // 次のクエストが受けられる
+      expect(game.questMark(chief)).toBe('!');
+      expect(game.toSaveInput().quests).toEqual([{ id: 'q1', state: 'completed', count: 2 }]);
+    });
+
+    it('アイテムを集めるクエストは、報告するときにアイテムを渡し、足りなければ報告できない', () => {
+      game.questLog.load([{ id: 'q1', state: 'completed', count: 2 }]);
+      game.acceptQuest(giftQuest);
+      game.player.inv['potion'] = 1;
+      expect(game.reportQuest(giftQuest)).toBe(false);
+      game.player.inv['potion'] = 3;
+      expect(game.questMark(game.npcs[0])).toBe('?');
+      expect(game.reportQuest(giftQuest)).toBe(true);
+      expect(game.player.inv['potion']).toBe(1);
+    });
+  });
+
   describe('段差(front#225)', () => {
     // x >= 8 が2段の台地のエリア。まわりとの境目は崖で、(7, 3) だけ1段の段になっている
     const heights = Array.from({ length: 12 }, (_, y) => '0000000' + (y === 3 ? '1' : '0') + '2222');
@@ -465,7 +524,7 @@ describe('RpgGame', () => {
       const area = buildAreaMap(map('test', {
         ground: ['wvg' + 'g'.repeat(9), ...Array.from({ length: 11 }, () => 'g'.repeat(12))],
         objects: [{ type: 'tree', x: 3, y: 0, torch: false }, { type: 'volcano', x: 6, y: 6, torch: false }],
-        npcs: [{ name: '村人', x: 4, y: 0, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [], look: lookFromColors('#000000', '#000000') }]
+        npcs: [{ name: '村人', x: 4, y: 0, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [], look: lookFromColors('#000000', '#000000'), quests: [] }]
       }));
 
       expect([0, 1, 2, 3, 4].map((x) => area.walkable(x, 0))).toEqual([false, false, true, false, false]);

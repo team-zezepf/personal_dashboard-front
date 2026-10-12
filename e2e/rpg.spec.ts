@@ -4,7 +4,7 @@ import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence
 
 // 前回の実行の続きにならないよう、セーブデータを最初の状態(始まりの草原の村・30G・回復薬×3)に戻す。
 // level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
-// 見た目も最初の見た目(ショート・シャツ)に戻す。
+// 見た目も最初の見た目(ショート・シャツ)に戻し、受けたクエストもなくす(front#239)。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
 async function resetRpg(level = 1): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
@@ -27,7 +27,7 @@ async function resetRpg(level = 1): Promise<void> {
       level, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
       area: 'plain', x: 6, y: 7,
-      stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3,
+      stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3, quests: [],
       look: {
         hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
         mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc'
@@ -293,6 +293,74 @@ test(
       await expect(option('目', 'メガネ')).toHaveAttribute('aria-pressed', 'true');
       await expect(option('服', 'ローブ')).toHaveAttribute('aria-pressed', 'true');
       await expect(dialog.getByRole('button', { name: '服の色 #8b5cf6' })).toHaveAttribute('aria-pressed', 'true');
+    });
+  }
+);
+
+test(
+  'E2E-12 RPGで、村長のクエストを受けてスライムを3体たおし、報告すると報酬をもらえ、開き直しても終わったまま',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'RPGのセーブデータを最初の状態(30G・受けたクエストなし)に戻してある',
+      '始まりの草原の村長 ゴロウが、最初のクエスト「スライム退治(スライムを3体たおす)」を持っている'
+    ],
+    expected: [
+      '村長 ゴロウの頭に「!」が出ている',
+      '村長に話しかけ、依頼のセリフを進めると「引き受ける」が出て、引き受けると右の「クエスト」欄にスライム退治(0/3)が出る',
+      'スライムを3体たおすと、クエスト欄に「報告できます」、村長の頭に「?」が出る',
+      '村長に報告すると、ログに達成と報酬が出て、ゴールドが50増え、回復薬が2つ増える',
+      '画面を開き直しても、クエスト欄は空で、村長の頭に印は出ない'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetRpg();
+    await loginAsE2E(page, step);
+    const quests = page.getByRole('region', { name: 'クエスト' });
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const mark = () => page.evaluate(() => (window as any).rpgTest?.questMark('村長 ゴロウ'));
+    const dialog = page.getByRole('dialog', { name: '村長 ゴロウとの会話' });
+
+    await step('RPG(/rpg)を開く', '村長 ゴロウの頭に「!」が出ている', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByText('30G')).toBeVisible();
+      await expect.poll(mark).toBe('!');
+    });
+
+    await step('村長 ゴロウに話しかけ、セリフを進めて「引き受ける」を押す', '右の「クエスト」欄に「スライム退治」と「スライムをたおす（0/3）」が出る', async () => {
+      await clickNpc(page, '村長 ゴロウ');
+      await dialog.waitFor();
+      const accept = dialog.getByRole('button', { name: '引き受ける' });
+      for (let i = 0; i < 10 && !(await accept.isVisible()); i++) await dialog.click();
+      await accept.click();
+      await expect(quests.getByText('スライム退治')).toBeVisible();
+      await expect(quests.getByText(/スライムをたおす（0\/3）/)).toBeVisible();
+      expect(await mark()).toBeNull();
+    });
+
+    await step('スライムを3体たおす', 'クエスト欄に「報告できます」、村長の頭に「?」が出る', async () => {
+      for (let i = 0; i < 3; i++) expect(await page.evaluate(() => (window as any).rpgTest.defeat('slime'))).toBe(true);
+      await expect(quests.getByText('? 報告できます')).toBeVisible();
+      await expect.poll(mark).toBe('?');
+    });
+
+    await step('村長 ゴロウに話しかけ、報告のセリフを最後まで進める', 'ログに達成と報酬が出て、ゴールドが50増え、回復薬が×5になる', async () => {
+      const goldBefore = Number((await status.getByText(/\d+G/).innerText()).replace(/[^0-9]/g, ''));
+      await clickNpc(page, '村長 ゴロウ');
+      await dialog.waitFor();
+      for (let i = 0; i < 10 && (await dialog.isVisible()); i++) await dialog.click();
+      await expect(page.getByRole('region', { name: 'ログ' }).getByText(/クエスト「スライム退治」を達成した！ 50G・回復薬×2 を手に入れた/)).toBeVisible();
+      await expect(status.getByText(`${goldBefore + 50}G`)).toBeVisible();
+      await expect(items.getByText('×5')).toBeVisible();
+    });
+
+    await step('画面を読み込み直す', 'クエスト欄は空で、村長の頭に印は出ない', async () => {
+      await page.reload();
+      await expect(quests.getByText('受けているクエストはありません。', { exact: false })).toBeVisible();
+      await expect.poll(mark).toBeNull();
     });
   }
 );

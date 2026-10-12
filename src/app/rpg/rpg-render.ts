@@ -399,7 +399,9 @@ export class RpgRenderer {
     else if (o.kind === 'npc') {
       this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
       this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
-      if (o.notice) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3);
+      // 受けられる新しいクエストは「!」、報告できるクエストは「?」(front#239)
+      const mark = game.questMark(o);
+      if (mark) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3, mark);
     } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
     else if (!game.hidePlayer) this.drawPlayer(sx, sy);
   }
@@ -417,17 +419,20 @@ export class RpgRenderer {
     }
   }
 
-  private drawNotice(x: number, y: number): void {
+  private drawNotice(x: number, y: number, mark: '!' | '?'): void {
     const ctx = this.ctx;
-    ctx.fillStyle = '#ffd54a';
+    ctx.fillStyle = mark === '!' ? '#ffd54a' : '#60a5fa';
     ctx.beginPath();
     ctx.arc(x, y, 9, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#7a5c00';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = mark === '!' ? '#7a5c00' : '#ffffff';
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('!', x, y + 1);
+    ctx.fillText(mark, x, y + 1);
   }
 
   private shadow(sx: number, sy: number, rx: number, ry: number, alpha = 0.18): void {

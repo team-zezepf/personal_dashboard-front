@@ -31,12 +31,19 @@ const SAVE_FIELDS = `
   stats { hp atk def mag spd luk }
   statPoints updatedAt
   look { ${LOOK_FIELDS} }
+  quests { id state count }
 `;
 
 const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
   objects { type x y roof torch shape rotation lowRoof }
-  npcs { name x y hair body role notice lines look { ${LOOK_FIELDS} } }
+  npcs {
+    name x y hair body role notice lines look { ${LOOK_FIELDS} }
+    quests {
+      id title kind target targetArea count offerLines progressLines doneLines rewardGold
+      rewardItems { itemId count }
+    }
+  }
   enemies { type x y }
   portals { x y to toX toY }
   startX startY sortOrder updatedAt

@@ -69,8 +69,18 @@
     @if (talking(); as talk) {
       <div class="dialog" role="dialog" [attr.aria-label]="talk.npc.name + 'との会話'" (click)="nextLine()">
         <div class="dialog-name">{{ talk.npc.name }}</div>
-        <p class="dialog-text">{{ talk.npc.lines[talk.index] }}</p>
-        <div class="dialog-next">▼ クリックで次へ</div>
+        @if (talk.quest) {
+          <span class="dialog-quest">クエスト：{{ talk.quest.quest.title }}</span>
+        }
+        <p class="dialog-text">{{ talk.lines[talk.index] }}</p>
+        @if (choosing()) {
+          <div class="dialog-choices">
+            <button type="button" class="btn ghost" (click)="$event.stopPropagation(); declineQuest()">やめておく</button>
+            <button type="button" class="btn" (click)="$event.stopPropagation(); acceptQuest()">引き受ける</button>
+          </div>
+        } @else {
+          <div class="dialog-next">▼ クリックで次へ</div>
+        }
       </div>
     }
 
@@ -257,6 +267,24 @@
         }
       </section>
     }
+
+    <section class="card" aria-label="クエスト">
+      <h2>クエスト</h2>
+      @for (q of quests(); track q.id) {
+        <div class="quest">
+          <div class="quest-title">
+            <span>{{ q.title }}</span>
+            @if (q.cleared) {
+              <span class="quest-ready">? 報告できます</span>
+            }
+          </div>
+          <div class="quest-meta">{{ q.progress }}　依頼主：{{ q.giver }}</div>
+          <div class="quest-bar"><i [style.width.%]="q.ratio * 100"></i></div>
+        </div>
+      } @empty {
+        <p class="quest-empty">受けているクエストはありません。頭に「!」が出ているNPCに話しかけると、クエストを受けられます。</p>
+      }
+    </section>
 
     <section class="card" aria-label="ログ">
       <h2>ログ</h2>

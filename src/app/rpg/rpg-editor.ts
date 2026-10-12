@@ -1,4 +1,4 @@
-import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
+import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, houseTiles, objectTiles } from './rpg-house';
 import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
@@ -95,7 +95,17 @@ export const PALETTE: PaletteTab[] = [
   }
 ];
 
-export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所' };
+export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼' };
+
+/** 新しいクエスト(front#239)。最初は、いちばん最初の敵を3体たおすクエスト */
+export function blankQuest(): RpgQuest {
+  const enemy = Object.keys(ENEMIES)[0] ?? 'slime';
+  return {
+    id: null, title: '新しいクエスト', kind: 'defeat', target: enemy, targetArea: null, count: 3,
+    offerLines: [`${ENEMIES[enemy]?.name ?? '敵'}を3体たおしてきてくれないか？`], progressLines: ['たのんだぞ。'], doneLines: ['ありがとう！ これはお礼だ。'],
+    rewardGold: 50, rewardItems: []
+  };
+}
 export const MAP_SIZE = { min: 12, max: 50 };
 
 export type Selection =
@@ -138,7 +148,12 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null
     })),
-    npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
+    npcs: map.npcs.map((n) => ({
+      ...n,
+      lines: n.lines.map((l) => l.trim()).filter((l) => l),
+      // クエストはクエスト依頼だけが持つ(front#239)
+      quests: n.role === 'quest' ? (n.quests ?? []).map((q) => ({ ...q, rewardItems: q.rewardItems.map((r) => ({ itemId: r.itemId, count: r.count })) })) : []
+    })),
     enemies: map.enemies.map((e) => ({ ...e })),
     portals: map.portals.map((p) => ({ ...p })),
     startX: map.startX, startY: map.startY
@@ -348,7 +363,7 @@ export class RpgMapEditor {
         const hair = HAIR_COLORS[n % HAIR_COLORS.length];
         const body = CLOTHES_COLORS[n % CLOTHES_COLORS.length];
         const npc: RpgMapNpc = {
-          name: `NPC${n + 1}`, x, y, hair, body, role: 'talk', notice: false, lines: ['こんにちは！'], look: lookFromColors(hair, body)
+          name: `NPC${n + 1}`, x, y, hair, body, role: 'talk', notice: false, lines: ['こんにちは！'], look: lookFromColors(hair, body), quests: []
         };
         this.map.npcs.push(npc);
         return { kind: 'npc', ref: npc };
@@ -441,6 +456,14 @@ export class RpgMapEditor {
       ok: badArrival.length === 0,
       text: badArrival.length ? `着く位置が通れないマスのポータルが ${badArrival.length} 個あります` : 'ポータルの着く位置が通れるマスにある'
     });
+
+    // クエスト依頼なのにクエストがない・会う相手が見つからないクエスト(front#239)
+    const noQuest = m.npcs.filter((n) => n.role === 'quest' && !(n.quests ?? []).length);
+    if (noQuest.length) checks.push({ ok: false, text: `クエストを1つも持っていないクエスト依頼のNPCが ${noQuest.length} 人います` });
+    const lostVisit = m.npcs
+      .flatMap((n) => (n.role === 'quest' ? (n.quests ?? []) : []))
+      .filter((q) => q.kind === 'visit' && !maps.find((a) => a.id === q.targetArea)?.npcs.some((n) => n.name === q.target));
+    if (lostVisit.length) checks.push({ ok: false, text: `会う相手のNPCが見つからないクエストが ${lostVisit.length} 個あります` });
 
     const emptyNpc = m.npcs.filter((n) => !n.name.trim() || !n.lines.some((l) => l.trim()));
     checks.push({

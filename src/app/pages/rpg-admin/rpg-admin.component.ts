@@ -4,11 +4,12 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
+import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import { DEFAULT_ROOF, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
-import { ENEMIES, G, GROUND_CHARS, HZ, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
+import { ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer, shade } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
@@ -24,6 +25,7 @@ import {
   RpgMapEditor,
   Selection,
   blankMap,
+  blankQuest,
   cloneMap,
   toMapInput
 } from '../../rpg/rpg-editor';
@@ -111,6 +113,10 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly houseModal = signal<RpgMapObject | null>(null);
   readonly houseDraft = signal<{ shape: string; rotation: number; roof: string; lowRoof: boolean }>({ shape: '1x1', rotation: 0, roof: DEFAULT_ROOF, lowRoof: false });
   readonly houseShapes = HOUSE_SHAPES;
+  // クエスト(front#239)。NPCのモーダルで、いま編集しているクエストの番号
+  readonly questIndex = signal(0);
+  readonly questKinds = Object.entries(QUEST_KIND_LABELS) as [RpgQuestKind, string][];
+  readonly itemOptions = Object.entries(ITEMS).map(([id, item]) => ({ id, name: item.name }));
   readonly roofColors = ROOF_COLORS;
   // 家を下書きの形・向きにしたときに置けない理由(置ければ空)
   readonly houseProblem = computed(() => {
@@ -636,11 +642,121 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
+  // ===== クエスト(front#239) =====
+
+  editingQuest(npc: RpgMapNpc): RpgQuest | null {
+    const quests = npc.quests ?? [];
+    return quests[Math.min(this.questIndex(), quests.length - 1)] ?? null;
+  }
+
+  // NPCの役割を変える。クエスト依頼にしたとき、クエストがなければ1つ作っておく
+  setNpcRole(npc: RpgMapNpc, role: RpgNpcRole): void {
+    this.editor?.checkpoint();
+    npc.role = role;
+    if (role === 'quest' && !(npc.quests ?? []).length) npc.quests = [blankQuest()];
+    this.questIndex.set(0);
+    this.markDirty();
+  }
+
+  addQuest(npc: RpgMapNpc): void {
+    this.editor?.checkpoint();
+    npc.quests = [...(npc.quests ?? []), blankQuest()];
+    this.questIndex.set(npc.quests.length - 1);
+    this.markDirty();
+  }
+
+  removeQuest(npc: RpgMapNpc): void {
+    const quests = npc.quests ?? [];
+    const i = Math.min(this.questIndex(), quests.length - 1);
+    if (i < 0) return;
+    this.editor?.checkpoint();
+    npc.quests = quests.filter((_, k) => k !== i);
+    this.questIndex.set(Math.max(0, i - 1));
+    this.markDirty();
+  }
+
+  // いま編集しているクエストを、上(-1)・下(+1)へ動かす(上から順に受けられる)
+  moveQuest(npc: RpgMapNpc, d: number): void {
+    const quests = [...(npc.quests ?? [])];
+    const i = Math.min(this.questIndex(), quests.length - 1);
+    const j = i + d;
+    if (i < 0 || j < 0 || j >= quests.length) return;
+    this.editor?.checkpoint();
+    [quests[i], quests[j]] = [quests[j], quests[i]];
+    npc.quests = quests;
+    this.questIndex.set(j);
+    this.markDirty();
+  }
+
+  // 種類を変えたら、対象をその種類の最初のものにする
+  setQuestKind(q: RpgQuest, kind: RpgQuestKind): void {
+    this.editor?.checkpoint();
+    q.kind = kind;
+    q.target = kind === 'defeat' ? (Object.keys(ENEMIES)[0] ?? '') : kind === 'collect' ? 'potion' : '';
+    q.targetArea = null;
+    q.count = kind === 'visit' ? 1 : Math.max(1, q.count || 3);
+    this.markDirty();
+  }
+
+  questLines(lines: string[]): string {
+    return lines.join('\n');
+  }
+
+  setQuestLines(q: RpgQuest, key: 'offerLines' | 'progressLines' | 'doneLines', text: string): void {
+    q[key] = text.split('\n');
+    this.markDirty();
+  }
+
+  // 会うNPCは、ダンジョン → エリア → NPC の順に選ぶ
+  visitDungeonId(q: RpgQuest): string {
+    return this.maps().find((m) => m.id === q.targetArea)?.dungeonId ?? '';
+  }
+
+  areasOf(dungeonId: string): RpgMap[] {
+    return this.maps().filter((m) => m.dungeonId === dungeonId);
+  }
+
+  npcNamesOf(areaId: string | null | undefined): string[] {
+    return this.maps().find((m) => m.id === areaId)?.npcs.map((n) => n.name) ?? [];
+  }
+
+  setVisitDungeon(q: RpgQuest, dungeonId: string): void {
+    this.editor?.checkpoint();
+    q.targetArea = this.areasOf(dungeonId)[0]?.id ?? null;
+    q.target = this.npcNamesOf(q.targetArea)[0] ?? '';
+    this.markDirty();
+  }
+
+  setVisitArea(q: RpgQuest, areaId: string): void {
+    this.editor?.checkpoint();
+    q.targetArea = areaId || null;
+    q.target = this.npcNamesOf(q.targetArea)[0] ?? '';
+    this.markDirty();
+  }
+
+  addReward(q: RpgQuest): void {
+    this.editor?.checkpoint();
+    q.rewardItems = [...q.rewardItems, { itemId: 'potion', count: 1 }];
+    this.markDirty();
+  }
+
+  removeReward(q: RpgQuest, index: number): void {
+    this.editor?.checkpoint();
+    q.rewardItems = q.rewardItems.filter((_, k) => k !== index);
+    this.markDirty();
+  }
+
+  questSummary(q: RpgQuest): string {
+    const rewards = [...(q.rewardGold ? [`${q.rewardGold}G`] : []), ...q.rewardItems.map((r) => `${ITEMS[r.itemId]?.name ?? r.itemId}×${r.count}`)];
+    return [QUEST_KIND_LABELS[q.kind] ?? q.kind, ...rewards].join('・');
+  }
+
   // ===== NPC・家のモーダル(front#236) =====
 
   openModal(sel: Selection): void {
     this.selection.set(sel);
     if (sel.kind === 'npc') {
+      this.questIndex.set(0);
       this.npcModal.set(sel.ref);
     } else if (sel.kind === 'house') {
       const h = sel.ref;

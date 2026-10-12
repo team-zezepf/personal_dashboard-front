@@ -5,8 +5,8 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem } from '../../models/rpg.models';
-import { DEFAULT_ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
+import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
 import {
@@ -83,8 +83,33 @@ export class RpgPageComponent implements OnDestroy {
   readonly areaTitle = signal<RpgDungeon | null>(null);
   readonly knockedOut = signal(false);
 
-  // 会話中の村人と、表示しているセリフの番号
-  readonly talking = signal<{ npc: Npc; index: number } | null>(null);
+  // 会話中のNPCと、話しているセリフ・表示しているセリフの番号。
+  // クエスト(front#239)の会話では、依頼(offer)・進み具合(progress)・報告(report)のどれか
+  readonly talking = signal<{
+    npc: Npc;
+    lines: string[];
+    index: number;
+    quest?: { quest: RpgQuest; mode: 'offer' | 'progress' | 'report' };
+  } | null>(null);
+  // 依頼の最後のセリフでは「引き受ける/やめておく」を出す
+  readonly choosing = computed(() => {
+    const t = this.talking();
+    return !!t && t.quest?.mode === 'offer' && t.index === t.lines.length - 1;
+  });
+  // 受けていて、まだ報告していないクエスト(右の欄)
+  readonly quests = computed(() => {
+    this.version();
+    const game = this.game;
+    if (!game) return [];
+    return game.questLog.activeQuests(game.questEntries()).map((e) => ({
+      id: e.quest.id,
+      title: e.quest.title,
+      giver: e.giver,
+      progress: this.questProgressText(e.quest),
+      ratio: game.questLog.progressOf(e.quest, game.player.inv) / e.quest.count,
+      cleared: game.questLog.isCleared(e.quest, game.player.inv)
+    }));
+  });
   readonly shopMode = signal<'shop' | 'exchange' | null>(null);
   readonly pointShop = signal<RpgPointShopItem[]>([]);
   readonly exchanging = signal(false);
@@ -355,7 +380,7 @@ export class RpgPageComponent implements OnDestroy {
       inventoryChanged: () => this.version.update((v) => v + 1),
       dirty: () => (this.dirty = true),
       talk: (npc) => {
-        this.talking.set({ npc, index: 0 });
+        this.talking.set(this.conversationOf(npc));
         this.syncLock();
       },
       fade: (on) => this.fading.set(on),
@@ -480,13 +505,59 @@ export class RpgPageComponent implements OnDestroy {
   nextLine(): void {
     const current = this.talking();
     if (!current) return;
-    if (current.index + 1 < current.npc.lines.length) {
-      this.talking.set({ npc: current.npc, index: current.index + 1 });
+    if (current.index + 1 < current.lines.length) {
+      this.talking.set({ ...current, index: current.index + 1 });
       return;
     }
+    // 依頼の最後のセリフでは、「引き受ける/やめておく」を選ぶまで閉じない
+    if (current.quest?.mode === 'offer') return;
     this.talking.set(null);
-    if (current.npc.role !== 'talk') this.openShop(current.npc.role);
+    if (current.quest?.mode === 'report') this.game?.reportQuest(current.quest.quest);
+    if (current.npc.role === 'shop' || current.npc.role === 'exchange') this.openShop(current.npc.role);
     this.syncLock();
+  }
+
+  // ===== クエスト(front#239) =====
+
+  /** 話しかけたNPCと話す内容。クエスト依頼は、今のクエストの依頼・進み具合・報告のどれか(すべて終わればふだんのセリフ) */
+  private conversationOf(npc: Npc): NonNullable<ReturnType<typeof this.talking>> {
+    const game = this.game;
+    const quest = game?.questLog.currentQuest(npc);
+    const plain = { npc, lines: npc.lines.length ? npc.lines : ['……'], index: 0 };
+    if (!game || !quest) return plain;
+    const log = game.questLog;
+    if (!log.stateOf(quest)) {
+      return { npc, lines: quest.offerLines.length ? quest.offerLines : [`「${quest.title}」を引き受けてくれんか？`], index: 0, quest: { quest, mode: 'offer' } };
+    }
+    if (log.isCleared(quest, game.player.inv)) {
+      return { npc, lines: quest.doneLines.length ? quest.doneLines : ['ありがとう！ これはお礼だ。'], index: 0, quest: { quest, mode: 'report' } };
+    }
+    const lines = quest.progressLines.length ? [...quest.progressLines] : ['たのんだぞ。'];
+    if (quest.kind !== 'visit') lines[lines.length - 1] += `（${log.progressOf(quest, game.player.inv)}/${quest.count}）`;
+    return { npc, lines, index: 0, quest: { quest, mode: 'progress' } };
+  }
+
+  acceptQuest(): void {
+    const quest = this.talking()?.quest?.quest;
+    if (quest) this.game?.acceptQuest(quest);
+    this.talking.set(null);
+    this.syncLock();
+  }
+
+  declineQuest(): void {
+    this.talking.set(null);
+    this.syncLock();
+  }
+
+  // クエストの目標と進み具合(例: スライムをたおす(2/3))
+  private questProgressText(quest: RpgQuest): string {
+    const game = this.game;
+    const n = game ? game.questLog.progressOf(quest, game.player.inv) : 0;
+    switch (quest.kind) {
+      case 'defeat': return `${ENEMIES[quest.target]?.name ?? quest.target}をたおす（${n}/${quest.count}）`;
+      case 'collect': return `${ITEMS[quest.target]?.name ?? quest.target}を集める（${n}/${quest.count}）`;
+      default: return `${quest.target}に会う（${n}/1）`;
+    }
   }
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
@@ -645,6 +716,19 @@ export class RpgPageComponent implements OnDestroy {
         this.game ? [Math.round(this.game.player.x), Math.round(this.game.player.y), this.game.player.z] : null,
       // いるエリアのID(front#234)
       areaId: (): string | null => this.game?.area.id ?? null,
+      // NPCの頭の印(「!」「?」。front#239)
+      questMark: (name: string): string | null => {
+        const npc = this.game?.npcs.find((n) => n.name === name);
+        return npc && this.game ? this.game.questMark(npc) : null;
+      },
+      // その種類の敵を1体たおしたことにする(クエストの進み具合を見るため。戦う動きは E2E-08 などで見ている)
+      defeat: (type: string): boolean => {
+        const game = this.game;
+        const enemy = game?.enemies.find((e) => e.type === type && e.alive);
+        if (!game || !enemy) return false;
+        (game as unknown as { killEnemy(e: typeof enemy): void }).killEnemy(enemy);
+        return true;
+      },
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl
