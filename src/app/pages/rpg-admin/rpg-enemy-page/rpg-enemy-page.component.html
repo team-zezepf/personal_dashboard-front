@@ -156,7 +156,7 @@
         </div>
         <div class="grid2">
           <label class="field"><span>攻撃の間隔（秒）</span><input type="number" [min]="limits.interval[0]" [max]="limits.interval[1]" step="0.1" [ngModel]="sel.def.interval" (ngModelChange)="setNumber('interval', $event)" /></label>
-          <label class="field"><span>歩く速さ（マス/秒）</span><input type="number" [min]="limits.speed[0]" [max]="limits.speed[1]" step="0.1" [ngModel]="sel.def.speed" (ngModelChange)="setNumber('speed', $event)" /></label>
+          <label class="field"><span>歩く速さ（マス/秒）{{ isRooted(sel.def) ? '― 根を張っていて動かない' : '' }}</span><input type="number" [min]="limits.speed[0]" [max]="limits.speed[1]" step="0.1" [ngModel]="sel.def.speed" [disabled]="isRooted(sel.def)" (ngModelChange)="setNumber('speed', $event)" /></label>
         </div>
       </div>
 

@@ -32,7 +32,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
-import { EnemyDef, SPELLS, attackReach, attackTiming, hitHeightOf, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, attackTiming, hitHeightOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -859,6 +859,7 @@ export class RpgGame {
   private updateEnemy(e: Enemy, dt: number): void {
     const def = ENEMIES[e.type];
     const p = this.player;
+    const rooted = isRooted(def);
     e.flash = Math.max(0, e.flash - dt);
     e.lunge = Math.max(0, e.lunge - dt * 5);
     if (!e.alive) {
@@ -894,6 +895,9 @@ export class RpgGame {
           this.startAct(e, def);
           e.atkCd = def.interval;
         }
+      } else if (rooted) {
+        // 根を張っている敵は追いかけず、相手の方を向いて待つ
+        this.faceTo(e, p);
       } else {
         e.repath -= dt;
         if (e.repath <= 0) {
@@ -901,7 +905,7 @@ export class RpgGame {
           e.repath = 0.5;
         }
       }
-    } else {
+    } else if (!rooted) {
       e.wander -= dt;
       if (e.wander <= 0 && !e.path.length) {
         const tx = e.hx + randi(-3, 3);
@@ -910,7 +914,8 @@ export class RpgGame {
         e.wander = 2 + Math.random() * 3;
       }
     }
-    e.moving = !e.act && this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
+    if (rooted) e.path = [];
+    e.moving = !e.act && !rooted && this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
     this.settleZ(e, dt);
   }
 
@@ -922,7 +927,7 @@ export class RpgGame {
     const spell = SPELLS.includes(def.attack);
     const tx = spell ? Math.round(p.x) : p.x;
     const ty = spell ? Math.round(p.y) : p.y;
-    const [mx, my] = movesToTarget(def) ? this.dashEnd(e, tx, ty, def.dash) : [e.x, e.y];
+    const [mx, my] = movesToTarget(def) && !isRooted(def) ? this.dashEnd(e, tx, ty, def.dash) : [e.x, e.y];
     e.act = { t: 0, hit: false, tx, ty, sx: e.x, sy: e.y, mx, my };
   }
 
