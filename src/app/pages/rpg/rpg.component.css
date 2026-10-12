@@ -223,6 +223,8 @@
   border-radius: 14px;
   padding: 14px 18px 12px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  /* 左下のステータスバー(.vitals)より前に出す */
+  z-index: 5;
 }
 
 .dialog-name {
