@@ -1,5 +1,5 @@
 import { buildAreaMap } from './rpg-data';
-import { doorLabel, houseGeometry, housePieces, houseTiles, roofRise } from './rpg-house';
+import { DEFAULT_WALL, doorLabel, houseGeometry, housePieces, houseTiles, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { RpgMap } from '../models/rpg.models';
 
 const sortTiles = (tiles: readonly (readonly [number, number])[]) => [...tiles].map((t) => t.join(',')).sort();
@@ -67,5 +67,46 @@ describe('rpg-house(家の形と向き。front#236)', () => {
     const area = buildAreaMap(map);
     expect([area.walkable(3, 3), area.walkable(4, 3), area.walkable(3, 4)]).toEqual([false, false, false]);
     expect(area.walkable(4, 4)).toBe(true);
+  });
+});
+
+describe('rpg-house(壁の色と窓。front#250)', () => {
+  it('壁の色がなければ今までの2色。選んだ色は横の面を少し暗くする', () => {
+    expect(wallColors(null)).toEqual({ front: DEFAULT_WALL, side: '#e3cda8', door: '#9b6a3e' });
+    expect(wallColors('#f8fafc')).toEqual({ front: '#f8fafc', side: 'rgb(223, 225, 227)', door: '#9b6a3e' });
+  });
+
+  it('壁が暗い色・扉の茶色に近い色のときは、扉をこげ茶にする', () => {
+    expect(wallColors('#a9773f').door).toBe('#5b3a20');
+    expect(wallColors('#1f2937').door).toBe('#5b3a20');
+    expect(wallColors('#cbd5e1').door).toBe('#9b6a3e');
+  });
+
+  const openings = (shape: string, noWindow: boolean) => {
+    const geo = houseGeometry(shape, 0);
+    const walls = housePieces(geo).flatMap((p) => p.walls);
+    return { walls, list: walls.flatMap((w) => wallOpenings(w, geo.door, wallColors(null), noWindow)) };
+  };
+
+  it('窓ありの家は、扉と重なる壁のほかはすべての壁に窓を付け、扉を1つ付ける', () => {
+    const { walls, list } = openings('2x1', false);
+    expect(list.filter((o) => o.color === '#9b6a3e')).toHaveLength(1);
+    expect(list.filter((o) => o.color === '#7cc3ee')).toHaveLength(walls.length - 1);
+  });
+
+  it('窓なしの家は扉だけ付ける', () => {
+    expect(openings('2x1', true).list.map((o) => o.color)).toEqual(['#9b6a3e']);
+  });
+
+  it('2×2 の家は、扉が2つの壁の境目にあっても扉を描き、その2つの壁の窓も残す', () => {
+    const { walls, list } = openings('2x2', false);
+    const doors = list.filter((o) => o.color === '#9b6a3e');
+    // 境目の両側の壁に同じ扉を描く
+    expect(doors).toHaveLength(2);
+    const center = (o: { p1: readonly [number, number]; p2: readonly [number, number] }) => [(o.p1[0] + o.p2[0]) / 2, (o.p1[1] + o.p2[1]) / 2];
+    expect(center(doors[0])[0]).toBeCloseTo(center(doors[1])[0]);
+    expect(center(doors[0])[1]).toBeCloseTo(center(doors[1])[1]);
+    expect(list.filter((o) => o.color === '#7cc3ee')).toHaveLength(walls.length);
+    expect(openings('2x2', true).list.filter((o) => o.color === '#9b6a3e')).toHaveLength(2);
   });
 });

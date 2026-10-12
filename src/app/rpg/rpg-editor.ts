@@ -1,5 +1,5 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole, RpgQuest } from '../models/rpg.models';
-import { DEFAULT_ROOF, houseTiles, objectTiles } from './rpg-house';
+import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
 import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
@@ -146,7 +146,8 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     objects: map.objects.map((o) => ({
       type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch,
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
-      lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null
+      lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
+      wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,
@@ -304,13 +305,16 @@ export class RpgMapEditor {
     return null;
   }
 
-  /** 家の形・向き・屋根の色・屋根の高さを変える。置けない形・向きなら変えずに false */
-  setHouse(house: RpgMapObject, shape: string, rotation: number, roof: string, lowRoof = false): boolean {
+  /** 家の形・向き・屋根の色・屋根の高さ・壁の色・窓の有無を変える。置けない形・向きなら変えずに false */
+  setHouse(house: RpgMapObject, shape: string, rotation: number, roof: string, lowRoof = false, wall: string | null = null, noWindow = false): boolean {
     if (this.houseProblem(house, house.x, house.y, shape, rotation)) return false;
     house.shape = shape;
     house.rotation = rotation;
     house.roof = roof;
     house.lowRoof = lowRoof;
+    // 最初の色・窓ありは持たない(今までの家と同じ形にする)(front#250)
+    house.wall = wall && wall.toLowerCase() !== DEFAULT_WALL ? wall : null;
+    house.noWindow = noWindow || null;
     return true;
   }
 
