@@ -617,16 +617,17 @@
   @if (houseModal(); as house) {
     <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
       <div class="modal-card house-card" role="dialog" aria-label="家">
-        <h2>🏠 家 <span class="muted small">（x {{ house.x }} ・ y {{ house.y }}）</span></h2>
+        <h2>🏠 家</h2>
         <div class="house-modal-body">
           <div>
-            <div class="field">
+            <!-- 形・向き・屋根の高さ・窓は、ラベルと選択肢を1行に並べる(front#250) -->
+            <div class="field row">
               <span>形</span>
               <div class="shapes">
                 @for (s of houseShapes; track s.id) {
                   <button type="button" class="shape" [class.active]="houseDraft().shape === s.id" [attr.aria-pressed]="houseDraft().shape === s.id" (click)="setHouseShape(s.id)">
                     <svg viewBox="-60 -70 120 90" aria-hidden="true">
-                      @for (p of housePolygons(s.id, s.id === houseDraft().shape ? houseDraft().rotation : 0, houseDraft().roof, 0.55, false, houseDraft().lowRoof); track $index) {
+                      @for (p of housePolygons(s.id, s.id === houseDraft().shape ? houseDraft().rotation : 0, 0.55); track $index) {
                         <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
                       }
                     </svg>
@@ -635,18 +636,25 @@
                 }
               </div>
             </div>
-            <div class="field">
+            <div class="field row">
               <span>向き</span>
               <div class="rotate-row">
-                <button type="button" class="btn" (click)="rotateHouse()">↻ 回す</button>
+                <button type="button" class="btn small" (click)="rotateHouse()">↻ 回す</button>
                 <span class="muted small">{{ houseDraft().rotation * 90 }}°（扉は{{ houseDoorLabel() }}）</span>
               </div>
             </div>
-            <div class="field">
+            <div class="field row">
               <span>屋根の高さ</span>
               <div class="seg" role="group" aria-label="屋根の高さ">
                 <button type="button" [class.active]="!houseDraft().lowRoof" [attr.aria-pressed]="!houseDraft().lowRoof" (click)="setLowRoof(false)">ふつう</button>
                 <button type="button" [class.active]="houseDraft().lowRoof" [attr.aria-pressed]="houseDraft().lowRoof" (click)="setLowRoof(true)">低い</button>
+              </div>
+            </div>
+            <div class="field row">
+              <span>窓</span>
+              <div class="seg" role="group" aria-label="窓">
+                <button type="button" [class.active]="!houseDraft().noWindow" [attr.aria-pressed]="!houseDraft().noWindow" (click)="setNoWindow(false)">あり</button>
+                <button type="button" [class.active]="houseDraft().noWindow" [attr.aria-pressed]="houseDraft().noWindow" (click)="setNoWindow(true)">なし</button>
               </div>
             </div>
             <div class="field">
@@ -663,7 +671,26 @@
                   ></button>
                 }
                 <label class="muted small custom-color">
-                  好きな色 <input type="color" [value]="houseDraft().roof" (input)="setRoof($any($event.target).value)" />
+                  好きな色 <input type="color" aria-label="屋根の好きな色" [value]="houseDraft().roof" (input)="setRoof($any($event.target).value)" />
+                </label>
+              </div>
+            </div>
+            <div class="field">
+              <span>壁の色</span>
+              <div class="roof-colors">
+                @for (c of wallColors; track c.color) {
+                  <button
+                    type="button"
+                    class="roof-color"
+                    [class.active]="houseDraft().wall === c.color"
+                    [style.background]="c.color"
+                    [attr.aria-label]="'壁の色 ' + c.label"
+                    [title]="c.label"
+                    (click)="setWall(c.color)"
+                  ></button>
+                }
+                <label class="muted small custom-color">
+                  好きな色 <input type="color" aria-label="壁の好きな色" [value]="houseDraft().wall" (input)="setWall($any($event.target).value)" />
                 </label>
               </div>
             </div>
@@ -674,7 +701,7 @@
           <div>
             <div class="house-preview">
               <svg viewBox="-150 -130 300 220" aria-label="家の見本">
-                @for (p of housePolygons(houseDraft().shape, houseDraft().rotation, houseDraft().roof, 1.2, true, houseDraft().lowRoof); track $index) {
+                @for (p of housePolygons(houseDraft().shape, houseDraft().rotation, 1.2, true); track $index) {
                   <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
                 }
               </svg>

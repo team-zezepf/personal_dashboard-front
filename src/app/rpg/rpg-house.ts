@@ -12,6 +12,41 @@ export const HOUSE_ROTATIONS = 4;
 export const DEFAULT_ROOF = '#e0605a';
 // 屋根の色の見本(好きな色も選べる)
 export const ROOF_COLORS = ['#e0605a', '#5b8def', '#45b36b', '#f2a33a', '#a78bfa', '#6b7280', '#8b5a2b'];
+// 壁の色(front#250)。最初の色(クリーム)と見本(好きな色も選べる)
+export const DEFAULT_WALL = '#f4e4c9';
+export const WALL_COLORS: { color: string; label: string }[] = [
+  { color: DEFAULT_WALL, label: 'クリーム' },
+  { color: '#f8fafc', label: '白' },
+  { color: '#cbd5e1', label: '灰の石' },
+  { color: '#c2644a', label: 'レンガ' },
+  { color: '#a9773f', label: '木' },
+  { color: '#e2b86b', label: '黄土' },
+  { color: '#bfd7ea', label: 'うす青' },
+  { color: '#cfe3c1', label: 'うす緑' }
+];
+const DOOR = '#9b6a3e';
+const DARK_DOOR = '#5b3a20';
+const WINDOW = '#7cc3ee';
+
+const rgbOf = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1), 16);
+  return [n >> 16, (n >> 8) & 255, n & 255];
+};
+
+/**
+ * 壁の色(front#250)から、前向きの面(左下を向いた面)・横向きの面・扉の色を決める。
+ * 横向きの面は少し暗くする(最初の色は今までと同じ2色)。扉は、壁が暗い色・扉の茶色に近い色のときだけこげ茶にする
+ */
+export function wallColors(wall?: string | null): { front: string; side: string; door: string } {
+  const front = wall ?? DEFAULT_WALL;
+  if (front.toLowerCase() === DEFAULT_WALL) return { front, side: '#e3cda8', door: DOOR };
+  const [r, g, b] = rgbOf(front);
+  const side = `rgb(${Math.round(r * 0.9)}, ${Math.round(g * 0.9)}, ${Math.round(b * 0.9)})`;
+  const [dr, dg, db] = rgbOf(DOOR);
+  const nearDoor = Math.hypot(r - dr, g - dg, b - db) < 90;
+  const dark = (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.45;
+  return { front, side, door: nearDoor || dark ? DARK_DOOR : DOOR };
+}
 
 type P = readonly [number, number];
 
@@ -152,6 +187,38 @@ export interface HouseRoofPiece {
   // z は 0 が軒、1 が棟の高さ
   points: { x: number; y: number; z: number }[];
   normal: P;
+}
+
+/** 壁の扉・窓。p1・p2 は壁に沿った左右の端(マスの単位)、z0・z1 は下・上の高さ(画面上) */
+export interface WallOpening {
+  p1: P;
+  p2: P;
+  z0: number;
+  z1: number;
+  color: string;
+}
+
+/**
+ * 壁の1マス分に付ける窓と扉。窓は壁の真ん中、扉は扉の位置(door.at)に付ける(扉と重なる窓は付けない)。
+ * 2×2 の家のように扉が2つの壁の境目にあるときは、両方の壁に描く(あとから描く壁が前の扉の半分を隠さないように)。
+ * 窓なし(front#250)の家は扉だけ付ける
+ */
+export function wallOpenings(w: HouseWall, door: { at: P; normal: P }, colors: { door: string }, noWindow?: boolean | null): WallOpening[] {
+  const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
+  const d = [(w.b[0] - w.a[0]) / len, (w.b[1] - w.a[1]) / len];
+  // 扉の位置を壁の線に重ねたときの、a からの距離と、線からのずれ
+  const t = (door.at[0] - w.a[0]) * d[0] + (door.at[1] - w.a[1]) * d[1];
+  const off = Math.abs((door.at[0] - w.a[0]) * d[1] - (door.at[1] - w.a[1]) * d[0]);
+  const hasDoor = door.normal[0] === w.normal[0] && door.normal[1] === w.normal[1] && off < 0.2 && t > -0.01 && t < len + 0.01;
+  const at = (k: number, hw: number, z0: number, z1: number, color: string): WallOpening => ({
+    p1: [w.a[0] + d[0] * (k - hw), w.a[1] + d[1] * (k - hw)],
+    p2: [w.a[0] + d[0] * (k + hw), w.a[1] + d[1] * (k + hw)],
+    z0, z1, color
+  });
+  const result: WallOpening[] = [];
+  if (!noWindow && !(hasDoor && Math.abs(t - len / 2) < 0.3)) result.push(at(len / 2, 0.13, 13, 25, WINDOW));
+  if (hasDoor) result.push(at(t, 0.15, 0, 22, colors.door));
+  return result;
 }
 
 /** 1マス分の部品。奥のマスから順に描けば、手前の壁・屋根が奥のものを正しく隠す */

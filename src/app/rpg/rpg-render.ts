@@ -1,5 +1,5 @@
 import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
-import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise } from './rpg-house';
+import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
@@ -572,20 +572,16 @@ export class RpgRenderer {
       const [sx, sy] = iso(x, y);
       return [cx + sx, cy + sy - z];
     };
+    // 壁の色と窓の有無(front#250)
+    const colors = wallColors(o.wall);
     const ctx = this.ctx;
     for (const piece of house.pieces) {
       for (const w of piece.walls) {
-        this.poly([at(w.a), at(w.b), at(w.b, wall), at(w.a, wall)], w.normal[1] === 1 ? '#f4e4c9' : '#e3cda8');
-        // 壁の1マス分の真ん中に、扉(扉のある壁)か窓
-        const c: [number, number] = [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2];
-        const { at: door, normal } = house.door;
-        const isDoor = normal[0] === w.normal[0] && normal[1] === w.normal[1] && Math.hypot(c[0] - door[0], c[1] - door[1]) < 0.2;
-        const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
-        const d = [(w.b[0] - w.a[0]) / len, (w.b[1] - w.a[1]) / len];
-        const [hw, z0, z1] = isDoor ? [0.15, 0, 22] : [0.13, 13, 25];
-        const p1: [number, number] = [c[0] - d[0] * hw, c[1] - d[1] * hw];
-        const p2: [number, number] = [c[0] + d[0] * hw, c[1] + d[1] * hw];
-        this.poly([at(p1, z0), at(p2, z0), at(p2, z1), at(p1, z1)], isDoor ? '#9b6a3e' : '#7cc3ee');
+        this.poly([at(w.a), at(w.b), at(w.b, wall), at(w.a, wall)], w.normal[1] === 1 ? colors.front : colors.side);
+        // 壁の1マス分に、窓と扉
+        for (const op of wallOpenings(w, house.door, colors, o.noWindow)) {
+          this.poly([at(op.p1, op.z0), at(op.p2, op.z0), at(op.p2, op.z1), at(op.p1, op.z1)], op.color);
+        }
       }
       for (const f of piece.roof) {
         // 左下を向いた面がいちばん明るい

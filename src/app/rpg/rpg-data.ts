@@ -120,6 +120,9 @@ export interface StaticObj {
   shape?: string;
   rotation?: number;
   lowRoof?: boolean;
+  // 壁の色と窓なし(front#250)
+  wall?: string;
+  noWindow?: boolean;
 }
 
 /** 奥から順に描くときの奥行き。大きな家は、いちばん手前のマスで並べる */
@@ -293,7 +296,8 @@ export function buildAreaMap(map: RpgMap): AreaMap {
     .filter((o) => (STATIC_TYPES as string[]).includes(o.type))
     .map((o) => ({
       kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
-      shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined
+      shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined,
+      wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined
     }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>

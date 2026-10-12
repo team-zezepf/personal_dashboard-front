@@ -635,7 +635,7 @@ textarea {
 }
 
 .modal-card.house-card {
-  width: min(680px, calc(100vw - 32px));
+  width: min(760px, calc(100vw - 32px));
 }
 
 .npc-modal-body {
@@ -646,8 +646,25 @@ textarea {
 
 .house-modal-body {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.15fr 1fr;
   gap: 18px;
+}
+
+/* 家のモーダルで、ラベルと選択肢を1行に並べる(front#250) */
+.field.row {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.field.row > span {
+  width: 64px;
+  flex: none;
+}
+
+.field.row > :last-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-actions.spread {
@@ -690,17 +707,24 @@ textarea {
   font-weight: 700;
 }
 
-.rotate-row,
-.roof-colors {
+.rotate-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+/* 色の見本と「好きな色」は1行に収める(front#250) */
+.roof-colors {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .roof-color {
-  width: 26px;
-  height: 26px;
+  flex: none;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px var(--line);
@@ -714,7 +738,16 @@ textarea {
 .custom-color {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+.custom-color input[type='color'] {
+  flex: none;
+  width: 30px;
+  height: 24px;
+  padding: 0 2px;
 }
 
 .house-preview {

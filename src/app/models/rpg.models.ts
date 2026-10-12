@@ -119,6 +119,9 @@ export interface RpgMapObject {
   rotation?: number | null;
   // 家の屋根を低く(つぶした形に)する(front#238)。なければふつう
   lowRoof?: boolean | null;
+  // 家の壁の色(#rrggbb)と、窓を付けない(front#250)。なければクリーム色・窓あり
+  wall?: string | null;
+  noWindow?: boolean | null;
 }
 
 // quest はクエスト依頼(front#239)
