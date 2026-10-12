@@ -87,52 +87,9 @@ export const evadeRateOf = (s: Stats) => 0.6 * rate99(s.luk);
 export const dropRateOf = (s: Stats) => 1 + rate99(s.luk);
 
 // ===== 敵 =====
-export type EnemyDraw = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord';
-
-export interface EnemyDef {
-  name: string;
-  draw: EnemyDraw;
-  hp: number;
-  atk: number;
-  def: number;
-  exp: number;
-  gold: number;
-  speed: number;
-  // 攻撃の間隔(秒)
-  interval: number;
-  color: string;
-  dark: string;
-  // この距離(マス)まで近づくと向こうから襲ってくる。0なら攻撃されるまで襲ってこない
-  sight: number;
-  drop: { id: string; rate: number };
-  size: number;
-  // クリックで選べる高さ(px)
-  hit: number;
-  // 倒してから復活するまでの秒数(省略すると10秒)
-  respawn?: number;
-  boss?: boolean;
-}
-
-export const ENEMIES: Record<string, EnemyDef> = {
-  slime: { name: 'スライム', draw: 'slime', hp: 22, atk: 8, def: 1, exp: 6, gold: 4, speed: 1.3, interval: 1.4,
-    color: '#7ddc6f', dark: '#3fa24a', sight: 0, drop: { id: 'potion', rate: 0.25 }, size: 1, hit: 28 },
-  blue: { name: 'ブルースライム', draw: 'slime', hp: 50, atk: 14, def: 5, exp: 16, gold: 10, speed: 1.6, interval: 1.3,
-    color: '#6fb6ff', dark: '#2c74d6', sight: 2.5, drop: { id: 'potion', rate: 0.35 }, size: 1.2, hit: 34 },
-  kinokon: { name: 'キノコン', draw: 'mushroom', hp: 75, atk: 20, def: 8, exp: 26, gold: 15, speed: 1.2, interval: 1.5,
-    color: '#e85d75', dark: '#b83a52', sight: 0, drop: { id: 'potion', rate: 0.35 }, size: 1, hit: 36 },
-  spirit: { name: 'もりのせいれい', draw: 'wisp', hp: 60, atk: 26, def: 6, exp: 32, gold: 18, speed: 2.2, interval: 1.2,
-    color: '#7ef9ff', dark: '#22b8c9', sight: 3, drop: { id: 'hipotion', rate: 0.2 }, size: 1, hit: 46 },
-  raptor: { name: 'ラプトル', draw: 'raptor', hp: 130, atk: 34, def: 12, exp: 60, gold: 32, speed: 2.4, interval: 1.2,
-    color: '#7fb069', dark: '#4f7a3d', sight: 3.5, drop: { id: 'hipotion', rate: 0.3 }, size: 1.2, hit: 40 },
-  golem: { name: 'いわゴーレム', draw: 'golem', hp: 240, atk: 42, def: 20, exp: 110, gold: 65, speed: 1.1, interval: 1.8,
-    color: '#a3acb6', dark: '#6b7480', sight: 3, drop: { id: 'hipotion', rate: 0.6 }, size: 1.5, hit: 62 },
-  ghost: { name: 'ゴースト', draw: 'ghost', hp: 170, atk: 48, def: 16, exp: 120, gold: 55, speed: 1.8, interval: 1.4,
-    color: '#f5f3ff', dark: '#a78bfa', sight: 3, drop: { id: 'hipotion', rate: 0.4 }, size: 1, hit: 50 },
-  knight: { name: 'ダークナイト', draw: 'knight', hp: 320, atk: 62, def: 30, exp: 220, gold: 110, speed: 1.4, interval: 1.6,
-    color: '#475569', dark: '#1f2937', sight: 3, drop: { id: 'hipotion', rate: 0.5 }, size: 1.15, hit: 64 },
-  darklord: { name: '闇の魔導士', draw: 'lord', hp: 900, atk: 85, def: 40, exp: 1000, gold: 500, speed: 1.2, interval: 2.0,
-    color: '#6d28d9', dark: '#2e1065', sight: 4, drop: { id: 'hipotion', rate: 1 }, size: 1.45, hit: 94, respawn: 60, boss: true }
-};
+// 敵の種類は「敵」タブ(front#229)で作れるようになったため、rpg-enemy.ts に移した
+export { ENEMIES } from './rpg-enemy';
+export type { EnemyDef } from './rpg-enemy';
 
 
 // ===== マップ =====

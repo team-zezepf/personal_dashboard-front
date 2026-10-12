@@ -16,7 +16,9 @@
       <div class="page-tabs" role="tablist">
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
       </div>
+      @if (page() !== 'enemy') {
       <span class="sep"></span>
       <label class="toolbar-label">
         エリア
@@ -56,7 +58,17 @@
       <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
         {{ saving() ? '保存中…' : '保存する' }}
       </button>
+      }
     </div>
+
+    <!-- 敵タブは、ほかのタブに移っても編集中の内容を残すため、隠すだけにする -->
+    <app-rpg-enemy-page
+      [style.display]="page() === 'enemy' ? null : 'none'"
+      [enemies]="enemies()"
+      [maps]="maps()"
+      (saved)="onEnemiesSaved($event)"
+      (dirtyChange)="enemyDirty.set($event)"
+    />
 
     @if (page() === 'bgm') {
       <div class="bgm-page">
@@ -151,7 +163,7 @@
       </div>
     }
 
-    <div class="workspace" [class.hidden]="page() === 'bgm'">
+    <div class="workspace" [class.hidden]="page() !== 'map'">
       <aside class="palette" aria-label="パレット">
         <div class="tabs">
           @for (t of palette; track t.id) {
@@ -315,7 +327,7 @@
                     <label class="field">
                       <span>敵の種類</span>
                       <select [ngModel]="sel.ref.type" (focus)="beginEdit()" (ngModelChange)="sel.ref.type = $event; edited()">
-                        @for (e of enemyTypes; track e.id) {
+                        @for (e of enemyTypes(); track e.id) {
                           <option [value]="e.id">{{ e.name }}</option>
                         }
                       </select>

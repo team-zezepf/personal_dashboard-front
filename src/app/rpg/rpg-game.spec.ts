@@ -2,6 +2,7 @@ import { RpgMap, RpgSave } from '../models/rpg.models';
 import { ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
+import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
 const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
@@ -278,6 +279,99 @@ describe('RpgGame', () => {
       game.update(0);
       const [sx, sy] = game.screenPositionOf({ x: 10, y: 7 });
       expect(game.screenToTile(sx, sy)).toEqual([10, 7]);
+    });
+  });
+
+  describe('敵の攻撃(front#229)', () => {
+    // すぐ襲ってくる、攻撃の間隔の短い敵(HPが高く、こちらからは倒れない)
+    const test = (patch: Partial<EnemyDef>): EnemyDef => ({
+      ...DEFAULT_ENEMIES[0], id: 'test', name: 'テスト', hp: 9999, atk: 20, sight: 8, interval: 0.5, speed: 1, ...patch
+    });
+
+    function setup(def: EnemyDef, enemyAt: [number, number], playerAt: [number, number]): void {
+      setEnemies([...DEFAULT_ENEMIES, def]);
+      game.loadMap(map('field', { enemies: [{ type: 'test', x: enemyAt[0], y: enemyAt[1] }] }));
+      game.player.x = playerAt[0];
+      game.player.y = playerAt[1];
+    }
+
+    function run(seconds: number, each?: () => void): void {
+      for (let t = 0; t < seconds; t += 0.05) {
+        game.update(0.05);
+        each?.();
+      }
+    }
+
+    afterEach(() => setEnemies(DEFAULT_ENEMIES));
+
+    it('炎は離れたところから攻撃し、攻撃を始めたマスにいると当たる', () => {
+      setup(test({ attack: 'fire', range: 5 }), [2, 7], [6, 7]);
+      const hp = game.player.hp;
+      run(1.6);
+
+      const enemy = game.enemies[0];
+      // 近づかずに攻撃する
+      expect([Math.round(enemy.x), Math.round(enemy.y)]).toEqual([2, 7]);
+      expect(game.player.hp).toBeLessThan(hp);
+    });
+
+    it('炎は、予告のあいだに別のマスへ動けば当たらない', () => {
+      setup(test({ attack: 'fire', range: 5, interval: 5 }), [2, 7], [6, 7]);
+      const hp = game.player.hp;
+      // 攻撃が始まったら、当たる前に1マス横へ動く(攻撃は 0.8 秒後に始まり、1 秒で終わる)
+      run(2.0, () => {
+        if (game.enemies[0].act && game.player.y === 7) game.player.y = 8;
+      });
+
+      expect(game.enemies[0].act).toBeNull();
+      expect(game.player.hp).toBe(hp);
+    });
+
+    it('体当たり(距離3)は、ためてから相手の手前まで突っ込んで当たる', () => {
+      setup(test({ attack: 'tackle', dash: 3, charge: 0.3 }), [2, 7], [5, 7]);
+      const hp = game.player.hp;
+      run(1.5);
+
+      expect(game.enemies[0].x).toBeGreaterThan(3.9);
+      expect(game.player.hp).toBeLessThan(hp);
+    });
+
+    it('体当たりは、崖の手前で止まる', () => {
+      const heights = Array.from({ length: 12 }, () => '0000' + '2' + '0000000');
+      setEnemies([...DEFAULT_ENEMIES, test({ attack: 'tackle', dash: 3, sight: 0 })]);
+      game.loadMap(map('cliff', { heights, enemies: [{ type: 'test', x: 2, y: 7 }] }));
+      game.player.x = 5;
+      game.player.y = 7;
+      const enemy = game.enemies[0];
+      enemy.aggro = true;
+      enemy.atkCd = 0;
+      run(1.2);
+
+      // x = 4 の崖(2段)には上がれない
+      expect(Math.round(enemy.x)).toBeLessThanOrEqual(3);
+    });
+
+    it('衝撃波は、範囲の中にいれば当たり、外なら当たらない', () => {
+      setup(test({ attack: 'shockwave', radius: 1 }), [4, 7], [5, 7]);
+      let hp = game.player.hp;
+      run(1.6);
+      expect(game.player.hp).toBeLessThan(hp);
+
+      // 攻撃が始まったら、当たる前に範囲(1マス)の外へ出る
+      setup(test({ attack: 'shockwave', radius: 1, interval: 5 }), [4, 7], [5, 7]);
+      hp = game.player.hp;
+      run(1.6, () => {
+        if (game.enemies[0].act && game.player.x === 5) game.player.x = 8;
+      });
+      expect(game.player.hp).toBe(hp);
+    });
+
+    it('今の敵(距離1・ためる時間0の体当たり)は、となりに来たら攻撃する', () => {
+      setup(test({ attack: 'tackle', dash: 1, charge: 0 }), [4, 7], [5, 7]);
+      const hp = game.player.hp;
+      run(1.2);
+      expect(game.player.hp).toBeLessThan(hp);
+      expect(game.enemies[0].x).toBe(4);
     });
   });
 

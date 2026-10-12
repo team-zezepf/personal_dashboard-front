@@ -72,8 +72,11 @@ export const PALETTE: PaletteTab[] = [
     ]
   },
   {
-    id: 'enemy', label: '敵', hint: '敵が出てくる場所を置きます。敵はこの場所のまわりを歩き回ります。',
-    items: Object.entries(ENEMIES).map(([type, e]) => ({ id: type, label: e.name, tool: { kind: 'enemy', type } as EditorTool }))
+    id: 'enemy', label: '敵', hint: '敵が出てくる場所を置きます。敵はこの場所のまわりを歩き回ります。敵の見た目・強さは「👾 敵」タブで作れます。',
+    // 敵の種類は「敵」タブ(front#229)で増やせるため、読むたびに今の種類から作る
+    get items(): PaletteItem[] {
+      return Object.entries(ENEMIES).map(([type, e]) => ({ id: type, label: e.name, tool: { kind: 'enemy', type } as EditorTool }));
+    }
   },
   {
     id: 'npc', label: '人', hint: '村人を置きます。置いたあと、右側で名前・役割・セリフを決めます。',

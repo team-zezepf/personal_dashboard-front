@@ -1,6 +1,8 @@
 import { RpgMap } from '../models/rpg.models';
 import { RpgMapEditor, blankMap, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
+import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
+import { PALETTE } from './rpg-editor';
 
 describe('RpgMapEditor', () => {
   let editor: RpgMapEditor;
@@ -139,6 +141,15 @@ describe('RpgMapEditor', () => {
     // 2人目は別の色にする
     expect([b.hair, b.body]).not.toEqual([a.hair, a.body]);
     expect(toMapInput(editor.map).npcs[0].look).toEqual(a.look);
+  });
+
+  it('パレットの「敵」には、そのときの敵の種類が並ぶ(front#229)', () => {
+    const tab = () => PALETTE.find((t) => t.id === 'enemy')!;
+    expect(tab().items.map((i) => i.id)).toEqual(DEFAULT_ENEMIES.map((e) => e.id));
+
+    setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'enemy1', name: 'かみなりスライム' }]);
+    expect(tab().items.at(-1)).toMatchObject({ id: 'enemy1', label: 'かみなりスライム' });
+    setEnemies(DEFAULT_ENEMIES);
   });
 
   it('保存する形では、空のセリフを除く', () => {

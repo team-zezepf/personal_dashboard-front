@@ -4,7 +4,7 @@ import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
-import { RpgBgm, RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgBgm, RpgEnemy, RpgEnemyInput, RpgExchangeResult, RpgMap, RpgMapInput, RpgPointShopItem, RpgSave, RpgSaveInput } from '../models/rpg.models';
 
 // BGMの音楽ファイルの大きさの上限(APIと合わせる)
 export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
@@ -31,6 +31,11 @@ const MAP_FIELDS = `
 `;
 
 const BGM_FIELDS = `id name filename size createdAt`;
+
+const ENEMY_FIELDS = `
+  id name shape color dark size hp atk def interval speed exp gold drop dropRate sight respawn boss
+  attack dash charge range radius sortOrder updatedAt
+`;
 
 const SAVE_MUTATION = `
   mutation SaveRpg($input: RpgSaveInput!) {
@@ -76,6 +81,24 @@ export class RpgService {
 
   bgmUrl(bgm: RpgBgm): string {
     return `${environment.apiBaseUrl}/rpg-bgm/${encodeURIComponent(bgm.filename)}`;
+  }
+
+  // ===== 敵(front#229) =====
+
+  getEnemies(): Observable<RpgEnemy[]> {
+    const query = `query GetRpgEnemies { rpgEnemies { ${ENEMY_FIELDS} } }`;
+    return this.graphql.query<{ rpgEnemies: RpgEnemy[] }>(query).pipe(map((res) => res.rpgEnemies));
+  }
+
+  // 管理者・開発者だけが保存・削除できる(api#94)
+  saveEnemy(input: RpgEnemyInput): Observable<RpgEnemy> {
+    const mutation = `mutation SaveRpgEnemy($input: RpgEnemyInput!) { saveRpgEnemy(input: $input) { ${ENEMY_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgEnemy: RpgEnemy }>(mutation, { input }).pipe(map((res) => res.saveRpgEnemy));
+  }
+
+  deleteEnemy(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgEnemy($id: ID!) { deleteRpgEnemy(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgEnemy: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgEnemy));
   }
 
   getSave(): Observable<RpgSave> {

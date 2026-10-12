@@ -4,7 +4,7 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
+import { RpgBgm, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import { ENEMIES, G, GROUND_CHARS, HZ, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
@@ -12,6 +12,8 @@ import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
+import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
+import { setEnemies } from '../../rpg/rpg-enemy';
 import {
   EditorTool,
   MAP_SIZE,
@@ -45,7 +47,7 @@ const ZOOM = { min: 0.3, max: 2 };
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent],
+  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -60,7 +62,13 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly palette = PALETTE;
   readonly themes = Object.entries(THEMES).map(([id, t]) => ({ id, label: t.label }));
   readonly roles = Object.entries(NPC_ROLES) as [RpgNpcRole, string][];
-  readonly enemyTypes = Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
+  // 敵の種類(「敵」タブで保存すると変わる。front#229)
+  readonly enemies = signal<RpgEnemy[]>([]);
+  readonly enemyDirty = signal(false);
+  readonly enemyTypes = computed(() => {
+    this.enemies();
+    return Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
+  });
   readonly sizeRange = MAP_SIZE;
 
   readonly isLoading = signal(true);
@@ -91,7 +99,10 @@ export class RpgAdminPageComponent implements OnDestroy {
     return themeOf(this.current()?.theme ?? 'plain');
   });
   readonly tabHint = computed(() => PALETTE.find((t) => t.id === this.tab())?.hint ?? '');
-  readonly tabItems = computed(() => PALETTE.find((t) => t.id === this.tab())?.items ?? []);
+  readonly tabItems = computed(() => {
+    this.enemies();
+    return PALETTE.find((t) => t.id === this.tab())?.items ?? [];
+  });
   readonly isDirty = computed(() => this.dirtyIds().size > 0);
   readonly canUndo = computed(() => {
     this.version();
@@ -114,7 +125,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   newArea = { name: '新しいエリア', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
-  readonly page = signal<'map' | 'bgm'>('map');
+  readonly page = signal<'map' | 'bgm' | 'enemy'>('map');
   readonly bgms = signal<RpgBgm[]>([]);
   readonly bgmAccept = RPG_BGM_ACCEPT;
   readonly uploading = signal(false);
@@ -150,14 +161,16 @@ export class RpgAdminPageComponent implements OnDestroy {
   private dragging: Selection | null = null;
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (this.isDirty()) e.preventDefault();
+    if (this.isDirty() || this.enemyDirty()) e.preventDefault();
   };
 
   constructor() {
     afterNextRender(() => {
       if (!this.allowed) return;
-      forkJoin({ maps: this.rpgService.getMaps(), bgms: this.rpgService.getBgms() }).subscribe({
-        next: ({ maps, bgms }) => {
+      forkJoin({ maps: this.rpgService.getMaps(), bgms: this.rpgService.getBgms(), enemies: this.rpgService.getEnemies() }).subscribe({
+        next: ({ maps, bgms, enemies }) => {
+          setEnemies(enemies);
+          this.enemies.set(enemies);
           this.maps.set(maps.map(cloneMap));
           this.bgms.set(bgms);
           this.isLoading.set(false);
@@ -184,7 +197,13 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   /** 保存していない変更があるとき、ほかの画面へ移る前に確かめる(ルートの canDeactivate から呼ぶ) */
   confirmLeave(): boolean {
-    return !this.isDirty() || confirm('保存していない変更があります。保存せずに移動しますか？');
+    return (!this.isDirty() && !this.enemyDirty()) || confirm('保存していない変更があります。保存せずに移動しますか？');
+  }
+
+  // 「敵」タブで保存・削除したら、パレット・マップの敵を描き直す(front#229)
+  onEnemiesSaved(enemies: RpgEnemy[]): void {
+    this.enemies.set(enemies);
+    this.refresh();
   }
 
   private start(): void {

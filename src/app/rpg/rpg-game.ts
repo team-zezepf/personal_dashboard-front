@@ -27,6 +27,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
+import { EnemyDef, SPELLS, attackReach, attackTiming, hitHeightOf, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -39,6 +40,22 @@ export interface Mover {
   moving: boolean;
   // 今立っている高さ(段。front#225)。段を登り降りするときは、なめらかに変わる
   z: number;
+}
+
+/** 敵の攻撃の途中の状態(front#229) */
+export interface EnemyAct {
+  // 攻撃を始めてからの秒
+  t: number;
+  // もう当たり判定をしたか(1回の攻撃で1回だけ)
+  hit: boolean;
+  // 攻撃する場所(炎・水などは攻撃を始めたときの相手のマス。ほかは相手の位置)
+  tx: number;
+  ty: number;
+  // 体当たり・ジャンプで動くときの、動き始めと着く位置
+  sx: number;
+  sy: number;
+  mx: number;
+  my: number;
 }
 
 export interface Npc extends RpgMapNpc, Mover {
@@ -60,6 +77,8 @@ export interface Enemy extends Mover {
   flash: number;
   lunge: number;
   respawn: number;
+  // 攻撃している途中(front#229)。ためる → 動く/予告 → 当たる → 終わる まで、ほかの動きをしない
+  act: EnemyAct | null;
   seed: number;
 }
 
@@ -313,7 +332,7 @@ export class RpgGame {
         const [x, y] = this.map.nearestWalkable(e.x, e.y);
         return {
           kind: 'enemy', type: e.type, x, y, z: this.map.heightAt(x, y), hx: x, hy: y, hp: ENEMIES[e.type].hp, alive: true, path: [], dir: -1, moving: false,
-          wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6
+          wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6, act: null
         };
       });
     this.floats.length = 0;
@@ -450,8 +469,8 @@ export class RpgGame {
       const [sx, sy0] = iso(e.x, e.y);
       const sy = sy0 - e.z * HZ;
       const def = e.kind === 'enemy' ? ENEMIES[e.type] : null;
-      const hw = def ? 18 * def.size + 4 : 18;
-      const ht = def ? def.hit : 50;
+      const hw = def ? 18 * ringSizeOf(def) + 4 : 18;
+      const ht = def ? hitHeightOf(def) : 50;
       if (wx > sx - hw && wx < sx + hw && wy > sy - ht && wy < sy + 8 && e.x + e.y > bestDepth) {
         bestDepth = e.x + e.y;
         best = e;
@@ -571,6 +590,7 @@ export class RpgGame {
     const p = this.player;
     e.alive = false;
     e.respawn = def.respawn ?? 10;
+    e.act = null;
     e.aggro = false;
     e.path = [];
     for (let i = 0; i < 12; i++) {
@@ -581,9 +601,9 @@ export class RpgGame {
     p.target = null;
     this.floatText(e.x, e.y, `+${def.exp} EXP`, '#a5f3fc', 13, -18);
     this.events.log(`${def.name}をたおした！ 経験値+${def.exp}・ゴールド+${def.gold}`);
-    if (Math.random() < Math.min(1, def.drop.rate * dropRateOf(p.stats))) {
-      p.inv[def.drop.id] = (p.inv[def.drop.id] ?? 0) + 1;
-      this.events.log(`${ITEMS[def.drop.id].name}を手に入れた！`);
+    if (def.drop && ITEMS[def.drop] && Math.random() < Math.min(1, def.dropRate * dropRateOf(p.stats))) {
+      p.inv[def.drop] = (p.inv[def.drop] ?? 0) + 1;
+      this.events.log(`${ITEMS[def.drop].name}を手に入れた！`);
       this.events.inventoryChanged();
     }
     // レベルが上がっても能力は自動では上がらず、ステータスのポイントをもらう(front#223)
@@ -599,10 +619,10 @@ export class RpgGame {
     this.events.dirty();
   }
 
-  private enemyAttack(e: Enemy): void {
+  private enemyAttack(e: Enemy, lunge = true): void {
     const def = ENEMIES[e.type];
     const p = this.player;
-    e.lunge = 1;
+    if (lunge) e.lunge = 1;
     p.lastCombat = this.time;
     // 運が高いほど、敵の攻撃をよけやすい
     if (Math.random() < evadeRateOf(p.stats)) {
@@ -731,7 +751,7 @@ export class RpgGame {
     if (!e.alive) {
       e.respawn -= dt;
       if (e.respawn <= 0) {
-        Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false });
+        Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false, act: null });
         this.snapZ(e);
       }
       return;
@@ -747,13 +767,18 @@ export class RpgGame {
         e.aggro = false;
         e.hp = def.hp;
         e.path = [];
+        e.act = null;
         this.pathTo(e, e.hx, e.hy);
-      } else if (dp <= ATTACK_RANGE) {
+      } else if (e.act) {
+        e.atkCd -= dt;
+        this.updateAct(e, def, dt);
+      } else if (dp <= attackReach(def, ATTACK_RANGE)) {
+        // 攻撃が届く距離なら止まり、攻撃の間隔ごとに攻撃する(炎・水などは離れたまま)
         e.path = [];
         this.faceTo(e, p);
         e.atkCd -= dt;
         if (e.atkCd <= 0) {
-          this.enemyAttack(e);
+          this.startAct(e, def);
           e.atkCd = def.interval;
         }
       } else {
@@ -772,7 +797,81 @@ export class RpgGame {
         e.wander = 2 + Math.random() * 3;
       }
     }
-    e.moving = this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
+    e.moving = !e.act && this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
     this.settleZ(e, dt);
+  }
+
+  // ===== 敵の攻撃(front#229) =====
+
+  /** 攻撃を始める。攻撃する場所・動く先は、始めたときの相手の位置で決める(ためている間に動けばよけられる) */
+  private startAct(e: Enemy, def: EnemyDef): void {
+    const p = this.player;
+    const spell = SPELLS.includes(def.attack);
+    const tx = spell ? Math.round(p.x) : p.x;
+    const ty = spell ? Math.round(p.y) : p.y;
+    const [mx, my] = movesToTarget(def) ? this.dashEnd(e, tx, ty, def.dash) : [e.x, e.y];
+    e.act = { t: 0, hit: false, tx, ty, sx: e.x, sy: e.y, mx, my };
+  }
+
+  /**
+   * 体当たり・ジャンプで着く位置。相手の手前(0.7マス)まで、まっすぐ距離(dash マス)だけ進む。
+   * 体当たりは通れないマス・崖の手前で止まり、ジャンプは着く場所が通れなければ、そのいちばん近くの通れる所に着く
+   */
+  private dashEnd(e: Enemy, tx: number, ty: number, dash: number): [number, number] {
+    const dx = tx - e.x;
+    const dy = ty - e.y;
+    const dist = Math.hypot(dx, dy);
+    const go = Math.max(0, Math.min(dash, dist - 0.7));
+    if (dist < 0.01 || go <= 0) return [e.x, e.y];
+    const ux = dx / dist;
+    const uy = dy / dist;
+    const def = ENEMIES[e.type];
+    if (def.attack === 'jump') {
+      const x = e.x + ux * go;
+      const y = e.y + uy * go;
+      if (this.map.walkable(Math.round(x), Math.round(y))) return [x, y];
+      const [nx, ny] = this.map.nearestWalkable(Math.round(x), Math.round(y));
+      return [nx, ny];
+    }
+    let [lx, ly] = [e.x, e.y];
+    for (let d = 0.1; d <= go + 1e-6; d += 0.1) {
+      const x = e.x + ux * d;
+      const y = e.y + uy * d;
+      const [ax, ay] = [Math.round(lx), Math.round(ly)];
+      const [bx, by] = [Math.round(x), Math.round(y)];
+      if ((ax !== bx || ay !== by) && (!this.map.walkable(bx, by) || !this.map.canStep(ax, ay, bx, by))) break;
+      [lx, ly] = [x, y];
+    }
+    return [lx, ly];
+  }
+
+  private updateAct(e: Enemy, def: EnemyDef, dt: number): void {
+    const a = e.act!;
+    const p = this.player;
+    a.t += dt;
+    const { duration, hitAt } = attackTiming(def);
+    // 体当たり・ジャンプは、ためたあと当たる時までに着く位置へ動く
+    if (movesToTarget(def) && a.t > def.charge) {
+      const q = Math.min(1, (a.t - def.charge) / Math.max(0.01, hitAt - def.charge));
+      e.x = a.sx + (a.mx - a.sx) * q;
+      e.y = a.sy + (a.my - a.sy) * q;
+    }
+    if (!a.hit && a.t >= hitAt) {
+      a.hit = true;
+      if (!p.dead && this.actHits(e, def, a)) {
+        const melee = def.attack === 'tackle' || def.attack === 'claw' || def.attack === 'bite';
+        this.enemyAttack(e, melee && !movesToTarget(def));
+      }
+    }
+    if (a.t >= duration) e.act = null;
+  }
+
+  /** 攻撃が当たったか(当たる時に、相手がその場所にいるか) */
+  private actHits(e: Enemy, def: EnemyDef, a: EnemyAct): boolean {
+    const p = this.player;
+    if (SPELLS.includes(def.attack)) return cheb(p.x, p.y, a.tx, a.ty) < 0.6;
+    if (def.attack === 'shockwave') return cheb(p.x, p.y, e.x, e.y) <= def.radius + 0.5;
+    if (movesToTarget(def)) return cheb(p.x, p.y, e.x, e.y) <= 1.0;
+    return cheb(p.x, p.y, e.x, e.y) <= ATTACK_RANGE;
   }
 }
