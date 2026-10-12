@@ -5,7 +5,8 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgLook, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { RpgBgm, RpgEnemy, RpgLook, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { DEFAULT_ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
 import {
@@ -277,9 +278,12 @@ export class RpgPageComponent implements OnDestroy {
     // マップ(地形)とセーブデータがそろってからゲームを作る
     // BGMの一覧が読めなくても、曲なしで遊べるようにする
     const bgms$ = this.rpgService.getBgms().pipe(catchError(() => of([] as RpgBgm[])));
-    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave(), bgms: bgms$ }).subscribe({
-      next: ({ maps, save, bgms }) => {
+    // 敵の種類(front#229)が読めなければ、最初の9種類で遊べるようにする
+    const enemies$ = this.rpgService.getEnemies().pipe(catchError(() => of(DEFAULT_ENEMIES as unknown as RpgEnemy[])));
+    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave(), bgms: bgms$, enemies: enemies$ }).subscribe({
+      next: ({ maps, save, bgms, enemies }) => {
         this.bgms = bgms;
+        setEnemies(enemies);
         if (maps.length === 0) {
           this.loadError.set('エリアがまだ1つもありません');
           this.isLoading.set(false);

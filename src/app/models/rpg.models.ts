@@ -122,6 +122,50 @@ export interface RpgMap {
   updatedAt?: string | null;
 }
 
+// RPGの敵(front#229 / api#94)。マップ作成画面の「敵」タブで作る。絵の描き方・攻撃の動きは rpg/rpg-enemy.ts
+export interface RpgEnemy {
+  id: string;
+  name: string;
+  // slime / mushroom / wisp / raptor / golem / ghost / knight / lord
+  shape: string;
+  // 明るい色(体)・暗い色(影・ふち)
+  color: string;
+  dark: string;
+  // 大きさ(0.8〜1.6倍)
+  size: number;
+  hp: number;
+  atk: number;
+  def: number;
+  // 攻撃の間隔(秒)・歩く速さ(マス/秒)
+  interval: number;
+  speed: number;
+  exp: number;
+  gold: number;
+  // 落とすアイテムのID(なければ null)と確率(0〜1)
+  drop: string | null;
+  dropRate: number;
+  // 襲ってくる距離(マス)。0なら攻撃されるまで襲ってこない
+  sight: number;
+  // 倒してから復活するまでの秒数
+  respawn: number;
+  // いつも名前とHPを出す
+  boss: boolean;
+  // tackle / claw / bite / jump / fire / water / wind / thunder / dark / shockwave
+  attack: string;
+  // 体当たり・ジャンプの距離(マス)とためる時間(秒)
+  dash: number;
+  charge: number;
+  // 炎・水・風・雷・暗黒の射程(マス)
+  range: number;
+  // 衝撃波の範囲(まわり何マス)
+  radius: number;
+  sortOrder: number;
+  updatedAt?: string | null;
+}
+
+// id が null なら新しい敵として追加する
+export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
+
 // RPGのBGM(front#218 / api#83)。音楽ファイルは /rpg-bgm/{filename} で配られる
 export interface RpgBgm {
   id: string;

@@ -2,27 +2,9 @@ import { ENEMIES, G, HZ, StaticObj, TH, TW, swordColorOf } from './rpg-data';
 import { Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
+import { SPELLS, attackTiming, chargeShake, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
 
 type Pt = [number, number];
-
-interface ChibiOptions {
-  body: string;
-  hair: string;
-  dir: number;
-  moving?: boolean;
-  phase?: number;
-  hurt?: boolean;
-  skin?: string;
-  eye?: string;
-  glowEyes?: boolean;
-  hat?: 'wizard' | 'plume';
-  sword?: boolean;
-  swordColor?: string;
-  staff?: boolean;
-  aura?: boolean;
-  scale?: number;
-  slash?: number;
-}
 
 // #rrggbb の色を暗くする(家の屋根の影の面)
 export function shade(hex: string, factor: number): string {
@@ -78,6 +60,7 @@ export class RpgRenderer {
     // 高いマスがあるときは、マスを描き終えてから重ねる(高いマスの下に隠れないように)
     if (!game.map.hasHeights) this.drawCursorTile();
     this.drawEntities();
+    this.drawAttacks();
     if (game.map.hasHeights) this.drawCursorTile();
     if (pal.fireflies) this.drawFireflies();
     for (const p of game.area.portals) {
@@ -145,8 +128,6 @@ export class RpgRenderer {
         this.drawTile(x, y);
       }
     }
-    // ボス(闇の魔導士)の出る場所には魔法陣を描く
-    for (const e of area.enemies) if (ENEMIES[e.type]?.boss) this.drawMagicCircle(...this.at(e.x, e.y));
     for (const p of area.portals) if (map.heightAt(p.x, p.y) === 0) this.drawPortal(...iso(p.x, p.y));
   }
 
@@ -284,26 +265,6 @@ export class RpgRenderer {
       ctx.ellipse(cx, cy - k * 30, 22 * (1 - k * 0.4), 10 * (1 - k * 0.4), 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-  }
-
-  private drawMagicCircle(cx: number, cy: number): void {
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(1, 0.5);
-    ctx.strokeStyle = `rgba(167,139,250,${0.55 + Math.sin(this.time * 2) * 0.2})`;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, 0, 56, 0, Math.PI * 2); ctx.stroke();
-    ctx.rotate(this.time * 0.3);
-    ctx.beginPath();
-    for (let i = 0; i <= 5; i++) {
-      const a = (i * Math.PI * 4) / 5 - Math.PI / 2;
-      if (i) ctx.lineTo(Math.cos(a) * 56, Math.sin(a) * 56);
-      else ctx.moveTo(Math.cos(a) * 56, Math.sin(a) * 56);
-    }
-    ctx.stroke();
-    ctx.restore();
   }
 
   // マウスの下の通れるマスを明るくし、クリックした場所に印を出す
@@ -551,97 +512,6 @@ export class RpgRenderer {
     ctx.restore();
   }
 
-  // 二頭身の敵(ダークナイト・闇の魔導士)
-  private drawChibi(sx: number, sy: number, o: ChibiOptions): void {
-    const ctx = this.ctx;
-    const sc = o.scale ?? 1;
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.scale(sc, sc);
-    const bob = o.moving ? -Math.abs(Math.sin(this.time * 10)) * 3 : Math.sin(this.time * 2 + (o.phase ?? 0)) * 0.8;
-    if (o.aura) {
-      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
-      g.addColorStop(0, `rgba(167,139,250,${0.6 + Math.sin(this.time * 3) * 0.2})`);
-      g.addColorStop(1, 'rgba(167,139,250,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.ellipse(0, 0, 30, 13, 0, 0, Math.PI * 2); ctx.fill();
-    }
-    this.shadow(0, 0, 13, 5);
-    const step = o.moving ? Math.sin(this.time * 14) * 2.5 : 0;
-    ctx.fillStyle = '#5b4636';
-    ctx.beginPath(); ctx.ellipse(-4, -2 - Math.max(0, step), 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(4, -2 - Math.max(0, -step), 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-    const y0 = bob;
-    const f = o.dir * 2.5;
-
-    if (o.sword) {
-      const hx = o.dir * 10;
-      const hy = y0 - 12;
-      ctx.strokeStyle = o.swordColor ?? '#cbd5e1';
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + o.dir * 9, hy - 16); ctx.stroke();
-      ctx.strokeStyle = '#6b4a2b';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(hx - 3, hy + 1); ctx.lineTo(hx + 4 * o.dir, hy - 1); ctx.stroke();
-    }
-    if (o.staff) {
-      ctx.strokeStyle = '#3b2414';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(o.dir * 11, y0 - 4); ctx.lineTo(o.dir * 13, y0 - 46); ctx.stroke();
-      ctx.save();
-      ctx.shadowColor = '#e879f9';
-      ctx.shadowBlur = 12;
-      ctx.fillStyle = '#e879f9';
-      ctx.beginPath(); ctx.arc(o.dir * 13, y0 - 49, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-    }
-    ctx.fillStyle = o.hurt ? '#ff9b9b' : o.body;
-    ctx.beginPath(); ctx.roundRect(-9, y0 - 20, 18, 16, 6); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = o.skin ?? '#ffe0bd';
-    ctx.beginPath(); ctx.arc(0, y0 - 31, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = o.hair;
-    ctx.beginPath();
-    ctx.arc(0, y0 - 32, 13, Math.PI, 0);
-    ctx.lineTo(13, y0 - 29);
-    ctx.quadraticCurveTo(f * 2, y0 - 36, -13, y0 - 29);
-    ctx.closePath();
-    ctx.fill();
-    if (o.hat === 'wizard') {
-      this.poly([[-15, y0 - 38], [15, y0 - 38], [o.dir * 8, y0 - 66]], '#2e1065');
-      ctx.fillStyle = '#4c1d95';
-      ctx.beginPath(); ctx.ellipse(0, y0 - 38, 17, 4, 0, 0, Math.PI * 2); ctx.fill();
-    } else if (o.hat === 'plume') {
-      ctx.fillStyle = '#dc2626';
-      ctx.beginPath(); ctx.ellipse(-o.dir * 2, y0 - 48, 3.5, 8, -o.dir * 0.3, 0, Math.PI * 2); ctx.fill();
-    }
-    if (o.glowEyes) {
-      ctx.save();
-      ctx.shadowColor = o.eye ?? '#fff';
-      ctx.shadowBlur = 8;
-    }
-    ctx.fillStyle = o.eye ?? '#3b2f2f';
-    ctx.beginPath(); ctx.ellipse(-4 + f, y0 - 27, 1.8, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(4 + f, y0 - 27, 1.8, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-    if (o.glowEyes) {
-      ctx.restore();
-    } else {
-      ctx.fillStyle = 'rgba(255,120,120,0.35)';
-      ctx.beginPath(); ctx.arc(-7 + f, y0 - 23, 2.3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(7 + f, y0 - 23, 2.3, 0, Math.PI * 2); ctx.fill();
-    }
-    if (o.slash && o.slash > 0) {
-      ctx.strokeStyle = `rgba(255,255,255,${o.slash})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(o.dir * 14, y0 - 16, 15, -1.2, 1.2); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
   private drawPlayer(sx: number, sy: number): void {
     const p = this.game.player;
     const ctx = this.ctx;
@@ -663,221 +533,48 @@ export class RpgRenderer {
     const def = ENEMIES[e.type];
     const game = this.game;
     const targeted = game.player.target === e;
+    const ring = ringSizeOf(def);
     if (targeted) {
       ctx.strokeStyle = `rgba(239,68,68,${0.6 + Math.sin(this.time * 6) * 0.3})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(sx, sy, 20 * def.size, 8 * def.size, 0, 0, Math.PI * 2);
+      ctx.ellipse(sx, sy, 20 * ring, 8 * ring, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    const x = sx + e.lunge * 5 * e.dir;
-    let top: number;
-    switch (def.draw) {
-      case 'slime': top = this.drawSlime(e, x, sy); break;
-      case 'mushroom': top = this.drawMushroom(e, x, sy); break;
-      case 'wisp': top = this.drawWisp(e, x, sy); break;
-      case 'raptor': top = this.drawRaptor(e, x, sy); break;
-      case 'golem': top = this.drawGolem(e, x, sy); break;
-      case 'ghost': top = this.drawGhost(e, x, sy); break;
-      case 'knight':
-        this.drawChibi(x, sy, { body: '#475569', hair: '#334155', skin: '#1f2937', eye: '#f87171', glowEyes: true, hat: 'plume',
-          sword: true, swordColor: '#94a3b8', dir: e.dir, moving: e.moving, hurt: e.flash > 0, scale: def.size, slash: e.lunge });
-        top = 62;
-        break;
-      case 'lord':
-        this.drawChibi(x, sy, { body: '#6d28d9', hair: '#1e1b4b', skin: '#ddd6fe', eye: '#e11d48', glowEyes: true, hat: 'wizard',
-          staff: true, aura: true, dir: e.dir, moving: e.moving, hurt: e.flash > 0, scale: def.size });
-        top = 96;
-        break;
-    }
+    const elapsed = e.act?.t ?? 0;
+    const x = sx + e.lunge * 5 * e.dir + (e.act ? chargeShake(def, elapsed, this.time) : 0);
+    const y = sy - (e.act ? jumpHeight(def, elapsed) : 0);
+    ctx.save();
+    ctx.translate(x, y);
+    const top = drawEnemyBody(ctx, def, {
+      dir: e.dir, time: this.time, moving: e.moving, flash: e.flash > 0, aggro: e.aggro, lunge: e.lunge, seed: e.seed
+    });
+    ctx.restore();
     const hovered = game.hover === e;
+    const barY = y - top;
     if (targeted || hovered || e.hp < def.hp || def.boss) {
-      this.hpBar(sx, sy - top - 10, e.hp / def.hp);
-      if (targeted || hovered || def.boss) this.label(def.name, sx, sy - top - 22, e.aggro || def.boss ? 'rgba(220,38,38,0.85)' : undefined);
+      this.hpBar(sx, barY - 10, e.hp / def.hp);
+      if (targeted || hovered || def.boss) this.label(def.name, sx, barY - 22, e.aggro || def.boss ? 'rgba(220,38,38,0.85)' : undefined);
     }
   }
 
-  private angryBrows(x: number, ey: number, s: number): void {
-    const ctx = this.ctx;
-    ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(x - 8 * s, ey - 6 * s); ctx.lineTo(x - 3 * s, ey - 4 * s);
-    ctx.moveTo(x + 8 * s, ey - 6 * s); ctx.lineTo(x + 3 * s, ey - 4 * s);
-    ctx.stroke();
-  }
-
-  private eyes(x: number, y: number, gap: number, rx: number, ry: number, color = '#1f2937'): void {
-    const ctx = this.ctx;
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.ellipse(x - gap, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(x + gap, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-  }
-
-  private drawSlime(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const s = def.size;
-    const sq = Math.sin(this.time * 5 + e.seed) * 0.07 + (e.moving ? Math.sin(this.time * 12) * 0.06 : 0);
-    this.shadow(sx, sy, 14 * s, 5 * s);
-    const rx = 15 * s * (1 + sq);
-    const hgt = 20 * s * (1 - sq);
-    const grd = ctx.createRadialGradient(sx - 4 * s, sy - hgt * 0.7, 2, sx, sy - hgt / 2, rx * 1.3);
-    grd.addColorStop(0, '#ffffff');
-    grd.addColorStop(0.25, def.color);
-    grd.addColorStop(1, def.dark);
-    ctx.fillStyle = e.flash > 0 ? '#ffffff' : grd;
-    ctx.beginPath();
-    ctx.moveTo(sx - rx, sy);
-    ctx.bezierCurveTo(sx - rx, sy - hgt / 0.75, sx + rx, sy - hgt / 0.75, sx + rx, sy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    const ey = sy - hgt * 0.5;
-    const f = e.dir * 2.5;
-    this.eyes(sx + f, ey, 5 * s, 2 * s, 3 * s);
-    if (e.aggro) this.angryBrows(sx + f, ey, s);
-    return hgt + 4;
-  }
-
-  private drawMushroom(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const hop = e.moving ? -Math.abs(Math.sin(this.time * 9)) * 5 : 0;
-    const y = sy + hop;
-    const f = e.dir * 2;
-    this.shadow(sx, sy, 13, 5);
-    ctx.fillStyle = e.flash > 0 ? '#fff' : '#fff3e0';
-    ctx.beginPath(); ctx.roundRect(sx - 8, y - 18, 16, 17, 6); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    this.eyes(sx + f, y - 10, 3.5, 1.6, 2.4);
-    ctx.fillStyle = e.flash > 0 ? '#fff' : def.color;
-    ctx.beginPath();
-    ctx.moveTo(sx - 18, y - 15);
-    ctx.bezierCurveTo(sx - 18, y - 40, sx + 18, y - 40, sx + 18, y - 15);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = def.dark;
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    for (const [dx, dy, r] of [[-8, -24, 3.2], [6, -28, 3.6], [1, -19, 2.2], [11, -19, 2]]) {
-      ctx.beginPath(); ctx.arc(sx + dx, y + dy, r, 0, Math.PI * 2); ctx.fill();
+  // 敵の攻撃の演出(炎・水・爪あとなど)。人・敵の上に重ねる(front#229)
+  private drawAttacks(): void {
+    const game = this.game;
+    const p = game.player;
+    for (const e of game.enemies) {
+      if (!e.alive || !e.act) continue;
+      const def = ENEMIES[e.type];
+      const { duration, hitAt } = attackTiming(def);
+      const [ex, ey] = this.at(e.x, e.y);
+      const spell = SPELLS.includes(def.attack);
+      const [tx, ty] = spell ? this.at(e.act.tx, e.act.ty) : this.at(p.x, p.y);
+      if (!this.onScreen(ex, ey, 300) && !this.onScreen(tx, ty, 200)) continue;
+      drawAttackEffect(this.ctx, {
+        attack: def.attack, k: Math.min(1, e.act.t / duration), time: this.time, ex, ey, tx, ty, dir: e.dir, s: 1,
+        radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, hitK: hitAt / duration
+      });
     }
-    if (e.aggro) this.angryBrows(sx + f, y - 10, 0.8);
-    return 36 - hop;
-  }
-
-  private drawWisp(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const fl = Math.sin(this.time * 3 + e.seed) * 4;
-    const cy = sy - 28 + fl;
-    this.shadow(sx, sy, 9, 3.5);
-    for (let i = 1; i <= 3; i++) {
-      ctx.fillStyle = `rgba(126,249,255,${0.35 - i * 0.08})`;
-      ctx.beginPath();
-      ctx.arc(sx - e.dir * i * 7, cy + i * 3 + Math.sin(this.time * 6 + i) * 2, 6 - i, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    const g = ctx.createRadialGradient(sx, cy, 2, sx, cy, 22);
-    g.addColorStop(0, 'rgba(255,255,255,0.9)');
-    g.addColorStop(0.35, e.flash > 0 ? '#fff' : def.color);
-    g.addColorStop(1, 'rgba(126,249,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(sx, cy, 22, 0, Math.PI * 2); ctx.fill();
-    this.eyes(sx + e.dir * 2, cy - 1, 3.5, 1.6, 2.4, '#0f3f46');
-    return 46 - fl;
-  }
-
-  private drawRaptor(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const d = e.dir;
-    const y = sy + (e.moving ? -Math.abs(Math.sin(this.time * 12)) * 3 : 0);
-    const step = e.moving ? Math.sin(this.time * 14) * 4 : 0;
-    this.shadow(sx, sy, 20, 6);
-    const c = e.flash > 0 ? '#fff' : def.color;
-    const dk = e.flash > 0 ? '#fff' : def.dark;
-    ctx.strokeStyle = dk;
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(sx - 3, y - 12); ctx.lineTo(sx - 5 + step, sy - 1);
-    ctx.moveTo(sx + 4, y - 12); ctx.lineTo(sx + 5 - step, sy - 1);
-    ctx.stroke();
-    this.poly([[sx - d * 8, y - 22], [sx - d * 32, y - 26], [sx - d * 8, y - 13]], dk);
-    ctx.fillStyle = c;
-    ctx.beginPath(); ctx.ellipse(sx, y - 18, 15, 9, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#efe7c0';
-    ctx.beginPath(); ctx.ellipse(sx + d * 3, y - 14, 9, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = dk;
-    ctx.lineWidth = 2;
-    for (let i = -1; i <= 1; i++) {
-      ctx.beginPath(); ctx.moveTo(sx + i * 5, y - 26); ctx.lineTo(sx + i * 5 - d * 2, y - 21); ctx.stroke();
-    }
-    ctx.fillStyle = c;
-    ctx.beginPath(); ctx.ellipse(sx + d * 12, y - 26, 5, 8, d * 0.4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(sx + d * 18, y - 33, 10, 6, 0, 0, Math.PI * 2); ctx.fill();
-    this.poly([[sx + d * 18, y - 30], [sx + d * 28, y - 30], [sx + d * 18, y - 27]], '#fff');
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(sx + d * 19, y - 36, 2.6, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = e.aggro ? '#dc2626' : '#1f2937';
-    ctx.beginPath(); ctx.arc(sx + d * 20, y - 36, 1.4, 0, Math.PI * 2); ctx.fill();
-    return 42;
-  }
-
-  private drawGolem(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const bob = e.moving ? Math.abs(Math.sin(this.time * 6)) * -2 : 0;
-    this.shadow(sx, sy, 24, 9, 0.2);
-    const c = e.flash > 0 ? '#ffffff' : def.color;
-    const d = e.flash > 0 ? '#ffffff' : def.dark;
-    ctx.fillStyle = d;
-    ctx.beginPath(); ctx.roundRect(sx - 15, sy - 14, 11, 14, 4); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(sx + 4, sy - 14, 11, 14, 4); ctx.fill();
-    ctx.fillStyle = c;
-    ctx.beginPath(); ctx.roundRect(sx - 20, sy - 42 + bob, 40, 32, 10); ctx.fill();
-    ctx.fillStyle = d;
-    ctx.beginPath(); ctx.roundRect(sx - 30, sy - 38 + bob, 11, 22, 5); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(sx + 19, sy - 38 + bob, 11, 22, 5); ctx.fill();
-    ctx.fillStyle = c;
-    ctx.beginPath(); ctx.roundRect(sx - 12, sy - 58 + bob, 24, 18, 6); ctx.fill();
-    ctx.fillStyle = e.aggro ? '#ff7a2f' : '#ffd54a';
-    ctx.fillRect(sx - 7 + e.dir * 2, sy - 52 + bob, 4, 4);
-    ctx.fillRect(sx + 3 + e.dir * 2, sy - 52 + bob, 4, 4);
-    return 60;
-  }
-
-  private drawGhost(e: Enemy, sx: number, sy: number): number {
-    const ctx = this.ctx;
-    const def = ENEMIES[e.type];
-    const fl = Math.sin(this.time * 2.5 + e.seed) * 4;
-    const y = sy - 8 + fl;
-    this.shadow(sx, sy, 12, 4, 0.12);
-    ctx.globalAlpha = 0.88;
-    const g = ctx.createLinearGradient(0, y - 40, 0, y);
-    g.addColorStop(0, e.flash > 0 ? '#fff' : def.color);
-    g.addColorStop(1, def.dark);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(sx, y - 26, 14, Math.PI, 0);
-    ctx.lineTo(sx + 14, y - 4);
-    for (let i = 0; i < 4; i++) {
-      const x0 = sx + 14 - i * 7;
-      const w = Math.sin(this.time * 6 + i) * 2;
-      ctx.quadraticCurveTo(x0 - 3.5, y + 4 + w, x0 - 7, y - 4);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    this.eyes(sx + e.dir * 2, y - 26, 5, 2.4, 3.6, '#1e1b4b');
-    ctx.beginPath(); ctx.ellipse(sx + e.dir * 2, y - 17, 2.5, 3, 0, 0, Math.PI * 2); ctx.fill();
-    return 48 - fl;
   }
 
   private drawFireflies(): void {

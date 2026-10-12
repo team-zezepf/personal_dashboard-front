@@ -1,0 +1,404 @@
+:host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.enemy-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn.small {
+  padding: 4px 8px;
+  font-size: 11.5px;
+}
+
+.btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn.danger {
+  color: var(--red-text);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ===== 左: 敵の一覧 ===== */
+.list {
+  width: 236px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.list-head {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.list-head .btn {
+  flex: 1;
+}
+
+.list-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.enemy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid transparent;
+  background: none;
+  border-radius: 10px;
+  padding: 4px 6px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.enemy-row:hover {
+  background: var(--surface);
+}
+
+.enemy-row.active {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+}
+
+.enemy-row canvas {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.badge {
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--red-soft);
+  color: var(--red-text);
+  margin-left: 4px;
+}
+
+.badge.new {
+  background: var(--green-soft);
+  color: var(--green-text);
+}
+
+.dot {
+  color: var(--orange);
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* ===== まんなか: プレビュー ===== */
+.stage {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+}
+
+.preview {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(#8fd0f5, #d6f2fd);
+}
+
+.preview canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.preview .turn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f2937;
+}
+
+.preview-hint {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: rgba(17, 24, 39, 0.55);
+  color: #fff;
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.85);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+}
+
+.used {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.used b {
+  color: var(--indigo);
+}
+
+/* ===== 右: 編集欄 ===== */
+.props {
+  width: 380px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 0 16px 14px;
+}
+
+.props-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.dirty {
+  font-size: 12px;
+  color: var(--orange);
+  font-weight: 700;
+  margin-right: auto;
+}
+
+.props h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.section {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.props-head + .section {
+  border-top: none;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.field input[type='text'],
+.field input[type='number'],
+.field select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: var(--card);
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 10px;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 8px;
+}
+
+.shapes,
+.attacks {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.opt {
+  border: 2px solid var(--line);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 10.5px;
+  color: var(--text);
+}
+
+.opt canvas {
+  width: 52px;
+  height: 52px;
+}
+
+.opt.active {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+  font-weight: 700;
+}
+
+.opt.attack {
+  font-size: 11px;
+  padding: 6px 2px;
+}
+
+.opt .icon {
+  font-size: 18px;
+}
+
+.kind {
+  font-size: 9.5px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.color {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+
+.color.active {
+  box-shadow: 0 0 0 2px var(--indigo);
+}
+
+.colors input[type='color'] {
+  width: 30px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-row input {
+  flex: 1;
+}
+
+.range-value {
+  font-size: 13px;
+  color: var(--text);
+  width: 44px;
+  text-align: right;
+}
+
+.hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 8px;
+}

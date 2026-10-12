@@ -1,0 +1,201 @@
+<div class="enemy-page">
+  <aside class="list" aria-label="敵の一覧">
+    <div class="list-head">
+      <button type="button" class="btn small" (click)="add()">＋ 新しい敵</button>
+      <button type="button" class="btn small" [disabled]="!selected()" (click)="copy()">⧉ 複製</button>
+    </div>
+    <div class="list-body">
+      @for (row of rows(); track row.def.id) {
+        <button type="button" class="enemy-row" [class.active]="row.def.id === selectedId()" [attr.aria-pressed]="row.def.id === selectedId()" (click)="select(row.def.id)">
+          <canvas #thumb width="88" height="88" [attr.data-id]="row.def.id"></canvas>
+          <span class="row-text">
+            <span class="name">
+              {{ row.def.name || '（名前なし）' }}
+              @if (row.def.boss) {
+                <span class="badge">ボス</span>
+              }
+              @if (row.isNew) {
+                <span class="badge new">新しい</span>
+              } @else if (dirtyIds().has(row.def.id)) {
+                <span class="dot" title="保存していない変更があります">●</span>
+              }
+            </span>
+            <span class="sub">HP {{ row.def.hp }}・攻撃 {{ row.def.atk }}・{{ usedCount(row.def.id) ? usedCount(row.def.id) + '体 配置中' : '未配置' }}</span>
+          </span>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="preview">
+      <canvas #preview aria-label="敵のプレビュー"></canvas>
+      <button type="button" class="btn small turn" (click)="turn()">↔ 向きを変える</button>
+      <span class="preview-hint">選んだ攻撃を、人形にくり返して見せます</span>
+      @if (message()) {
+        <div class="toast" role="status">{{ message() }}</div>
+      }
+    </div>
+    @if (selected(); as sel) {
+      <div class="used">
+        @if (usedCount(sel.def.id)) {
+          📍 置いてある場所：<b>{{ usageText(sel.def.id) }}</b><br />
+          <span class="muted">強さ・見た目を変えると、置いてあるすべての敵が変わります。</span>
+        } @else {
+          📍 まだどのエリアにも置いていません。保存すると、マップタブの「敵」パレットから置けます。
+        }
+      </div>
+    }
+  </main>
+
+  <aside class="props">
+    <div class="props-head">
+      @if (isDirty()) {
+        <span class="dirty">● 保存していない変更があります</span>
+      }
+      <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
+        {{ saving() ? '保存中…' : '敵を保存する' }}
+      </button>
+    </div>
+
+    @if (selected(); as sel) {
+      <div class="section">
+        <label class="field">
+          <span>名前</span>
+          <input type="text" maxlength="20" [ngModel]="sel.def.name" (ngModelChange)="setName($event)" />
+        </label>
+      </div>
+
+      <div class="section" role="group" aria-label="体の形">
+        <h2>体の形</h2>
+        <div class="shapes">
+          @for (shape of shapes; track shape[0]) {
+            <button type="button" class="opt" [class.active]="sel.def.shape === shape[0]" [attr.aria-pressed]="sel.def.shape === shape[0]" (click)="setShape(shape[0])">
+              <canvas #thumb width="104" height="104" [attr.data-shape]="shape[0]"></canvas>
+              <span>{{ shape[1] }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>色・大きさ</h2>
+        <div class="field" role="group" aria-label="明るい色（体）">
+          <span>明るい色（体）</span>
+          <div class="colors">
+            @for (c of colors; track c) {
+              <button type="button" class="color" [class.active]="sel.def.color === c" [style.background]="c" [attr.aria-label]="'明るい色 ' + c" (click)="setColor('color', c)"></button>
+            }
+            <input type="color" [value]="sel.def.color" title="ほかの色" aria-label="明るい色（ほかの色）" (input)="setColor('color', $any($event.target).value)" />
+          </div>
+        </div>
+        <div class="field" role="group" aria-label="暗い色（影・ふち）">
+          <span>暗い色（影・ふち）</span>
+          <div class="colors">
+            @for (c of darks; track c) {
+              <button type="button" class="color" [class.active]="sel.def.dark === c" [style.background]="c" [attr.aria-label]="'暗い色 ' + c" (click)="setColor('dark', c)"></button>
+            }
+            <input type="color" [value]="sel.def.dark" title="ほかの色" aria-label="暗い色（ほかの色）" (input)="setColor('dark', $any($event.target).value)" />
+          </div>
+        </div>
+        <label class="field">
+          <span>大きさ</span>
+          <span class="range-row">
+            <input type="range" [min]="limits.size[0]" [max]="limits.size[1]" step="0.05" [ngModel]="sel.def.size" (ngModelChange)="setNumber('size', $event)" aria-label="大きさ" />
+            <span class="range-value">×{{ sel.def.size.toFixed(2) }}</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="section" role="group" aria-label="攻撃">
+        <h2>攻撃</h2>
+        <div class="attacks">
+          @for (a of attacks; track a.id) {
+            <button type="button" class="opt attack" [class.active]="sel.def.attack === a.id" [attr.aria-pressed]="sel.def.attack === a.id" (click)="setAttack(a.id)">
+              <span class="icon">{{ a.icon }}</span>
+              <span>{{ a.label }}</span>
+              <span class="kind">{{ a.kind === 'look' ? '見た目' : 'ふるまい' }}</span>
+            </button>
+          }
+        </div>
+        <p class="hint">{{ attackSpec().desc }}</p>
+        @switch (sel.def.attack) {
+          @case ('tackle') {
+            <div class="grid2">
+              <label class="field"><span>突っ込む距離（マス）</span><input type="number" [min]="limits.dash[0]" [max]="limits.dash[1]" step="1" [ngModel]="sel.def.dash" (ngModelChange)="setNumber('dash', $event)" /></label>
+              <label class="field"><span>ためる時間（秒）</span><input type="number" [min]="limits.charge[0]" [max]="limits.charge[1]" step="0.1" [ngModel]="sel.def.charge" (ngModelChange)="setNumber('charge', $event)" /></label>
+            </div>
+          }
+          @case ('jump') {
+            <div class="grid2">
+              <label class="field"><span>跳ぶ距離（マス）</span><input type="number" [min]="limits.dash[0]" [max]="limits.dash[1]" step="1" [ngModel]="sel.def.dash" (ngModelChange)="setNumber('dash', $event)" /></label>
+              <label class="field"><span>ためる時間（秒）</span><input type="number" [min]="limits.charge[0]" [max]="limits.charge[1]" step="0.1" [ngModel]="sel.def.charge" (ngModelChange)="setNumber('charge', $event)" /></label>
+            </div>
+          }
+          @case ('shockwave') {
+            <div class="grid2">
+              <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
+            </div>
+          }
+          @case ('claw') {}
+          @case ('bite') {}
+          @default {
+            <div class="grid2">
+              <label class="field"><span>射程（マス）</span><input type="number" [min]="limits.range[0]" [max]="limits.range[1]" step="1" [ngModel]="sel.def.range" (ngModelChange)="setNumber('range', $event)" /></label>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="section">
+        <h2>強さ</h2>
+        <div class="grid3">
+          <label class="field"><span>HP</span><input type="number" [min]="limits.hp[0]" [max]="limits.hp[1]" [ngModel]="sel.def.hp" (ngModelChange)="setNumber('hp', $event)" /></label>
+          <label class="field"><span>攻撃</span><input type="number" [min]="limits.stat[0]" [max]="limits.stat[1]" [ngModel]="sel.def.atk" (ngModelChange)="setNumber('atk', $event)" /></label>
+          <label class="field"><span>防御</span><input type="number" [min]="limits.stat[0]" [max]="limits.stat[1]" [ngModel]="sel.def.def" (ngModelChange)="setNumber('def', $event)" /></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>攻撃の間隔（秒）</span><input type="number" [min]="limits.interval[0]" [max]="limits.interval[1]" step="0.1" [ngModel]="sel.def.interval" (ngModelChange)="setNumber('interval', $event)" /></label>
+          <label class="field"><span>歩く速さ（マス/秒）</span><input type="number" [min]="limits.speed[0]" [max]="limits.speed[1]" step="0.1" [ngModel]="sel.def.speed" (ngModelChange)="setNumber('speed', $event)" /></label>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>ごほうび</h2>
+        <div class="grid2">
+          <label class="field"><span>経験値</span><input type="number" [min]="limits.reward[0]" [max]="limits.reward[1]" [ngModel]="sel.def.exp" (ngModelChange)="setNumber('exp', $event)" /></label>
+          <label class="field"><span>ゴールド</span><input type="number" [min]="limits.reward[0]" [max]="limits.reward[1]" [ngModel]="sel.def.gold" (ngModelChange)="setNumber('gold', $event)" /></label>
+        </div>
+        <div class="grid2">
+          <label class="field">
+            <span>落とすアイテム</span>
+            <select [ngModel]="sel.def.drop ?? ''" (ngModelChange)="setDrop($event)">
+              @for (item of items; track item[0]) {
+                <option [value]="item[0]">{{ item[1] }}</option>
+              }
+            </select>
+          </label>
+          <label class="field"><span>落とす確率（%）</span><input type="number" min="0" max="100" [ngModel]="Math.round(sel.def.dropRate * 100)" (ngModelChange)="setDropRate($event)" /></label>
+        </div>
+        <p class="hint">落とす確率は、プレイヤーの運が高いほど上がります。</p>
+      </div>
+
+      <div class="section">
+        <h2>ふるまい</h2>
+        <div class="grid2">
+          <label class="field"><span>襲ってくる距離（マス）</span><input type="number" [min]="limits.sight[0]" [max]="limits.sight[1]" step="0.5" [ngModel]="sel.def.sight" (ngModelChange)="setNumber('sight', $event)" /></label>
+          <label class="field"><span>復活までの秒数</span><input type="number" [min]="limits.respawn[0]" [max]="limits.respawn[1]" [ngModel]="sel.def.respawn" (ngModelChange)="setNumber('respawn', $event)" /></label>
+        </div>
+        <p class="hint">0 にすると、こちらから攻撃するまで襲ってきません。</p>
+        <label class="check"><input type="checkbox" [ngModel]="sel.def.boss" (ngModelChange)="setBoss($event)" /> ボス（いつも名前とHPを出す）</label>
+      </div>
+
+      <div class="section">
+        <button type="button" class="btn danger" [disabled]="usedCount(sel.def.id) > 0" (click)="delete()">この敵を消す</button>
+        @if (usedCount(sel.def.id) > 0) {
+          <p class="hint">マップに置いてある敵は消せません。先にマップから取り除いてください。</p>
+        }
+      </div>
+    }
+  </aside>
+</div>
