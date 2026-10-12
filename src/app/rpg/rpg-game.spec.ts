@@ -1,32 +1,37 @@
-import { RpgMap, RpgSave } from '../models/rpg.models';
-import { ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
+import { RpgDungeon, RpgMap, RpgSave } from '../models/rpg.models';
+import { THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
 const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
-function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[] } {
+function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; captured: number } {
   const result = {
     messages: [] as string[],
     dirtyCount: 0,
     entered: [] as string[],
+    captured: 0,
     log: (message: string) => result.messages.push(message),
     statsChanged: () => undefined,
     inventoryChanged: () => undefined,
     dirty: () => result.dirtyCount++,
     talk: () => undefined,
     fade: () => undefined,
-    areaEntered: (area: RpgMap) => result.entered.push(area.id),
+    dungeonEntered: (dungeon: RpgDungeon) => result.entered.push(dungeon.id),
+    captureScreen: () => {
+      result.captured++;
+      return null;
+    },
     knockedOut: () => undefined
   };
   return result;
 }
 
-// 一面が草の 12×12 のエリア
+// 一面が草の 12×12 のエリア。何も指定しなければ、エリアと同じIDのダンジョンの位置(0, 0)に置く
 function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
   return {
-    id, name: id, recommendedLevel: 1, theme: 'plain', width: 12, height: 12,
+    id, name: id, dungeonId: id, gridX: 0, gridY: 0, width: 12, height: 12,
     ground: Array.from({ length: 12 }, () => 'g'.repeat(12)),
     heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
     objects: [], npcs: [], enemies: [], portals: [], startX: 6, startY: 7, sortOrder: 1,
@@ -41,7 +46,17 @@ const MAPS: RpgMap[] = [
       { x: 6, y: 9, to: null, toX: 0, toY: 0 }
     ]
   }),
-  map('forest', { theme: 'forest', startX: 2, startY: 3, sortOrder: 2 })
+  map('forest', { startX: 2, startY: 3, sortOrder: 2 }),
+  // 洞くつのダンジョン(front#234): 入口の右下に奥、左下に泉(泉は広い)
+  map('cave1', { dungeonId: 'cave', name: '入口', sortOrder: 3 }),
+  map('cave2', { dungeonId: 'cave', name: '奥', gridX: 1, sortOrder: 4 }),
+  map('cave3', { dungeonId: 'cave', name: '泉', gridY: 1, width: 16, height: 16, ground: Array.from({ length: 16 }, () => 'g'.repeat(16)), sortOrder: 5 })
+];
+
+const DUNGEONS: RpgDungeon[] = [
+  { id: 'plain', name: '始まりの草原', recommendedLevel: 1, theme: 'plain', sortOrder: 1 },
+  { id: 'forest', name: '精霊の森', recommendedLevel: 4, theme: 'forest', sortOrder: 2 },
+  { id: 'cave', name: '海辺の洞くつ', recommendedLevel: 6, theme: 'tower', sortOrder: 3 }
 ];
 
 function save(partial: Partial<RpgSave> = {}): RpgSave {
@@ -62,7 +77,7 @@ describe('RpgGame', () => {
 
   beforeEach(() => {
     ev = events();
-    game = new RpgGame(ev, MAPS);
+    game = new RpgGame(ev, MAPS, DUNGEONS);
     game.viewW = 800;
     game.viewH = 600;
   });
@@ -232,6 +247,9 @@ describe('RpgGame', () => {
       expect(game.area.id).toBe('forest');
       expect([game.player.x, game.player.y]).toEqual([2, 3]);
       expect(ev.entered).toEqual(['forest']);
+      // 見た目はダンジョンのもの
+      expect(game.theme).toBe(THEMES['forest']);
+      expect(ev.messages).toContain('精霊の森にやってきた');
     });
 
     it('行き先が決まっていないポータルでは移らない', () => {
@@ -241,6 +259,73 @@ describe('RpgGame', () => {
 
       expect(game.area.id).toBe('plain');
       expect([game.player.x, game.player.y]).toEqual([6, 9]);
+    });
+  });
+
+  describe('ダンジョンの中のエリア移動(front#234)', () => {
+    beforeEach(() => {
+      game.loadSave(save({ area: 'cave1', x: 6, y: 6 }));
+    });
+
+    // スライドが終わるまで進める
+    function walk(): void {
+      for (let i = 0; i < 60; i++) game.update(0.05);
+    }
+
+    it('隣にエリアがある側の端で止まると、画面をスライドして隣のエリアの反対側の端(1マス内側)に移る', () => {
+      clickTile(11, 6);
+      for (let i = 0; i < 40 && game.area.id === 'cave1'; i++) game.update(0.05);
+
+      expect(game.area.id).toBe('cave2');
+      expect([game.player.x, game.player.y]).toEqual([1, 6]);
+      expect(game.slide?.side).toEqual([1, 0]);
+      expect(ev.captured).toBe(1);
+
+      walk();
+      expect(game.slide).toBeNull();
+      expect(game.transitioning).toBe(false);
+      // 同じダンジョンの中なので、ダンジョン名は出さない
+      expect(ev.entered).toEqual([]);
+      expect(ev.messages.filter((m) => m.includes('やってきた'))).toEqual([]);
+      expect(game.dungeon.id).toBe('cave');
+      expect(game.theme).toBe(THEMES['tower']);
+    });
+
+    it('戻る向きにも移れ、広さの違うエリアでは同じ位置に着く', () => {
+      clickTile(6, 11);
+      walk();
+      expect(game.area.id).toBe('cave3');
+      expect([game.player.x, game.player.y]).toEqual([6, 1]);
+
+      // 泉(16×16)から入口(12×12)へは、はみ出さない位置に着く
+      game.player.x = 14;
+      game.player.y = 1;
+      clickTile(14, 0);
+      walk();
+      expect(game.area.id).toBe('cave1');
+      expect([game.player.x, game.player.y]).toEqual([11, 10]);
+    });
+
+    it('隣にエリアがない側の端では移らない', () => {
+      clickTile(0, 6);
+      walk();
+      expect(game.area.id).toBe('cave1');
+      expect([game.player.x, game.player.y]).toEqual([0, 6]);
+    });
+
+    it('着くマスが通れなければ、近くの通れるマスに着く', () => {
+      game.maps = MAPS.map((m) => (m.id === 'cave2' ? { ...m, ground: m.ground.map((row, y) => (y === 6 ? 'gw' + 'g'.repeat(10) : row)) } : m));
+      clickTile(11, 6);
+      walk();
+      expect(game.area.id).toBe('cave2');
+      expect(game.map.walkable(game.player.x, game.player.y)).toBe(true);
+      expect(Math.abs(game.player.x - 1) + Math.abs(game.player.y - 6)).toBeLessThanOrEqual(2);
+    });
+
+    it('ダンジョンが見つからないエリアは、エリアの名前で最初の見た目のダンジョンとして扱う', () => {
+      game.dungeons = [];
+      game.loadMap(MAPS[0]);
+      expect(game.dungeon).toMatchObject({ id: 'plain', name: 'plain', theme: 'plain' });
     });
   });
 

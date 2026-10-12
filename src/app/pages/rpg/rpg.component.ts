@@ -5,7 +5,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgEnemy, RpgLook, RpgMap, RpgPointShopItem } from '../../models/rpg.models';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer } from '../../rpg/rpg-bgm';
 import { environment } from '../../../environments/environment';
@@ -78,9 +78,9 @@ export class RpgPageComponent implements OnDestroy {
   // 表示に関わる変化があったときだけ version を上げて、サイド欄などを描き直す
   private readonly version = signal(0);
   readonly logs = signal<string[]>([]);
-  readonly area = signal<RpgMap | null>(null);
   readonly fading = signal(false);
-  readonly areaTitle = signal<RpgMap | null>(null);
+  // ダンジョンに入ったときに画面の中央に大きく出す、ダンジョンの名前と推奨レベル
+  readonly areaTitle = signal<RpgDungeon | null>(null);
   readonly knockedOut = signal(false);
 
   // 会話中の村人と、表示しているセリフの番号
@@ -97,7 +97,7 @@ export class RpgPageComponent implements OnDestroy {
   readonly bgmVolume = signal(Math.round(this.bgmPlayer.settings.volume * 100));
   readonly bgmMuted = signal(this.bgmPlayer.settings.muted);
   readonly bgmUnlocked = signal(false);
-  // 今のエリアの曲(なければ null)
+  // 今のダンジョンの曲(なければ null)
   readonly areaBgm = signal<RpgBgm | null>(null);
 
   readonly gemVisible = signal(false);
@@ -280,8 +280,14 @@ export class RpgPageComponent implements OnDestroy {
     const bgms$ = this.rpgService.getBgms().pipe(catchError(() => of([] as RpgBgm[])));
     // 敵の種類(front#229)が読めなければ、最初の9種類で遊べるようにする
     const enemies$ = this.rpgService.getEnemies().pipe(catchError(() => of(DEFAULT_ENEMIES as unknown as RpgEnemy[])));
-    forkJoin({ maps: this.rpgService.getMaps(), save: this.rpgService.getSave(), bgms: bgms$, enemies: enemies$ }).subscribe({
-      next: ({ maps, save, bgms, enemies }) => {
+    forkJoin({
+      maps: this.rpgService.getMaps(),
+      dungeons: this.rpgService.getDungeons(),
+      save: this.rpgService.getSave(),
+      bgms: bgms$,
+      enemies: enemies$
+    }).subscribe({
+      next: ({ maps, dungeons, save, bgms, enemies }) => {
         this.bgms = bgms;
         setEnemies(enemies);
         if (maps.length === 0) {
@@ -289,7 +295,7 @@ export class RpgPageComponent implements OnDestroy {
           this.isLoading.set(false);
           return;
         }
-        const game = new RpgGame(this.createEvents(), maps);
+        const game = new RpgGame(this.createEvents(), maps, dungeons);
         this.game = game;
         this.resize();
         game.loadSave(save);
@@ -301,11 +307,10 @@ export class RpgPageComponent implements OnDestroy {
         }
         // テストプレイでは保存しない
         this.loaded = !this.testArea;
-        this.area.set(game.area);
-        this.playAreaBgm(game.area);
+        this.playDungeonBgm(game.dungeon);
         this.isLoading.set(false);
-        this.log(game.area.id === 'plain' ? `${game.area.name}にやってきた。村長に話しかけてみよう` : `${game.area.name}にやってきた`);
-        this.showAreaTitle(game.area);
+        this.log(game.area.id === 'plain' ? `${game.dungeon.name}にやってきた。村長に話しかけてみよう` : `${game.dungeon.name}にやってきた`);
+        this.showAreaTitle(game.dungeon);
         this.startLoop(game);
       },
       error: () => {
@@ -354,11 +359,11 @@ export class RpgPageComponent implements OnDestroy {
         this.syncLock();
       },
       fade: (on) => this.fading.set(on),
-      areaEntered: (area) => {
-        this.area.set(area);
-        this.showAreaTitle(area);
-        this.playAreaBgm(area);
+      dungeonEntered: (dungeon) => {
+        this.showAreaTitle(dungeon);
+        this.playDungeonBgm(dungeon);
       },
+      captureScreen: () => this.captureScreen(),
       knockedOut: (on) => this.knockedOut.set(on)
     };
   }
@@ -414,8 +419,8 @@ export class RpgPageComponent implements OnDestroy {
 
   // ===== BGM =====
 
-  private playAreaBgm(area: RpgMap): void {
-    const bgm = this.bgms.find((b) => b.id === area.bgmId) ?? null;
+  private playDungeonBgm(dungeon: RpgDungeon): void {
+    const bgm = this.bgms.find((b) => b.id === dungeon.bgmId) ?? null;
     this.areaBgm.set(bgm);
     this.bgmPlayer.play(bgm ? this.rpgService.bgmUrl(bgm) : null);
   }
@@ -608,10 +613,21 @@ export class RpgPageComponent implements OnDestroy {
     this.logs.update((logs) => [message, ...logs].slice(0, MAX_LOGS));
   }
 
-  private showAreaTitle(area: RpgMap): void {
-    this.areaTitle.set(area);
+  private showAreaTitle(dungeon: RpgDungeon): void {
+    this.areaTitle.set(dungeon);
     if (this.areaTitleTimer) clearTimeout(this.areaTitleTimer);
     this.areaTitleTimer = setTimeout(() => this.areaTitle.set(null), AREA_TITLE_MS);
+  }
+
+  // 隣のエリアへスライドする直前の画面を写し取る(front#234)
+  private captureScreen(): CanvasImageSource | null {
+    const canvas = this.canvas().nativeElement;
+    if (!canvas.width || !canvas.height) return null;
+    const copy = document.createElement('canvas');
+    copy.width = canvas.width;
+    copy.height = canvas.height;
+    copy.getContext('2d')?.drawImage(canvas, 0, 0);
+    return copy;
   }
 
   // E2Eテストで、キャンバスの中の村人をクリックする位置を求められるようにする(本番のビルドでは出さない)
@@ -627,6 +643,8 @@ export class RpgPageComponent implements OnDestroy {
       // プレイヤーが立っているマスと高さ
       playerTile: (): [number, number, number] | null =>
         this.game ? [Math.round(this.game.player.x), Math.round(this.game.player.y), this.game.player.z] : null,
+      // いるエリアのID(front#234)
+      areaId: (): string | null => this.game?.area.id ?? null,
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl

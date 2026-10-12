@@ -1,5 +1,5 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
-import { ENEMIES, MAX_HEIGHT, StaticType } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -112,9 +112,10 @@ export interface MapCheck {
 const MAX_UNDO = 50;
 const BLOCKED_GROUND = ['w', 'v'];
 
-export function blankMap(id: string, name: string, theme: string, width: number, height: number, recommendedLevel: number): RpgMap {
+/** 一面が草のエリア。dungeonId のダンジョンの、位置(gridX, gridY)に置く */
+export function blankMap(id: string, name: string, dungeonId: string, gridX: number, gridY: number, width: number, height: number): RpgMap {
   return {
-    id, name, recommendedLevel, theme, width, height,
+    id, name, dungeonId, gridX, gridY, width, height,
     ground: Array.from({ length: height }, () => 'g'.repeat(width)),
     heights: flatHeights(width, height),
     objects: [], npcs: [], enemies: [], portals: [],
@@ -129,15 +130,14 @@ export function flatHeights(width: number, height: number): string[] {
 
 export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput {
   return {
-    id, name: map.name, recommendedLevel: map.recommendedLevel, theme: map.theme, width: map.width, height: map.height,
+    id, name: map.name, dungeonId: map.dungeonId, gridX: map.gridX, gridY: map.gridY, width: map.width, height: map.height,
     ground: map.ground,
     heights: map.heights ?? flatHeights(map.width, map.height),
     objects: map.objects.map((o) => ({ type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch })),
     npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
     enemies: map.enemies.map((e) => ({ ...e })),
     portals: map.portals.map((p) => ({ ...p })),
-    startX: map.startX, startY: map.startY,
-    bgmId: map.bgmId ?? null
+    startX: map.startX, startY: map.startY
   };
 }
 
@@ -390,10 +390,32 @@ export class RpgMapEditor {
       text: emptyNpc.length ? `名前かセリフが空の村人が ${emptyNpc.length} 人います` : '村人の名前とセリフが入っている'
     });
 
-    const reachable = m.id === 'plain' || maps.some((a) => a.id !== m.id && a.portals.some((p) => p.to === m.id));
+    // 隣のエリアがある側の端に、通れるマス(出口)があるか(front#234)
+    for (const side of SIDES) {
+      const next = neighborOf(maps, m, side);
+      if (!next) continue;
+      const [dx, dy] = side;
+      const edge = dx !== 0
+        ? Array.from({ length: m.height }, (_, y) => [dx === 1 ? m.width - 1 : 0, y])
+        : Array.from({ length: m.width }, (_, x) => [x, dy === 1 ? m.height - 1 : 0]);
+      const open = edge.some(([x, y]) => this.walkableGround(x, y) && this.occupied(x, y) !== 'object' && this.occupied(x, y) !== 'npc');
+      checks.push({
+        ok: open,
+        text: open
+          ? `${sideLabel(side)}の「${next.name}」へ出られる`
+          : `${sideLabel(side)}の端に通れるマスがなく、「${next.name}」へ出られません`
+      });
+    }
+
+    const reachable =
+      m.id === 'plain' ||
+      maps.some((a) => a.id !== m.id && a.portals.some((p) => p.to === m.id)) ||
+      SIDES.some((side) => neighborOf(maps, m, side));
     checks.push({
       ok: reachable,
-      text: reachable ? 'ほかのエリアから来られる' : 'まだどのエリアからも来られません（ほかのエリアに、このエリアへのポータルを置いてください）'
+      text: reachable
+        ? 'ほかのエリアから来られる'
+        : 'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンにこのエリアへのポータルを置いてください）'
     });
     return checks;
   }
