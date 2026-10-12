@@ -39,6 +39,8 @@ export const PALETTE: PaletteTab[] = [
       { id: 'f', label: '花', tool: { kind: 'ground', ground: 'f' } },
       { id: 'p', label: '道', tool: { kind: 'ground', ground: 'p' } },
       { id: 's', label: '砂・ふち', tool: { kind: 'ground', ground: 's' } },
+      { id: 't', label: 'タイル', tool: { kind: 'ground', ground: 't' } },
+      { id: 'r', label: 'レンガ', tool: { kind: 'ground', ground: 'r' } },
       // 呼び名は見た目(テーマ)で変わる(水・泉・溶岩・闇)
       { id: 'w', label: '水', tool: { kind: 'ground', ground: 'w' } },
       { id: 'b', label: '橋', tool: { kind: 'ground', ground: 'b' } },

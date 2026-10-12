@@ -231,10 +231,15 @@ export class RpgRenderer {
     if (g === G.WATER || g === G.BRIDGE) color = pal.liquid(x, y, this.time);
     else if (g === G.PATH) color = pal.path[(x + y) % 2];
     else if (g === G.SAND) color = pal.sand;
+    else if (g === G.TILE) color = pal.tile.grout;
+    else if (g === G.BRICK) color = pal.brick.mortar;
     else color = pal.grass[(x * 7 + y * 13) % 3];
     this.diamond(cx, cy);
     ctx.fillStyle = color;
     ctx.fill();
+    if (g === G.TILE) this.drawStoneTile(cx, cy, x, y);
+    else if (g === G.BRICK) this.drawBrick(cx, cy, x, y);
+    this.diamond(cx, cy);
     // 高いマスほど、上の面を少し明るくする
     if (lift > 0) {
       ctx.fillStyle = `rgba(255,255,255,${(lift / HZ) * 0.06})`;
@@ -266,6 +271,55 @@ export class RpgRenderer {
       }
     } else if (g === G.FLOWER) {
       this.drawFlower(cx, cy, x, y);
+    }
+  }
+
+  // マスの上の面の中の点。u は x の向き(画面の右下)、v は y の向き(画面の左下)に 0〜1
+  private tilePoint(cx: number, cy: number, u: number, v: number): Pt {
+    return [cx + ((u - v) * TW) / 2, cy - TH / 2 + ((u + v) * TH) / 2];
+  }
+
+  private tileQuad(cx: number, cy: number, u0: number, v0: number, u1: number, v1: number, fill: string): void {
+    const pt = (u: number, v: number) => this.tilePoint(cx, cy, u, v);
+    this.poly([pt(u0, v0), pt(u1, v0), pt(u1, v1), pt(u0, v1)], fill);
+  }
+
+  // タイル(石畳, front#254)。目地の色の上に、2×2の石を少しすき間をあけて並べる。石ごとに色を少し変える
+  private drawStoneTile(cx: number, cy: number, x: number, y: number): void {
+    const ctx = this.ctx;
+    const { stone } = this.game.theme.tile;
+    const gap = 0.035;
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 2; j++) {
+        const u0 = i / 2 + gap;
+        const v0 = j / 2 + gap;
+        const u1 = (i + 1) / 2 - gap;
+        this.tileQuad(cx, cy, u0, v0, u1, (j + 1) / 2 - gap, stone[(x * 2 + i + (y * 2 + j) * 3) % 3]);
+        // 石の奥側のふちを少し明るく
+        ctx.beginPath();
+        ctx.moveTo(...this.tilePoint(cx, cy, u0, v0 + 0.02));
+        ctx.lineTo(...this.tilePoint(cx, cy, u1, v0 + 0.02));
+        ctx.stroke();
+      }
+    }
+  }
+
+  // レンガ(front#254)。y の向きに4段、x の向きに長いレンガを段ごとに半分ずらして積む。ずれ方はとなりのマスとつながる
+  private drawBrick(cx: number, cy: number, x: number, y: number): void {
+    const { brick } = this.game.theme.brick;
+    const rows = 4;
+    const gap = 0.03;
+    for (let r = 0; r < rows; r++) {
+      const v0 = r / rows + gap;
+      const v1 = (r + 1) / rows - gap;
+      const shift = ((y * rows + r) % 2) * 0.25;
+      for (let k = -1; k < 2; k++) {
+        const u0 = Math.max(0, k / 2 + shift) + gap;
+        const u1 = Math.min(1, (k + 1) / 2 + shift) - gap;
+        if (u1 > u0) this.tileQuad(cx, cy, u0, v0, u1, v1, brick[(x * 3 + k + y * 5 + r * 7 + 9) % 3]);
+      }
     }
   }
 

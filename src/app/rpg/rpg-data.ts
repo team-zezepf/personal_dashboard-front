@@ -101,10 +101,10 @@ export const TH = 32;
 // 地面の高さ(front#225)。1段の画面上の高さ(マスの縦の4分の1)と、いちばん高い段
 export const HZ = 8;
 export const MAX_HEIGHT = 3;
-export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, VOID: 6 } as const;
+export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, VOID: 6, TILE: 7, BRICK: 8 } as const;
 
-// マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし)
-export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v'];
+// マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし t:タイル r:レンガ)
+export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano';
 export const STATIC_TYPES: StaticType[] = ['tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano'];
@@ -138,6 +138,9 @@ export interface ThemeDef {
   grass: [string, string, string];
   path: [string, string];
   sand: string;
+  // タイル(石畳)の石・目地の色と、レンガ・目地の色(front#254)。石・レンガは3色を混ぜて並べる
+  tile: { stone: [string, string, string]; grout: string };
+  brick: { brick: [string, string, string]; mortar: string };
   liquid: (x: number, y: number, time: number) => string;
   wave: string | null;
   flower: 'flower' | 'glow' | 'tuft' | 'crack';
@@ -158,6 +161,7 @@ export const THEMES: Record<string, ThemeDef> = {
   plain: {
     label: '草原', liquidName: '水',
     sky: ['#8fd0f5', '#d6f2fd'], grass: ['#8fd16a', '#88cb63', '#95d771'], path: ['#ead6a8', '#e4cf9f'], sand: '#f2e5b8',
+    tile: { stone: ['#dcd7ca', '#d2ccbd', '#e3dfd3'], grout: '#aaa392' }, brick: { brick: ['#c96a4c', '#bd5f43', '#d07455'], mortar: '#ead9bf' },
     liquid: waterColor(200, 56, 4), wave: 'rgba(255,255,255,0.45)',
     flower: 'flower', flowers: ['#ff7eb6', '#fff176', '#ffffff'], edge: ['#a0754d', '#7f5a3a'],
     tree: GREEN_TREE, rock: ['#9aa3ad', '#b7bec6']
@@ -165,6 +169,7 @@ export const THEMES: Record<string, ThemeDef> = {
   forest: {
     label: '森', liquidName: '泉',
     sky: ['#123c3a', '#2f7d6d'], grass: ['#5fae73', '#58a66c', '#64b679'], path: ['#c9b48a', '#c2ad82'], sand: '#8fc89a',
+    tile: { stone: ['#9db2a0', '#93a895', '#a7bba9'], grout: '#5f8a66' }, brick: { brick: ['#8e6c55', '#83624c', '#977560'], mortar: '#8fb47f' },
     liquid: waterColor(178, 58, 5), wave: 'rgba(220,255,255,0.7)',
     flower: 'glow', flowers: ['#b4f8ff', '#e9d5ff', '#fdffb6'], edge: ['#6b4f33', '#57402a'],
     tree: { trunk: '#5b3a29', leaves: ['#1f7a5c', '#23896a', '#36a882'], scale: 1.25 }, rock: ['#7d8a86', '#9aa8a3'],
@@ -173,6 +178,7 @@ export const THEMES: Record<string, ThemeDef> = {
   valley: {
     label: '谷', liquidName: '溶岩',
     sky: ['#f59e5b', '#fde2b6'], grass: ['#c9a46c', '#c19c63', '#d0ab74'], path: ['#a98457', '#a27d50'], sand: '#6b4a32',
+    tile: { stone: ['#dcb98d', '#d2ae82', '#e3c398'], grout: '#9a7550' }, brick: { brick: ['#a4512f', '#97492a', '#ae5a36'], mortar: '#d6b588' },
     liquid: (x, y, time) => `hsl(${18 + Math.sin(time * 2 + x + y) * 8}, 95%, ${50 + Math.sin(time * 3 + x * 0.7 + y * 0.4) * 6}%)`,
     wave: 'rgba(255,230,120,0.8)', flower: 'tuft', flowers: ['#7a9a3a', '#8fb045', '#6b8a30'], edge: ['#7c4f2c', '#5f3b20'],
     tree: GREEN_TREE, rock: ['#8a5a3c', '#a97450']
@@ -180,6 +186,7 @@ export const THEMES: Record<string, ThemeDef> = {
   tower: {
     label: '塔', liquidName: '闇',
     sky: ['#0b0820', '#2a2255'], grass: ['#5b5770', '#56526a', '#615c77'], path: ['#8b1e3f', '#7d1a38'], sand: '#4a4660',
+    tile: { stone: ['#4d4869', '#46415f', '#554f72'], grout: '#25222f' }, brick: { brick: ['#5e2c42', '#55283b', '#68324a'], mortar: '#25222f' },
     liquid: () => '#000', wave: null, flower: 'crack', flowers: ['#3f3b52'], edge: ['#2a2738', '#1f1d2b'],
     tree: GREEN_TREE, rock: ['#4b4763', '#625d7d'], vignette: 'rgba(8,4,25,0.7)', stars: true
   }
