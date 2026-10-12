@@ -448,6 +448,19 @@ describe('RpgGame', () => {
 
     afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
+    it('ひとくいそう(根を張る形)は、襲ってきても追いかけず、体当たり・ジャンプでも動かない(front#255)', () => {
+      setup(test({ shape: 'plant', attack: 'jump', dash: 3, speed: 3 }), [2, 7], [6, 7]);
+      run(3);
+      expect([game.enemies[0].x, game.enemies[0].y]).toEqual([2, 7]);
+
+      // となりに来たら攻撃してくる
+      const hp = game.player.hp;
+      game.player.x = 3;
+      run(2);
+      expect([game.enemies[0].x, game.enemies[0].y]).toEqual([2, 7]);
+      expect(game.player.hp).toBeLessThan(hp);
+    });
+
     it('炎は離れたところから攻撃し、攻撃を始めたマスにいると当たる', () => {
       setup(test({ attack: 'fire', range: 5 }), [2, 7], [6, 7]);
       const hp = game.player.hp;
