@@ -18,14 +18,10 @@
     ></canvas>
 
     <div class="hud">
-      @if (area(); as a) {
-        <div class="chip place">{{ a.name }}</div>
-        <div class="chip rec">{{ recLabel(a.recommendedLevel) }}</div>
-      }
       @if (testArea) {
         <div class="chip test">テストプレイ中（保存されません）</div>
       }
-      <div class="chip">クリック：移動 ／ 敵：攻撃 ／ 人：話す ／ 光る場所：エリア移動 ／ [1]キー：回復薬</div>
+      <div class="chip">[1]キー：回復薬</div>
     </div>
 
     <div class="settings">
@@ -55,7 +51,6 @@
               (input)="changeVolume(+$any($event.target).value)"
             />
           </div>
-          <div class="now-playing">♪ {{ areaBgm()?.name ?? '（曲なし）' }}</div>
         </div>
       }
     </div>

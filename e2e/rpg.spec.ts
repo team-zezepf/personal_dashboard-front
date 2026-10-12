@@ -130,7 +130,7 @@ test(
 
     await step('RPG(/rpg)を開く', '始まりの草原の村から、Lv 1・30G・回復薬×3・木の剣を装備した状態で始まる', async () => {
       await page.goto('/rpg');
-      // 左上のエリア名(入った直後は、画面の中央にも大きく出る)
+      // エリアに入った直後に、画面の中央に大きく出るエリア名
       await expect(page.getByText('始まりの草原', { exact: true }).first()).toBeVisible();
       await expect(status.getByText('Lv 1')).toBeVisible();
       await expect(status.getByText('30G')).toBeVisible();
