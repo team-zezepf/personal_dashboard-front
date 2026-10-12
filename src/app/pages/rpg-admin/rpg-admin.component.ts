@@ -417,6 +417,11 @@ export class RpgAdminPageComponent implements OnDestroy {
       case G.SAND: return t.sand;
       case G.WATER: return t.liquid(0, 0, 0);
       case G.BRIDGE: return '#b8834f';
+      // タイルは2×2の石、レンガは互い違いの横長の模様
+      case G.TILE:
+        return `linear-gradient(90deg, ${t.tile.grout} 1px, transparent 1px) 0 0 / 50% 50%, linear-gradient(${t.tile.grout} 1px, transparent 1px) 0 0 / 50% 50%, ${t.tile.stone[0]}`;
+      case G.BRICK:
+        return `linear-gradient(${t.brick.mortar} 1px, transparent 1px) 0 0 / 100% 50%, linear-gradient(90deg, ${t.brick.mortar} 1px, transparent 1px) 0 0 / 50% 100%, ${t.brick.brick[0]}`;
       case G.VOID: return 'repeating-linear-gradient(45deg, #cbd5e1 0 4px, #ffffff 4px 8px)';
       default: return t.grass[0];
     }

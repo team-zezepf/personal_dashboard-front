@@ -26,6 +26,17 @@ describe('RpgMapEditor', () => {
     expect(editor.map.objects).toEqual([]);
   });
 
+  it('パレットの「地面」にタイル・レンガがあり、塗ったマスには敵を置ける(front#254)', () => {
+    const ground = PALETTE.find((t) => t.id === 'ground')!.items;
+    expect(ground.map((i) => i.label)).toEqual(['草', '花', '道', '砂・ふち', 'タイル', 'レンガ', '水', '橋', 'なし']);
+
+    editor.apply({ kind: 'ground', ground: 't' }, 2, 2, true);
+    editor.apply({ kind: 'ground', ground: 'r' }, 3, 2, true);
+    expect(editor.map.ground[2].slice(2, 4)).toBe('tr');
+    editor.apply({ kind: 'enemy', type: 'slime' }, 2, 2, true);
+    expect(editor.map.enemies.some((e) => e.x === 2 && e.y === 2)).toBe(true);
+  });
+
   it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {
     editor.apply({ kind: 'height', op: 'up' }, 2, 2, true, 3);
     editor.apply({ kind: 'height', op: 'up' }, 2, 2, false, 3);

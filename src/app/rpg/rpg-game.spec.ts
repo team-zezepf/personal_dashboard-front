@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
+import { G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -546,6 +546,17 @@ describe('RpgGame', () => {
       expect(area.walkable(5, 5)).toBe(false);
       expect(area.walkable(7, 7)).toBe(false);
       expect(area.walkable(8, 8)).toBe(true);
+    });
+
+    it('タイル・レンガの地面は歩け、どのテーマにも石・レンガの色がある(front#254)', () => {
+      const area = buildAreaMap(map('test', { ground: ['trg' + 'g'.repeat(9), ...Array.from({ length: 11 }, () => 'g'.repeat(12))] }));
+
+      expect([0, 1].map((x) => area.walkable(x, 0))).toEqual([true, true]);
+      expect(area.ground[0].slice(0, 2)).toEqual([G.TILE, G.BRICK]);
+      for (const theme of Object.values(THEMES)) {
+        expect(theme.tile.stone).toHaveLength(3);
+        expect(theme.brick.brick).toHaveLength(3);
+      }
     });
 
     it('高さのないマップは、すべて0段として読む', () => {
