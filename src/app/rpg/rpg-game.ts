@@ -203,7 +203,7 @@ export class RpgGame {
   mouse: { x: number; y: number } | null = null;
   hover: Npc | Enemy | null = null;
 
-  // 会話・お店を開いている間はクリックで動かない
+  // 会話・お店などを開いている間はクリックで動かない。敵も止まり、攻撃してこない(front#243)
   locked = false;
   transitioning = false;
   slide: AreaSlide | null = null;
@@ -727,7 +727,7 @@ export class RpgGame {
       this.transitioning = false;
     }
     this.updatePlayer(dt);
-    if (!this.transitioning) this.enemies.forEach((e) => this.updateEnemy(e, dt));
+    if (!this.transitioning && !this.locked) this.enemies.forEach((e) => this.updateEnemy(e, dt));
     for (const f of this.floats) f.t += dt;
     while (this.floats.length && this.floats[0].t > 1.1) this.floats.shift();
     for (const p of this.particles) {
