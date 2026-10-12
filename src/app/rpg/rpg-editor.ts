@@ -135,7 +135,8 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     heights: map.heights ?? flatHeights(map.width, map.height),
     objects: map.objects.map((o) => ({
       type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch,
-      shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null
+      shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
+      lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null
     })),
     npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
     enemies: map.enemies.map((e) => ({ ...e })),
@@ -288,12 +289,13 @@ export class RpgMapEditor {
     return null;
   }
 
-  /** 家の形・向き・屋根の色を変える。置けない形・向きなら変えずに false */
-  setHouse(house: RpgMapObject, shape: string, rotation: number, roof: string): boolean {
+  /** 家の形・向き・屋根の色・屋根の高さを変える。置けない形・向きなら変えずに false */
+  setHouse(house: RpgMapObject, shape: string, rotation: number, roof: string, lowRoof = false): boolean {
     if (this.houseProblem(house, house.x, house.y, shape, rotation)) return false;
     house.shape = shape;
     house.rotation = rotation;
     house.roof = roof;
+    house.lowRoof = lowRoof;
     return true;
   }
 

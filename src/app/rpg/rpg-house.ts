@@ -132,6 +132,11 @@ export function houseGeometry(shape: string | null | undefined, rotation: number
   };
 }
 
+/** 屋根の棟の、軒からの高さ(画面上)。幅の広い家ほど高く、低い屋根(front#238)はつぶした形にする */
+export function roofRise(ridge: number, low?: boolean | null): number {
+  return (34 + (ridge - 0.5) * 28) * (low ? 0.45 : 1);
+}
+
 // ===== 描くための部品 =====
 // 壁は角から少し内側、軒は少し外側に出す(マスの単位。今までの1×1の家とほぼ同じ大きさ)
 const WALL_INSET = 0.08;

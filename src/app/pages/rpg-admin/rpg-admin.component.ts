@@ -5,7 +5,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole } from '../../models/rpg.models';
-import { DEFAULT_ROOF, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, doorLabel, houseGeometry, housePieces, objectTiles } from '../../rpg/rpg-house';
+import { DEFAULT_ROOF, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import { ENEMIES, G, GROUND_CHARS, HZ, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
@@ -109,7 +109,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   // NPC・家の中身を変えるモーダル(front#236)。家は、決めるまでは下書き(houseDraft)を変える
   readonly npcModal = signal<RpgMapNpc | null>(null);
   readonly houseModal = signal<RpgMapObject | null>(null);
-  readonly houseDraft = signal<{ shape: string; rotation: number; roof: string }>({ shape: '1x1', rotation: 0, roof: DEFAULT_ROOF });
+  readonly houseDraft = signal<{ shape: string; rotation: number; roof: string; lowRoof: boolean }>({ shape: '1x1', rotation: 0, roof: DEFAULT_ROOF, lowRoof: false });
   readonly houseShapes = HOUSE_SHAPES;
   readonly roofColors = ROOF_COLORS;
   // 家を下書きの形・向きにしたときに置けない理由(置ければ空)
@@ -644,7 +644,7 @@ export class RpgAdminPageComponent implements OnDestroy {
       this.npcModal.set(sel.ref);
     } else if (sel.kind === 'house') {
       const h = sel.ref;
-      this.houseDraft.set({ shape: h.shape ?? '1x1', rotation: h.rotation ?? 0, roof: h.roof ?? DEFAULT_ROOF });
+      this.houseDraft.set({ shape: h.shape ?? '1x1', rotation: h.rotation ?? 0, roof: h.roof ?? DEFAULT_ROOF, lowRoof: !!h.lowRoof });
       this.houseModal.set(h);
     }
     this.version.update((v) => v + 1);
@@ -667,13 +667,17 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.houseDraft.update((d) => ({ ...d, roof }));
   }
 
+  setLowRoof(lowRoof: boolean): void {
+    this.houseDraft.update((d) => ({ ...d, lowRoof }));
+  }
+
   // 家の下書きを決める(置けない形・向きのときは、ボタンを押せない)
   applyHouse(): void {
     const house = this.houseModal();
     const d = this.houseDraft();
     if (!house || !this.editor) return;
     this.editor.checkpoint();
-    if (!this.editor.setHouse(house, d.shape, d.rotation, d.roof)) return;
+    if (!this.editor.setHouse(house, d.shape, d.rotation, d.roof, d.lowRoof)) return;
     this.houseModal.set(null);
     this.markDirty();
   }
@@ -682,10 +686,10 @@ export class RpgAdminPageComponent implements OnDestroy {
    * 家の見本の絵(SVG の多角形)。マップと同じ形の計算(rpg-house.ts)で、マスごとの壁 → 屋根を奥から並べる。
    * withGround のときは、まわりの地面と扉の前の印も描く
    */
-  housePolygons(shape: string, rotation: number, roof: string, scale: number, withGround = false): { points: string; fill: string }[] {
+  housePolygons(shape: string, rotation: number, roof: string, scale: number, withGround = false, lowRoof = false): { points: string; fill: string }[] {
     const geo = houseGeometry(shape, rotation);
     const wall = 34;
-    const top = wall + 34 + (geo.ridge - 0.5) * 28;
+    const top = wall + roofRise(geo.ridge, lowRoof);
     // 家の真ん中を (0, 0) にする
     const cx = geo.tiles.reduce((a, t) => a + t[0], 0) / geo.tiles.length;
     const cy = geo.tiles.reduce((a, t) => a + t[1], 0) / geo.tiles.length;

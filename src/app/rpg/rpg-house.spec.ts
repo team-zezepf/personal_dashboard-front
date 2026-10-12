@@ -1,5 +1,5 @@
 import { buildAreaMap } from './rpg-data';
-import { doorLabel, houseGeometry, housePieces, houseTiles } from './rpg-house';
+import { doorLabel, houseGeometry, housePieces, houseTiles, roofRise } from './rpg-house';
 import { RpgMap } from '../models/rpg.models';
 
 const sortTiles = (tiles: readonly (readonly [number, number])[]) => [...tiles].map((t) => t.join(',')).sort();
@@ -48,6 +48,13 @@ describe('rpg-house(家の形と向き。front#236)', () => {
     expect(geo.roof).toHaveLength(6);
     // 曲がり角(0, 0)は、4つの面が集まる
     expect(geo.roof.filter((f) => f.points.some((p) => p.top && p.x === 0 && p.y === 0))).toHaveLength(4);
+  });
+
+  it('低い屋根は、ふつうの屋根よりつぶした高さになる(front#238)', () => {
+    expect(roofRise(0.5)).toBe(34);
+    expect(roofRise(0.5, true)).toBeLessThan(roofRise(0.5) / 2);
+    // 幅の広い家(2×2)ほど高い
+    expect(roofRise(1)).toBeGreaterThan(roofRise(0.5));
   });
 
   it('家が占めるマスは、すべて通れない', () => {

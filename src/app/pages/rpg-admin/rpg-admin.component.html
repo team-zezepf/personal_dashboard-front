@@ -492,7 +492,7 @@
                 @for (s of houseShapes; track s.id) {
                   <button type="button" class="shape" [class.active]="houseDraft().shape === s.id" [attr.aria-pressed]="houseDraft().shape === s.id" (click)="setHouseShape(s.id)">
                     <svg viewBox="-60 -70 120 90" aria-hidden="true">
-                      @for (p of housePolygons(s.id, s.id === houseDraft().shape ? houseDraft().rotation : 0, houseDraft().roof, 0.55); track $index) {
+                      @for (p of housePolygons(s.id, s.id === houseDraft().shape ? houseDraft().rotation : 0, houseDraft().roof, 0.55, false, houseDraft().lowRoof); track $index) {
                         <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
                       }
                     </svg>
@@ -506,6 +506,13 @@
               <div class="rotate-row">
                 <button type="button" class="btn" (click)="rotateHouse()">↻ 回す</button>
                 <span class="muted small">{{ houseDraft().rotation * 90 }}°（扉は{{ houseDoorLabel() }}）</span>
+              </div>
+            </div>
+            <div class="field">
+              <span>屋根の高さ</span>
+              <div class="seg" role="group" aria-label="屋根の高さ">
+                <button type="button" [class.active]="!houseDraft().lowRoof" [attr.aria-pressed]="!houseDraft().lowRoof" (click)="setLowRoof(false)">ふつう</button>
+                <button type="button" [class.active]="houseDraft().lowRoof" [attr.aria-pressed]="houseDraft().lowRoof" (click)="setLowRoof(true)">低い</button>
               </div>
             </div>
             <div class="field">
@@ -533,7 +540,7 @@
           <div>
             <div class="house-preview">
               <svg viewBox="-150 -130 300 220" aria-label="家の見本">
-                @for (p of housePolygons(houseDraft().shape, houseDraft().rotation, houseDraft().roof, 1.2, true); track $index) {
+                @for (p of housePolygons(houseDraft().shape, houseDraft().rotation, houseDraft().roof, 1.2, true, houseDraft().lowRoof); track $index) {
                   <polygon [attr.points]="p.points" [attr.fill]="p.fill" [attr.stroke]="p.fill" stroke-width="0.6" />
                 }
               </svg>

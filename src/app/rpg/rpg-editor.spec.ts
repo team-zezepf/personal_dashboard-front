@@ -111,9 +111,17 @@ describe('RpgMapEditor', () => {
       editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
       editor.apply({ kind: 'object', type: 'house' }, 4, 4, true);
       expect(toMapInput(editor.map).objects).toEqual([
-        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null },
-        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0 }
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null }
       ]);
+    });
+
+    it('屋根の高さ(低い)を選べ、保存する形にも入る(front#238)', () => {
+      const house = editor.apply({ kind: 'object', type: 'house' }, 4, 4, true)!.ref as RpgMapObject;
+      expect(editor.setHouse(house, '2x1', 0, '#5b8def', true)).toBe(true);
+      expect(toMapInput(editor.map).objects[0]).toMatchObject({ shape: '2x1', lowRoof: true });
+      expect(editor.setHouse(house, '2x1', 0, '#5b8def')).toBe(true);
+      expect(house.lowRoof).toBe(false);
     });
   });
 

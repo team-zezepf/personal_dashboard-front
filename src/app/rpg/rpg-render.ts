@@ -1,5 +1,5 @@
 import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
-import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces } from './rpg-house';
+import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
@@ -561,7 +561,7 @@ export class RpgRenderer {
       this.houses.set(key, house);
     }
     const wall = 34;
-    const top = wall + 34 + (house.ridge - 0.5) * 28;
+    const top = wall + roofRise(house.ridge, o.lowRoof);
     const roof = o.roof ?? DEFAULT_ROOF;
     const at = ([x, y]: readonly [number, number], z = 0): Pt => {
       const [sx, sy] = iso(x, y);

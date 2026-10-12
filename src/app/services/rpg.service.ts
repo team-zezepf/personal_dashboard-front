@@ -35,7 +35,7 @@ const SAVE_FIELDS = `
 
 const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
-  objects { type x y roof torch shape rotation }
+  objects { type x y roof torch shape rotation lowRoof }
   npcs { name x y hair body role notice lines look { ${LOOK_FIELDS} } }
   enemies { type x y }
   portals { x y to toX toY }

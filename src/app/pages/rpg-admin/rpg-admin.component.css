@@ -749,3 +749,26 @@ textarea {
   border-radius: 10px;
   z-index: 30;
 }
+
+/* 屋根の高さ(front#238) */
+.seg {
+  display: flex;
+  gap: 4px;
+}
+
+.seg button {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.seg button.active {
+  background: #6076e0;
+  border-color: #6076e0;
+  color: #fff;
+  font-weight: 700;
+}
