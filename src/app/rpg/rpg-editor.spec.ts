@@ -24,6 +24,21 @@ describe('RpgMapEditor', () => {
     expect(editor.map.objects).toEqual([]);
   });
 
+  it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {
+    editor.apply({ kind: 'height', op: 'up' }, 2, 2, true, 3);
+    editor.apply({ kind: 'height', op: 'up' }, 2, 2, false, 3);
+    expect(editor.map.heights[1].slice(1, 4)).toBe('111');
+    expect(editor.map.heights[3].slice(1, 4)).toBe('111');
+
+    for (let i = 0; i < 5; i++) editor.apply({ kind: 'height', op: 'up' }, 2, 2, true);
+    expect(editor.heightAt(2, 2)).toBe(3);
+    editor.apply({ kind: 'height', op: 'set', value: 0 }, 2, 2, true);
+    editor.apply({ kind: 'height', op: 'down' }, 2, 2, true);
+    expect(editor.heightAt(2, 2)).toBe(0);
+    editor.apply({ kind: 'height', op: 'set', value: 2 }, 5, 5, true);
+    expect(toMapInput(editor.map).heights[5][5]).toBe('2');
+  });
+
   it('置物は同じマスのものと置き換わり、敵は空いている通れるマスにだけ置ける', () => {
     editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
     editor.apply({ kind: 'object', type: 'house', roof: '#5b8def' }, 1, 1, true);
@@ -73,8 +88,12 @@ describe('RpgMapEditor', () => {
 
   it('広さを変えると、広げたところは草になり、はみ出したものは消える', () => {
     editor.apply({ kind: 'object', type: 'tree' }, 13, 11, true);
+    editor.apply({ kind: 'height', op: 'set', value: 2 }, 13, 0, true);
     editor.resize(20, 12);
     expect(editor.map.ground[0]).toBe('g'.repeat(20));
+    // 高さも広さに合わせ、広げたところは0段
+    expect(editor.map.heights[0]).toBe('0'.repeat(13) + '2' + '0'.repeat(6));
+    expect(editor.map.heights).toHaveLength(12);
     expect(editor.map.objects).toHaveLength(1);
 
     editor.resize(12, 12);

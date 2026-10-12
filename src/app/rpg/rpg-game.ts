@@ -2,6 +2,7 @@ import { RpgLook, RpgMap, RpgMapNpc, RpgSave, RpgSaveInput } from '../models/rpg
 import {
   AreaMap,
   ENEMIES,
+  HZ,
   ITEMS,
   TH,
   TW,
@@ -36,6 +37,8 @@ export interface Mover {
   // 画面上の向き(右なら1、左なら-1)
   dir: 1 | -1;
   moving: boolean;
+  // 今立っている高さ(段。front#225)。段を登り降りするときは、なめらかに変わる
+  z: number;
 }
 
 export interface Npc extends RpgMapNpc, Mover {
@@ -142,7 +145,7 @@ export class RpgGame {
   npcs: Npc[] = [];
   enemies: Enemy[] = [];
   readonly player: Player = {
-    kind: 'player', x: 0, y: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
+    kind: 'player', x: 0, y: 0, z: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
     level: 1, exp: 0, hp: maxHpOf(ZERO_STATS), gold: 30, weapon: 'wood_sword', armor: 'cloth',
     inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, look: { ...DEFAULT_LOOK }, lastCombat: -99, regen: 0, dead: false
   };
@@ -176,6 +179,7 @@ export class RpgGame {
     this.loadMap(home);
     this.player.x = home.startX;
     this.player.y = home.startY;
+    this.snapZ(this.player);
   }
 
   mapById(id: string | null): RpgMap | undefined {
@@ -227,6 +231,7 @@ export class RpgGame {
     const [x, y] = this.map.walkable(save.x, save.y) ? [save.x, save.y] : [this.area.startX, this.area.startY];
     p.x = x;
     p.y = y;
+    this.snapZ(p);
     p.path = [];
     p.target = null;
     this.events.statsChanged();
@@ -300,14 +305,14 @@ export class RpgGame {
     this.theme = themeOf(area.theme);
     this.map = buildAreaMap(area);
     this.npcs = area.npcs.map((n) => ({
-      ...n, kind: 'npc', path: [], dir: 1, moving: false, notice: n.notice && !this.talkedTo.has(n.name)
+      ...n, kind: 'npc', path: [], dir: 1, moving: false, z: this.map.heightAt(n.x, n.y), notice: n.notice && !this.talkedTo.has(n.name)
     }));
     this.enemies = area.enemies
       .filter((e) => ENEMIES[e.type])
       .map((e) => {
         const [x, y] = this.map.nearestWalkable(e.x, e.y);
         return {
-          kind: 'enemy', type: e.type, x, y, hx: x, hy: y, hp: ENEMIES[e.type].hp, alive: true, path: [], dir: -1, moving: false,
+          kind: 'enemy', type: e.type, x, y, z: this.map.heightAt(x, y), hx: x, hy: y, hp: ENEMIES[e.type].hp, alive: true, path: [], dir: -1, moving: false,
           wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6
         };
       });
@@ -330,6 +335,7 @@ export class RpgGame {
       const [tx, ty] = this.map.walkable(x, y) ? [x, y] : [dest.startX, dest.startY];
       this.player.x = tx;
       this.player.y = ty;
+      this.snapZ(this.player);
       after?.();
       this.transitioning = false;
       this.events.fade(false);
@@ -349,7 +355,8 @@ export class RpgGame {
     // 歩いている途中なら、向かっているマスから探し直す(マスの途中で向きを変えない)
     const moving = ent.path.length > 0;
     const [sx, sy] = moving ? ent.path[0] : [Math.round(ent.x), Math.round(ent.y)];
-    const path = findPath((x, y) => this.map.walkable(x, y), sx, sy, isGoal, h, this.map.w);
+    const map = this.map;
+    const path = findPath((x, y) => map.walkable(x, y), sx, sy, isGoal, h, map.w, (ax, ay, bx, by) => map.canStep(ax, ay, bx, by));
     if (path === null) return false;
     ent.path = moving ? [[sx, sy], ...path] : path;
     return true;
@@ -387,6 +394,20 @@ export class RpgGame {
     return true;
   }
 
+  // ===== 高さ(front#225) =====
+
+  /** 立っているマスの高さにすぐ合わせる(エリアに入ったとき・敵が出てきたとき) */
+  private snapZ(ent: Mover): void {
+    ent.z = this.map.heightAt(Math.round(ent.x), Math.round(ent.y));
+  }
+
+  /** 段を登り降りするときは、なめらかに高さを変える */
+  private settleZ(ent: Mover, dt: number): void {
+    const target = this.map.heightAt(Math.round(ent.x), Math.round(ent.y));
+    ent.z += (target - ent.z) * Math.min(1, dt * 12);
+    if (Math.abs(target - ent.z) < 0.01) ent.z = target;
+  }
+
   private faceTo(ent: Mover, t: { x: number; y: number }): void {
     const s = t.x - t.y - (ent.x - ent.y);
     if (Math.abs(s) > 0.05) ent.dir = s > 0 ? 1 : -1;
@@ -394,9 +415,28 @@ export class RpgGame {
 
   // ===== 入力 =====
 
+  /** 画面上の位置にあるマス。高いマスがあるときは、手前のマスから上の面と側面に当たるかを見る */
   screenToTile(mx: number, my: number): [number, number] {
-    const a = (mx - this.camX) / this.zoom / (TW / 2);
-    const b = (my - this.camY) / this.zoom / (TH / 2);
+    const wx = (mx - this.camX) / this.zoom;
+    const wy = (my - this.camY) / this.zoom;
+    const map = this.map;
+    if (map.hasHeights) {
+      for (let s = map.w + map.h - 2; s >= 0; s--) {
+        for (let x = Math.min(map.w - 1, s); x >= 0 && s - x < map.h; x--) {
+          const y = s - x;
+          const [cx, cy] = iso(x, y);
+          const lift = map.heightAt(x, y) * HZ;
+          // 上の面のひし形と、その下の側面を合わせた六角形の中か
+          const dx = Math.abs(wx - cx) / (TW / 2);
+          if (dx > 1) continue;
+          const top = cy - lift - (TH / 2) * (1 - dx);
+          const bottom = cy + (TH / 2) * (1 - dx);
+          if (wy >= top && wy <= bottom) return [x, y];
+        }
+      }
+    }
+    const a = wx / (TW / 2);
+    const b = wy / (TH / 2);
     return [Math.round((a + b) / 2), Math.round((b - a) / 2)];
   }
 
@@ -407,7 +447,8 @@ export class RpgGame {
     let best: Npc | Enemy | null = null;
     let bestDepth = -Infinity;
     for (const e of [...this.npcs, ...this.enemies.filter((e) => e.alive)]) {
-      const [sx, sy] = iso(e.x, e.y);
+      const [sx, sy0] = iso(e.x, e.y);
+      const sy = sy0 - e.z * HZ;
       const def = e.kind === 'enemy' ? ENEMIES[e.type] : null;
       const hw = def ? 18 * def.size + 4 : 18;
       const ht = def ? def.hit : 50;
@@ -420,9 +461,10 @@ export class RpgGame {
   }
 
   /** 村人・敵の足元の画面上の位置(E2Eテストでクリックする位置を求めるのに使う) */
-  screenPositionOf(e: { x: number; y: number }): [number, number] {
+  screenPositionOf(e: { x: number; y: number; z?: number }): [number, number] {
     const [sx, sy] = iso(e.x, e.y);
-    return [sx * this.zoom + this.camX, sy * this.zoom + this.camY];
+    const z = e.z ?? this.map.heightAt(Math.round(e.x), Math.round(e.y));
+    return [sx * this.zoom + this.camX, (sy - z * HZ) * this.zoom + this.camY];
   }
 
   mouseMove(mx: number, my: number): void {
@@ -618,7 +660,7 @@ export class RpgGame {
 
     const [px, py] = iso(this.player.x, this.player.y);
     this.camX = Math.round(this.viewW / 2 - px * this.zoom);
-    this.camY = Math.round(this.viewH / 2 - (py - 20) * this.zoom);
+    this.camY = Math.round(this.viewH / 2 - (py - this.player.z * HZ - 20) * this.zoom);
   }
 
   private updatePlayer(dt: number): void {
@@ -653,6 +695,7 @@ export class RpgGame {
     }
     const wasMoving = p.path.length > 0;
     p.moving = this.moveAlong(p, walkSpeedOf(p.stats), dt);
+    this.settleZ(p, dt);
     if (wasMoving && !p.path.length) this.events.dirty();
 
     // 光る場所(ポータル)の上で止まったらエリア移動
@@ -687,7 +730,10 @@ export class RpgGame {
     e.lunge = Math.max(0, e.lunge - dt * 5);
     if (!e.alive) {
       e.respawn -= dt;
-      if (e.respawn <= 0) Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false });
+      if (e.respawn <= 0) {
+        Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false });
+        this.snapZ(e);
+      }
       return;
     }
     const dp = cheb(p.x, p.y, e.x, e.y);
@@ -727,5 +773,6 @@ export class RpgGame {
       }
     }
     e.moving = this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
+    this.settleZ(e, dt);
   }
 }

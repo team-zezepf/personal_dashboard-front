@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgLook, RpgMap, RpgMapNpc, RpgNpcRole } from '../../models/rpg.models';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
-import { ENEMIES, G, GROUND_CHARS, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
+import { ENEMIES, G, GROUND_CHARS, HZ, TH, THEMES, TW, themeOf } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
@@ -76,6 +76,9 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly tool = signal<PaletteItem>(PALETTE[0].items[0]);
   readonly brush = signal(1);
   readonly showGrid = signal(true);
+  // 段差(front#225): 高さを数字で出す・2段以上の差(崖)に赤い線を引く
+  readonly showHeights = signal(false);
+  readonly showCliffs = signal(true);
   readonly selection = signal<Selection | null>(null);
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
@@ -658,11 +661,17 @@ export class RpgAdminPageComponent implements OnDestroy {
     const editor = this.editor;
     if (!game || !editor) return;
     const map = editor.map;
+    const area = game.map;
     ctx.save();
     ctx.translate(game.camX, game.camY);
     ctx.scale(game.zoom, game.zoom);
-    const diamond = (x: number, y: number, s = 1) => {
+    // マスの上の面の中心(高いマスは、その高さの分だけ上)
+    const top = (x: number, y: number): [number, number] => {
       const [cx, cy] = iso(x, y);
+      return [cx, cy - area.heightAt(x, y) * HZ];
+    };
+    const diamond = (x: number, y: number, s = 1) => {
+      const [cx, cy] = top(x, y);
       ctx.beginPath();
       ctx.moveTo(cx, cy - (TH / 2) * s);
       ctx.lineTo(cx + (TW / 2) * s, cy);
@@ -690,16 +699,52 @@ export class RpgAdminPageComponent implements OnDestroy {
       ctx.setLineDash([]);
     }
 
+    // 通れない段差(となりとの差が2段以上)のふちに赤い線
+    if (this.showCliffs() && area.hasHeights) {
+      ctx.strokeStyle = 'rgba(220,38,38,0.85)';
+      ctx.lineWidth = 2.5;
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          const [cx, cy] = top(x, y);
+          const L: [number, number] = [cx - TW / 2, cy];
+          const R: [number, number] = [cx + TW / 2, cy];
+          const T: [number, number] = [cx, cy - TH / 2];
+          const B: [number, number] = [cx, cy + TH / 2];
+          const edges: [number, number, [number, number], [number, number]][] = [[x, y + 1, L, B], [x + 1, y, B, R], [x, y - 1, T, R], [x - 1, y, L, T]];
+          for (const [nx, ny, a, b] of edges) {
+            if (!area.inMap(nx, ny) || area.canStep(x, y, nx, ny)) continue;
+            ctx.beginPath();
+            ctx.moveTo(...a);
+            ctx.lineTo(...b);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    if (this.showHeights()) {
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(17,24,39,0.75)';
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          if (editor.groundAt(x, y) !== 'v') ctx.fillText(String(area.heightAt(x, y)), ...top(x, y));
+        }
+      }
+    }
+
     // 出発地点
     diamond(map.startX, map.startY, 0.8);
     ctx.fillStyle = 'rgba(34,181,115,0.45)';
     ctx.fill();
-    this.label(ctx, '🚩 出発地点', ...iso(map.startX, map.startY + 0.6), 'rgba(34,181,115,0.92)');
+    const [fx, fy] = top(map.startX, map.startY);
+    this.label(ctx, '🚩 出発地点', fx - TW * 0.3, fy + TH * 0.3, 'rgba(34,181,115,0.92)');
 
     // 行き先が決まっていないポータル
     for (const p of map.portals) {
       if (this.maps().some((m) => m.id === p.to)) continue;
-      const [sx, sy] = iso(p.x, p.y);
+      const [sx, sy] = top(p.x, p.y);
       this.label(ctx, '▶ 行き先が未設定', sx, sy - 48, 'rgba(245,158,11,0.95)');
     }
 

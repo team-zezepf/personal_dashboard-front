@@ -14,6 +14,7 @@ export function octile(ax: number, ay: number, bx: number, by: number): number {
  * A*で、(sx, sy) から isGoal を満たすマスまでの道順を探す。width はマップの幅(マスの番号を作るのに使う)。
  * 戻り値は通るマスの並び(出発地点は含まない)。たどり着けなければ null。
  * 斜めに進むのは、その両隣のマスがどちらも通れるときだけ(角をすり抜けない)。
+ * canStep はとなりのマスへ進めるか(段差が2段以上なら進めない。front#225)。
  */
 export function findPath(
   walkable: (x: number, y: number) => boolean,
@@ -21,7 +22,8 @@ export function findPath(
   sy: number,
   isGoal: (x: number, y: number) => boolean,
   h: (x: number, y: number) => number,
-  width: number
+  width: number,
+  canStep: (ax: number, ay: number, bx: number, by: number) => boolean = () => true
 ): [number, number][] | null {
   if (isGoal(sx, sy)) return [];
   const key = (x: number, y: number) => y * width + x;
@@ -48,8 +50,12 @@ export function findPath(
     for (const [dx, dy] of DIRS) {
       const nx = cur.x + dx;
       const ny = cur.y + dy;
-      if (!walkable(nx, ny)) continue;
-      if (dx && dy && (!walkable(cur.x + dx, cur.y) || !walkable(cur.x, cur.y + dy))) continue;
+      if (!walkable(nx, ny) || !canStep(cur.x, cur.y, nx, ny)) continue;
+      if (dx && dy) {
+        const sideA = walkable(cur.x + dx, cur.y) && canStep(cur.x, cur.y, cur.x + dx, cur.y);
+        const sideB = walkable(cur.x, cur.y + dy) && canStep(cur.x, cur.y, cur.x, cur.y + dy);
+        if (!sideA || !sideB) continue;
+      }
       const nk = key(nx, ny);
       if (closed.has(nk)) continue;
       const ng = g.get(ck)! + (dx && dy ? 1.414 : 1);

@@ -1,5 +1,5 @@
-import { ENEMIES, G, StaticObj, TH, TW, swordColorOf } from './rpg-data';
-import { Enemy, RpgGame, iso } from './rpg-game';
+import { ENEMIES, G, HZ, StaticObj, TH, TW, swordColorOf } from './rpg-data';
+import { Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 
@@ -75,13 +75,15 @@ export class RpgRenderer {
     ctx.translate(game.camX, game.camY);
     ctx.scale(game.zoom, game.zoom);
     this.drawGround();
-    this.drawCursorTile();
+    // 高いマスがあるときは、マスを描き終えてから重ねる(高いマスの下に隠れないように)
+    if (!game.map.hasHeights) this.drawCursorTile();
     this.drawEntities();
+    if (game.map.hasHeights) this.drawCursorTile();
     if (pal.fireflies) this.drawFireflies();
     for (const p of game.area.portals) {
       const dest = game.mapById(p.to);
       if (!dest) continue;
-      const [sx, sy] = iso(p.x, p.y);
+      const [sx, sy] = this.at(p.x, p.y);
       this.label(`▶ ${dest.name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
     }
     this.drawEffects();
@@ -127,62 +129,96 @@ export class RpgRenderer {
     ctx.fill();
   }
 
+  // 高いマスがあるときは、高さの分だけ上にずらした位置(front#225)
+  private at(x: number, y: number): [number, number] {
+    const [cx, cy] = iso(x, y);
+    return [cx, cy - this.game.map.heightAt(Math.round(x), Math.round(y)) * HZ];
+  }
+
+  // 0段のマスを先に描く。高いマスは、手前のものを隠せるよう置物・人・敵と一緒に奥から順に描く(drawEntities)
   private drawGround(): void {
-    const ctx = this.ctx;
     const { map, area } = this.game;
-    const pal = this.game.theme;
     for (let s = 0; s < map.w + map.h - 1; s++) {
       for (let x = 0; x < map.w; x++) {
         const y = s - x;
-        if (y < 0 || y >= map.h) continue;
-        const g = map.ground[y][x];
-        if (g === G.VOID) continue;
-        const [cx, cy] = iso(x, y);
-        if (!this.onScreen(cx, cy, TW)) continue;
-        // 島のふち(手前の側面)
-        if (map.isVoid(x, y + 1)) this.poly([[cx - TW / 2, cy], [cx, cy + TH / 2], [cx, cy + TH / 2 + 22], [cx - TW / 2, cy + 22]], pal.edge[0]);
-        if (map.isVoid(x + 1, y)) this.poly([[cx, cy + TH / 2], [cx + TW / 2, cy], [cx + TW / 2, cy + 22], [cx, cy + TH / 2 + 22]], pal.edge[1]);
-
-        let color: string;
-        if (g === G.WATER || g === G.BRIDGE) color = pal.liquid(x, y, this.time);
-        else if (g === G.PATH) color = pal.path[(x + y) % 2];
-        else if (g === G.SAND) color = pal.sand;
-        else color = pal.grass[(x * 7 + y * 13) % 3];
-        this.diamond(cx, cy);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        if (g === G.WATER && pal.wave) {
-          ctx.strokeStyle = pal.wave;
-          ctx.lineWidth = 1.5;
-          const o = Math.sin(this.time * 1.5 + x + y * 2) * 6;
-          ctx.beginPath();
-          ctx.moveTo(cx - 10 + o, cy - 2);
-          ctx.lineTo(cx + 2 + o, cy - 2);
-          ctx.stroke();
-        } else if (g === G.BRIDGE) {
-          this.diamond(cx, cy, 0.86);
-          ctx.fillStyle = '#b8834f';
-          ctx.fill();
-          ctx.strokeStyle = '#8a5d33';
-          ctx.lineWidth = 1;
-          for (let i = -3; i <= 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(cx + i * 7 - 10, cy + i * 3.5 + 5);
-            ctx.lineTo(cx + i * 7 + 10, cy + i * 3.5 - 5);
-            ctx.stroke();
-          }
-        } else if (g === G.FLOWER) {
-          this.drawFlower(cx, cy, x, y);
-        }
+        if (y < 0 || y >= map.h || map.heights[y][x] > 0) continue;
+        this.drawTile(x, y);
       }
     }
     // ボス(闇の魔導士)の出る場所には魔法陣を描く
-    for (const e of area.enemies) if (ENEMIES[e.type]?.boss) this.drawMagicCircle(...iso(e.x, e.y));
-    for (const p of area.portals) this.drawPortal(...iso(p.x, p.y));
+    for (const e of area.enemies) if (ENEMIES[e.type]?.boss) this.drawMagicCircle(...this.at(e.x, e.y));
+    for (const p of area.portals) if (map.heightAt(p.x, p.y) === 0) this.drawPortal(...iso(p.x, p.y));
+  }
+
+  // 1マス分の地面。高いマスは、上の面と手前の2つの側面(土台)を描く
+  private drawTile(x: number, y: number): void {
+    const ctx = this.ctx;
+    const map = this.game.map;
+    const pal = this.game.theme;
+    const g = map.ground[y][x];
+    if (g === G.VOID) return;
+    const lift = map.heights[y][x] * HZ;
+    const [cx, cy0] = iso(x, y);
+    const cy = cy0 - lift;
+    if (!this.onScreen(cx, cy0, TW + lift)) return;
+    // 手前の側面。島のふち(手前が「なし」)なら、さらに下まで伸ばす
+    const left = lift + (map.isVoid(x, y + 1) ? 22 : 0);
+    const right = lift + (map.isVoid(x + 1, y) ? 22 : 0);
+    if (left > 0) this.poly([[cx - TW / 2, cy], [cx, cy + TH / 2], [cx, cy + TH / 2 + left], [cx - TW / 2, cy + left]], pal.edge[0]);
+    if (right > 0) this.poly([[cx, cy + TH / 2], [cx + TW / 2, cy], [cx + TW / 2, cy + right], [cx, cy + TH / 2 + right]], pal.edge[1]);
+    if (lift > 0) {
+      // 段の境目の線
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i * HZ <= lift; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx - TW / 2, cy + i * HZ);
+        ctx.lineTo(cx, cy + TH / 2 + i * HZ);
+        ctx.lineTo(cx + TW / 2, cy + i * HZ);
+        ctx.stroke();
+      }
+    }
+
+    let color: string;
+    if (g === G.WATER || g === G.BRIDGE) color = pal.liquid(x, y, this.time);
+    else if (g === G.PATH) color = pal.path[(x + y) % 2];
+    else if (g === G.SAND) color = pal.sand;
+    else color = pal.grass[(x * 7 + y * 13) % 3];
+    this.diamond(cx, cy);
+    ctx.fillStyle = color;
+    ctx.fill();
+    // 高いマスほど、上の面を少し明るくする
+    if (lift > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${(lift / HZ) * 0.06})`;
+      ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (g === G.WATER && pal.wave) {
+      ctx.strokeStyle = pal.wave;
+      ctx.lineWidth = 1.5;
+      const o = Math.sin(this.time * 1.5 + x + y * 2) * 6;
+      ctx.beginPath();
+      ctx.moveTo(cx - 10 + o, cy - 2);
+      ctx.lineTo(cx + 2 + o, cy - 2);
+      ctx.stroke();
+    } else if (g === G.BRIDGE) {
+      this.diamond(cx, cy, 0.86);
+      ctx.fillStyle = '#b8834f';
+      ctx.fill();
+      ctx.strokeStyle = '#8a5d33';
+      ctx.lineWidth = 1;
+      for (let i = -3; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx + i * 7 - 10, cy + i * 3.5 + 5);
+        ctx.lineTo(cx + i * 7 + 10, cy + i * 3.5 - 5);
+        ctx.stroke();
+      }
+    } else if (g === G.FLOWER) {
+      this.drawFlower(cx, cy, x, y);
+    }
   }
 
   private drawFlower(cx: number, cy: number, x: number, y: number): void {
@@ -277,14 +313,14 @@ export class RpgRenderer {
     if (game.mouse && !game.hover && !game.locked) {
       const [tx, ty] = game.screenToTile(game.mouse.x, game.mouse.y);
       if (game.map.walkable(tx, ty)) {
-        const [cx, cy] = iso(tx, ty);
+        const [cx, cy] = this.at(tx, ty);
         this.diamond(cx, cy);
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
         ctx.fill();
       }
     }
     if (game.clickMarker) {
-      const [cx, cy] = iso(game.clickMarker.x, game.clickMarker.y);
+      const [cx, cy] = this.at(game.clickMarker.x, game.clickMarker.y);
       this.diamond(cx, cy, 1 - game.clickMarker.t);
       ctx.strokeStyle = `rgba(255,255,255,${1 - game.clickMarker.t / 0.6})`;
       ctx.lineWidth = 2;
@@ -296,22 +332,47 @@ export class RpgRenderer {
 
   private drawEntities(): void {
     const game = this.game;
+    const map = game.map;
     type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player;
-    const list: Drawable[] = [...game.map.statics, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
+    const list: Drawable[] = [...map.statics, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
     // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物を先に
     list.sort((a, b) => a.x + a.y - (b.x + b.y) || (a.kind === 'static' ? -1 : 1));
-    for (const o of list) {
-      const [sx, sy] = iso(o.x, o.y);
-      // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
-      if (!this.onScreen(sx, sy, 160)) continue;
-      if (o.kind === 'static') this.drawStatic(o, sx, sy);
-      else if (o.kind === 'npc') {
-        this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
-        this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
-        if (o.notice) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3);
-      } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
-      else if (!game.hidePlayer) this.drawPlayer(sx, sy);
+    if (!map.hasHeights) {
+      for (const o of list) this.drawEntity(o);
+      return;
     }
+    // 高いマスがあるときは、奥の斜めの列から順に「高いマス → その列に立っているもの」を描く。
+    // 手前の高いマスがあとから描かれて、奥のものを隠す(front#225)
+    const rows: Drawable[][] = Array.from({ length: map.w + map.h - 1 }, () => []);
+    for (const o of list) {
+      const s = Math.min(rows.length - 1, Math.max(0, Math.round(o.x) + Math.round(o.y)));
+      rows[s].push(o);
+    }
+    for (let s = 0; s < rows.length; s++) {
+      for (let x = 0; x < map.w; x++) {
+        const y = s - x;
+        if (y < 0 || y >= map.h || map.heights[y][x] === 0) continue;
+        this.drawTile(x, y);
+        if (game.area.portals.some((p) => p.x === x && p.y === y)) this.drawPortal(...this.at(x, y));
+      }
+      for (const o of rows[s]) this.drawEntity(o);
+    }
+  }
+
+  private drawEntity(o: StaticObj | Npc | Enemy | Player): void {
+    const game = this.game;
+    const [sx, sy0] = iso(o.x, o.y);
+    // 立っているマスの高さの分だけ上に描く(置物はマスの高さ、人・敵は登り降りの途中の高さ)
+    const sy = sy0 - (o.kind === 'static' ? game.map.heightAt(o.x, o.y) : o.z) * HZ;
+    // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
+    if (!this.onScreen(sx, sy, 160)) return;
+    if (o.kind === 'static') this.drawStatic(o, sx, sy);
+    else if (o.kind === 'npc') {
+      this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
+      this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
+      if (o.notice) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3);
+    } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
+    else if (!game.hidePlayer) this.drawPlayer(sx, sy);
   }
 
   private drawStatic(o: StaticObj, sx: number, sy: number): void {
@@ -858,13 +919,13 @@ export class RpgRenderer {
   private drawEffects(): void {
     const ctx = this.ctx;
     for (const p of this.game.particles) {
-      const [sx, sy] = iso(p.x, p.y);
+      const [sx, sy] = this.at(p.x, p.y);
       ctx.globalAlpha = 1 - p.t / 0.7;
       ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(sx + p.ox, sy + p.oy, 3, 0, Math.PI * 2); ctx.fill();
     }
     for (const f of this.game.floats) {
-      const [sx, sy] = iso(f.x, f.y);
+      const [sx, sy] = this.at(f.x, f.y);
       ctx.globalAlpha = Math.max(0, 1 - f.t / 1.1);
       ctx.font = `800 ${f.size}px "Segoe UI", sans-serif`;
       ctx.textAlign = 'center';

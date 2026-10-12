@@ -140,6 +140,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
 // ここには、データの文字・種類が何を表すかと、見た目(テーマ)ごとの色を置く
 export const TW = 64;
 export const TH = 32;
+// 地面の高さ(front#225)。1段の画面上の高さ(マスの縦の4分の1)と、いちばん高い段
+export const HZ = 8;
+export const MAX_HEIGHT = 3;
 export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, VOID: 6 } as const;
 
 // マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし)
@@ -215,15 +218,21 @@ export const THEMES: Record<string, ThemeDef> = {
 export const themeOf = (theme: string): ThemeDef => THEMES[theme] ?? THEMES['plain'];
 export const recLabel = (level: number) => `推奨 Lv${level}〜`;
 
-/** 1エリア分の地面・通れないマス・置物。マップのデータから作る */
+/** 1エリア分の地面・地面の高さ・通れないマス・置物。マップのデータから作る */
 export class AreaMap {
   readonly ground: number[][];
+  // 地面の高さ(0〜3段)。段差のないマップはすべて0
+  readonly heights: number[][];
+  // 1マスでも高いマスがあるか(なければ段差の計算・描き分けをしない)
+  readonly hasHeights: boolean;
   readonly solid: boolean[][];
   readonly statics: StaticObj[];
 
-  constructor(readonly w: number, readonly h: number, ground: number[][], statics: StaticObj[]) {
+  constructor(readonly w: number, readonly h: number, ground: number[][], statics: StaticObj[], heights?: number[][]) {
     this.ground = ground;
     this.statics = statics;
+    this.heights = heights ?? Array.from({ length: h }, () => Array<number>(w).fill(0));
+    this.hasHeights = this.heights.some((row) => row.some((v) => v > 0));
     this.solid = Array.from({ length: h }, () => Array<boolean>(w).fill(false));
     for (const o of statics) {
       // 火山は大きいので、まわり1マスも通れない
@@ -238,6 +247,15 @@ export class AreaMap {
 
   walkable(x: number, y: number): boolean {
     return this.inMap(x, y) && !this.solid[y][x] && this.ground[y][x] !== G.WATER && this.ground[y][x] !== G.VOID;
+  }
+
+  heightAt(x: number, y: number): number {
+    return this.inMap(x, y) ? this.heights[y][x] : 0;
+  }
+
+  /** となりのマスへ進めるか。高さの差が1段までなら登り降りでき、2段以上は崖で進めない */
+  canStep(ax: number, ay: number, bx: number, by: number): boolean {
+    return Math.abs(this.heightAt(ax, ay) - this.heightAt(bx, by)) <= 1;
   }
 
   isVoid(x: number, y: number): boolean {
@@ -264,7 +282,11 @@ export function buildAreaMap(map: RpgMap): AreaMap {
   const statics: StaticObj[] = map.objects
     .filter((o) => (STATIC_TYPES as string[]).includes(o.type))
     .map((o) => ({ kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined }));
-  const area = new AreaMap(map.width, map.height, ground, statics);
+  // 高さがない・知らない文字は0段
+  const heights = Array.from({ length: map.height }, (_, y) =>
+    Array.from({ length: map.width }, (_, x) => Math.min(MAX_HEIGHT, Math.max(0, Number(map.heights?.[y]?.[x] ?? 0) || 0)))
+  );
+  const area = new AreaMap(map.width, map.height, ground, statics, heights);
   for (const n of map.npcs) if (area.inMap(n.x, n.y)) area.solid[n.y][n.x] = true;
   return area;
 }

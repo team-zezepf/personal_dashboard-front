@@ -37,6 +37,16 @@ describe('findPath', () => {
     expect(findPath(walkable, 0, 0, goalAt(2, 0), toward(2, 0), 10)).toBeNull();
   });
 
+  it('進めないとなり(段差)は通らず、斜めは両どなりにも進めるときだけ', () => {
+    const walkable = walkableOf(['...', '...']);
+    // (1, 0) へは段差で進めない
+    const canStep = (_ax: number, _ay: number, bx: number, by: number) => !(bx === 1 && by === 0);
+    const path = findPath(walkable, 0, 0, goalAt(2, 0), toward(2, 0), 10, canStep)!;
+    expect(path).not.toContainEqual([1, 0]);
+    // (0,0) → (1,1) の斜めは、となりの (1,0) に進めないので使わない
+    expect(path[0]).toEqual([0, 1]);
+  });
+
   it('相手の隣のマスまでの道順を探せる', () => {
     const walkable = walkableOf(['.....']);
     const path = findPath(walkable, 0, 0, (x, y) => cheb(x, y, 4, 0) <= 1 && !(x === 4 && y === 0), toward(4, 0), 10);

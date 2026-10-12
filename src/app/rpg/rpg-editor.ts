@@ -1,11 +1,13 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapPortal, RpgNpcRole } from '../models/rpg.models';
-import { ENEMIES, StaticType } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, StaticType } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
 
 export type EditorTool =
   | { kind: 'ground'; ground: string }
+  // 地面の高さ(front#225)。up・down は1段ずつ、set は決まった高さにする
+  | { kind: 'height'; op: 'up' | 'down' | 'set'; value?: number }
   | { kind: 'object'; type: StaticType; roof?: string; torch?: boolean }
   | { kind: 'enemy'; type: string }
   | { kind: 'npc' }
@@ -40,6 +42,16 @@ export const PALETTE: PaletteTab[] = [
       { id: 'w', label: '水', tool: { kind: 'ground', ground: 'w' } },
       { id: 'b', label: '橋', tool: { kind: 'ground', ground: 'b' } },
       { id: 'v', label: 'なし', tool: { kind: 'ground', ground: 'v' } }
+    ]
+  },
+  {
+    id: 'height', label: '高さ',
+    hint: 'クリック・ドラッグしたマスの高さを変えます（0〜3段）。となりとの差が1段までなら登り降りでき、2段以上は崖になって通れません。',
+    items: [
+      { id: 'up', label: '高くする', icon: '⬆️', tool: { kind: 'height', op: 'up' } },
+      { id: 'down', label: '低くする', icon: '⬇️', tool: { kind: 'height', op: 'down' } },
+      { id: 'h0', label: '0段にする', icon: '▭', tool: { kind: 'height', op: 'set', value: 0 } },
+      { id: 'h2', label: '2段にする', icon: '▤', tool: { kind: 'height', op: 'set', value: 2 } }
     ]
   },
   {
@@ -101,15 +113,22 @@ export function blankMap(id: string, name: string, theme: string, width: number,
   return {
     id, name, recommendedLevel, theme, width, height,
     ground: Array.from({ length: height }, () => 'g'.repeat(width)),
+    heights: flatHeights(width, height),
     objects: [], npcs: [], enemies: [], portals: [],
     startX: Math.floor(width / 2), startY: Math.floor(height / 2), sortOrder: 0
   };
+}
+
+// すべて0段の高さ
+export function flatHeights(width: number, height: number): string[] {
+  return Array.from({ length: height }, () => '0'.repeat(width));
 }
 
 export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput {
   return {
     id, name: map.name, recommendedLevel: map.recommendedLevel, theme: map.theme, width: map.width, height: map.height,
     ground: map.ground,
+    heights: map.heights ?? flatHeights(map.width, map.height),
     objects: map.objects.map((o) => ({ type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch })),
     npcs: map.npcs.map((n) => ({ ...n, lines: n.lines.map((l) => l.trim()).filter((l) => l) })),
     enemies: map.enemies.map((e) => ({ ...e })),
@@ -124,6 +143,8 @@ const clone = (map: RpgMap): RpgMap => JSON.parse(JSON.stringify(map));
 /** 1エリア分の編集。map は画面に出しているマップのデータそのもの(書き換えるとすぐ画面に出る) */
 export class RpgMapEditor {
   private undoStack: string[] = [];
+  // 1回のドラッグで高さを変えたマス
+  private readonly heightPainted = new Set<number>();
   private redoStack: string[] = [];
 
   constructor(public map: RpgMap) {}
@@ -167,6 +188,16 @@ export class RpgMapEditor {
 
   groundAt(x: number, y: number): string {
     return this.map.ground[y]?.[x] ?? 'g';
+  }
+
+  heightAt(x: number, y: number): number {
+    return Number(this.map.heights?.[y]?.[x] ?? 0) || 0;
+  }
+
+  private setHeight(x: number, y: number, value: number): void {
+    if (!this.map.heights) this.map.heights = flatHeights(this.map.width, this.map.height);
+    const row = this.map.heights[y];
+    this.map.heights[y] = row.slice(0, x) + String(Math.min(MAX_HEIGHT, Math.max(0, value))) + row.slice(x + 1);
   }
 
   private setGround(x: number, y: number, ground: string): void {
@@ -214,9 +245,9 @@ export class RpgMapEditor {
     return this.map.objects.length + this.map.npcs.length + this.map.enemies.length + this.map.portals.length;
   }
 
-  /** 筆で塗るマス(地面の 3×3 のときは、まわりも) */
+  /** 筆で塗るマス(地面・高さの 3×3 のときは、まわりも) */
   brushTiles(tool: EditorTool, x: number, y: number, brush: number): [number, number][] {
-    if (tool.kind !== 'ground' || brush === 1) return [[x, y]];
+    if ((tool.kind !== 'ground' && tool.kind !== 'height') || brush === 1) return [[x, y]];
     const tiles: [number, number][] = [];
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (this.inMap(x + dx, y + dy)) tiles.push([x + dx, y + dy]);
     return tiles;
@@ -235,6 +266,17 @@ export class RpgMapEditor {
           this.setGround(tx, ty, tool.ground);
           // 水・なしの上には何も置けないので消す
           if (BLOCKED_GROUND.includes(tool.ground)) this.removeAt(tx, ty);
+        }
+        return null;
+      case 'height':
+        // ドラッグで同じマスを何度もなぞっても、1回のドラッグでは1段ずつしか変えない
+        if (first) this.heightPainted.clear();
+        for (const [tx, ty] of this.brushTiles(tool, x, y, brush)) {
+          const key = ty * this.map.width + tx;
+          if (this.heightPainted.has(key)) continue;
+          this.heightPainted.add(key);
+          const h = this.heightAt(tx, ty);
+          this.setHeight(tx, ty, tool.op === 'up' ? h + 1 : tool.op === 'down' ? h - 1 : (tool.value ?? 0));
         }
         return null;
       case 'object':
@@ -295,6 +337,11 @@ export class RpgMapEditor {
     this.map.ground = Array.from({ length: h }, (_, y) => {
       const row = (this.map.ground[y] ?? '').slice(0, w);
       return row + 'g'.repeat(w - row.length);
+    });
+    // 広げたところは0段
+    this.map.heights = Array.from({ length: h }, (_, y) => {
+      const row = (this.map.heights?.[y] ?? '').slice(0, w);
+      return row + '0'.repeat(w - row.length);
     });
     this.map.width = w;
     this.map.height = h;
