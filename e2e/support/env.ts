@@ -30,9 +30,10 @@ export const E2E_DATA_PREFIX = '[E2E]';
  * - E2E_EVIDENCE: Issue 番号が分かるフォルダ名。<repo>-issue<番号>-<内容>(例: front-issue204-multi-choice-click)にすると、
  *   報告書に Issue へのリンクを出す。省略すると e2e
  * - E2E_NOTE: 実行の目的などのメモ(例: 修正前)。実行日時のフォルダ名の後ろに付け、報告書にも出す
- * - E2E_EVIDENCE_ROOT: 省略するとリポジトリの隣の test/(C:\zezepf\personal_dashboard\test)
+ * - E2E_EVIDENCE_ROOT: 省略するとリポジトリの隣の test/(C:\zezepf\personal_dashboard\test)。
+ *   worktree から流しても、元のリポジトリの隣に置く(front#262)
  */
-export const EVIDENCE_ROOT = process.env['E2E_EVIDENCE_ROOT'] ?? path.resolve(__dirname, '..', '..', '..', 'test');
+export const EVIDENCE_ROOT = process.env['E2E_EVIDENCE_ROOT'] ?? path.resolve(mainRepositoryRoot(), '..', 'test');
 export const EVIDENCE_NAME = toFolderName(process.env['E2E_EVIDENCE'] ?? 'e2e');
 export const EVIDENCE_NOTE = (process.env['E2E_NOTE'] ?? '').trim();
 
