@@ -1,10 +1,12 @@
 import { API_URL, E2E_ACCOUNT, E2E_DATA_PREFIX, FRONT_URL } from './env';
+import { useRpgFixture } from './rpg-fixture';
 
 /**
  * テストを始める前に1回だけ実行する。
  * 1. sandbox が起動しているかを確かめる(起動していなければ、起動のしかたを出して止める)
  * 2. E2E 専用のアカウントがなければ作る
  * 3. 前回の実行で失敗して残った、E2E のデータ(タイトルが [E2E] で始まる予定・つぶやき)を消す
+ * 4. sandbox の RPG データを、E2E 用のデータ(e2e/fixtures/rpg/)に置き換える。終わったら global-teardown で元に戻す(front#260)
  */
 export default async function globalSetup(): Promise<void> {
   await assertReachable(FRONT_URL, 'フロント');
@@ -12,6 +14,7 @@ export default async function globalSetup(): Promise<void> {
 
   const token = await loginOrRegister();
   await removeLeftovers(token);
+  useRpgFixture();
 }
 
 async function assertReachable(url: string, label: string): Promise<void> {

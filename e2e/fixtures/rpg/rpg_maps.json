@@ -1,0 +1,1501 @@
+[ {
+  "id" : "plain",
+  "name" : "はじまりの村",
+  "dungeon_id" : "plain",
+  "grid_x" : 0,
+  "grid_y" : 0,
+  "width" : 32,
+  "height" : 32,
+  "ground" : [ "ggggggggggggggggggfgggggfggggggg", "gggggfgggfgggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "ggggggggggggggggggggggggggfgggfg", "ggggggggggggggggggggggggfggggggg", "gggggggggggggggggggggggggggggggg", "gggfggggggggggpggggggggggggggggg", "ggggggggggggggpfgggppppppggggggg", "ggggggggggggggpggggpgggggggggggg", "ggggggggggggggpgfgfpgggggggggggg", "ggggggggggggggpggggpgggfgggggggg", "gggggggfggggpppppppppgfgfggfgggg", "ggggggggggggpppppppppggfggfggggg", "ggggggggggggpppppppppfgggggggggg", "gggggggppppppppfsfpppppppppppppp", "ggggggggfggfpppswspppppppppppppp", "gggggggfggggpppfsfpppppppppppppp", "gggfggggggggpppppppppggggggggggg", "fgggggggpppppppppppppppppggggggg", "ggggggfgpgggpppppppppgggpggggggg", "fgggggggpgfggggpppggggggpgggfggg", "ggggggggpgfggggpppggggggpggggggg", "ggggggggpffggggpppggggfggsssgggg", "gggggggggggggggpppggggggswwwsggg", "gggggggggggfgggpppgggggswwwwwsgg", "ggggggggggfggggpppgggggswwwwwsgg", "gggggggggggggggpppgggggswwwwwsgg", "gggggggggggggggpppggggfgswwwsggg", "ggggfggggggfgggpppgggggggsssgggg", "gggggggggggggggpppggggggggggfggg", "gggggggggggggggpppgggggggggggggg" ],
+  "heights" : null,
+  "objects" : [ {
+    "type" : "house",
+    "x" : 12,
+    "y" : 10,
+    "roof" : "#e0605a",
+    "torch" : false,
+    "shape" : "2x2",
+    "rotation" : 0,
+    "low_roof" : false
+  }, {
+    "type" : "house",
+    "x" : 15,
+    "y" : 11,
+    "roof" : "#e8913a",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 17,
+    "y" : 11,
+    "roof" : "#4f7fd9",
+    "torch" : false,
+    "shape" : "2x1",
+    "rotation" : 0,
+    "low_roof" : false
+  }, {
+    "type" : "house",
+    "x" : 20,
+    "y" : 10,
+    "roof" : "#4b9e5f",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 10,
+    "y" : 12,
+    "roof" : "#8b5cf6",
+    "torch" : false,
+    "shape" : "L",
+    "rotation" : 0,
+    "low_roof" : false
+  }, {
+    "type" : "house",
+    "x" : 11,
+    "y" : 17,
+    "roof" : "#8b5a2b",
+    "torch" : false,
+    "shape" : "2x1",
+    "rotation" : 1,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 21,
+    "y" : 12,
+    "roof" : "#14b8a6",
+    "torch" : false,
+    "shape" : "2x2",
+    "rotation" : 0,
+    "low_roof" : false
+  }, {
+    "type" : "house",
+    "x" : 21,
+    "y" : 19,
+    "roof" : "#e8913a",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 12,
+    "y" : 21,
+    "roof" : "#8b5a2b",
+    "torch" : false,
+    "shape" : "2x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 19,
+    "y" : 21,
+    "roof" : "#e0605a",
+    "torch" : false,
+    "shape" : "L",
+    "rotation" : 2,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 9,
+    "y" : 9,
+    "roof" : "#64748b",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 22,
+    "y" : 9,
+    "roof" : "#4f7fd9",
+    "torch" : false,
+    "shape" : "2x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 9,
+    "y" : 21,
+    "roof" : "#4b9e5f",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 9,
+    "y" : 16,
+    "roof" : "#e0605a",
+    "torch" : false,
+    "shape" : "1x1",
+    "rotation" : 0,
+    "low_roof" : true
+  }, {
+    "type" : "house",
+    "x" : 25,
+    "y" : 13,
+    "roof" : "#8b5cf6",
+    "torch" : false,
+    "shape" : "2x1",
+    "rotation" : 1,
+    "low_roof" : true
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 2,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 3,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 4,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 5,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 6,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 7,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 8,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 9,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 10,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 11,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 12,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 13,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 14,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 15,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 16,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 17,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 18,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 19,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 20,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 21,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 22,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 23,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 24,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 25,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 26,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 27,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 28,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 29,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 0,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 6,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 7,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 8,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 9,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 10,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 12,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 17,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 18,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 19,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 20,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 23,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 24,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 25,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 26,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 27,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 28,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 1,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 2,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 2,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 4,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 4,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 4,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 5,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 5,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 5,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 6,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 6,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 6,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 7,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 7,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 7,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 8,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 8,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 8,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 8,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 9,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 9,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 10,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 10,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 11,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 11,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 12,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 12,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 12,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 13,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 13,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 14,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 14,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 14,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 15,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 16,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 16,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 17,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 17,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 18,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 18,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 18,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 19,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 19,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 19,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 20,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 20,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 20,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 21,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 21,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 21,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 21,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 22,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 22,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 23,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 23,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 23,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 23,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 24,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 24,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 24,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 25,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 25,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 25,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 26,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 26,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 27,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 27,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 27,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 28,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 28,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 28,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 29,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 29,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 29,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 2,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 3,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 4,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 5,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 6,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 8,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 10,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 11,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 13,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 14,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 18,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 19,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 20,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 21,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 25,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 28,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 29,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 30,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 0,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 1,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 2,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 3,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 4,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 5,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 6,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 7,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 8,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 9,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 10,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 11,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 12,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 13,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 14,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 18,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 19,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 20,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 21,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 22,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 23,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 24,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 25,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 26,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 27,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 28,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 29,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 30,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 31,
+    "y" : 31,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 14,
+    "y" : 29,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 7,
+    "y" : 13,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 26,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 28,
+    "y" : 20,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 3,
+    "y" : 22,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 4,
+    "y" : 21,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 27,
+    "y" : 6,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 7,
+    "y" : 9,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 29,
+    "y" : 22,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 4,
+    "y" : 15,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 25,
+    "y" : 8,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 11,
+    "y" : 2,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 27,
+    "y" : 7,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "tree",
+    "x" : 3,
+    "y" : 15,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "rock",
+    "x" : 17,
+    "y" : 3,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "rock",
+    "x" : 7,
+    "y" : 27,
+    "roof" : null,
+    "torch" : false
+  }, {
+    "type" : "rock",
+    "x" : 29,
+    "y" : 26,
+    "roof" : null,
+    "torch" : false
+  } ],
+  "npcs" : [ {
+    "name" : "村長 ゴロウ",
+    "x" : 13,
+    "y" : 13,
+    "hair" : "#e5e7eb",
+    "body" : "#4b9e5f",
+    "role" : "quest",
+    "notice" : true,
+    "lines" : [ "ようこそ、はじまりの村へ！ わしは村長のゴロウじゃ。" ],
+    "look" : {
+      "hair" : "short",
+      "hair_color" : "#e5e7eb",
+      "skin" : "#ffe0bd",
+      "eyes" : "sleepy",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "robe",
+      "clothes_color" : "#4b9e5f",
+      "accent_color" : "#f8fafc"
+    },
+    "quests" : [ {
+      "id" : "quest-village-1",
+      "title" : "スライム退治",
+      "kind" : "defeat",
+      "target" : "slime",
+      "target_area" : null,
+      "count" : 3,
+      "offer_lines" : [ "ようこそ、はじまりの村へ！ わしは村長のゴロウじゃ。", "村はずれの畑や、東の「風の丘」にスライムが住みついて困っておる。", "敵をクリックすると、近づいて自動で戦うぞ。HPが減ったら回復薬を使うのじゃ（[1]キーでも使える）。", "どうじゃ、スライムを3体たおしてきてくれんかの？" ],
+      "progress_lines" : [ "スライムは村はずれと、東の風の丘におるぞ。たのんだぞ" ],
+      "done_lines" : [ "おお、スライムをたおしてくれたか！ これはお礼じゃ。", "レベルが上がったら、ステータスにポイントを振り分けるのを忘れんようにな。" ],
+      "reward_gold" : 50,
+      "reward_items" : [ {
+        "item_id" : "potion",
+        "count" : 2
+      } ]
+    } ]
+  }, {
+    "name" : "道具屋 ミナ",
+    "x" : 18,
+    "y" : 13,
+    "hair" : "#f08a4b",
+    "body" : "#3b82f6",
+    "role" : "shop",
+    "notice" : false,
+    "lines" : [ "いらっしゃい！ 道具屋だよ。", "ためたゴールドで、装備や回復薬を買っていってね。" ],
+    "look" : {
+      "hair" : "ponytail",
+      "hair_color" : "#f08a4b",
+      "skin" : "#ffe0bd",
+      "eyes" : "normal",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "dress",
+      "clothes_color" : "#3b82f6",
+      "accent_color" : "#fbbf24"
+    },
+    "quests" : [ ]
+  }, {
+    "name" : "交換所 ステラ",
+    "x" : 13,
+    "y" : 14,
+    "hair" : "#a7f3d0",
+    "body" : "#8b5cf6",
+    "role" : "exchange",
+    "notice" : false,
+    "lines" : [ "ここはポイント交換所。", "ダッシュボードでためたポイントを、ここでしか手に入らない品物と交換できるよ。" ],
+    "look" : {
+      "hair" : "long",
+      "hair_color" : "#a7f3d0",
+      "skin" : "#ffe0bd",
+      "eyes" : "sparkle",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "robe",
+      "clothes_color" : "#8b5cf6",
+      "accent_color" : "#fbbf24"
+    },
+    "quests" : [ ]
+  }, {
+    "name" : "旅人 ケン",
+    "x" : 19,
+    "y" : 15,
+    "hair" : "#1f2937",
+    "body" : "#8b5a2b",
+    "role" : "talk",
+    "notice" : false,
+    "lines" : [ "おれは旅人のケン。この草原は4つの場所に分かれてるんだ。", "東が「風の丘」、南が「しずかな湖畔」。その2つの先に「見張りの高台」がある。", "風の丘の奥には「精霊の森」への入口、見張りの高台の奥には「原始の谷」への入口があるぜ。", "マップの端の道を歩いていくと、となりの場所に出られるぞ。" ],
+    "look" : {
+      "hair" : "spiky",
+      "hair_color" : "#1f2937",
+      "skin" : "#ffe0bd",
+      "eyes" : "normal",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "vest",
+      "clothes_color" : "#8b5a2b",
+      "accent_color" : "#f8fafc"
+    },
+    "quests" : [ ]
+  }, {
+    "name" : "子ども ポポ",
+    "x" : 14,
+    "y" : 19,
+    "hair" : "#fcd34d",
+    "body" : "#f9a8d4",
+    "role" : "quest",
+    "notice" : true,
+    "lines" : [ "おとうさん、まだ湖から帰ってこないの…" ],
+    "look" : {
+      "hair" : "bob",
+      "hair_color" : "#fcd34d",
+      "skin" : "#ffe0bd",
+      "eyes" : "sparkle",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "open",
+      "clothes" : "shirt",
+      "clothes_color" : "#f9a8d4",
+      "accent_color" : "#f8fafc"
+    },
+    "quests" : [ {
+      "id" : "quest-village-3",
+      "title" : "おとうさんへの伝言",
+      "kind" : "visit",
+      "target" : "釣り人 ジン",
+      "target_area" : "area6",
+      "count" : 1,
+      "offer_lines" : [ "ねえねえ、おとうさんが湖に釣りに行ったまま帰ってこないの。", "「ごはんだよ」って伝えてきてくれない？" ],
+      "progress_lines" : [ "おとうさんは南の湖で釣りをしてるよ" ],
+      "done_lines" : [ "おとうさん、もうすぐ帰ってくるって？ よかったー！", "これ、お礼にあげる！ ひろったきれいな石と…あとこれ！" ],
+      "reward_gold" : 30,
+      "reward_items" : [ {
+        "item_id" : "potion",
+        "count" : 1
+      } ]
+    } ]
+  }, {
+    "name" : "宿屋 マーサ",
+    "x" : 20,
+    "y" : 13,
+    "hair" : "#8b5a2b",
+    "body" : "#f8fafc",
+    "role" : "quest",
+    "notice" : true,
+    "lines" : [ "いらっしゃい。旅の話を聞かせておくれ。", "ゲームをやめるときは、そのままページを閉じても大丈夫。冒険の記録は自動で保存されるよ。" ],
+    "look" : {
+      "hair" : "bob",
+      "hair_color" : "#8b5a2b",
+      "skin" : "#ffe0bd",
+      "eyes" : "normal",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "dress",
+      "clothes_color" : "#f8fafc",
+      "accent_color" : "#ef4444"
+    },
+    "quests" : [ {
+      "id" : "quest-village-2",
+      "title" : "湖のブルースライム",
+      "kind" : "defeat",
+      "target" : "blue",
+      "target_area" : null,
+      "count" : 5,
+      "offer_lines" : [ "旅の人、ちょっと聞いておくれ。南の「しずかな湖畔」にブルースライムがふえて、お客さんが来られなくて困ってるんだよ。", "スライムより手ごわいけど、5体ほど追いはらってくれないかい？" ],
+      "progress_lines" : [ "ブルースライムは村の南、湖のまわりにいるよ" ],
+      "done_lines" : [ "ありがとう！ これでお客さんも安心して来られるよ。", "これを持っていきな。昔、うちに泊まった剣士が置いていった剣さ。", "東の丘の先には「精霊の森」があるそうだよ。強くなったら行ってごらん。" ],
+      "reward_gold" : 80,
+      "reward_items" : [ {
+        "item_id" : "copper_sword",
+        "count" : 1
+      } ]
+    } ]
+  } ],
+  "enemies" : [ {
+    "type" : "slime",
+    "x" : 26,
+    "y" : 11
+  }, {
+    "type" : "slime",
+    "x" : 7,
+    "y" : 5
+  }, {
+    "type" : "slime",
+    "x" : 3,
+    "y" : 17
+  } ],
+  "portals" : [ ],
+  "start_x" : 16,
+  "start_y" : 14,
+  "sort_order" : 1,
+  "updated_at" : null
+} ]

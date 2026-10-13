@@ -1,0 +1,46 @@
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { SANDBOX_DATA_DIR } from './env';
+
+/**
+ * RPG の E2E で使う RPG データ(front#260)。
+ * sandbox の RPG データ(手で確認するときに作り変えることがある)の中身や、敵が回復薬を落とすランダムに左右されないよう、
+ * テストの間だけ e2e/fixtures/rpg/ のデータに置き換え、終わったら元に戻す。
+ * API はこのファイルを毎回読むので、起動し直さなくてよい
+ */
+const FILES = ['rpg_dungeons.json', 'rpg_maps.json', 'rpg_enemies.json'];
+const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures', 'rpg');
+// 退避先。元のファイルがなかったものは manifest に記録し、戻すときに消す
+const BACKUP_DIR = path.join(SANDBOX_DATA_DIR, '.e2e-rpg-backup');
+const MANIFEST = path.join(BACKUP_DIR, 'manifest.json');
+
+function assertSandboxDir(): void {
+  if (!existsSync(path.join(SANDBOX_DATA_DIR, 'users.json'))) {
+    throw new Error(
+      `sandbox のデータのフォルダ(${SANDBOX_DATA_DIR})が見つかりません。環境変数 SANDBOX_DATA_DIR で場所を指定してください。`
+    );
+  }
+}
+
+/** sandbox の RPG データを退避し、E2E 用のデータを置く。前回途中で止まって退避が残っていれば、先に元へ戻す */
+export function useRpgFixture(): void {
+  assertSandboxDir();
+  restoreRpgData();
+  mkdirSync(BACKUP_DIR, { recursive: true });
+  const existed = FILES.filter((f) => existsSync(path.join(SANDBOX_DATA_DIR, f)));
+  for (const f of existed) copyFileSync(path.join(SANDBOX_DATA_DIR, f), path.join(BACKUP_DIR, f));
+  writeFileSync(MANIFEST, JSON.stringify({ existed }), 'utf8');
+  for (const f of FILES) copyFileSync(path.join(FIXTURE_DIR, f), path.join(SANDBOX_DATA_DIR, f));
+}
+
+/** 退避した RPG データを元に戻す(退避がなければ何もしない) */
+export function restoreRpgData(): void {
+  if (!existsSync(MANIFEST)) return;
+  const { existed } = JSON.parse(readFileSync(MANIFEST, 'utf8')) as { existed: string[] };
+  for (const f of FILES) {
+    const target = path.join(SANDBOX_DATA_DIR, f);
+    if (existed.includes(f)) copyFileSync(path.join(BACKUP_DIR, f), target);
+    else rmSync(target, { force: true });
+  }
+  rmSync(BACKUP_DIR, { recursive: true, force: true });
+}
