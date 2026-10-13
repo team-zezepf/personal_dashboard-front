@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -544,6 +544,80 @@ describe('RpgGame', () => {
       run(1.2);
       expect(game.player.hp).toBeLessThan(hp);
       expect(game.enemies[0].x).toBe(4);
+    });
+  });
+
+  describe('壊れる置物(front#264)', () => {
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    // プレイヤーを (5, 5) に置き、右下(6, 5)と左下(5, 6)に置物を置く
+    function setup(objects: RpgMap['objects']): void {
+      game.loadMap(map('field', { objects }));
+      Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
+      game.update(0);
+    }
+
+    const staticAt = (x: number, y: number) => game.map.statics.find((o) => o.x === x && o.y === y)!;
+
+    it('草むら・シダ・水晶・岩だけを狙え、決まった回数叩くと壊れて、そのマスを通れる', () => {
+      setup([{ type: 'rock', x: 6, y: 5, torch: false }, { type: 'tree', x: 5, y: 6, torch: false }]);
+      const [tx, ty] = game.screenPositionOf({ x: 5, y: 6 });
+      expect(game.pickEntity(tx, ty - 10)).toBeNull();
+      const [rx, ry] = game.screenPositionOf({ x: 6, y: 5 });
+      const rock = staticAt(6, 5);
+      expect(game.pickEntity(rx, ry - 10)).toBe(rock);
+
+      game.player.target = rock;
+      game.update(0.05);
+      // 岩は3回で壊れる。1回目ではまだ壊れない
+      expect(rock.hits).toBe(1);
+      expect(rock.broken).toBeFalsy();
+      expect(game.map.walkable(6, 5)).toBe(false);
+      run(5);
+      expect(rock.broken).toBe(true);
+      expect(game.map.walkable(6, 5)).toBe(true);
+    });
+
+    it('中身のアイテムはそのまま持ち物に入り、10秒後に元に戻る(エリアに入り直しても戻る)', () => {
+      setup([{ type: 'grass', x: 6, y: 5, torch: false, contents: { kind: 'item', id: 'potion', count: 2 } }]);
+      const before = game.player.inv['potion'] ?? 0;
+      const grass = staticAt(6, 5);
+      game.player.target = grass;
+      game.update(0.05);
+
+      expect(grass.broken).toBe(true);
+      expect(game.player.inv['potion']).toBe(before + 2);
+      expect(ev.messages.at(-1)).toBe('草むらの中から回復薬×2を手に入れた！');
+      run(BREAK_RESPAWN_SEC - 1);
+      expect(grass.broken).toBe(true);
+      run(1.5);
+      expect(grass.broken).toBe(false);
+      expect(game.map.walkable(6, 5)).toBe(false);
+    });
+
+    it('中身の敵はそのマスに現れて襲ってくる。倒すまで置物は戻らず、倒しても敵は出直さない', () => {
+      setup([{ type: 'fern', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'slime', count: 1 } }]);
+      const fern = staticAt(6, 5);
+      game.player.target = fern;
+      game.update(0.05);
+
+      const slime = game.enemies.find((e) => e.fromObject === fern)!;
+      expect([slime.type, slime.x, slime.y, slime.aggro]).toEqual(['slime', 6, 5, true]);
+      expect(game.player.target).toBe(slime);
+      expect(ev.messages.at(-1)).toBe('シダの中からスライムが現れた！');
+
+      // 敵が生きている間は戻らない(プレイヤーが倒さないよう狙いを外し、敵が動かないよう会話中の扱いにして時間を進める)
+      game.player.target = null;
+      game.locked = true;
+      run(BREAK_RESPAWN_SEC + 2);
+      expect(fern.broken).toBe(true);
+
+      (game as unknown as { killEnemy(e: typeof slime): void }).killEnemy(slime);
+      run(BREAK_RESPAWN_SEC + 2);
+      expect(fern.broken).toBe(false);
+      expect(game.enemies.some((e) => e.fromObject === fern)).toBe(false);
     });
   });
 

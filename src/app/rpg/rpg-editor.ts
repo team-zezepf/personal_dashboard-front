@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, neighborOf, sideLabel } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -67,6 +67,8 @@ export const PALETTE: PaletteTab[] = [
       { id: 'cliff', label: '崖', icon: '⛰️', tool: { kind: 'object', type: 'cliff' } },
       { id: 'fern', label: 'シダ', icon: '🌿', tool: { kind: 'object', type: 'fern' } },
       { id: 'crystal', label: '水晶', icon: '💎', tool: { kind: 'object', type: 'crystal' } },
+      // 草むら・シダ・水晶・岩は攻撃で壊れ、置いたあとに中身(アイテム・敵)を選べる(front#264)
+      { id: 'grass', label: '草むら', icon: '🌾', tool: { kind: 'object', type: 'grass' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },
       { id: 'torch', label: 'たいまつ柱', icon: '🔥', tool: { kind: 'object', type: 'pillar', torch: true } },
       { id: 'volcano', label: '火山', icon: '🌋', tool: { kind: 'object', type: 'volcano' } }
@@ -114,7 +116,9 @@ export type Selection =
   | { kind: 'npc'; ref: RpgMapNpc }
   | { kind: 'house'; ref: RpgMapObject }
   | { kind: 'portal'; ref: RpgMapPortal }
-  | { kind: 'enemy'; ref: RpgMapEnemy };
+  | { kind: 'enemy'; ref: RpgMapEnemy }
+  // 壊れる置物(front#264)。中身を選べる
+  | { kind: 'breakable'; ref: RpgMapObject };
 
 export interface MapCheck {
   ok: boolean;
@@ -149,7 +153,8 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch,
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
-      wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null
+      wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null,
+      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count } : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,
@@ -259,6 +264,7 @@ export class RpgMapEditor {
     if (enemy) return { kind: 'enemy', ref: enemy };
     const house = this.objectAt(x, y);
     if (house?.type === 'house') return { kind: 'house', ref: house };
+    if (house && isBreakable(house.type)) return { kind: 'breakable', ref: house };
     return null;
   }
 
@@ -356,8 +362,10 @@ export class RpgMapEditor {
         }
         if (!this.walkableGround(x, y)) return null;
         this.removeAt(x, y);
-        this.map.objects.push({ type: tool.type, x, y, roof: tool.roof ?? null, torch: !!tool.torch });
-        return null;
+        const placed: RpgMapObject = { type: tool.type, x, y, roof: tool.roof ?? null, torch: !!tool.torch };
+        this.map.objects.push(placed);
+        // 壊れる置物は、置いたものを選んだ状態にする(中身を選べる)
+        return first && isBreakable(tool.type) ? { kind: 'breakable', ref: placed } : null;
       }
       case 'enemy':
         if (canPlace) this.map.enemies.push({ type: tool.type, x, y });

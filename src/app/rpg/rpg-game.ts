@@ -2,15 +2,19 @@ import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgSave, RpgSaveInput
 import { QuestEntry, QuestLog, QuestMark, allQuests } from './rpg-quest';
 import {
   AreaMap,
+  BREAK_HITS,
+  BREAK_RESPAWN_SEC,
   ENEMIES,
   HZ,
   ITEMS,
   TH,
   TW,
   MAX_LUCK,
+  STATIC_NAMES,
   STAT_POINTS_PER_LEVEL,
   Side,
   StatKey,
+  StaticObj,
   Stats,
   ThemeDef,
   ZERO_STATS,
@@ -85,11 +89,14 @@ export interface Enemy extends Mover {
   // 攻撃している途中(front#229)。ためる → 動く/予告 → 当たる → 終わる まで、ほかの動きをしない
   act: EnemyAct | null;
   seed: number;
+  // 壊れる置物から出てきた敵(front#264)。倒しても出直さず、置物が元に戻る
+  fromObject?: StaticObj;
 }
 
 export interface Player extends Mover {
   kind: 'player';
-  target: Npc | Enemy | null;
+  // 話す相手・攻撃する敵・壊す置物(front#264)
+  target: Npc | Enemy | StaticObj | null;
   repath: number;
   atkCd: number;
   lunge: number;
@@ -201,7 +208,7 @@ export class RpgGame {
   // マップ作成画面ではプレイヤーを描かない
   hidePlayer = false;
   mouse: { x: number; y: number } | null = null;
-  hover: Npc | Enemy | null = null;
+  hover: Npc | Enemy | StaticObj | null = null;
 
   // 会話・お店などを開いている間はクリックで動かない。敵も止まり、攻撃してこない(front#243)
   locked = false;
@@ -514,10 +521,10 @@ export class RpgGame {
   }
 
   /** 画面上の位置にいる村人・敵(重なっていれば手前のもの) */
-  pickEntity(mx: number, my: number): Npc | Enemy | null {
+  pickEntity(mx: number, my: number): Npc | Enemy | StaticObj | null {
     const wx = (mx - this.camX) / this.zoom;
     const wy = (my - this.camY) / this.zoom;
-    let best: Npc | Enemy | null = null;
+    let best: Npc | Enemy | StaticObj | null = null;
     let bestDepth = -Infinity;
     for (const e of [...this.npcs, ...this.enemies.filter((e) => e.alive)]) {
       const [sx, sy0] = iso(e.x, e.y);
@@ -528,6 +535,17 @@ export class RpgGame {
       if (wx > sx - hw && wx < sx + hw && wy > sy - ht && wy < sy + 8 && e.x + e.y > bestDepth) {
         bestDepth = e.x + e.y;
         best = e;
+      }
+    }
+    // 壊れる置物(壊れていないもの)もクリックで狙える(front#264)。人・敵と重なれば手前のもの
+    for (const o of this.map.statics) {
+      if (!BREAK_HITS[o.type] || o.broken) continue;
+      const [sx, sy0] = iso(o.x, o.y);
+      const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
+      const ht = o.type === 'crystal' ? 34 : 24;
+      if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
+        bestDepth = o.x + o.y;
+        best = o;
       }
     }
     return best;
@@ -639,6 +657,74 @@ export class RpgGame {
     if (e.hp <= 0) this.killEnemy(e);
   }
 
+  // ===== 壊れる置物(front#264) =====
+
+  /** 壊れる置物を1回叩く。必要な回数を叩くと壊れる */
+  private hitObject(o: StaticObj): void {
+    const p = this.player;
+    p.atkCd = attackIntervalOf(p.stats);
+    p.lunge = 1;
+    o.hits = (o.hits ?? 0) + 1;
+    o.shake = 1;
+    if (o.hits >= (BREAK_HITS[o.type] ?? 1)) this.breakObject(o);
+  }
+
+  /** 置物を壊し、中身を出す。アイテムはそのまま持ち物に入り、敵はそのマスに現れて襲ってくる */
+  private breakObject(o: StaticObj): void {
+    const p = this.player;
+    o.broken = true;
+    o.hits = 0;
+    o.shake = 0;
+    this.map.solid[o.y][o.x] = false;
+    p.target = null;
+    const color = { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff' }[o.type as string] ?? this.theme.rock[1];
+    for (let i = 0; i < 12; i++) {
+      this.particles.push({ x: o.x, y: o.y, ox: 0, oy: -8, vx: randi(-70, 70), vy: randi(-150, -50), t: 0, color: i % 3 ? color : '#ffffff' });
+    }
+    const c = o.contents;
+    if (c?.kind === 'item' && ITEMS[c.id]) {
+      p.inv[c.id] = (p.inv[c.id] ?? 0) + c.count;
+      this.floatText(o.x, o.y, `${ITEMS[c.id].name}×${c.count}`, '#fde68a', 15, -10);
+      this.events.log(`${STATIC_NAMES[o.type]}の中から${ITEMS[c.id].name}×${c.count}を手に入れた！`);
+      this.events.inventoryChanged();
+      this.events.dirty();
+      o.respawnIn = BREAK_RESPAWN_SEC;
+    } else if (c?.kind === 'enemy' && ENEMIES[c.id]) {
+      const e: Enemy = {
+        kind: 'enemy', type: c.id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
+        moving: false, wander: 0, repath: 0, atkCd: 0.8, flash: 0, lunge: 0, aggro: true, respawn: 0, seed: Math.random() * 6, act: null, fromObject: o
+      };
+      this.enemies.push(e);
+      this.events.log(`${STATIC_NAMES[o.type]}の中から${ENEMIES[c.id].name}が現れた！`);
+      // 出てきた敵をそのまま狙う。倒すまで置物は戻らない
+      p.target = e;
+      p.repath = 0;
+      o.respawnIn = null;
+    } else {
+      o.respawnIn = BREAK_RESPAWN_SEC;
+    }
+  }
+
+  /** 叩いたときのゆれ・戻るときの濃さを進め、時間が来た置物を元に戻す。そのマスに誰かいる(通る)間は待つ */
+  private updateBreakables(dt: number): void {
+    for (const o of this.map.statics) {
+      if (o.shake) o.shake = Math.max(0, o.shake - dt * 4);
+      if (o.fade !== undefined && o.fade < 1) o.fade = Math.min(1, o.fade + dt * 2);
+      if (!o.broken || o.respawnIn == null) continue;
+      o.respawnIn -= dt;
+      if (o.respawnIn > 0 || this.tileInUse(o.x, o.y)) continue;
+      o.broken = false;
+      o.respawnIn = null;
+      o.fade = 0;
+      this.map.solid[o.y][o.x] = true;
+    }
+  }
+
+  private tileInUse(x: number, y: number): boolean {
+    const on = (m: Mover) => (Math.round(m.x) === x && Math.round(m.y) === y) || m.path.some(([px, py]) => px === x && py === y);
+    return on(this.player) || this.enemies.some((e) => e.alive && on(e));
+  }
+
   private killEnemy(e: Enemy): void {
     const def = ENEMIES[e.type];
     const p = this.player;
@@ -647,6 +733,8 @@ export class RpgGame {
     e.act = null;
     e.aggro = false;
     e.path = [];
+    // 置物から出た敵を倒したら、その置物が元に戻るまでの時間を数え始める(front#264)
+    if (e.fromObject) e.fromObject.respawnIn = BREAK_RESPAWN_SEC;
     for (let i = 0; i < 12; i++) {
       this.particles.push({ x: e.x, y: e.y, ox: 0, oy: -10, vx: randi(-70, 70), vy: randi(-160, -60), t: 0, color: i % 2 ? def.color : '#ffffff' });
     }
@@ -728,6 +816,9 @@ export class RpgGame {
     }
     this.updatePlayer(dt);
     if (!this.transitioning && !this.locked) this.enemies.forEach((e) => this.updateEnemy(e, dt));
+    // 置物から出て倒された敵は、もう出てこないので消す(front#264)
+    if (this.enemies.some((e) => !e.alive && e.fromObject)) this.enemies = this.enemies.filter((e) => e.alive || !e.fromObject);
+    this.updateBreakables(dt);
     for (const f of this.floats) f.t += dt;
     while (this.floats.length && this.floats[0].t > 1.1) this.floats.shift();
     for (const p of this.particles) {
@@ -753,11 +844,16 @@ export class RpgGame {
 
     const t = p.target;
     if (t) {
-      if (t.kind === 'enemy' && !t.alive) {
+      if ((t.kind === 'enemy' && !t.alive) || (t.kind === 'static' && t.broken)) {
         p.target = null;
       } else {
         const d = cheb(p.x, p.y, t.x, t.y);
-        if (t.kind === 'enemy' && d <= ATTACK_RANGE) {
+        if (t.kind === 'static' && d <= ATTACK_RANGE) {
+          // 壊れる置物の隣まで来たら叩く(front#264)
+          p.path = [];
+          this.faceTo(p, t);
+          if (p.atkCd <= 0) this.hitObject(t);
+        } else if (t.kind === 'enemy' && d <= ATTACK_RANGE) {
           p.path = [];
           this.faceTo(p, t);
           if (p.atkCd <= 0) this.playerAttack(t);
@@ -863,6 +959,8 @@ export class RpgGame {
     e.flash = Math.max(0, e.flash - dt);
     e.lunge = Math.max(0, e.lunge - dt * 5);
     if (!e.alive) {
+      // 置物から出た敵は出直さない(置物が元に戻る)(front#264)
+      if (e.fromObject) return;
       e.respawn -= dt;
       if (e.respawn <= 0) {
         Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false, act: null });

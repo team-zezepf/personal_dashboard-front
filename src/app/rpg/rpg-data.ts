@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgMap } from '../models/rpg.models';
+import { RpgMap, RpgObjectContents } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
 export type ItemType = 'use' | 'weapon' | 'armor';
@@ -106,8 +106,17 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 // マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし t:タイル r:レンガ)
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
-export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano';
-export const STATIC_TYPES: StaticType[] = ['tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano'];
+export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass';
+export const STATIC_TYPES: StaticType[] = ['tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass'];
+
+// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。ほかの置物は壊れない
+export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3 };
+export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as StaticType];
+// 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
+export const BREAK_RESPAWN_SEC = 10;
+export const STATIC_NAMES: Record<StaticType, string> = {
+  tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら'
+};
 
 export interface StaticObj {
   kind: 'static';
@@ -123,6 +132,14 @@ export interface StaticObj {
   // 壁の色と窓なし(front#250)
   wall?: string;
   noWindow?: boolean;
+  // 壊れる置物の中身と、ゲームの中での状態(front#264)。hits: 受けた攻撃の回数、broken: 壊れている、
+  // respawnIn: 元に戻るまでの残りの秒数(中身の敵が生きている間は null)、shake: 叩かれてゆれる量、fade: 戻るときの濃さ(0〜1)
+  contents?: RpgObjectContents;
+  hits?: number;
+  broken?: boolean;
+  respawnIn?: number | null;
+  shake?: number;
+  fade?: number;
 }
 
 /** 奥から順に描くときの奥行き。大きな家は、いちばん手前のマスで並べる */
@@ -304,7 +321,8 @@ export function buildAreaMap(map: RpgMap): AreaMap {
     .map((o) => ({
       kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
       shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined,
-      wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined
+      wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined,
+      contents: isBreakable(o.type) ? (o.contents ?? undefined) : undefined
     }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>
