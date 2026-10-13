@@ -40,6 +40,10 @@ describe('RpgMapEditor', () => {
   it('草むら・シダ・水晶・岩は置くと選んだ状態になり、中身は壊れる置物だけが保存する形に入る(front#264)', () => {
     const objects = PALETTE.find((t) => t.id === 'object')!.items;
     expect(objects.some((i) => i.label === '草むら')).toBe(true);
+    // 宝箱・甲冑も壊れる置物(front#266)
+    expect(['宝箱', '甲冑'].every((l) => objects.some((i) => i.label === l))).toBe(true);
+    expect(editor.apply({ kind: 'object', type: 'armor' }, 8, 8, true)?.kind).toBe('breakable');
+    editor.removeAt(8, 8);
 
     const placed = editor.apply({ kind: 'object', type: 'grass' }, 2, 2, true);
     expect(placed).toEqual({ kind: 'breakable', ref: editor.map.objects.at(-1) });

@@ -69,6 +69,9 @@ export const PALETTE: PaletteTab[] = [
       { id: 'crystal', label: '水晶', icon: '💎', tool: { kind: 'object', type: 'crystal' } },
       // 草むら・シダ・水晶・岩は攻撃で壊れ、置いたあとに中身(アイテム・敵)を選べる(front#264)
       { id: 'grass', label: '草むら', icon: '🌾', tool: { kind: 'object', type: 'grass' } },
+      // 宝箱・甲冑も壊れる置物(front#266)。甲冑は斜め右正面を向く
+      { id: 'chest', label: '宝箱', icon: '🧰', tool: { kind: 'object', type: 'chest' } },
+      { id: 'armor', label: '甲冑', icon: '🛡️', tool: { kind: 'object', type: 'armor' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },
       { id: 'torch', label: 'たいまつ柱', icon: '🔥', tool: { kind: 'object', type: 'pillar', torch: true } },
       { id: 'volcano', label: '火山', icon: '🌋', tool: { kind: 'object', type: 'volcano' } }

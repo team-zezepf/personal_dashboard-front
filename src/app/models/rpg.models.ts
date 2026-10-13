@@ -106,7 +106,7 @@ export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'recommendedLevel' | 'th
 
 // RPGのマップ(エリア)(front#217 / api#82)。マップ作成画面で作り、ゲームはこれを読んで地形を作る
 export interface RpgMapObject {
-  // tree / rock / house / cliff / fern / crystal / pillar / volcano / grass
+  // tree / rock / house / cliff / fern / crystal / pillar / volcano / grass / chest / armor
   type: string;
   x: number;
   y: number;
@@ -122,7 +122,7 @@ export interface RpgMapObject {
   // 家の壁の色(#rrggbb)と、窓を付けない(front#250)。なければクリーム色・窓あり
   wall?: string | null;
   noWindow?: boolean | null;
-  // 壊れる置物(草むら・シダ・水晶・岩)の中身(front#264)。なければ中身なし
+  // 壊れる置物(草むら・シダ・水晶・岩・宝箱・甲冑)の中身(front#264)。なければ中身なし
   contents?: RpgObjectContents | null;
 }
 
