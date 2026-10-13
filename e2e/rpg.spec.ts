@@ -351,7 +351,8 @@ test(
       const goldBefore = Number((await status.getByText(/\d+G/).innerText()).replace(/[^0-9]/g, ''));
       await clickNpc(page, '村長 ゴロウ');
       await dialog.waitFor();
-      for (let i = 0; i < 10 && (await dialog.isVisible()); i++) await dialog.click();
+      // 最後のセリフで会話が閉じるので、見えていると判定した直後に閉じていることがある。待ち続けないよう、クリックは短く待つ(front#260)
+      for (let i = 0; i < 10 && (await dialog.isVisible()); i++) await dialog.click({ timeout: 2000 }).catch(() => undefined);
       await expect(page.getByRole('region', { name: 'ログ' }).getByText(/クエスト「スライム退治」を達成した！ 50G・回復薬×2 を手に入れた/)).toBeVisible();
       await expect(status.getByText(`${goldBefore + 50}G`)).toBeVisible();
       await expect(items.getByText('×5')).toBeVisible();

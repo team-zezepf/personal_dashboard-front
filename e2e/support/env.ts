@@ -1,8 +1,19 @@
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 
 // 接続先(sandbox)。別の環境に向けるときは環境変数で上書きする
 export const FRONT_URL = process.env['E2E_FRONT_URL'] ?? 'http://localhost:4201';
 export const API_URL = process.env['E2E_API_URL'] ?? 'http://localhost:8081';
+
+// sandbox のデータのフォルダ(RPG の E2E で、テスト用の RPG データに置き換える。front#260)。
+// 既定はフロントのリポジトリ(worktree から実行したときも、元のリポジトリ)の隣の personal_dashboard-data-sandbox
+export const SANDBOX_DATA_DIR = process.env['SANDBOX_DATA_DIR'] ?? path.resolve(mainRepositoryRoot(), '..', 'personal_dashboard-data-sandbox');
+
+function mainRepositoryRoot(): string {
+  // worktree の中でも、git の共通のフォルダ(元のリポジトリの .git)は元のリポジトリにある
+  const commonDir = execSync('git rev-parse --git-common-dir', { cwd: __dirname }).toString().trim();
+  return path.dirname(path.resolve(__dirname, commonDir));
+}
 
 // E2E 専用のアカウント。手で確認するときの sandbox@example.com とは分ける(なければ global-setup で作る)
 export const E2E_ACCOUNT = {

@@ -14,6 +14,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   globalSetup: './e2e/support/global-setup.ts',
+  globalTeardown: './e2e/support/global-teardown.ts',
   reporter: [['list'], ['./e2e/support/evidence-reporter.ts']],
   use: {
     baseURL: FRONT_URL,
