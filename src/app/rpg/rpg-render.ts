@@ -7,6 +7,9 @@ import { SPELLS, attackTiming, chargeShake, drawAttackEffect, drawEnemyBody, jum
 
 type Pt = [number, number];
 
+// 壁(front#268)の高さ。床のマスの縦の6つぶんほど
+const WALL_HEIGHT = 200;
+
 // #rrggbb の色を暗くする(家の屋根の影の面)
 export function shade(hex: string, factor: number): string {
   const n = parseInt(hex.slice(1), 16);
@@ -449,7 +452,7 @@ export class RpgRenderer {
     // 立っているマスの高さの分だけ上に描く(置物はマスの高さ、人・敵は登り降りの途中の高さ)
     const sy = sy0 - (o.kind === 'static' ? game.map.heightAt(o.x, o.y) : o.z) * HZ;
     // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
-    if (!this.onScreen(sx, sy, 160)) return;
+    if (!this.onScreen(sx, sy, o.kind === 'static' && o.type === 'wall' ? WALL_HEIGHT + 40 : 160)) return;
     if (o.kind === 'static') this.drawStaticState(o, sx, sy);
     else if (o.kind === 'npc') {
       this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
@@ -498,6 +501,7 @@ export class RpgRenderer {
     switch (o.type) {
       case 'grass': return this.drawGrass(sx, sy);
       case 'chest': return this.drawChest(sx, sy, o.hits ?? 0);
+      case 'wall': return this.drawWall(sx, sy, o);
       case 'armor': return this.drawArmor(sx, sy, o.hits ?? 0);
       case 'tree': return this.drawTree(sx, sy);
       case 'rock': return this.drawRock(sx, sy);
@@ -587,6 +591,50 @@ export class RpgRenderer {
   private boxPoint(cx: number, cy: number, u: number, v: number, z: number): Pt {
     const [x, y] = this.tilePoint(cx, cy, u, v);
     return [x, y - z];
+  }
+
+  // 壁(front#268)。マスいっぱいの石積みのブロックで、色はテーマのタイルの石と同じ。
+  // 上の面は少し明るく、手前の2つの面にはレンガの目地を描く(段ごとに縦の目地を半分ずらす)。となりに並べるとひと続きに見える
+  private drawWall(cx: number, cy: number, o: StaticObj): void {
+    const ctx = this.ctx;
+    const { stone, grout } = this.game.theme.tile;
+    const h = WALL_HEIGHT;
+    const top: Pt[] = [[cx, cy - TH / 2 - h], [cx + TW / 2, cy - h], [cx, cy + TH / 2 - h], [cx - TW / 2, cy - h]];
+    this.poly([[cx - TW / 2, cy - h], [cx, cy + TH / 2 - h], [cx, cy + TH / 2], [cx - TW / 2, cy]], shade(stone[(o.x + o.y) % 3], 0.78));
+    this.poly([[cx, cy + TH / 2 - h], [cx + TW / 2, cy - h], [cx + TW / 2, cy], [cx, cy + TH / 2]], shade(stone[(o.x + o.y + 1) % 3], 0.62));
+    this.poly(top, shade(stone[2], 1.08));
+    ctx.save();
+    ctx.strokeStyle = grout;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.7;
+    const rows = Math.round(h / 10);
+    for (const [ax, ay, bx, by] of [[cx - TW / 2, cy, cx, cy + TH / 2], [cx, cy + TH / 2, cx + TW / 2, cy]]) {
+      ctx.beginPath();
+      for (let r = 1; r < rows; r++) {
+        const dz = (h / rows) * r;
+        ctx.moveTo(ax, ay - dz);
+        ctx.lineTo(bx, by - dz);
+      }
+      for (let r = 0; r < rows; r++) {
+        const z0 = (h / rows) * r;
+        const z1 = (h / rows) * (r + 1);
+        for (const k of r % 2 ? [0.25, 0.75] : [0.5]) {
+          const px = ax + (bx - ax) * k;
+          const py = ay + (by - ay) * k;
+          ctx.moveTo(px, py - z0);
+          ctx.lineTo(px, py - z1);
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(...top[3]);
+    ctx.lineTo(...top[2]);
+    ctx.lineTo(...top[1]);
+    ctx.stroke();
   }
 
   // 宝箱(front#266)。y の向きに長い箱で、正面(錠前)は右下の面。ふたはかまぼこ形で、金の帯を巻く

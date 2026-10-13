@@ -600,6 +600,13 @@ describe('RpgGame', () => {
       expect(armor.broken).toBe(true);
     });
 
+    it('壁は通れず、狙えず、壊れない(front#268)', () => {
+      setup([{ type: 'wall', x: 6, y: 5, torch: false }]);
+      expect(game.map.walkable(6, 5)).toBe(false);
+      const [wx, wy] = game.screenPositionOf({ x: 6, y: 5 });
+      expect(game.pickEntity(wx, wy - 10)).toBeNull();
+    });
+
     it('中身のアイテムはそのまま持ち物に入り、10秒後に元に戻る(エリアに入り直しても戻る)', () => {
       setup([{ type: 'grass', x: 6, y: 5, torch: false, contents: { kind: 'item', id: 'potion', count: 2 } }]);
       const before = game.player.inv['potion'] ?? 0;
