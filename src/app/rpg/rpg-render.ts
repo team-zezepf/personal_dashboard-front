@@ -1,4 +1,4 @@
-import { ENEMIES, G, HZ, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
+import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
@@ -416,7 +416,8 @@ export class RpgRenderer {
     const game = this.game;
     const map = game.map;
     type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player;
-    const list: Drawable[] = [...map.statics, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
+    // 壊れている置物は描かない(front#264)
+    const list: Drawable[] = [...map.statics.filter((o) => !o.broken), ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
     // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物を先に。大きな家は、いちばん手前のマスで並べる
     const depth = (o: Drawable) => (o.kind === 'static' ? staticDepth(o) : o.x + o.y);
     list.sort((a, b) => depth(a) - depth(b) || (a.kind === 'static' ? -1 : 1));
@@ -449,7 +450,7 @@ export class RpgRenderer {
     const sy = sy0 - (o.kind === 'static' ? game.map.heightAt(o.x, o.y) : o.z) * HZ;
     // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
     if (!this.onScreen(sx, sy, 160)) return;
-    if (o.kind === 'static') this.drawStatic(o, sx, sy);
+    if (o.kind === 'static') this.drawStaticState(o, sx, sy);
     else if (o.kind === 'npc') {
       this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
       this.label(o.name, sx, sy - 56, game.hover === o ? 'rgba(96,118,224,0.95)' : undefined);
@@ -460,8 +461,41 @@ export class RpgRenderer {
     else if (!game.hidePlayer) this.drawPlayer(sx, sy);
   }
 
+  // 壊れる置物は、叩かれるとゆれ・ひびが入り、元に戻るときはだんだん濃くなる。狙っている・マウスの下なら名前を出す(front#264)
+  private drawStaticState(o: StaticObj, sx: number, sy: number): void {
+    const ctx = this.ctx;
+    const game = this.game;
+    const dx = o.shake ? Math.sin(this.time * 60) * 3 * o.shake : 0;
+    ctx.save();
+    if (o.fade !== undefined && o.fade < 1) ctx.globalAlpha = o.fade;
+    this.drawStatic(o, sx + dx, sy);
+    if (o.hits) this.drawCracks(o, sx + dx, sy);
+    ctx.restore();
+    if (BREAK_HITS[o.type] && (game.hover === o || game.player.target === o)) {
+      this.label(STATIC_NAMES[o.type], sx, sy - (o.type === 'crystal' ? 44 : 32), game.player.target === o ? 'rgba(220,38,38,0.85)' : undefined);
+    }
+  }
+
+  // 叩いた回数だけ、岩・水晶にひびを入れる
+  private drawCracks(o: StaticObj, cx: number, cy: number): void {
+    const ctx = this.ctx;
+    ctx.strokeStyle = o.type === 'crystal' ? 'rgba(14,116,144,0.9)' : 'rgba(31,41,55,0.75)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const top = o.type === 'crystal' ? -26 : -16;
+    ctx.moveTo(cx - 3, cy + top);
+    ctx.lineTo(cx + 2, cy + top + 7);
+    ctx.lineTo(cx - 1, cy + top + 13);
+    if ((o.hits ?? 0) > 1) {
+      ctx.moveTo(cx + 6, cy + top + 2);
+      ctx.lineTo(cx + 9, cy + top + 10);
+    }
+    ctx.stroke();
+  }
+
   private drawStatic(o: StaticObj, sx: number, sy: number): void {
     switch (o.type) {
+      case 'grass': return this.drawGrass(sx, sy);
       case 'tree': return this.drawTree(sx, sy);
       case 'rock': return this.drawRock(sx, sy);
       case 'house': return this.drawHouse(o, sx, sy);
@@ -528,6 +562,22 @@ export class RpgRenderer {
     this.poly([L, B, [cx, cy + 15 - h], [cx - 26, cy - h + 8]], '#a47148');
     this.poly([B, R, [cx + 26, cy - h + 10], [cx, cy + 15 - h]], '#7d5232');
     this.poly([[cx - 26, cy - h + 8], [cx, cy + 15 - h], [cx + 26, cy - h + 10], [cx + 4, cy - h - 4]], '#c08a5a');
+  }
+
+  // 草むら(front#264)。細い葉を束ねて、風で少しゆらす
+  private drawGrass(cx: number, cy: number): void {
+    const ctx = this.ctx;
+    this.shadow(cx, cy, 14, 5, 0.15);
+    ctx.lineCap = 'round';
+    for (let i = -4; i <= 4; i++) {
+      const sway = Math.sin(this.time * 2 + cx * 0.1 + i) * 1.5;
+      ctx.strokeStyle = i % 2 ? '#4f9a3c' : '#6cb84f';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(cx + i * 2.6, cy);
+      ctx.quadraticCurveTo(cx + i * 3.4, cy - 10, cx + i * 4.2 + sway, cy - 20 + Math.abs(i) * 1.5);
+      ctx.stroke();
+    }
   }
 
   private drawFern(cx: number, cy: number): void {

@@ -12,7 +12,9 @@ import {
 } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
-import { ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, TH, THEMES, TW, neighborOf, sideLabel, themeOf } from '../../rpg/rpg-data';
+import {
+  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, StaticType, TH, THEMES, TW, neighborOf, sideLabel, themeOf
+} from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer, shade } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
@@ -87,6 +89,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     return Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
   });
   readonly sizeRange = MAP_SIZE;
+  readonly breakRespawnSec = BREAK_RESPAWN_SEC;
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal('');
@@ -651,6 +654,29 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.npcModal.set(null);
     this.houseModal.set(null);
     this.markDirty();
+  }
+
+  // ===== 壊れる置物の中身(front#264) =====
+
+  staticName(type: string): string {
+    return STATIC_NAMES[type as StaticType] ?? type;
+  }
+
+  breakHits(type: string): number {
+    return BREAK_HITS[type as StaticType] ?? 0;
+  }
+
+  /** 中身の種類を変える。アイテムは回復薬1個、敵はいちばん上の敵から始める */
+  setContentsKind(obj: RpgMapObject, kind: 'item' | 'enemy' | null): void {
+    if ((obj.contents?.kind ?? null) === kind) return;
+    this.beginEdit();
+    obj.contents = kind === 'item' ? { kind, id: 'potion', count: 1 } : kind === 'enemy' ? { kind, id: this.enemyTypes()[0]?.id ?? 'slime', count: 1 } : null;
+    this.edited();
+    this.version.update((v) => v + 1);
+  }
+
+  clampCount(value: number): number {
+    return Math.min(9, Math.max(1, Math.round(Number(value) || 1)));
   }
 
   // ===== クエスト(front#239) =====

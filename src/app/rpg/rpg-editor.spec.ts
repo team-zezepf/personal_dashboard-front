@@ -37,6 +37,22 @@ describe('RpgMapEditor', () => {
     expect(editor.map.enemies.some((e) => e.x === 2 && e.y === 2)).toBe(true);
   });
 
+  it('草むら・シダ・水晶・岩は置くと選んだ状態になり、中身は壊れる置物だけが保存する形に入る(front#264)', () => {
+    const objects = PALETTE.find((t) => t.id === 'object')!.items;
+    expect(objects.some((i) => i.label === '草むら')).toBe(true);
+
+    const placed = editor.apply({ kind: 'object', type: 'grass' }, 2, 2, true);
+    expect(placed).toEqual({ kind: 'breakable', ref: editor.map.objects.at(-1) });
+    expect(editor.entityAt(2, 2)?.kind).toBe('breakable');
+    expect(editor.apply({ kind: 'object', type: 'tree' }, 3, 2, true)).toBeNull();
+
+    editor.map.objects[0].contents = { kind: 'item', id: 'potion', count: 2 };
+    editor.map.objects[1].contents = { kind: 'enemy', id: 'slime', count: 1 };
+    const saved = toMapInput(editor.map).objects;
+    expect(saved[0].contents).toEqual({ kind: 'item', id: 'potion', count: 2 });
+    expect(saved[1].contents).toBeNull();
+  });
+
   it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {
     editor.apply({ kind: 'height', op: 'up' }, 2, 2, true, 3);
     editor.apply({ kind: 'height', op: 'up' }, 2, 2, false, 3);
@@ -122,8 +138,8 @@ describe('RpgMapEditor', () => {
       editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
       editor.apply({ kind: 'object', type: 'house' }, 4, 4, true);
       expect(toMapInput(editor.map).objects).toEqual([
-        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null },
-        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null }
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, contents: null }
       ]);
     });
 

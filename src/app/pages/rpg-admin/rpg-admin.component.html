@@ -364,6 +364,46 @@
                     <p class="muted small">強さ・落とすアイテムは、種類ごとに決まっています。</p>
                     <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
                   }
+                  @case ('breakable') {
+                    <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <div class="field">
+                      <span>中身</span>
+                      <div class="seg" role="group" aria-label="置物の中身">
+                        <button type="button" class="btn small" [class.active]="!sel.ref.contents" [attr.aria-pressed]="!sel.ref.contents" (click)="setContentsKind(sel.ref, null)">なし</button>
+                        <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'item'" [attr.aria-pressed]="sel.ref.contents?.kind === 'item'" (click)="setContentsKind(sel.ref, 'item')">アイテム</button>
+                        <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'enemy'" [attr.aria-pressed]="sel.ref.contents?.kind === 'enemy'" (click)="setContentsKind(sel.ref, 'enemy')">敵</button>
+                      </div>
+                    </div>
+                    @if (sel.ref.contents; as c) {
+                      @if (c.kind === 'item') {
+                        <div class="row2">
+                          <label class="field">
+                            <span>アイテム</span>
+                            <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
+                              @for (item of itemOptions; track item.id) {
+                                <option [value]="item.id">{{ item.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>個数</span>
+                            <input type="number" min="1" max="9" [ngModel]="c.count" (focus)="beginEdit()" (ngModelChange)="c.count = clampCount($event); edited()" />
+                          </label>
+                        </div>
+                      } @else {
+                        <label class="field">
+                          <span>敵</span>
+                          <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
+                            @for (e of enemyTypes(); track e.id) {
+                              <option [value]="e.id">{{ e.name }}</option>
+                            }
+                          </select>
+                        </label>
+                      }
+                    }
+                    <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>
+                    <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                  }
                 }
               } @else {
                 <p class="muted small">
