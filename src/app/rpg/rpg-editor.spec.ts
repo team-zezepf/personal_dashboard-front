@@ -42,6 +42,11 @@ describe('RpgMapEditor', () => {
     expect(objects.some((i) => i.label === '草むら')).toBe(true);
     // 宝箱・甲冑も壊れる置物(front#266)
     expect(['宝箱', '甲冑'].every((l) => objects.some((i) => i.label === l))).toBe(true);
+    // 壁(front#268)は壊れない置物なので、置いても中身を選ぶ状態にはならない
+    expect(objects.some((i) => i.label === '壁')).toBe(true);
+    expect(editor.apply({ kind: 'object', type: 'wall' }, 8, 8, true)).toBeNull();
+    expect(editor.map.objects.at(-1)?.type).toBe('wall');
+    editor.removeAt(8, 8);
     expect(editor.apply({ kind: 'object', type: 'armor' }, 8, 8, true)?.kind).toBe('breakable');
     editor.removeAt(8, 8);
 

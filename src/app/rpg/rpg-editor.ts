@@ -65,6 +65,8 @@ export const PALETTE: PaletteTab[] = [
       // 形・向き・屋根の色は、置いたあとにモーダルで選ぶ(front#236)
       { id: 'house', label: '家', icon: '🏠', tool: { kind: 'object', type: 'house' } },
       { id: 'cliff', label: '崖', icon: '⛰️', tool: { kind: 'object', type: 'cliff' } },
+      // 石積みの高い壁(front#268)。部屋の奥側の端に並べて、建物の中のように見せる
+      { id: 'wall', label: '壁', icon: '🧱', tool: { kind: 'object', type: 'wall' } },
       { id: 'fern', label: 'シダ', icon: '🌿', tool: { kind: 'object', type: 'fern' } },
       { id: 'crystal', label: '水晶', icon: '💎', tool: { kind: 'object', type: 'crystal' } },
       // 草むら・シダ・水晶・岩は攻撃で壊れ、置いたあとに中身(アイテム・敵)を選べる(front#264)
