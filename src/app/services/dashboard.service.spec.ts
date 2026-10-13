@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { DashboardData, Schedule, Task } from '../models/dashboard.models';
@@ -182,5 +183,27 @@ describe('DashboardService', () => {
     service.updateSchedule({ ...savedSchedule, repeat: { enabled: true, frequency: 'daily', endType: 'count', endCount: 3 } });
 
     expect(service.scheduleOccurrences().map((s) => s.scheduleDate)).toEqual(['2026-10-04', '2026-10-05', '2026-10-06']);
+  });
+  it('API からエラーが返ったときは、仮データを出さずにエラーの内容を出し続け、読み込めたら消す(front#258)', () => {
+    const notify = TestBed.inject(NotificationService) as unknown as { showResult: ReturnType<typeof vi.fn>; dismiss: ReturnType<typeof vi.fn> };
+    const message = 'データファイル（tasks.json）を読み込めませんでした。データを守るため、保存はしていません。';
+    query.mockReturnValueOnce(throwError(() => new Error(message)));
+    service.loadDashboardData('2026-10-04');
+
+    expect(notify.showResult).toHaveBeenCalledWith(message, 'error', null);
+    // 前に読み込んだ実データのまま(仮のタスクA・Bに置き換えない)
+    expect(service.tasks().map((t) => t.title)).toEqual(['保存済みタスク']);
+
+    service.loadDashboardData('2026-10-04');
+    expect(notify.dismiss).toHaveBeenCalledWith(message);
+  });
+
+  it('API につながらないときは、今までどおり仮データとエラーを出す', () => {
+    const notify = TestBed.inject(NotificationService) as unknown as { showResult: ReturnType<typeof vi.fn> };
+    query.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    service.loadDashboardData('2026-10-04');
+
+    expect(notify.showResult).toHaveBeenCalledWith('バックエンドに接続できないため、仮のデータを表示しています', 'error', null);
+    expect(service.tasks().map((t) => t.title)).toEqual(['タスクA', 'タスクB']);
   });
 });
