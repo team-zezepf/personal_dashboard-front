@@ -106,16 +106,16 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 // マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし t:タイル r:レンガ)
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
-export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass';
-export const STATIC_TYPES: StaticType[] = ['tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass'];
+export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor';
+export const STATIC_TYPES: StaticType[] = ['tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor'];
 
-// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。ほかの置物は壊れない
-export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3 };
+// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)。ほかの置物は壊れない
+export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3 };
 export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as StaticType];
 // 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
 export const BREAK_RESPAWN_SEC = 10;
 export const STATIC_NAMES: Record<StaticType, string> = {
-  tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら'
+  tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑'
 };
 
 export interface StaticObj {

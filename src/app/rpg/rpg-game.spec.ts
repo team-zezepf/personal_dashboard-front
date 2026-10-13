@@ -580,6 +580,26 @@ describe('RpgGame', () => {
       expect(game.map.walkable(6, 5)).toBe(true);
     });
 
+    it('宝箱は1回、甲冑は3回叩くと壊れ、背の高い甲冑は頭のあたりをクリックしても狙える(front#266)', () => {
+      setup([{ type: 'chest', x: 6, y: 5, torch: false }, { type: 'armor', x: 5, y: 6, torch: false }]);
+      const chest = staticAt(6, 5);
+      const armor = staticAt(5, 6);
+      const [ax, ay] = game.screenPositionOf({ x: 5, y: 6 });
+      expect(game.pickEntity(ax, ay - 45 * game.zoom)).toBe(armor);
+
+      game.player.target = chest;
+      game.update(0.05);
+      expect(chest.broken).toBe(true);
+
+      // 宝箱を叩いた直後なので、次の攻撃までの待ち時間をなくしてから甲冑を狙う
+      game.player.atkCd = 0;
+      game.player.target = armor;
+      game.update(0.05);
+      expect([armor.hits, armor.broken]).toEqual([1, undefined]);
+      run(5);
+      expect(armor.broken).toBe(true);
+    });
+
     it('中身のアイテムはそのまま持ち物に入り、10秒後に元に戻る(エリアに入り直しても戻る)', () => {
       setup([{ type: 'grass', x: 6, y: 5, torch: false, contents: { kind: 'item', id: 'potion', count: 2 } }]);
       const before = game.player.inv['potion'] ?? 0;
