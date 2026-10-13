@@ -183,7 +183,7 @@
       <div class="section">
         <h2>ふるまい</h2>
         <div class="grid2">
-          <label class="field"><span>襲ってくる距離（マス）</span><input type="number" [min]="limits.sight[0]" [max]="limits.sight[1]" step="0.5" [ngModel]="sel.def.sight" (ngModelChange)="setNumber('sight', $event)" /></label>
+          <label class="field"><span>襲ってくる距離（マス）{{ disguiseOf(sel.def) ? '― それまでは' + disguiseOf(sel.def) + 'のふりをして動かない' : '' }}</span><input type="number" [min]="limits.sight[0]" [max]="limits.sight[1]" step="0.5" [ngModel]="sel.def.sight" (ngModelChange)="setNumber('sight', $event)" /></label>
           <label class="field"><span>復活までの秒数</span><input type="number" [min]="limits.respawn[0]" [max]="limits.respawn[1]" [ngModel]="sel.def.respawn" (ngModelChange)="setNumber('respawn', $event)" /></label>
         </div>
         <p class="hint">0 にすると、こちらから攻撃するまで襲ってきません。</p>

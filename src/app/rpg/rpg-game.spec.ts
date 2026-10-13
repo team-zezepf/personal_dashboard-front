@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, shelfFace, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -461,6 +461,19 @@ describe('RpgGame', () => {
       expect(game.player.hp).toBeLessThan(hp);
     });
 
+    it('ミミック・リビングアーマー(化ける形)は、近づかれるまで歩き回らず、近づくと追ってくる(front#270)', () => {
+      for (const shape of ['mimic', 'livingarmor'] as const) {
+        setup(test({ shape, sight: 2, speed: 3 }), [2, 7], [9, 7]);
+        run(8);
+        expect([game.enemies[0].x, game.enemies[0].y, game.enemies[0].aggro]).toEqual([2, 7, false]);
+
+        game.player.x = 4;
+        run(1.5);
+        expect(game.enemies[0].aggro).toBe(true);
+        expect(game.enemies[0].x).toBeGreaterThan(2);
+      }
+    });
+
     it('炎は離れたところから攻撃し、攻撃を始めたマスにいると当たる', () => {
       setup(test({ attack: 'fire', range: 5 }), [2, 7], [6, 7]);
       const hp = game.player.hp;
@@ -598,6 +611,42 @@ describe('RpgGame', () => {
       expect([armor.hits, armor.broken]).toEqual([1, undefined]);
       run(5);
       expect(armor.broken).toBe(true);
+    });
+
+    it('たる・つぼ・骨の山は1回で壊れ、本棚・燭台・墓石は通れず、狙えず、壊れない(front#270)', () => {
+      setup([
+        { type: 'barrel', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'skeleton', count: 1 } },
+        { type: 'bookshelf', x: 5, y: 6, torch: false }, { type: 'candle', x: 4, y: 5, torch: false }, { type: 'grave', x: 5, y: 4, torch: false }
+      ]);
+      for (const [x, y] of [[5, 6], [4, 5], [5, 4]]) {
+        expect(game.map.walkable(x, y)).toBe(false);
+        const [sx, sy] = game.screenPositionOf({ x, y });
+        expect(game.pickEntity(sx, sy - 10)).toBeNull();
+      }
+      const barrel = staticAt(6, 5);
+      game.player.target = barrel;
+      game.update(0.05);
+      expect(barrel.broken).toBe(true);
+      expect(ev.messages.at(-1)).toBe('たるの中からガイコツ兵が現れた！');
+
+      for (const type of ['pot', 'bones']) {
+        setup([{ type, x: 6, y: 5, torch: false }]);
+        game.player.atkCd = 0;
+        game.player.target = staticAt(6, 5);
+        game.update(0.05);
+        expect(staticAt(6, 5).broken).toBe(true);
+      }
+    });
+
+    it('本棚は、壁ぎわ・「なし」の端に置くと部屋の内側を向く(front#270)', () => {
+      const ground = Array.from({ length: 12 }, (_, y) => (y === 0 ? 'v'.repeat(12) : 'g'.repeat(12)));
+      const area = buildAreaMap(map('room', { ground, objects: [{ type: 'wall', x: 3, y: 5, torch: false }] }));
+      // 左上(x - 1)が端・壁なら右下、右上(y - 1)だけが「なし」なら左下、どちらでもなければ右下
+      expect(shelfFace(area, { x: 0, y: 5 })).toBe('x');
+      expect(shelfFace(area, { x: 4, y: 5 })).toBe('x');
+      expect(shelfFace(area, { x: 6, y: 1 })).toBe('y');
+      expect(shelfFace(area, { x: 3, y: 6 })).toBe('y');
+      expect(shelfFace(area, { x: 6, y: 6 })).toBe('x');
     });
 
     it('壁は通れず、狙えず、壊れない(front#268)', () => {
