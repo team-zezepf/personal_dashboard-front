@@ -2,7 +2,8 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
 import { NotificationService } from './notification.service';
 import { DashboardData, Schedule, Task, SaveResult, Topic, StockData } from '../models/dashboard.models';
-import { catchError, of, tap } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EMPTY, catchError, of, tap } from 'rxjs';
 import { expandScheduleOccurrences, getTodayString } from '../utils/schedule-repeat';
 
 const LOAD_ERROR_MESSAGE = 'バックエンドに接続できないため、仮のデータを表示しています';
@@ -13,6 +14,8 @@ const LOAD_ERROR_MESSAGE = 'バックエンドに接続できないため、仮�
 export class DashboardService {
   private graphql = inject(GraphQLService);
   private notificationService = inject(NotificationService);
+  // 読み込みで API が返したエラー(次に読み込めたら消す)
+  private apiErrorMessage: string | null = null;
 
   readonly currentDate = signal<string>(getTodayString());
   readonly tasks = signal<Task[]>([]);
@@ -120,8 +123,19 @@ export class DashboardService {
 
     this.graphql.query<{ dashboardData: DashboardData }>(query, { date }).pipe(
       // 以前の取得失敗で出したエラーが残っていれば、実データを取得できた時点で消す
-      tap(() => this.notificationService.dismiss(LOAD_ERROR_MESSAGE)),
+      tap(() => {
+        this.notificationService.dismiss(LOAD_ERROR_MESSAGE);
+        if (this.apiErrorMessage) this.notificationService.dismiss(this.apiErrorMessage);
+        this.apiErrorMessage = null;
+      }),
       catchError(err => {
+        // API まで届いてエラーが返ってきた(データファイルが読めないなど)ときは、仮データを出さず、理由を出し続ける(front#258)
+        if (!(err instanceof HttpErrorResponse)) {
+          console.error('Backend returned an error:', err);
+          this.apiErrorMessage = err.message;
+          this.notificationService.showResult(err.message, 'error', null);
+          return EMPTY;
+        }
         console.warn('Backend GraphQL fetch failed, falling back to local defaults:', err);
         // バックエンドに接続できない場合、開発時の見た目確認用に仮データへフォールバックするが、
         // ユーザーが気づかずこの仮データを実データだと誤認しないよう、エラーを画面下部に表示し続ける
