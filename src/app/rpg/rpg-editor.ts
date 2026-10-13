@@ -74,6 +74,14 @@ export const PALETTE: PaletteTab[] = [
       // 宝箱・甲冑も壊れる置物(front#266)。甲冑は斜め右正面を向く
       { id: 'chest', label: '宝箱', icon: '🧰', tool: { kind: 'object', type: 'chest' } },
       { id: 'armor', label: '甲冑', icon: '🛡️', tool: { kind: 'object', type: 'armor' } },
+      // たる・つぼ・骨の山も壊れる置物(front#270)
+      { id: 'barrel', label: 'たる', icon: '🛢️', tool: { kind: 'object', type: 'barrel' } },
+      { id: 'pot', label: 'つぼ', icon: '🏺', tool: { kind: 'object', type: 'pot' } },
+      { id: 'bones', label: '骨の山', icon: '🦴', tool: { kind: 'object', type: 'bones' } },
+      // 壊れない飾り(front#270)。本棚は壁ぎわに置くと部屋の内側を向く
+      { id: 'bookshelf', label: '本棚', icon: '📚', tool: { kind: 'object', type: 'bookshelf' } },
+      { id: 'candle', label: '燭台', icon: '🕯️', tool: { kind: 'object', type: 'candle' } },
+      { id: 'grave', label: '墓石', icon: '🪦', tool: { kind: 'object', type: 'grave' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },
       { id: 'torch', label: 'たいまつ柱', icon: '🔥', tool: { kind: 'object', type: 'pillar', torch: true } },
       { id: 'volcano', label: '火山', icon: '🌋', tool: { kind: 'object', type: 'volcano' } }

@@ -1,9 +1,10 @@
-import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitSideAt, staticDepth, swordColorOf } from './rpg-data';
+import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitSideAt, shelfFace, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
-import { SPELLS, attackTiming, chargeShake, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
+import { SPELLS, attackTiming, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
+import { drawArmor, drawBarrel, drawBones, drawBookshelf, drawCandle, drawChest, drawGrave, drawPot } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -472,7 +473,7 @@ export class RpgRenderer {
     ctx.save();
     if (o.fade !== undefined && o.fade < 1) ctx.globalAlpha = o.fade;
     this.drawStatic(o, sx + dx, sy);
-    if (o.hits && o.type !== 'chest' && o.type !== 'armor') this.drawCracks(o, sx + dx, sy);
+    if (o.hits && (o.type === 'rock' || o.type === 'crystal')) this.drawCracks(o, sx + dx, sy);
     ctx.restore();
     if (BREAK_HITS[o.type] && (game.hover === o || game.player.target === o)) {
       const labelY = o.type === 'armor' ? 62 : o.type === 'crystal' ? 44 : 32;
@@ -500,9 +501,15 @@ export class RpgRenderer {
   private drawStatic(o: StaticObj, sx: number, sy: number): void {
     switch (o.type) {
       case 'grass': return this.drawGrass(sx, sy);
-      case 'chest': return this.drawChest(sx, sy, o.hits ?? 0);
+      case 'chest': return drawChest(this.ctx, sx, sy, o.hits ?? 0);
       case 'wall': return this.drawWall(sx, sy, o);
-      case 'armor': return this.drawArmor(sx, sy, o.hits ?? 0);
+      case 'armor': return drawArmor(this.ctx, sx, sy, o.hits ?? 0, this.time);
+      case 'barrel': return drawBarrel(this.ctx, sx, sy);
+      case 'pot': return drawPot(this.ctx, sx, sy);
+      case 'bones': return drawBones(this.ctx, sx, sy);
+      case 'bookshelf': return drawBookshelf(this.ctx, sx, sy, shelfFace(this.game.map, o), o.x * 7 + o.y * 13);
+      case 'candle': return drawCandle(this.ctx, sx, sy, this.time);
+      case 'grave': return drawGrave(this.ctx, sx, sy);
       case 'tree': return this.drawTree(sx, sy);
       case 'rock': return this.drawRock(sx, sy);
       case 'house': return this.drawHouse(o, sx, sy);
@@ -587,12 +594,6 @@ export class RpgRenderer {
     }
   }
 
-  // マスの上の点(u, v は 0〜1、z は高さ)。宝箱などの立体を描くのに使う
-  private boxPoint(cx: number, cy: number, u: number, v: number, z: number): Pt {
-    const [x, y] = this.tilePoint(cx, cy, u, v);
-    return [x, y - z];
-  }
-
   // 壁(front#268)。マスいっぱいの石積みのブロックで、色はテーマのタイルの石と同じ。
   // 上の面は少し明るく、手前の2つの面にはレンガの目地を描く(段ごとに縦の目地を半分ずらす)。となりに並べるとひと続きに見える
   private drawWall(cx: number, cy: number, o: StaticObj): void {
@@ -635,128 +636,6 @@ export class RpgRenderer {
     ctx.lineTo(...top[2]);
     ctx.lineTo(...top[1]);
     ctx.stroke();
-  }
-
-  // 宝箱(front#266)。y の向きに長い箱で、正面(錠前)は右下の面。ふたはかまぼこ形で、金の帯を巻く
-  private drawChest(cx: number, cy: number, hits: number): void {
-    const ctx = this.ctx;
-    this.shadow(cx, cy + 2, 18, 7, 0.18);
-    const [a, b, p, q] = [0.34, 0.66, 0.24, 0.76];
-    const H = 11;
-    const K = 7;
-    const P = (u: number, v: number, z: number) => this.boxPoint(cx, cy, u, v, z);
-    const lidAt = (s: number, v: number) => P(a + (b - a) * s, v, H + Math.sin(Math.PI * s) * K);
-    const arch = (v: number, n = 10) => Array.from({ length: n + 1 }, (_, i) => lidAt(i / n, v));
-    this.poly([P(b, p, 0), P(b, q, 0), P(b, q, H), P(b, p, H)], '#a8682f');
-    this.poly([P(a, q, 0), P(b, q, 0), P(b, q, H), P(a, q, H)], '#8a5427');
-    // ふたの上の面は細い帯に分け、奥から順に塗る(上・右下を向いた帯ほど明るい)。境目の線が見えないよう同じ色でふちどる
-    const front = arch(q);
-    const back = arch(p);
-    for (let i = 0; i < front.length - 1; i++) {
-      const light = 0.75 + 0.25 * Math.sin(Math.PI * (i / (front.length - 1) + 0.15));
-      const col = `rgb(${Math.round(196 * light)}, ${Math.round(122 * light)}, ${Math.round(55 * light)})`;
-      this.poly([front[i], front[i + 1], back[i + 1], back[i]], col);
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 0.7;
-      ctx.stroke();
-    }
-    this.poly([...front, P(a, q, H)], '#9c5e2a');
-    // 金の帯。ふたの奥側は見えない裏側に回り込んでいるので、表面が手前を向いているところ
-    // (視線の向き (1, 1, 32) との内積が正)だけに描く
-    const facing = (s: number) => -K * Math.PI * Math.cos(Math.PI * s) + (b - a) * 32 > 0;
-    ctx.strokeStyle = '#f2c14e';
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    for (const v of [p + 0.1, q - 0.1]) {
-      const band = Array.from({ length: 41 }, (_, i) => i / 40).filter(facing).map((s) => lidAt(s, v));
-      ctx.beginPath();
-      band.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-      ctx.lineTo(...P(b, v, 0));
-      ctx.stroke();
-    }
-    const [lx, ly] = P(b, 0.5, H - 1);
-    ctx.fillStyle = '#f2c14e';
-    ctx.beginPath(); ctx.roundRect(lx - 3, ly - 1, 6, 7, 1.5); ctx.fill();
-    ctx.fillStyle = '#5b3a12';
-    ctx.beginPath(); ctx.arc(lx, ly + 2, 1.1, 0, Math.PI * 2); ctx.fill();
-    ctx.fillRect(lx - 0.5, ly + 2, 1, 2.4);
-    ctx.strokeStyle = 'rgba(60,30,10,0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(...P(a, q, H)); ctx.lineTo(...P(b, q, H)); ctx.lineTo(...P(b, p, H)); ctx.stroke();
-    if (hits) {
-      const [x0, y0] = P(b, 0.36, H - 2);
-      ctx.strokeStyle = 'rgba(40,20,5,0.8)';
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 - 3, y0 + 4); ctx.lineTo(x0 - 1, y0 + 8); ctx.stroke();
-    }
-  }
-
-  // 甲冑(front#266)。台座の上に立つ鎧で、斜め右正面(画面の右下)を向く: 兜のすき間・胸当ては右に寄り、右手に槍を持つ。
-  // 鎧は台座より2割小さく描き、プレイヤーと同じくらいの背の高さにする。叩くたびにへこむ
-  private drawArmor(cx: number, cy: number, hits: number): void {
-    const ctx = this.ctx;
-    const [steel, mid, dark, deep, hi] = ['#cbd5e1', '#94a3b8', '#64748b', '#475569', '#f1f5f9'];
-    this.shadow(cx, cy + 2, 16, 6, 0.22);
-    this.poly([[cx - 14, cy], [cx, cy + 7], [cx + 14, cy], [cx, cy - 7]], '#8b8fa3');
-    this.poly([[cx - 14, cy], [cx, cy + 7], [cx, cy + 11], [cx - 14, cy + 4]], '#6b6f82');
-    this.poly([[cx, cy + 7], [cx + 14, cy], [cx + 14, cy + 4], [cx, cy + 11]], '#585c6e');
-    const y0 = cy - 2;
-    const f = 3;
-    ctx.save();
-    ctx.translate(cx, y0);
-    ctx.scale(0.8, 0.8);
-    ctx.translate(-cx, -y0);
-    ctx.strokeStyle = '#7c5a3a';
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(cx + 13, y0 + 2); ctx.lineTo(cx + 15, y0 - 58); ctx.stroke();
-    this.poly([[cx + 15, y0 - 66], [cx + 12, y0 - 57], [cx + 18, y0 - 57]], hi);
-    this.poly([[cx + 15, y0 - 66], [cx + 15, y0 - 57], [cx + 18, y0 - 57]], mid);
-    ctx.fillStyle = dark;
-    ctx.beginPath(); ctx.roundRect(cx - 7, y0 - 16, 6, 16, 2); ctx.fill();
-    ctx.fillStyle = mid;
-    ctx.beginPath(); ctx.roundRect(cx + 1, y0 - 16, 6, 16, 2); ctx.fill();
-    ctx.fillStyle = deep;
-    ctx.beginPath(); ctx.ellipse(cx - 4, y0 - 1, 4.5, 2.4, 0, 0, Math.PI * 2); ctx.ellipse(cx + 5, y0, 4.5, 2.4, 0, 0, Math.PI * 2); ctx.fill();
-    this.poly([[cx - 9, y0 - 20], [cx + 10, y0 - 20], [cx + 8, y0 - 13], [cx - 8, y0 - 13]], dark);
-    ctx.fillStyle = mid;
-    ctx.beginPath(); ctx.roundRect(cx - 10, y0 - 38, 20, 19, 6); ctx.fill();
-    ctx.fillStyle = steel;
-    ctx.beginPath(); ctx.roundRect(cx - 4 + f, y0 - 37, 12, 17, 5); ctx.fill();
-    ctx.strokeStyle = hi;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(cx + 2 + f, y0 - 35); ctx.lineTo(cx + 2 + f, y0 - 23); ctx.stroke();
-    ctx.fillStyle = dark;
-    ctx.beginPath(); ctx.ellipse(cx - 10, y0 - 35, 5.5, 4.5, -0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = steel;
-    ctx.beginPath(); ctx.ellipse(cx + 11, y0 - 35, 5.5, 4.5, 0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = dark;
-    ctx.beginPath(); ctx.roundRect(cx - 13, y0 - 33, 5, 14, 2); ctx.fill();
-    ctx.fillStyle = mid;
-    ctx.beginPath(); ctx.roundRect(cx + 10, y0 - 33, 5, 13, 2); ctx.fill();
-    ctx.fillStyle = deep;
-    ctx.beginPath(); ctx.arc(cx + 13.5, y0 - 19, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = mid;
-    ctx.beginPath(); ctx.arc(cx + 1, y0 - 46, 9.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = steel;
-    ctx.beginPath(); ctx.arc(cx + 3, y0 - 47, 7.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(cx - 1 + f, y0 - 48, 9, 2.2);
-    ctx.fillRect(cx + 3 + f, y0 - 48, 1.5, 6);
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.moveTo(cx + 1, y0 - 55);
-    ctx.quadraticCurveTo(cx - 6, y0 - 66 + Math.sin(this.time * 2 + cx) * 1.5, cx - 13, y0 - 55);
-    ctx.quadraticCurveTo(cx - 6, y0 - 59, cx + 1, y0 - 53);
-    ctx.fill();
-    if (hits) {
-      ctx.strokeStyle = 'rgba(30,41,59,0.8)';
-      ctx.lineWidth = 1.3;
-      ctx.beginPath();
-      ctx.moveTo(cx + 4, y0 - 33); ctx.lineTo(cx + 7, y0 - 29); ctx.lineTo(cx + 5, y0 - 25);
-      if (hits > 1) { ctx.moveTo(cx - 6, y0 - 30); ctx.lineTo(cx - 3, y0 - 26); }
-      ctx.stroke();
-    }
-    ctx.restore();
   }
 
   private drawFern(cx: number, cy: number): void {
@@ -929,7 +808,11 @@ export class RpgRenderer {
     ctx.restore();
     const hovered = game.hover === e;
     const barY = y - top;
-    if (targeted || hovered || e.hp < def.hp || def.boss) {
+    // ふりをしている化ける敵(front#270)は、置物と同じように名前だけを出す
+    const disguise = e.aggro ? null : disguiseOf(def);
+    if (disguise) {
+      if (targeted || hovered) this.label(disguise, sx, barY - 10, targeted ? 'rgba(220,38,38,0.85)' : undefined);
+    } else if (targeted || hovered || e.hp < def.hp || def.boss) {
       this.hpBar(sx, barY - 10, e.hp / def.hp);
       if (targeted || hovered || def.boss) this.label(def.name, sx, barY - 22, e.aggro || def.boss ? 'rgba(220,38,38,0.85)' : undefined);
     }

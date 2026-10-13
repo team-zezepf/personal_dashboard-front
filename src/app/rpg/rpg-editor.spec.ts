@@ -49,6 +49,16 @@ describe('RpgMapEditor', () => {
     editor.removeAt(8, 8);
     expect(editor.apply({ kind: 'object', type: 'armor' }, 8, 8, true)?.kind).toBe('breakable');
     editor.removeAt(8, 8);
+    // たる・つぼ・骨の山は壊れる置物、本棚・燭台・墓石は壊れない置物(front#270)
+    for (const type of ['barrel', 'pot', 'bones'] as const) {
+      expect(editor.apply({ kind: 'object', type }, 8, 8, true)?.kind).toBe('breakable');
+      editor.removeAt(8, 8);
+    }
+    for (const type of ['bookshelf', 'candle', 'grave'] as const) {
+      expect(editor.apply({ kind: 'object', type }, 8, 8, true)).toBeNull();
+      editor.removeAt(8, 8);
+    }
+    expect(['たる', 'つぼ', '骨の山', '本棚', '燭台', '墓石'].every((l) => objects.some((i) => i.label === l))).toBe(true);
 
     const placed = editor.apply({ kind: 'object', type: 'grass' }, 2, 2, true);
     expect(placed).toEqual({ kind: 'breakable', ref: editor.map.objects.at(-1) });

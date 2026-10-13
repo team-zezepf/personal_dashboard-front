@@ -16,6 +16,7 @@ import {
   SPELLS,
   attackTiming,
   chargeShake,
+  disguiseOf,
   drawAttackEffect,
   drawEnemyBody,
   isRooted,
@@ -64,6 +65,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   readonly shapes = ENEMY_SHAPES;
   readonly isRooted = isRooted;
+  readonly disguiseOf = disguiseOf;
   readonly attacks = ENEMY_ATTACKS;
   readonly colors = ENEMY_COLORS;
   readonly darks = ENEMY_DARKS;
@@ -444,5 +446,6 @@ function drawThumb(cv: HTMLCanvasElement, def: EnemyDef): void {
   const sc = (cv.width / 88) * (1.25 / Math.max(1, def.size * 0.85)) * thumbFitOf(def);
   c.translate(cv.width / 2, cv.height * 0.86);
   c.scale(sc, sc);
-  drawEnemyBody(c, def, { dir: 1, time: 0 });
+  // 化ける敵(front#270)は、ばけていない本当の姿を見せる
+  drawEnemyBody(c, def, { dir: 1, time: 0, aggro: !!disguiseOf(def) });
 }

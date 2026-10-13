@@ -1,4 +1,5 @@
 import { RpgEnemy } from '../models/rpg.models';
+import { drawArmor, drawChest, mix, shade } from './rpg-props';
 
 /**
  * RPGの敵(front#229)。種類ごとのデータ(マップ作成画面の「敵」タブで作る)と、体の絵・攻撃の動きの描き方を持つ。
@@ -6,7 +7,7 @@ import { RpgEnemy } from '../models/rpg.models';
  * 形・攻撃の名前はAPI(RpgEnemyService)と合わせる。
  */
 
-export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon';
+export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor';
 export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
@@ -14,7 +15,8 @@ export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: Enem
 export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['slime', 'スライム'], ['mushroom', 'キノコ'], ['wisp', '精霊'], ['raptor', 'ラプトル'],
   ['golem', 'ゴーレム'], ['ghost', 'ゴースト'], ['knight', '騎士'], ['lord', '魔導士'],
-  ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン']
+  ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン'],
+  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー']
 ];
 
 export interface AttackSpec {
@@ -59,7 +61,7 @@ export const ENEMY_LIMITS = {
 
 const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1 };
 
-// まだ「敵」タブで保存していないときの13種類(APIの default_enemies.json と同じ)
+// まだ「敵」タブで保存していないときの15種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
   { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, sight: 0, respawn: 10 },
   { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, sight: 2.5, respawn: 10 },
@@ -74,7 +76,10 @@ export const DEFAULT_ENEMIES: EnemyDef[] = [
   { ...base, id: 'nightbat', name: 'ナイトバット', shape: 'bat', color: '#6d28d9', dark: '#2e1065', size: 0.9, hp: 45, atk: 18, def: 3, interval: 1.1, speed: 2.6, exp: 14, gold: 8, drop: 'potion', dropRate: 0.3, sight: 3.5, respawn: 10, attack: 'bite' },
   { ...base, id: 'skeleton', name: 'ガイコツ兵', shape: 'skeleton', color: '#f5f3ff', dark: '#172554', size: 1, hp: 150, atk: 40, def: 14, interval: 1.4, speed: 1.5, exp: 80, gold: 40, drop: 'hipotion', dropRate: 0.4, sight: 3, respawn: 10, attack: 'claw' },
   { ...base, id: 'maneater', name: 'ひとくいそう', shape: 'plant', color: '#ec4899', dark: '#4d7c0f', size: 1.1, hp: 110, atk: 30, def: 10, interval: 1.6, speed: 0.5, exp: 40, gold: 22, drop: 'hipotion', dropRate: 0.3, sight: 0, respawn: 10, attack: 'bite' },
-  { ...base, id: 'reddragon', name: 'レッドドラゴン', shape: 'dragon', color: '#ef4444', dark: '#991b1b', size: 1.4, hp: 650, atk: 58, def: 26, interval: 2.2, speed: 1.3, exp: 450, gold: 220, drop: 'hipotion', dropRate: 1, sight: 4, respawn: 60, boss: true, attack: 'fire' }
+  { ...base, id: 'reddragon', name: 'レッドドラゴン', shape: 'dragon', color: '#ef4444', dark: '#991b1b', size: 1.4, hp: 650, atk: 58, def: 26, interval: 2.2, speed: 1.3, exp: 450, gold: 220, drop: 'hipotion', dropRate: 1, sight: 4, respawn: 60, boss: true, attack: 'fire' },
+  // 化ける敵(front#270)。最初の色は、本物の宝箱・甲冑と同じ
+  { ...base, id: 'mimic', name: 'ミミック', shape: 'mimic', color: '#a8682f', dark: '#4c0519', size: 1, hp: 200, atk: 46, def: 18, interval: 1.3, speed: 2, exp: 90, gold: 120, drop: 'hipotion', dropRate: 0.5, sight: 1.5, respawn: 10, attack: 'bite' },
+  { ...base, id: 'livingarmor', name: 'リビングアーマー', shape: 'livingarmor', color: '#94a3b8', dark: '#dc2626', size: 1, hp: 300, atk: 58, def: 32, interval: 1.6, speed: 1.3, exp: 180, gold: 90, drop: 'hipotion', dropRate: 0.4, sight: 2, respawn: 10 }
 ];
 
 /**
@@ -101,10 +106,12 @@ setEnemies(DEFAULT_ENEMIES);
 
 // 形ごとの、クリックで選べる高さ・足元の印の大きさ(大きさ 1 のとき)
 const HIT_HEIGHT: Record<EnemyShape, number> = {
-  slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 65, bat: 46, skeleton: 48, plant: 50, dragon: 68
+  slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 65, bat: 46, skeleton: 48, plant: 50, dragon: 68,
+  mimic: 30, livingarmor: 56
 };
 const RING: Record<EnemyShape, number> = {
-  slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6
+  slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
+  mimic: 1.1, livingarmor: 1
 };
 
 export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
@@ -113,6 +120,9 @@ export const ringSizeOf = (def: EnemyDef) => RING[def.shape] * def.size;
 export const thumbFitOf = (def: EnemyDef) => (def.shape === 'dragon' ? 0.72 : 1);
 // 根を張っていて、その場から動かない形(front#255)。歩く速さの設定は使わない
 export const isRooted = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'plant';
+// 置物にばける形(front#270)と、ばけている間(近づかれるまで)の名前。ばけている間は歩き回らず、置物と同じ絵になる
+const DISGUISES: Partial<Record<EnemyShape, string>> = { mimic: '宝箱', livingarmor: '甲冑' };
+export const disguiseOf = (def: Pick<EnemyDef, 'shape'>): string | null => DISGUISES[def.shape] ?? null;
 
 // ===== 攻撃の長さ(秒)と当たる時(攻撃を始めてからの秒) =====
 
@@ -157,19 +167,6 @@ export interface EnemyPose {
   lunge?: number;
   // 揺れ方をずらす
   seed?: number;
-}
-
-function shade(hex: string, f: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const c = (v: number) => Math.min(255, Math.round(v * f));
-  return `rgb(${c(n >> 16)}, ${c((n >> 8) & 255)}, ${c(n & 255)})`;
-}
-
-function mix(a: string, b: string, t: number): string {
-  const pa = parseInt(a.slice(1), 16);
-  const pb = parseInt(b.slice(1), 16);
-  const ch = (sh: number) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
-  return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
 }
 
 function shadow(c: CanvasRenderingContext2D, rx: number, ry: number, a = 0.18): void {
@@ -218,6 +215,8 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
     case 'skeleton': top = drawSkeleton(c, def, pose); break;
     case 'plant': top = drawPlant(c, def, pose); break;
     case 'dragon': top = drawDragon(c, def, pose); break;
+    case 'mimic': top = drawMimic(c, def, pose); break;
+    case 'livingarmor': top = drawLivingArmor(c, def, pose); break;
   }
   c.restore();
   return top * def.size;
@@ -620,6 +619,172 @@ function drawPlant(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
   }
   c.restore();
   return 50;
+}
+
+// ミミック(front#270): 宝箱にばけた敵。箱=明るい色、口の中=暗い色。
+// 近づかれる前(aggro でない)は本物の宝箱と同じ絵で、ときどき少しだけカタッと揺れる。
+// 近づかれると横向きになり、ふたをパクパクさせて跳ねながら追ってくる(口の中に光る目・舌・歯)
+function drawMimic(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time;
+  if (!p.aggro) {
+    const twitch = (t + (p.seed ?? 0)) % 4 < 0.15 ? Math.sin(t * 80) * 1.2 : 0;
+    drawChest(c, twitch, 0, 0, p.flash ? '#ffffff' : def.color);
+    return 28;
+  }
+  c.save();
+  // 右を向いた形で描き、左を向くときは左右を反転する
+  c.scale(p.dir, 1);
+  const y = p.moving ? -Math.abs(Math.sin(t * 10)) * 6 : 0;
+  shadow(c, 14, 5.5);
+  const lunge = p.lunge ?? 0;
+  const open = lunge ? 0.4 + lunge * 0.6 : 0.3 + Math.abs(Math.sin(t * 8)) * 0.45;
+  const col = p.flash ? '#fff' : def.color;
+  // ふたは後ろの端(hx, hy)を軸に開く
+  const hx = -15;
+  const hy = y - 15;
+  const lidEnd: [number, number] = [hx + 30 * Math.cos(open), hy - 30 * Math.sin(open)];
+  // 口の中・舌・光る目
+  poly(c, [[hx, hy], [15, hy], lidEnd], p.flash ? '#fff' : def.dark);
+  c.fillStyle = '#e11d48';
+  c.beginPath();
+  c.moveTo(-4, hy);
+  c.quadraticCurveTo(12, hy - 4 - open * 6, 18 + open * 6, hy + 2 + Math.sin(t * 6) * 2);
+  c.quadraticCurveTo(14, hy + 4, 4, hy);
+  c.fill();
+  if (open > 0.2) {
+    const ex = (hx + 15 + lidEnd[0]) / 3;
+    const ey = (hy * 2 + lidEnd[1]) / 3;
+    c.save();
+    c.shadowColor = '#fde047';
+    c.shadowBlur = 8;
+    c.fillStyle = '#fde047';
+    c.beginPath(); c.ellipse(ex - 3.5, ey, 2.6, 2, 0, 0, Math.PI * 2); c.ellipse(ex + 3.5, ey - 1, 2.6, 2, 0, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.fillStyle = '#1f2937';
+    c.beginPath(); c.ellipse(ex - 3, ey, 0.9, 1.6, 0, 0, Math.PI * 2); c.ellipse(ex + 4, ey - 1, 0.9, 1.6, 0, 0, Math.PI * 2); c.fill();
+  }
+  for (let i = 0; i < 5; i++) poly(c, [[-8 + i * 5, hy], [-5.5 + i * 5, hy - 3.5], [-3 + i * 5, hy]], '#fff');
+  // 箱
+  c.fillStyle = col;
+  c.beginPath(); c.roundRect(-15, y - 15, 30, 15, 2); c.fill();
+  c.strokeStyle = 'rgba(60,30,10,0.35)';
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(-15, y - 7.5); c.lineTo(15, y - 7.5); c.stroke();
+  c.fillStyle = '#f2c14e';
+  c.fillRect(-12, y - 15, 2.5, 15);
+  c.fillRect(9.5, y - 15, 2.5, 15);
+  // ふた(内側の歯と、ふたにくっついて上がった錠前)
+  c.save();
+  c.translate(hx, hy);
+  c.rotate(-open);
+  c.fillStyle = col;
+  c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(0, -12, 30, -12, 30, 0); c.closePath(); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  c.beginPath(); c.ellipse(11, -6.5, 7, 2, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#f2c14e';
+  c.lineWidth = 2.5;
+  for (const x of [5, 25]) {
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, -8.4); c.stroke();
+  }
+  for (let i = 0; i < 5; i++) poly(c, [[7 + i * 5, 0], [9.5 + i * 5, 3.5], [12 + i * 5, 0]], '#fff');
+  c.fillStyle = '#f2c14e';
+  c.beginPath(); c.roundRect(12, -2, 6, 6, 1.5); c.fill();
+  c.restore();
+  c.restore();
+  return 32 - y;
+}
+
+// リビングアーマー(front#270): 中身のない鎧。鎧=明るい色、羽飾り・マント=暗い色。
+// 近づかれる前(aggro でない)は甲冑の置物と同じ絵(台座の上で槍を持って立つ)。
+// 近づかれると台座を降り、兜のすき間が赤く光り、剣と盾を構えて歩いてくる。首のすき間から紫のもやが漏れる
+function drawLivingArmor(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time;
+  const d = p.dir;
+  if (!p.aggro) {
+    drawArmor(c, 0, 0, 0, t, p.flash ? '#ffffff' : def.color, p.flash ? '#ffffff' : def.dark);
+    return 56;
+  }
+  const y0 = p.moving ? -Math.abs(Math.sin(t * 9)) * 2.5 : 0;
+  const step = p.moving ? Math.sin(t * 12) * 3 : 0;
+  const plate = p.flash ? '#fff' : def.color;
+  const hi = p.flash ? '#fff' : shade(def.color, 1.25);
+  const lo = p.flash ? '#fff' : shade(def.color, 0.72);
+  const deep = p.flash ? '#fff' : shade(def.color, 0.55);
+  const plume = p.flash ? '#fff' : def.dark;
+  const cape = p.flash ? '#fff' : shade(def.dark, 0.7);
+  shadow(c, 14, 5, 0.22);
+  // マント(後ろ)
+  poly(c, [[-d * 2, y0 - 38], [-d * 12, y0 - 34], [-d * 15, y0 - 8 + Math.sin(t * 3) * 1.5], [-d * 3, y0 - 12]], cape);
+  // 足
+  c.fillStyle = lo;
+  c.beginPath(); c.roundRect(-7, y0 - 16 - Math.max(0, step), 6, 16 + Math.max(0, step) - y0, 2); c.fill();
+  c.fillStyle = plate;
+  c.beginPath(); c.roundRect(1, y0 - 16 - Math.max(0, -step), 6, 16 + Math.max(0, -step) - y0, 2); c.fill();
+  // 後ろの手の盾
+  c.fillStyle = deep;
+  c.beginPath(); c.ellipse(-d * 12, y0 - 26, 8, 11, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = cape;
+  c.beginPath(); c.ellipse(-d * 12, y0 - 26, 5.5, 8, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#f2c14e';
+  c.beginPath(); c.arc(-d * 12, y0 - 26, 2, 0, Math.PI * 2); c.fill();
+  // 腰・胴・肩
+  poly(c, [[-9, y0 - 20], [10, y0 - 20], [8, y0 - 13], [-8, y0 - 13]], lo);
+  c.fillStyle = plate;
+  c.beginPath(); c.roundRect(-10, y0 - 38, 20, 19, 6); c.fill();
+  c.fillStyle = hi;
+  c.beginPath(); c.roundRect(-4 + d * 3, y0 - 37, 10, 16, 5); c.fill();
+  c.fillStyle = lo;
+  c.beginPath(); c.ellipse(-d * 10, y0 - 35, 5.5, 4.5, -d * 0.3, 0, Math.PI * 2); c.fill();
+  c.fillStyle = hi;
+  c.beginPath(); c.ellipse(d * 11, y0 - 35, 5.5, 4.5, d * 0.3, 0, Math.PI * 2); c.fill();
+  // 前の手の剣。攻撃のとき振り下ろす
+  c.save();
+  c.translate(d * 12, y0 - 24);
+  c.rotate(d * (0.9 - (p.lunge ?? 0) * 1.8));
+  c.strokeStyle = '#e2e8f0';
+  c.lineWidth = 3.2;
+  c.beginPath(); c.moveTo(0, -3); c.lineTo(0, -26); c.stroke();
+  c.strokeStyle = '#f2c14e';
+  c.lineWidth = 2.4;
+  c.beginPath(); c.moveTo(-5, -3); c.lineTo(5, -3); c.stroke();
+  c.strokeStyle = '#5b3a1f';
+  c.beginPath(); c.moveTo(0, -2); c.lineTo(0, 4); c.stroke();
+  c.restore();
+  c.fillStyle = plate;
+  c.beginPath(); c.roundRect(d * 10 - 2.5, y0 - 33, 5, 12, 2); c.fill();
+  c.fillStyle = deep;
+  c.beginPath(); c.arc(d * 12, y0 - 21, 3, 0, Math.PI * 2); c.fill();
+  // 首のすき間のもや
+  c.fillStyle = `rgba(167,139,250,${0.45 + Math.sin(t * 4) * 0.15})`;
+  c.beginPath(); c.ellipse(0, y0 - 39 - Math.abs(Math.sin(t * 2)) * 2, 6, 2.5, 0, 0, Math.PI * 2); c.fill();
+  // 兜(すき間の目が赤く光る)
+  c.fillStyle = plate;
+  c.beginPath(); c.arc(0, y0 - 47, 9.5, 0, Math.PI * 2); c.fill();
+  c.fillStyle = hi;
+  c.beginPath(); c.arc(d * 2, y0 - 48, 7.5, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#0f172a';
+  c.fillRect(d * 3 - 4.5, y0 - 49, 9, 2.4);
+  c.fillRect(d * 3 - 0.75, y0 - 49, 1.5, 6);
+  c.save();
+  c.shadowColor = '#ef4444';
+  c.shadowBlur = 8;
+  c.fillStyle = '#f87171';
+  c.fillRect(d * 3 - 3.5, y0 - 48.6, 2.5, 1.6);
+  c.fillRect(d * 3 + 1, y0 - 48.6, 2.5, 1.6);
+  c.restore();
+  // 羽飾り
+  c.fillStyle = plume;
+  c.beginPath();
+  c.moveTo(0, y0 - 56);
+  c.quadraticCurveTo(-d * 7, y0 - 67 + Math.sin(t * 2) * 1.5, -d * 14, y0 - 56);
+  c.quadraticCurveTo(-d * 7, y0 - 60, 0, y0 - 54);
+  c.fill();
+  if (p.lunge && p.lunge > 0) {
+    c.strokeStyle = `rgba(255,255,255,${p.lunge})`;
+    c.lineWidth = 3;
+    c.beginPath(); c.arc(d * 14, y0 - 22, 17, -1.3, 1.1); c.stroke();
+  }
+  return 60;
 }
 
 // ドラゴン(front#255): 翼としっぽのある四つ足の大型。体=明るい色、翼・背びれ・足=暗い色。攻撃のとき口から火の粉

@@ -36,7 +36,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
-import { EnemyDef, SPELLS, attackReach, attackTiming, hitHeightOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -542,7 +542,7 @@ export class RpgGame {
       if (!BREAK_HITS[o.type] || o.broken) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
-      const ht = o.type === 'armor' ? 52 : o.type === 'crystal' ? 34 : 24;
+      const ht = o.type === 'armor' ? 52 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' ? 28 : 24;
       if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
         bestDepth = o.x + o.y;
         best = o;
@@ -677,7 +677,9 @@ export class RpgGame {
     o.shake = 0;
     this.map.solid[o.y][o.x] = false;
     p.target = null;
-    const color = { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff', chest: '#f2c14e', armor: '#cbd5e1' }[o.type as string] ?? this.theme.rock[1];
+    const color =
+      { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff', chest: '#f2c14e', armor: '#cbd5e1', barrel: '#9a6230', pot: '#c8693a', bones: '#e9e4d4' }[o.type as string] ??
+      this.theme.rock[1];
     for (let i = 0; i < 12; i++) {
       this.particles.push({ x: o.x, y: o.y, ox: 0, oy: -8, vx: randi(-70, 70), vy: randi(-150, -50), t: 0, color: i % 3 ? color : '#ffffff' });
     }
@@ -1003,7 +1005,8 @@ export class RpgGame {
           e.repath = 0.5;
         }
       }
-    } else if (!rooted) {
+    } else if (!rooted && !disguiseOf(def)) {
+      // 化ける敵(front#270)は、宝箱・甲冑のふりをして、近づかれるまでその場にいる
       e.wander -= dt;
       if (e.wander <= 0 && !e.path.length) {
         const tx = e.hx + randi(-3, 3);
