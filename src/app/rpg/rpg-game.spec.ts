@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, maxHpOf, shelfFace, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -34,19 +34,15 @@ function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
     id, name: id, dungeonId: id, gridX: 0, gridY: 0, width: 12, height: 12,
     ground: Array.from({ length: 12 }, () => 'g'.repeat(12)),
     heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
-    objects: [], npcs: [], enemies: [], portals: [], startX: 6, startY: 7, sortOrder: 1,
+    objects: [], npcs: [], enemies: [], links: [], startX: 6, startY: 7, sortOrder: 1,
     ...partial
   };
 }
 
 const MAPS: RpgMap[] = [
-  map('plain', {
-    portals: [
-      { x: 8, y: 7, to: 'forest', toX: 2, toY: 3 },
-      { x: 6, y: 9, to: null, toX: 0, toY: 0 }
-    ]
-  }),
-  map('forest', { startX: 2, startY: 3, sortOrder: 2 }),
+  // 始まりの草原の右下の端 ⇄ 精霊の森の左上の端(front#274)
+  map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }] }),
+  map('forest', { startX: 2, startY: 3, sortOrder: 2, links: [{ dx: -1, dy: 0, to: 'plain' }] }),
   // 洞くつのダンジョン(front#234): 入口の右下に奥、左下に泉(泉は広い)
   map('cave1', { dungeonId: 'cave', name: '入口', sortOrder: 3 }),
   map('cave2', { dungeonId: 'cave', name: '奥', gridX: 1, sortOrder: 4 }),
@@ -257,26 +253,77 @@ describe('RpgGame', () => {
       for (let i = 0; i < 40; i++) game.update(0.05);
     }
 
-    it('ポータルの上で止まると、行き先のエリアの着く位置に移る', () => {
-      clickTile(8, 7);
+    it('ほかのダンジョンへつながる端で止まると、暗くなって、行き先のこちらへ戻る端(1マス内側)に移る(front#274)', () => {
+      clickTile(11, 7);
       walk();
+      // 暗くなっている間は、まだ移らない(すべらない)
+      expect(game.area.id).toBe('plain');
+      expect(game.slide).toBeNull();
       vi.advanceTimersByTime(500);
 
       expect(game.area.id).toBe('forest');
-      expect([game.player.x, game.player.y]).toEqual([2, 3]);
+      expect([game.player.x, game.player.y]).toEqual([1, 7]);
       expect(ev.entered).toEqual(['forest']);
       // 見た目はダンジョンのもの
       expect(game.theme).toBe(THEMES['forest']);
       expect(ev.messages).toContain('精霊の森にやってきた');
     });
 
-    it('行き先が決まっていないポータルでは移らない', () => {
-      clickTile(6, 9);
+    it('行き先にこちらへ戻るつながりがなければ、行き先の出発地点に着く', () => {
+      game.dispose();
+      game = new RpgGame(ev, MAPS.map((m) => (m.id === 'forest' ? { ...m, links: [] } : m)), DUNGEONS);
+      game.viewW = 800;
+      game.viewH = 600;
+      game.loadSave(save({ area: 'plain', x: 6, y: 7 }));
+      clickTile(11, 7);
+      walk();
+      vi.advanceTimersByTime(500);
+
+      expect(game.area.id).toBe('forest');
+      expect([game.player.x, game.player.y]).toEqual([2, 3]);
+    });
+
+    it('つながりのない端では移らない', () => {
+      clickTile(6, 11);
       walk();
       vi.advanceTimersByTime(500);
 
       expect(game.area.id).toBe('plain');
-      expect([game.player.x, game.player.y]).toEqual([6, 9]);
+      expect([game.player.x, game.player.y]).toEqual([6, 11]);
+    });
+
+    it('同じダンジョンの隣のエリアがある端は、つながりがあっても隣のエリアへ。行き先のないつながりは使わない(front#274)', () => {
+      const cave1 = { ...MAPS.find((m) => m.id === 'cave1')!, links: [{ dx: 1, dy: 0, to: 'plain' }, { dx: -1, dy: 0, to: 'moon' }, { dx: 0, dy: -1, to: 'cave2' }] };
+      const maps = MAPS.map((m) => (m.id === 'cave1' ? cave1 : m));
+      expect(exitOf(maps, cave1, [1, 0])).toMatchObject({ to: { id: 'cave2' }, link: false });
+      expect(exitOf(maps, cave1, [-1, 0])).toBeNull();
+      // 同じダンジョンのエリアへのつながりは使わない
+      expect(exitOf(maps, cave1, [0, -1])).toBeNull();
+      expect(exitOf(MAPS, MAPS[0], [1, 0])).toMatchObject({ to: { id: 'forest' }, link: true });
+    });
+
+    it('戻る端の、道の出口(端も通れるマス)のうち、出てきた位置に近いマスに着く(front#274)', () => {
+      const plain = MAPS[0];
+      // 森の左上の端は、y=2 と y=9 だけ通れる
+      const forest = { ...MAPS[1], objects: Array.from({ length: 12 }, (_, y) => y).filter((y) => y !== 2 && y !== 9).map((y) => ({ type: 'tree', x: 0, y, torch: false })) };
+      const maps = [plain, forest];
+      expect(linkArrival(maps, plain, [1, 0], 11, 3, forest, buildAreaMap(forest))).toEqual([1, 2]);
+      expect(linkArrival(maps, plain, [1, 0], 11, 8, forest, buildAreaMap(forest))).toEqual([1, 9]);
+    });
+
+    it('戻る端に道の出口(端が道のマス)があれば、離れていても道の出口に着く(front#274)', () => {
+      const plain = MAPS[0];
+      // 森の左上の端はどこも通れるが、道は y=9 だけ
+      const forest = { ...MAPS[1], ground: MAPS[1].ground.map((row, y) => (y === 9 ? 'pp' + row.slice(2) : row)) };
+      expect(linkArrival([plain, forest], plain, [1, 0], 11, 1, forest, buildAreaMap(forest))).toEqual([1, 9]);
+    });
+
+    it('看板は、いちばん近いほかのダンジョンへの端を指す。なければ何も指さない(front#274)', () => {
+      const plain = { ...MAPS[0], links: [{ dx: 1, dy: 0, to: 'forest' }, { dx: 0, dy: 1, to: 'cave1' }] };
+      const maps = [plain, ...MAPS.slice(1)];
+      expect(signExit(maps, plain, 9, 2)).toMatchObject({ side: [1, 0], to: { id: 'forest' } });
+      expect(signExit(maps, plain, 2, 10)).toMatchObject({ side: [0, 1], to: { id: 'cave1' } });
+      expect(signExit(MAPS, MAPS[2], 5, 5)).toBeNull();
     });
   });
 

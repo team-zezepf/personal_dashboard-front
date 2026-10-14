@@ -160,13 +160,12 @@ export interface RpgMapEnemy {
   y: number;
 }
 
-export interface RpgMapPortal {
-  x: number;
-  y: number;
-  // 行き先のエリアのID(まだ決めていなければ null)
-  to: string | null;
-  toX: number;
-  toY: number;
+// ほかのダンジョンのエリアへの端のつながり(front#274)。(dx, dy) はどの端か([1, 0] は x が大きい側の端 = 画面の右下)、to は行き先のエリアのID。
+// その端で止まると、画面が暗くなって行き先のエリアへ移る(光る場所・ポータルは廃止した)
+export interface RpgMapLink {
+  dx: number;
+  dy: number;
+  to: string;
 }
 
 export interface RpgMap {
@@ -185,7 +184,7 @@ export interface RpgMap {
   objects: RpgMapObject[];
   npcs: RpgMapNpc[];
   enemies: RpgMapEnemy[];
-  portals: RpgMapPortal[];
+  links: RpgMapLink[];
   startX: number;
   startY: number;
   sortOrder: number;

@@ -295,6 +295,28 @@
                 <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
               </label>
             </div>
+            <div class="links" role="group" aria-label="端のつながり">
+              <span class="links-title">端のつながり</span>
+              @for (row of linkRows(map); track row.label) {
+                <div class="link-row">
+                  <span class="link-side">{{ row.label }}</span>
+                  @if (row.neighbor) {
+                    <span class="muted small">同じダンジョンの「{{ row.neighbor }}」</span>
+                  } @else {
+                    <select [attr.aria-label]="row.label + 'の端のつながり'" [ngModel]="row.to" (ngModelChange)="setLink(row.side, $event)">
+                      <option value="">なし</option>
+                      @for (m of linkTargets(); track m.id) {
+                        <option [value]="m.id">{{ dungeonName(m.dungeonId) }} ／ {{ m.name }}</option>
+                      }
+                    </select>
+                  }
+                </div>
+              }
+              <p class="muted small">
+                同じダンジョンの隣のエリアがない端だけ、ほかのダンジョンのエリアを選べます。その端で止まると、画面が暗くなって移ります。
+                行き先のエリアにも、こちらへ戻るつながりを決めると行き来できます（そのときは戻る側の端に着きます。決めていなければ、行き先のエリアの最初の位置に着きます）。
+              </p>
+            </div>
           </section>
 
           <section aria-label="選んでいるもの">
@@ -310,46 +332,6 @@
                   @case ('house') {
                     <div class="selected-title">🏠 家 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
                     <button type="button" class="btn small" (click)="openModal(sel)">家の形・向き・色を変える</button>
-                  }
-                  @case ('portal') {
-                    <div class="selected-title">🌀 ポータル <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <div class="row2">
-                      <label class="field">
-                        <span>行き先のダンジョン</span>
-                        <select [ngModel]="portalDungeonId(sel)" (ngModelChange)="setPortalDungeon(sel, $event)">
-                          <option value="">（選んでください）</option>
-                          @for (d of dungeons(); track d.id) {
-                            <option [value]="d.id">{{ d.name }}</option>
-                          }
-                        </select>
-                      </label>
-                      <label class="field">
-                        <span>行き先のエリア</span>
-                        <select [ngModel]="sel.ref.to ?? ''" (ngModelChange)="setPortalDestination(sel, $event)">
-                          <option value="">（選んでください）</option>
-                          @for (m of portalAreas(portalDungeonId(sel)); track m.id) {
-                            <option [value]="m.id">{{ m.name }}</option>
-                          }
-                        </select>
-                      </label>
-                    </div>
-                    <p class="muted small">光る場所は、ほかのダンジョンへ行くときに使います。同じダンジョンの中は端でつながるので、置かなくても行き来できます。</p>
-                    <div class="row2">
-                      <label class="field">
-                        <span>着く位置 x</span>
-                        <input type="number" min="0" [ngModel]="sel.ref.toX" (focus)="beginEdit()" (ngModelChange)="sel.ref.toX = $event; edited()" />
-                      </label>
-                      <label class="field">
-                        <span>着く位置 y</span>
-                        <input type="number" min="0" [ngModel]="sel.ref.toY" (focus)="beginEdit()" (ngModelChange)="sel.ref.toY = $event; edited()" />
-                      </label>
-                    </div>
-                    @if (sel.ref.to) {
-                      <p class="muted small">
-                        行き先：{{ mapName(sel.ref.to) }}（{{ mapSize(sel.ref.to) }}）。行き先のエリアにも、戻ってくるポータルを置くと行き来できます。
-                      </p>
-                    }
-                    <button type="button" class="btn small" (click)="deleteSelected()">このポータルを消す</button>
                   }
                   @case ('enemy') {
                     <div class="selected-title">👾 敵の出る場所 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
@@ -407,7 +389,7 @@
                 }
               } @else {
                 <p class="muted small">
-                  「その他」の「選ぶ・動かす」で、置いたポータル・敵をクリックすると、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
+                  「その他」の「選ぶ・動かす」で、置いた敵・壊れる置物をクリックすると、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
                 </p>
               }
             </div>
@@ -468,7 +450,7 @@
           <label class="field"><span>最初のエリアの幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.width" /></label>
           <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.height" /></label>
         </div>
-        <p class="muted small">一面の地面だけのエリア（入口）が1つあるダンジョンができます。ほかのダンジョンからポータルでつなぐと、ゲームから行けるようになります。</p>
+        <p class="muted small">一面の地面だけのエリア（入口）が1つあるダンジョンができます。ほかのダンジョンのエリアの端とつなぐと、ゲームから行けるようになります。</p>
         <div class="modal-actions">
           <button type="button" class="btn" (click)="newDungeonOpen.set(false)">やめる</button>
           <button type="button" class="btn primary" [disabled]="saving()" (click)="createDungeon()">作る</button>
