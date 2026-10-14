@@ -1,6 +1,7 @@
 import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgSave, RpgSaveInput } from '../models/rpg.models';
 import { QuestEntry, QuestLog, QuestMark, allQuests } from './rpg-quest';
 import {
+  AreaExit,
   AreaMap,
   BREAK_HITS,
   BREAK_RESPAWN_SEC,
@@ -26,8 +27,9 @@ import {
   critRateOf,
   dropRateOf,
   evadeRateOf,
-  exitSideAt,
+  exitAt,
   healRateOf,
+  linkArrival,
   maxHpOf,
   neighborOf,
   nextExpOf,
@@ -400,6 +402,15 @@ export class RpgGame {
       }
       this.events.dirty();
     });
+  }
+
+  /**
+   * 端のつながり(front#274)の出口(x, y)から、ほかのダンジョンのエリアへ移る。
+   * 今までのポータルと同じく画面が暗くなって移り、ダンジョンの名前が出る。着くのは、行き先のこちらへ戻る端
+   */
+  goLink(exit: AreaExit, x: number, y: number): void {
+    const [ax, ay] = linkArrival(this.maps, this.area, exit.side, x, y, exit.to, buildAreaMap(exit.to));
+    this.goArea(exit.to.id, ax, ay);
   }
 
   /**
@@ -883,21 +894,15 @@ export class RpgGame {
     this.settleZ(p, dt);
     if (wasMoving && !p.path.length) {
       this.events.dirty();
-      // 歩いてきて、隣のエリアへの出口(端のマス)で止まったら、隣のエリアへ移る(front#234)。
+      // 歩いてきて、出口(端のマス)で止まったら、隣のエリア(front#234)・ほかのダンジョン(front#274)へ移る。
       // 着いたマスや、敵を追いかけて止まったマスでは移らない
       const [ex, ey] = [Math.round(p.x), Math.round(p.y)];
-      const side = p.target ? null : exitSideAt(this.maps, this.area, ex, ey);
-      if (side) {
-        this.goNeighbor(side, ex, ey);
+      const exit = p.target ? null : exitAt(this.maps, this.area, ex, ey);
+      if (exit) {
+        if (exit.link) this.goLink(exit, ex, ey);
+        else this.goNeighbor(exit.side, ex, ey);
         return;
       }
-    }
-
-    // 光る場所(ポータル)の上で止まったらエリア移動
-    if (!p.path.length) {
-      // 行き先がまだ決まっていない・なくなったポータルでは何も起きない
-      const portal = this.area.portals.find((q) => Math.abs(p.x - q.x) < 0.1 && Math.abs(p.y - q.y) < 0.1 && this.mapById(q.to));
-      if (portal?.to) this.goArea(portal.to, portal.toX, portal.toY);
     }
 
     // 戦っていないときは少しずつ回復する

@@ -107,9 +107,9 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor' | 'wall'
-  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave';
+  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign';
 export const STATIC_TYPES: StaticType[] = [
-  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave'
+  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign'
 ];
 
 // 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)。ほかの置物は壊れない
@@ -119,7 +119,7 @@ export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as Stati
 export const BREAK_RESPAWN_SEC = 10;
 export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
-  barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石'
+  barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板'
 };
 
 export interface StaticObj {
@@ -245,14 +245,74 @@ export function neighborOf(maps: readonly RpgMap[], area: RpgMap, [dx, dy]: Side
   return maps.find((m) => m.id !== area.id && m.dungeonId === area.dungeonId && m.gridX === area.gridX + dx && m.gridY === area.gridY + dy);
 }
 
-/** 端のマス(x, y)が、隣のエリアへの出口になる向き(隣にエリアがある側の端だけ)。出口でなければ null */
-export function exitSideAt(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): Side | null {
+/**
+ * 端の行き先。to は行き先のエリア、link は「ほかのダンジョンへの端のつながり(front#274)」か。
+ * 同じダンジョンの隣のエリアへは横にすべって、ほかのダンジョンへは画面が暗くなって移る
+ */
+export interface AreaExit {
+  side: Side;
+  to: RpgMap;
+  link: boolean;
+}
+
+/** area の side の端の行き先。同じダンジョンの隣のエリアがあればそこ、なければ端のつながりのエリア(なければ null) */
+export function exitOf(maps: readonly RpgMap[], area: RpgMap, side: Side): AreaExit | null {
+  const next = neighborOf(maps, area, side);
+  if (next) return { side, to: next, link: false };
+  const link = (area.links ?? []).find((l) => l.dx === side[0] && l.dy === side[1]);
+  // 行き先のエリアがなくなった・同じダンジョンのエリアになったつながりは使わない
+  const to = link && maps.find((m) => m.id === link.to && m.dungeonId !== area.dungeonId);
+  return to ? { side, to, link: true } : null;
+}
+
+// (x, y) がその向きの端のマスか
+const onEdge = (area: Pick<RpgMap, 'width' | 'height'>, [dx, dy]: Side, x: number, y: number) =>
+  (dx === 1 && x === area.width - 1) || (dx === -1 && x === 0) || (dy === 1 && y === area.height - 1) || (dy === -1 && y === 0);
+
+/** 端のマス(x, y)が出口なら、その行き先(隣のエリア・端のつながり)。出口でなければ null */
+export function exitAt(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): AreaExit | null {
   for (const side of SIDES) {
-    const [dx, dy] = side;
-    const onEdge = (dx === 1 && x === area.width - 1) || (dx === -1 && x === 0) || (dy === 1 && y === area.height - 1) || (dy === -1 && y === 0);
-    if (onEdge && neighborOf(maps, area, side)) return side;
+    if (!onEdge(area, side, x, y)) continue;
+    const exit = exitOf(maps, area, side);
+    if (exit) return exit;
   }
   return null;
+}
+
+/**
+ * 端のつながり(front#274)で、from の端のマス(x, y)から行き先(to)へ移ったときに立つマス。
+ * 行き先の、from へ戻るつながりのある端の1マス内側のうち、端のマスも通れるマスで、
+ * 出てきた位置と端の上で同じ割合の位置にいちばん近いマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ。戻る端がない・通れるマスがなければ、行き先の出発地点
+ */
+export function linkArrival(maps: readonly RpgMap[], from: RpgMap, fromSide: Side, x: number, y: number, to: RpgMap, toMap: AreaMap): [number, number] {
+  const back = SIDES.find((s) => exitOf(maps, to, s)?.to.id === from.id && exitOf(maps, to, s)?.link);
+  if (!back) return [to.startX, to.startY];
+  const [dx, dy] = back;
+  // 端に沿った位置の割合(0〜1)
+  const ratio = fromSide[0] !== 0 ? y / Math.max(1, from.height - 1) : x / Math.max(1, from.width - 1);
+  const len = dx !== 0 ? to.height : to.width;
+  const want = Math.round(ratio * (len - 1));
+  // 端のマスと1マス内側がどちらも通れるマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ
+  const open: [number, number][] = [];
+  const road: [number, number][] = [];
+  for (let i = 0; i < len; i++) {
+    const edge: [number, number] = dx !== 0 ? [dx === 1 ? to.width - 1 : 0, i] : [i, dy === 1 ? to.height - 1 : 0];
+    const inner: [number, number] = [edge[0] - dx, edge[1] - dy];
+    if (!toMap.walkable(...edge) || !toMap.walkable(...inner)) continue;
+    open.push(inner);
+    const g = toMap.ground[edge[1]][edge[0]];
+    if (g === G.PATH || g === G.BRIDGE) road.push(inner);
+  }
+  const along = ([ix, iy]: [number, number]) => Math.abs((dx !== 0 ? iy : ix) - want);
+  const best = (road.length ? road : open).sort((a, b) => along(a) - along(b))[0];
+  return best ?? [to.startX, to.startY];
+}
+
+/** 看板(front#274)が指す、いちばん近い「ほかのダンジョンへの端」。そのエリアにほかのダンジョンへの端がなければ null */
+export function signExit(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): AreaExit | null {
+  const dist = ([dx, dy]: Side) => (dx === 1 ? area.width - 1 - x : dx === -1 ? x : dy === 1 ? area.height - 1 - y : y);
+  const exits = SIDES.map((s) => exitOf(maps, area, s)).filter((e): e is AreaExit => !!e?.link);
+  return exits.sort((a, b) => dist(a.side) - dist(b.side))[0] ?? null;
 }
 
 /**

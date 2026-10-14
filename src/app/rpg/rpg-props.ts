@@ -435,3 +435,40 @@ export function drawGrave(c: CanvasRenderingContext2D, cx: number, cy: number): 
   c.fillStyle = 'rgba(92,138,58,0.7)';
   c.beginPath(); c.ellipse(kx, ky, 3.5, 2, -0.46, 0, Math.PI * 2); c.fill();
 }
+
+// 看板(front#274)の板に入れる、行き先のダンジョンの見た目(テーマ)ごとの色
+export const SIGN_BANDS: Record<string, string> = { plain: '#4caf50', forest: '#1f6f50', valley: '#e08a2e', tower: '#6d28d9' };
+
+// 看板(front#274)。柱に矢印の形の板が付いていて、矢印は side の端の画面の向き(右下・左上・左下・右上)を指す。
+// band は行き先のダンジョンの色の帯(なければ、何も書いていない板)。板は上下対称なので、向きに合わせてそのまま回す
+export function drawSign(c: CanvasRenderingContext2D, cx: number, cy: number, side: readonly [number, number] | null, band: string | null): void {
+  shadow(c, cx, cy + 1, 10, 4, 0.18);
+  c.fillStyle = '#7a4b25';
+  c.fillRect(cx - 2, cy - 30, 4, 30);
+  c.fillStyle = '#5e3a1c';
+  c.fillRect(cx + 0.5, cy - 30, 1.5, 30);
+  const [dx, dy] = side ?? [1, 0];
+  c.save();
+  c.translate(cx, cy - 30);
+  c.rotate(Math.atan2((dx + dy) / 2, dx - dy));
+  const w = 26;
+  const h = 11;
+  poly(c, [[-w / 2, -h / 2], [w / 2 - 6, -h / 2], [w / 2 + 2, 0], [w / 2 - 6, h / 2], [-w / 2, h / 2]], '#b07a43');
+  c.strokeStyle = '#6b4423';
+  c.lineWidth = 1.2;
+  c.stroke();
+  if (band) {
+    c.fillStyle = band;
+    c.fillRect(-w / 2 + 3, -2, w - 12, 4);
+  } else {
+    c.strokeStyle = 'rgba(80,50,20,0.35)';
+    c.lineWidth = 0.8;
+    c.beginPath();
+    c.moveTo(-w / 2 + 3, -1.5); c.lineTo(w / 2 - 8, -1.5);
+    c.moveTo(-w / 2 + 3, 2); c.lineTo(w / 2 - 10, 2);
+    c.stroke();
+  }
+  c.restore();
+  c.fillStyle = '#94603a';
+  c.beginPath(); c.ellipse(cx, cy - 30, 2.4, 1.2, 0, 0, Math.PI * 2); c.fill();
+}

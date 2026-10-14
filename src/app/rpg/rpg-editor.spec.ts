@@ -179,15 +179,22 @@ describe('RpgMapEditor', () => {
     });
   });
 
-  it('村人・ポータルを置くと選んだ状態になり、ポータルのマスは道になる。ドラッグの途中では増えない', () => {
+  it('村人を置くと選んだ状態になる。ドラッグの途中では増えない', () => {
     const npc = editor.apply({ kind: 'npc' }, 2, 2, true);
     expect(npc?.kind).toBe('npc');
     expect(editor.apply({ kind: 'npc' }, 3, 3, false)).toBeNull();
-
-    const portal = editor.apply({ kind: 'portal' }, 5, 5, true);
-    expect(portal).toEqual({ kind: 'portal', ref: { x: 5, y: 5, to: null, toX: 0, toY: 0 } });
-    expect(editor.map.ground[5][5]).toBe('p');
     expect(editor.map.npcs).toHaveLength(1);
+  });
+
+  it('ポータルはなく、看板を置物として置ける。端のつながりは保存する形に入る(front#274)', () => {
+    expect(PALETTE.some((t) => t.id === 'portal')).toBe(false);
+    expect(PALETTE.find((t) => t.id === 'object')!.items.some((i) => i.label === '看板')).toBe(true);
+    expect(editor.apply({ kind: 'object', type: 'sign' }, 3, 3, true)).toBeNull();
+    expect(editor.map.objects.at(-1)?.type).toBe('sign');
+
+    editor.map.links.push({ dx: 1, dy: 0, to: 'plain' });
+    expect(toMapInput(editor.map).links).toEqual([{ dx: 1, dy: 0, to: 'plain' }]);
+    expect('portals' in toMapInput(editor.map)).toBe(false);
   });
 
   it('選んだものを動かせるが、ふさがっているマスには動かせない', () => {
@@ -233,27 +240,29 @@ describe('RpgMapEditor', () => {
   });
 
   describe('保存する前の確認', () => {
-    const plain = (): RpgMap => ({ ...blankMap('plain', '始まりの草原', 'plain', 0, 0, 12, 12), portals: [] });
+    const plain = (): RpgMap => blankMap('plain', '始まりの草原', 'plain', 0, 0, 12, 12);
 
-    it('問題がなければすべて ✔', () => {
+    it('問題がなければすべて ✔。ほかのダンジョンの端からつながっていれば来られる(front#274)', () => {
       const maps = [plain(), editor.map];
-      maps[0].portals.push({ x: 1, y: 1, to: 'area5', toX: 2, toY: 2 });
+      maps[0].links.push({ dx: 1, dy: 0, to: 'area5' });
+      editor.map.links.push({ dx: -1, dy: 0, to: 'plain' });
 
-      expect(editor.checks(maps).every((c) => c.ok)).toBe(true);
+      const checks = editor.checks(maps);
+      expect(checks.every((c) => c.ok)).toBe(true);
+      expect(checks.map((c) => c.text)).toContain('左上の「始まりの草原」へ出られる');
     });
 
-    it('行き先のないポータル・通れない着く位置・セリフのない村人・どこからも来られないことを知らせる', () => {
-      const dest = plain();
-      dest.ground[3] = 'www' + 'g'.repeat(9);
-      editor.map.portals.push({ x: 1, y: 1, to: null, toX: 0, toY: 0 }, { x: 2, y: 1, to: 'plain', toX: 1, toY: 3 });
+    it('使えない端のつながり・端に通れるマスがない・セリフのない村人・どこからも来られないことを知らせる', () => {
+      editor.map.links.push({ dx: 1, dy: 0, to: 'moon' }, { dx: 0, dy: 1, to: 'plain' });
+      editor.map.ground[11] = 'w'.repeat(14);
       editor.map.npcs.push({ name: '村人', x: 3, y: 3, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: [' '], look: lookFromColors('#000000', '#000000'), quests: [] });
 
-      const failed = editor.checks([dest, editor.map]).filter((c) => !c.ok).map((c) => c.text);
+      const failed = editor.checks([plain(), editor.map]).filter((c) => !c.ok).map((c) => c.text);
       expect(failed).toEqual([
-        '行き先が決まっていないポータルが 1 個あります',
-        '着く位置が通れないマスのポータルが 1 個あります',
+        '使えない端のつながりが 1 個あります（行き先のエリアがない・同じダンジョンの隣のエリアがある）',
         '名前かセリフが空のNPCが 1 人います',
-        'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンにこのエリアへのポータルを置いてください）'
+        '左下の端に通れるマスがなく、「始まりの草原」へ出られません',
+        'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンのエリアの端をこのエリアとつないでください）'
       ]);
     });
 

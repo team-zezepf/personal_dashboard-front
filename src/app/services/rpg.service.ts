@@ -45,7 +45,7 @@ const MAP_FIELDS = `
     }
   }
   enemies { type x y }
-  portals { x y to toX toY }
+  links { dx dy to }
   startX startY sortOrder updatedAt
 `;
 

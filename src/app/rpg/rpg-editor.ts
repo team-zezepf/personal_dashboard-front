@@ -1,6 +1,6 @@
-import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgMapPortal, RpgNpcRole, RpgQuest } from '../models/rpg.models';
+import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -12,7 +12,6 @@ export type EditorTool =
   | { kind: 'object'; type: StaticType; roof?: string; torch?: boolean }
   | { kind: 'enemy'; type: string }
   | { kind: 'npc' }
-  | { kind: 'portal' }
   | { kind: 'select' }
   | { kind: 'start' }
   | { kind: 'erase' };
@@ -82,6 +81,8 @@ export const PALETTE: PaletteTab[] = [
       { id: 'bookshelf', label: '本棚', icon: '📚', tool: { kind: 'object', type: 'bookshelf' } },
       { id: 'candle', label: '燭台', icon: '🕯️', tool: { kind: 'object', type: 'candle' } },
       { id: 'grave', label: '墓石', icon: '🪦', tool: { kind: 'object', type: 'grave' } },
+      // 看板(front#274)。いちばん近い「ほかのダンジョンへの端」を指し、行き先のダンジョンの名前を出す
+      { id: 'sign', label: '看板', icon: '➡️', tool: { kind: 'object', type: 'sign' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },
       { id: 'torch', label: 'たいまつ柱', icon: '🔥', tool: { kind: 'object', type: 'pillar', torch: true } },
       { id: 'volcano', label: '火山', icon: '🌋', tool: { kind: 'object', type: 'volcano' } }
@@ -97,10 +98,6 @@ export const PALETTE: PaletteTab[] = [
   {
     id: 'npc', label: 'NPC', hint: 'NPCを置きます。置いたあと、名前・役割・セリフ・見た目を決めます。',
     items: [{ id: 'npc', label: 'NPCを置く', icon: '🧑', tool: { kind: 'npc' } }]
-  },
-  {
-    id: 'portal', label: 'ポータル', hint: 'ほかのエリアへ移動する光る場所を置きます。右側で行き先を決めます。',
-    items: [{ id: 'portal', label: 'ポータルを置く', icon: '🌀', tool: { kind: 'portal' } }]
   },
   {
     id: 'other', label: 'その他', hint: '「選ぶ・動かす」で、置いたNPC・家・ポータル・敵をクリックすると中身を変えられ、ドラッグで動かせます。',
@@ -128,7 +125,6 @@ export const MAP_SIZE = { min: 12, max: 50 };
 export type Selection =
   | { kind: 'npc'; ref: RpgMapNpc }
   | { kind: 'house'; ref: RpgMapObject }
-  | { kind: 'portal'; ref: RpgMapPortal }
   | { kind: 'enemy'; ref: RpgMapEnemy }
   // 壊れる置物(front#264)。中身を選べる
   | { kind: 'breakable'; ref: RpgMapObject };
@@ -147,7 +143,7 @@ export function blankMap(id: string, name: string, dungeonId: string, gridX: num
     id, name, dungeonId, gridX, gridY, width, height,
     ground: Array.from({ length: height }, () => 'g'.repeat(width)),
     heights: flatHeights(width, height),
-    objects: [], npcs: [], enemies: [], portals: [],
+    objects: [], npcs: [], enemies: [], links: [],
     startX: Math.floor(width / 2), startY: Math.floor(height / 2), sortOrder: 0
   };
 }
@@ -176,7 +172,7 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       quests: n.role === 'quest' ? (n.quests ?? []).map((q) => ({ ...q, rewardItems: q.rewardItems.map((r) => ({ itemId: r.itemId, count: r.count })) })) : []
     })),
     enemies: map.enemies.map((e) => ({ ...e })),
-    portals: map.portals.map((p) => ({ ...p })),
+    links: (map.links ?? []).map((l) => ({ dx: l.dx, dy: l.dy, to: l.to })),
     startX: map.startX, startY: map.startY
   };
 }
@@ -248,17 +244,16 @@ export class RpgMapEditor {
     this.map.ground[y] = row.slice(0, x) + ground + row.slice(x + 1);
   }
 
-  // 水・なしでない地面(人・敵・ポータル・出発地点を置ける)
+  // 水・なしでない地面(人・敵・出発地点を置ける)
   walkableGround(x: number, y: number): boolean {
     return this.inMap(x, y) && !BLOCKED_GROUND.includes(this.groundAt(x, y));
   }
 
-  occupied(x: number, y: number): 'object' | 'npc' | 'enemy' | 'portal' | null {
+  occupied(x: number, y: number): 'object' | 'npc' | 'enemy' | null {
     const at = (o: { x: number; y: number }) => o.x === x && o.y === y;
     if (this.objectAt(x, y)) return 'object';
     if (this.map.npcs.some(at)) return 'npc';
     if (this.map.enemies.some(at)) return 'enemy';
-    if (this.map.portals.some(at)) return 'portal';
     return null;
   }
 
@@ -271,8 +266,6 @@ export class RpgMapEditor {
     const at = (o: { x: number; y: number }) => o.x === x && o.y === y;
     const npc = this.map.npcs.find(at);
     if (npc) return { kind: 'npc', ref: npc };
-    const portal = this.map.portals.find(at);
-    if (portal) return { kind: 'portal', ref: portal };
     const enemy = this.map.enemies.find(at);
     if (enemy) return { kind: 'enemy', ref: enemy };
     const house = this.objectAt(x, y);
@@ -288,12 +281,11 @@ export class RpgMapEditor {
     this.map.objects = this.map.objects.filter((o) => !objectTiles(o).some(([tx, ty]) => tx === x && ty === y));
     this.map.npcs = this.map.npcs.filter(keep);
     this.map.enemies = this.map.enemies.filter(keep);
-    this.map.portals = this.map.portals.filter(keep);
     return before !== this.countAll();
   }
 
   private countAll(): number {
-    return this.map.objects.length + this.map.npcs.length + this.map.enemies.length + this.map.portals.length;
+    return this.map.objects.length + this.map.npcs.length + this.map.enemies.length;
   }
 
   /** 筆で塗るマス(地面・高さの 3×3 のときは、まわりも) */
@@ -321,7 +313,6 @@ export class RpgMapEditor {
       const other = this.objectAt(tx, ty, house ?? undefined);
       if (other) return other.type === 'house' ? 'ほかの家と重なります' : '置物と重なります';
       if (this.map.enemies.some(at)) return '敵の出る場所と重なります';
-      if (this.map.portals.some(at)) return 'ポータルと重なります';
     }
     return null;
   }
@@ -395,14 +386,6 @@ export class RpgMapEditor {
         this.map.npcs.push(npc);
         return { kind: 'npc', ref: npc };
       }
-      case 'portal': {
-        if (!first || !canPlace) return null;
-        const portal: RpgMapPortal = { x, y, to: null, toX: 0, toY: 0 };
-        // ポータルは道の上に光る
-        this.setGround(x, y, 'p');
-        this.map.portals.push(portal);
-        return { kind: 'portal', ref: portal };
-      }
       case 'start':
         if (canPlace) {
           this.map.startX = x;
@@ -417,7 +400,7 @@ export class RpgMapEditor {
     }
   }
 
-  /** 選んだもの(NPC・家・ポータル・敵)を動かす。家は (x, y) を左上の角にする。置けないマスなら動かさない */
+  /** 選んだもの(NPC・家・敵)を動かす。家は (x, y) を左上の角にする。置けないマスなら動かさない */
   moveTo(selection: Selection, x: number, y: number): boolean {
     if (selection.kind === 'house') {
       const { ref } = selection;
@@ -429,7 +412,6 @@ export class RpgMapEditor {
     if (!this.walkableGround(x, y) || this.occupied(x, y)) return false;
     selection.ref.x = x;
     selection.ref.y = y;
-    if (selection.kind === 'portal') this.setGround(x, y, 'p');
     return true;
   }
 
@@ -452,7 +434,6 @@ export class RpgMapEditor {
     this.map.objects = this.map.objects.filter((o) => objectTiles(o).every(([tx, ty]) => tx < w && ty < h));
     this.map.npcs = this.map.npcs.filter(inside);
     this.map.enemies = this.map.enemies.filter(inside);
-    this.map.portals = this.map.portals.filter(inside);
     if (!this.inMap(this.map.startX, this.map.startY)) {
       this.map.startX = Math.floor(w / 2);
       this.map.startY = Math.floor(h / 2);
@@ -466,23 +447,9 @@ export class RpgMapEditor {
     const startOk = this.walkableGround(m.startX, m.startY) && !this.occupied(m.startX, m.startY);
     checks.push({ ok: startOk, text: startOk ? '出発地点が通れるマスにある' : '出発地点が通れないマスにあります' });
 
-    const noDest = m.portals.filter((p) => !maps.some((a) => a.id === p.to));
-    checks.push({
-      ok: noDest.length === 0,
-      text: noDest.length ? `行き先が決まっていないポータルが ${noDest.length} 個あります` : 'ポータルの行き先がすべて決まっている'
-    });
-
-    const badArrival = m.portals.filter((p) => {
-      const dest = maps.find((a) => a.id === p.to);
-      if (!dest) return false;
-      const ground = dest.ground[p.toY]?.[p.toX];
-      const blocked = dest.objects.some((o) => o.x === p.toX && o.y === p.toY) || dest.npcs.some((o) => o.x === p.toX && o.y === p.toY);
-      return ground === undefined || BLOCKED_GROUND.includes(ground) || blocked;
-    });
-    checks.push({
-      ok: badArrival.length === 0,
-      text: badArrival.length ? `着く位置が通れないマスのポータルが ${badArrival.length} 個あります` : 'ポータルの着く位置が通れるマスにある'
-    });
+    // 端のつながり(front#274)の行き先のエリアがなくなった・同じダンジョンの隣のエリアができて使えなくなった
+    const lost = (m.links ?? []).filter((l) => exitOf(maps, m, [l.dx, l.dy])?.to.id !== l.to);
+    if (lost.length) checks.push({ ok: false, text: `使えない端のつながりが ${lost.length} 個あります（行き先のエリアがない・同じダンジョンの隣のエリアがある）` });
 
     // クエスト依頼なのにクエストがない・会う相手が見つからないクエスト(front#239)
     const noQuest = m.npcs.filter((n) => n.role === 'quest' && !(n.quests ?? []).length);
@@ -498,9 +465,9 @@ export class RpgMapEditor {
       text: emptyNpc.length ? `名前かセリフが空のNPCが ${emptyNpc.length} 人います` : 'NPCの名前とセリフが入っている'
     });
 
-    // 隣のエリアがある側の端に、通れるマス(出口)があるか(front#234)
+    // 隣のエリア・ほかのダンジョン(front#274)へつながる端に、通れるマス(出口)があるか(front#234)
     for (const side of SIDES) {
-      const next = neighborOf(maps, m, side);
+      const next = exitOf(maps, m, side)?.to;
       if (!next) continue;
       const [dx, dy] = side;
       const edge = dx !== 0
@@ -517,13 +484,13 @@ export class RpgMapEditor {
 
     const reachable =
       m.id === 'plain' ||
-      maps.some((a) => a.id !== m.id && a.portals.some((p) => p.to === m.id)) ||
+      maps.some((a) => a.id !== m.id && (a.links ?? []).some((l) => l.to === m.id)) ||
       SIDES.some((side) => neighborOf(maps, m, side));
     checks.push({
       ok: reachable,
       text: reachable
         ? 'ほかのエリアから来られる'
-        : 'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンにこのエリアへのポータルを置いてください）'
+        : 'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンのエリアの端をこのエリアとつないでください）'
     });
     return checks;
   }

@@ -1493,7 +1493,7 @@
     "x" : 3,
     "y" : 17
   } ],
-  "portals" : [ ],
+  "links" : [ ],
   "start_x" : 16,
   "start_y" : 14,
   "sort_order" : 1,

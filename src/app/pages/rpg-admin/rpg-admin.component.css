@@ -494,6 +494,36 @@ textarea {
   gap: 8px;
 }
 
+/* 端のつながり(ほかのダンジョンへ。front#274) */
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.links-title {
+  color: var(--muted);
+}
+
+.link-row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-side {
+  font-weight: 700;
+}
+
+.link-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* エリアの配置(ダンジョンの中のマス目。front#234) */
 .layout-grid {
   display: grid;

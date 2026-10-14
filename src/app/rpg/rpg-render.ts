@@ -1,10 +1,10 @@
-import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitSideAt, shelfFace, staticDepth, swordColorOf } from './rpg-data';
+import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { drawArmor, drawBarrel, drawBones, drawBookshelf, drawCandle, drawChest, drawGrave, drawPot } from './rpg-props';
+import { SIGN_BANDS, drawArmor, drawBarrel, drawBones, drawBookshelf, drawCandle, drawChest, drawGrave, drawPot, drawSign } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -99,13 +99,13 @@ export class RpgRenderer {
     this.drawAttacks();
     if (game.map.hasHeights) this.drawCursorTile();
     if (pal.fireflies) this.drawFireflies();
-    for (const p of game.area.portals) {
-      const dest = game.mapById(p.to);
-      if (!dest) continue;
-      const [sx, sy] = this.at(p.x, p.y);
-      // ほかのダンジョンへのポータルは、ダンジョンの名前を出す
-      const name = dest.dungeonId === game.area.dungeonId ? dest.name : game.dungeonOf(dest).name;
-      this.label(`▶ ${name}`, sx, sy - 48, 'rgba(124,58,237,0.88)');
+    // 看板(front#274)の上に、行き先のダンジョンの名前
+    for (const o of game.map.statics) {
+      if (o.type !== 'sign') continue;
+      const exit = signExit(game.maps, game.area, o.x, o.y);
+      if (!exit) continue;
+      const [sx, sy] = this.at(o.x, o.y);
+      if (this.onScreen(sx, sy, 80)) this.label(`▶ ${game.dungeonOf(exit.to).name}`, sx, sy - 52, 'rgba(124,58,237,0.88)');
     }
     this.drawEffects();
     ctx.restore();
@@ -167,11 +167,11 @@ export class RpgRenderer {
         this.drawTile(x, y);
       }
     }
-    for (const p of area.portals) if (map.heightAt(p.x, p.y) === 0) this.drawPortal(...iso(p.x, p.y));
     this.drawExits();
   }
 
-  // 隣のエリアへの出口(隣にエリアがある側の、端の通れるマス)に、進む向きの矢印を出す(front#234)
+  // 隣のエリアへの出口(隣にエリアがある側の、端の通れるマス)に、進む向きの矢印を出す(front#234)。
+  // ほかのダンジョンへの出口(front#274)は紫に光らせる
   private drawExits(): void {
     const { map, area, maps } = this.game;
     const ctx = this.ctx;
@@ -181,12 +181,13 @@ export class RpgRenderer {
     for (let y = 1; y < map.h - 1; y++) edges.push([0, y], [map.w - 1, y]);
     for (const [x, y] of edges) {
       if (!map.walkable(x, y)) continue;
-      const side = exitSideAt(maps, area, x, y);
-      if (!side) continue;
+      const exit = exitAt(maps, area, x, y);
+      if (!exit) continue;
+      const side = exit.side;
       const [cx, cy] = this.at(x, y);
       if (!this.onScreen(cx, cy, TW)) continue;
       this.diamond(cx, cy, 0.86);
-      ctx.fillStyle = `rgba(180,248,255,${alpha * 0.45})`;
+      ctx.fillStyle = exit.link ? `rgba(216,180,254,${alpha * 0.55})` : `rgba(180,248,255,${alpha * 0.45})`;
       ctx.fill();
       // 矢印(画面上の進む向き)
       const [sx, sy] = iso(side[0], side[1]);
@@ -373,25 +374,6 @@ export class RpgRenderer {
     }
   }
 
-  private drawPortal(cx: number, cy: number): void {
-    const ctx = this.ctx;
-    const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 32);
-    g.addColorStop(0, 'rgba(216,180,254,0.95)');
-    g.addColorStop(1, 'rgba(216,180,254,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 32, 16, 0, 0, Math.PI * 2);
-    ctx.fill();
-    for (let i = 0; i < 3; i++) {
-      const k = (this.time * 0.7 + i / 3) % 1;
-      ctx.strokeStyle = `rgba(255,255,255,${(1 - k) * 0.85})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy - k * 30, 22 * (1 - k * 0.4), 10 * (1 - k * 0.4), 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }
-
   // マウスの下の通れるマスを明るくし、クリックした場所に印を出す
   private drawCursorTile(): void {
     const ctx = this.ctx;
@@ -441,7 +423,6 @@ export class RpgRenderer {
         const y = s - x;
         if (y < 0 || y >= map.h || map.heights[y][x] === 0) continue;
         this.drawTile(x, y);
-        if (game.area.portals.some((p) => p.x === x && p.y === y)) this.drawPortal(...this.at(x, y));
       }
       for (const o of rows[s]) this.drawEntity(o);
     }
@@ -510,6 +491,11 @@ export class RpgRenderer {
       case 'bookshelf': return drawBookshelf(this.ctx, sx, sy, shelfFace(this.game.map, o), o.x * 7 + o.y * 13);
       case 'candle': return drawCandle(this.ctx, sx, sy, this.time);
       case 'grave': return drawGrave(this.ctx, sx, sy);
+      case 'sign': {
+        // 看板(front#274)は、いちばん近いほかのダンジョンへの端を指し、行き先のダンジョンの色の帯を入れる
+        const exit = signExit(this.game.maps, this.game.area, o.x, o.y);
+        return drawSign(this.ctx, sx, sy, exit?.side ?? null, exit ? SIGN_BANDS[this.game.dungeonOf(exit.to).theme] ?? null : null);
+      }
       case 'tree': return this.drawTree(sx, sy);
       case 'rock': return this.drawRock(sx, sy);
       case 'house': return this.drawHouse(o, sx, sy);

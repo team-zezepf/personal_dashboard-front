@@ -13,7 +13,8 @@ import {
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
-  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, StaticType, TH, THEMES, TW, neighborOf, sideLabel, themeOf
+  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, exitOf, neighborOf, sideLabel,
+  themeOf
 } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
 import { RpgRenderer, shade } from '../../rpg/rpg-render';
@@ -483,7 +484,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     const prev = this.hoverTile();
     if (!prev || prev[0] !== x || prev[1] !== y) this.hoverTile.set([x, y]);
     const tool = this.tool().tool;
-    if (this.painting && tool.kind !== 'npc' && tool.kind !== 'portal') this.useTool(tool, x, y, false);
+    if (this.painting && tool.kind !== 'npc') this.useTool(tool, x, y, false);
     if (this.dragging && editor.moveTo(this.dragging, x - this.dragOffset[0], y - this.dragOffset[1])) {
       this.dragMoved = true;
       this.markDirty();
@@ -608,30 +609,37 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
-  // ポータルの行き先は、ダンジョン → エリアの順に選ぶ
-  portalDungeonId(sel: Selection): string {
-    return sel.kind === 'portal' ? (this.maps().find((m) => m.id === sel.ref.to)?.dungeonId ?? '') : '';
+  // ===== 端のつながり(front#274) =====
+
+  // 4つの端ごとに、同じダンジョンの隣のエリア(あれば変えられない)と、ほかのダンジョンへのつながりの行き先
+  linkRows(map: RpgMap): { side: Side; label: string; neighbor: string | null; to: string }[] {
+    this.version();
+    return SIDES.map((side) => ({
+      side,
+      label: sideLabel(side),
+      neighbor: neighborOf(this.maps(), map, side)?.name ?? null,
+      to: (map.links ?? []).find((l) => l.dx === side[0] && l.dy === side[1])?.to ?? ''
+    }));
   }
 
-  // 行き先に選べるエリア(今のエリアは選べない)
-  portalAreas(dungeonId: string): RpgMap[] {
-    return this.maps().filter((m) => m.dungeonId === dungeonId && m.id !== this.currentId());
+  // 端のつながりの行き先に選べるエリア(ほかのダンジョンのエリア)
+  linkTargets(): RpgMap[] {
+    const dungeonId = this.current()?.dungeonId;
+    return this.maps()
+      .filter((m) => m.dungeonId !== dungeonId)
+      .sort((a, b) => this.dungeonOrder(a.dungeonId) - this.dungeonOrder(b.dungeonId) || a.sortOrder - b.sortOrder);
   }
 
-  setPortalDungeon(sel: Selection, dungeonId: string): void {
-    this.setPortalDestination(sel, this.portalAreas(dungeonId)[0]?.id ?? '');
+  private dungeonOrder(id: string): number {
+    return this.dungeons().find((d) => d.id === id)?.sortOrder ?? 0;
   }
 
-  setPortalDestination(sel: Selection, to: string): void {
-    if (sel.kind !== 'portal') return;
+  setLink(side: Side, to: string): void {
+    const map = this.editor?.map;
+    if (!map) return;
     this.editor?.checkpoint();
-    const dest = this.maps().find((m) => m.id === to);
-    sel.ref.to = dest ? dest.id : null;
-    // 行き先を選んだら、まずは行き先の出発地点に着くようにする
-    if (dest) {
-      sel.ref.toX = dest.startX;
-      sel.ref.toY = dest.startY;
-    }
+    map.links = (map.links ?? []).filter((l) => l.dx !== side[0] || l.dy !== side[1]);
+    if (to) map.links.push({ dx: side[0], dy: side[1], to });
     this.markDirty();
   }
 
@@ -1191,11 +1199,15 @@ export class RpgAdminPageComponent implements OnDestroy {
       this.label(ctx, `▶ ${next.name}`, lx, ly, 'rgba(8,145,178,0.92)');
     }
 
-    // 行き先が決まっていないポータル
-    for (const p of map.portals) {
-      if (this.maps().some((m) => m.id === p.to)) continue;
-      const [sx, sy] = top(p.x, p.y);
-      this.label(ctx, '▶ 行き先が未設定', sx, sy - 48, 'rgba(245,158,11,0.95)');
+    // ほかのダンジョンへの端のつながり(front#274)の行き先(端の真ん中の外側、紫)
+    for (const side of SIDES) {
+      const exit = exitOf(this.maps(), map, side);
+      if (!exit?.link) continue;
+      const [dx, dy] = side;
+      const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
+      const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
+      const [lx, ly] = iso(ex, ey);
+      this.label(ctx, `▶ ${this.dungeonName(exit.to.dungeonId)} ／ ${exit.to.name}`, lx, ly, 'rgba(124,58,237,0.92)');
     }
 
     // 選んでいるもの
