@@ -109,7 +109,7 @@ export const PALETTE: PaletteTab[] = [
   }
 ];
 
-export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼' };
+export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼', smith: '鍛冶屋' };
 
 /** 新しいクエスト(front#239)。最初は、いちばん最初の敵を3体たおすクエスト */
 export function blankQuest(): RpgQuest {

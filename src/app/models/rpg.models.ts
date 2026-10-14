@@ -135,7 +135,8 @@ export interface RpgObjectContents {
 }
 
 // quest はクエスト依頼(front#239)
-export type RpgNpcRole = 'talk' | 'shop' | 'exchange' | 'quest';
+// smith: 鍛冶屋(素材で装備を合成する。front#277)
+export type RpgNpcRole = 'talk' | 'shop' | 'exchange' | 'quest' | 'smith';
 
 export interface RpgMapNpc {
   name: string;
@@ -213,6 +214,9 @@ export interface RpgEnemy {
   // 落とすアイテムのID(なければ null)と確率(0〜1)
   drop: string | null;
   dropRate: number;
+  // 落とす素材のIDと確率(0〜1)(front#277)。アイテムとは別に落とす
+  material?: string | null;
+  materialRate?: number;
   // 襲ってくる距離(マス)。0なら攻撃されるまで襲ってこない
   sight: number;
   // 倒してから復活するまでの秒数

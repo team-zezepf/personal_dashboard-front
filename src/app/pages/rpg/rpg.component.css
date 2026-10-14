@@ -519,6 +519,35 @@
   font-weight: 700;
 }
 
+/* 素材(front#277)の印 */
+.badge.material {
+  color: var(--orange-text);
+  background: var(--orange-soft);
+  border-radius: 6px;
+  padding: 0 6px;
+}
+
+/* 鍛冶屋の合成に使う素材。足りないものは赤 */
+.shop-materials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.material-chip {
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 0 6px;
+  color: var(--green-text);
+  background: var(--green-soft);
+}
+
+.material-chip.short {
+  color: var(--red-text);
+  background: var(--red-soft);
+}
+
 .log {
   font-size: 12px;
   line-height: 1.6;

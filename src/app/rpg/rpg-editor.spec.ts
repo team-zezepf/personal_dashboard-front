@@ -1,5 +1,5 @@
 import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { RpgMapEditor, blankMap, blankQuest, toMapInput } from './rpg-editor';
+import { NPC_ROLES, RpgMapEditor, blankMap, blankQuest, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
 import { PALETTE } from './rpg-editor';
@@ -177,6 +177,10 @@ describe('RpgMapEditor', () => {
       expect(editor.setHouse(house, '1x1', 0, '#8b5a2b', false, '#F4E4C9', false)).toBe(true);
       expect(toMapInput(editor.map).objects[0]).toMatchObject({ wall: null, noWindow: null });
     });
+  });
+
+  it('NPCの役割に鍛冶屋がある(front#277)', () => {
+    expect(NPC_ROLES.smith).toBe('鍛冶屋');
   });
 
   it('村人を置くと選んだ状態になる。ドラッグの途中では増えない', () => {

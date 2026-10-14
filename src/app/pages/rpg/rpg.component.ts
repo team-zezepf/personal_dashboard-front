@@ -15,6 +15,7 @@ import {
   ITEMS,
   MAX_LUCK,
   POINT_SHOP_ICONS,
+  RECIPES,
   SHOP_ITEMS,
   STAT_DEFS,
   StatKey,
@@ -53,6 +54,8 @@ interface ShopRow {
   price: string;
   buttonLabel: string;
   disabled: boolean;
+  // 鍛冶屋(front#277)の合成に使う素材と、持っている数・いる数
+  materials?: { icon: string; name: string; have: number; need: number }[];
 }
 
 @Component({
@@ -114,7 +117,8 @@ export class RpgPageComponent implements OnDestroy {
       cleared: game.questLog.isCleared(e.quest, game.player.inv)
     }));
   });
-  readonly shopMode = signal<'shop' | 'exchange' | null>(null);
+  // smith: 鍛冶屋の合成(front#277)
+  readonly shopMode = signal<'shop' | 'exchange' | 'smith' | null>(null);
   readonly pointShop = signal<RpgPointShopItem[]>([]);
   readonly exchanging = signal(false);
   readonly shopError = signal('');
@@ -244,6 +248,8 @@ export class RpgPageComponent implements OnDestroy {
           icon: item.icon,
           name: item.name,
           usable: item.type === 'use',
+          // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
+          material: item.type === 'material',
           count: game.player.inv[id],
           equipped: game.player.weapon === id || game.player.armor === id
         };
@@ -255,6 +261,22 @@ export class RpgPageComponent implements OnDestroy {
     const game = this.game;
     const mode = this.shopMode();
     if (!game || !mode) return [];
+    if (mode === 'smith') {
+      return RECIPES.filter((r) => ITEMS[r.result]).map((r) => {
+        const item = ITEMS[r.result];
+        const has = game.owned(r.result);
+        return {
+          id: r.result,
+          icon: item.icon,
+          name: item.name,
+          desc: itemStatLabel(item),
+          price: `${r.gold} G`,
+          buttonLabel: has ? '持っている' : '作る',
+          disabled: has || !game.canCraft(r),
+          materials: r.materials.map((m) => ({ icon: ITEMS[m.id]?.icon ?? '', name: ITEMS[m.id]?.name ?? m.id, have: game.player.inv[m.id] ?? 0, need: m.count }))
+        };
+      });
+    }
     if (mode === 'shop') {
       return SHOP_ITEMS.map((id) => {
         const item = ITEMS[id];
@@ -576,7 +598,7 @@ export class RpgPageComponent implements OnDestroy {
     if (current.quest?.mode === 'offer') return;
     this.talking.set(null);
     if (current.quest?.mode === 'report') this.game?.reportQuest(current.quest.quest);
-    if (current.npc.role === 'shop' || current.npc.role === 'exchange') this.openShop(current.npc.role);
+    if (current.npc.role === 'shop' || current.npc.role === 'exchange' || current.npc.role === 'smith') this.openShop(current.npc.role);
     this.syncLock();
   }
 
@@ -684,7 +706,7 @@ export class RpgPageComponent implements OnDestroy {
 
   // ===== お店・ポイント交換所 =====
 
-  private openShop(mode: 'shop' | 'exchange'): void {
+  private openShop(mode: 'shop' | 'exchange' | 'smith'): void {
     this.shopError.set('');
     this.shopMode.set(mode);
     this.syncLock();
@@ -700,6 +722,10 @@ export class RpgPageComponent implements OnDestroy {
     if (!game) return;
     if (this.shopMode() === 'shop') {
       game.buy(id);
+      return;
+    }
+    if (this.shopMode() === 'smith') {
+      game.craft(id);
       return;
     }
     this.exchange(id);

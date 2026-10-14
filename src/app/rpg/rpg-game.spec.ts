@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, G, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -491,6 +491,57 @@ describe('RpgGame', () => {
     });
   });
 
+  describe('素材と鍛冶屋の合成(front#277)', () => {
+    afterEach(() => setEnemies(DEFAULT_ENEMIES));
+
+    it('素材は14種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
+      expect(MATERIAL_IDS).toHaveLength(14);
+      expect(DEFAULT_ENEMIES.every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
+      expect(RECIPES).toHaveLength(8);
+      for (const r of RECIPES) {
+        expect(['weapon', 'armor']).toContain(ITEMS[r.result]?.type);
+        // 合成でしか手に入らない(道具屋で売らない)
+        expect(ITEMS[r.result].price).toBeUndefined();
+        expect(r.materials.every((m) => ITEMS[m.id]?.type === 'material' && m.count > 0)).toBe(true);
+      }
+    });
+
+    it('敵を倒すと、アイテムとは別に素材もフィールドに落ちる', () => {
+      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'potion', dropRate: 1, material: 'slime_jelly', materialRate: 1, sight: 0 }]);
+      game.loadMap(map('field', { enemies: [{ type: 'test', x: 8, y: 5 }] }));
+      (game as unknown as { killEnemy(e: unknown): void }).killEnemy(game.enemies[0]);
+      expect(game.drops.map((d) => d.id).sort()).toEqual(['potion', 'slime_jelly']);
+    });
+
+    it('素材は使えず、装備もできない', () => {
+      game.loadSave(save({ hp: 10, items: [...save().items, { itemId: 'slime_jelly', count: 3 }] }));
+      game.useItem('slime_jelly');
+      game.equip('slime_jelly');
+      expect(game.player.inv['slime_jelly']).toBe(3);
+      expect(game.player.hp).toBe(10);
+      expect(game.player.armor).toBe('cloth');
+    });
+
+    it('素材とゴールドが足りていれば装備を作れ、素材とゴールドが減る。足りない・持っているときは作れない', () => {
+      game.loadSave(save({ gold: 30, items: [...save().items, { itemId: 'slime_jelly', count: 6 }] }));
+      const robe = RECIPES.find((r) => r.result === 'jelly_robe')!;
+      const sword = RECIPES.find((r) => r.result === 'fang_sword')!;
+      expect(game.canCraft(robe)).toBe(true);
+      expect(game.canCraft(sword)).toBe(false);
+      expect(game.craft('fang_sword')).toBe(false);
+
+      expect(game.craft('jelly_robe')).toBe(true);
+      expect([game.player.gold, game.player.inv['slime_jelly'], game.player.inv['jelly_robe']]).toEqual([10, 1, 1]);
+      expect(ev.messages.at(-1)).toBe('ゼリーの服を作った！（-20G）');
+      // 作った装備は1つまで。装備できる
+      expect(game.canCraft(robe)).toBe(false);
+      game.equip('jelly_robe');
+      expect(game.player.armor).toBe('jelly_robe');
+      // レシピにないもの
+      expect(game.craft('potion')).toBe(false);
+    });
+  });
+
   describe('フィールドに落ちたアイテム(front#276)', () => {
     function run(seconds: number): void {
       for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
@@ -498,7 +549,7 @@ describe('RpgGame', () => {
 
     beforeEach(() => {
       // かならずアイテムを落とし、襲ってこない敵
-      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'hipotion', dropRate: 1, sight: 0 }]);
+      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'hipotion', dropRate: 1, material: null, sight: 0 }]);
       game.loadMap(map('field', { enemies: [{ type: 'test', x: 8, y: 5 }] }));
       Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
       game.update(0);

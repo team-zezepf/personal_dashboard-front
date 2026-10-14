@@ -112,14 +112,16 @@
 
     @if (shopMode(); as mode) {
       <div class="modal">
-        <div class="modal-card" role="dialog" [attr.aria-label]="mode === 'shop' ? '道具屋' : 'ポイント交換所'">
+        <div class="modal-card" role="dialog" [attr.aria-label]="mode === 'shop' ? '道具屋' : mode === 'smith' ? '鍛冶屋' : 'ポイント交換所'">
           <div class="modal-head">
-            <span>{{ mode === 'shop' ? '🏪 道具屋' : '★ ポイント交換所' }}</span>
+            <span>{{ mode === 'shop' ? '🏪 道具屋' : mode === 'smith' ? '⚒ 鍛冶屋' : '★ ポイント交換所' }}</span>
             <button type="button" class="close-button" aria-label="閉じる" (click)="closeShop()">×</button>
           </div>
           <p class="modal-sub">
             @if (mode === 'shop') {
               所持ゴールド：{{ stats()?.gold }} G
+            } @else if (mode === 'smith') {
+              所持ゴールド：{{ stats()?.gold }} G（素材とゴールドで装備を作ります）
             } @else {
               ダッシュボードのポイント：{{ points() }} pt（交換するとポイントが減ります）
             }
@@ -133,6 +135,13 @@
               <div class="shop-info">
                 <div class="shop-name">{{ row.name }}</div>
                 <div class="shop-desc">{{ row.desc }}</div>
+                @if (row.materials) {
+                  <div class="shop-materials">
+                    @for (m of row.materials; track m.name) {
+                      <span class="material-chip" [class.short]="m.have < m.need">{{ m.icon }} {{ m.name }} {{ m.have }}/{{ m.need }}</span>
+                    }
+                  </div>
+                }
               </div>
               <span class="shop-price" [class.pt]="mode === 'exchange'">{{ row.price }}</span>
               <button
@@ -281,7 +290,10 @@
           <div class="inv-row">
             <span class="icon">{{ item.icon }}</span>
             <span class="name">{{ item.name }}</span>
-            @if (item.usable) {
+            @if (item.material) {
+              <span class="count">×{{ item.count }}</span>
+              <span class="badge material">素材</span>
+            } @else if (item.usable) {
               <span class="count">×{{ item.count }}</span>
               <button type="button" class="btn" [attr.aria-label]="item.name + 'を使う'" (click)="useItem(item.id)">使う</button>
             } @else if (item.equipped) {

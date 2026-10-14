@@ -1479,6 +1479,27 @@
         "count" : 1
       } ]
     } ]
+  }, {
+    "name" : "鍛冶屋 ゴンゾウ",
+    "x" : 8,
+    "y" : 9,
+    "hair" : "#374151",
+    "body" : "#92400e",
+    "role" : "smith",
+    "notice" : false,
+    "lines" : [ "素材を持ってきてくれれば、いい装備を打ってやるぞ。" ],
+    "look" : {
+      "hair" : "spiky",
+      "hair_color" : "#374151",
+      "skin" : "#f1c27d",
+      "eyes" : "normal",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "vest",
+      "clothes_color" : "#92400e",
+      "accent_color" : "#f8fafc"
+    },
+    "quests" : [ ]
   } ],
   "enemies" : [ {
     "type" : "slime",

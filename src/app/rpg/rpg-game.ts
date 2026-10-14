@@ -11,6 +11,8 @@ import {
   TH,
   TW,
   MAX_LUCK,
+  RECIPES,
+  Recipe,
   STATIC_NAMES,
   STAT_POINTS_PER_LEVEL,
   Side,
@@ -656,7 +658,8 @@ export class RpgGame {
 
   equip(id: string): void {
     const item = ITEMS[id];
-    if (!item || item.type === 'use' || !this.owned(id)) return;
+    // 装備できるのは武器・防具だけ(使う道具・素材(front#277)は装備しない)
+    if (!item || (item.type !== 'weapon' && item.type !== 'armor') || !this.owned(id)) return;
     if (item.type === 'weapon') this.player.weapon = id;
     else this.player.armor = id;
     this.events.log(`${item.name}を装備した`);
@@ -673,6 +676,30 @@ export class RpgGame {
     this.player.gold -= item.price;
     this.player.inv[id] = (this.player.inv[id] ?? 0) + 1;
     this.events.log(`${item.name}を買った（-${item.price}G）`);
+    this.events.statsChanged();
+    this.events.inventoryChanged();
+    this.events.dirty();
+    return true;
+  }
+
+  // ===== 鍛冶屋の合成(front#277) =====
+
+  /** レシピの素材とゴールドが足りていて、まだ持っていない装備なら作れる */
+  canCraft(recipe: Recipe): boolean {
+    const p = this.player;
+    return !this.owned(recipe.result) && p.gold >= recipe.gold && recipe.materials.every((m) => (p.inv[m.id] ?? 0) >= m.count);
+  }
+
+  /** 素材とゴールドを払って装備を作る。作れなければ何もせず false */
+  craft(result: string): boolean {
+    const recipe = RECIPES.find((r) => r.result === result);
+    const item = ITEMS[result];
+    if (!recipe || !item || !this.canCraft(recipe)) return false;
+    const p = this.player;
+    p.gold -= recipe.gold;
+    for (const m of recipe.materials) p.inv[m.id] -= m.count;
+    p.inv[result] = (p.inv[result] ?? 0) + 1;
+    this.events.log(`${item.name}を作った！（-${recipe.gold}G）`);
     this.events.statsChanged();
     this.events.inventoryChanged();
     this.events.dirty();
@@ -839,6 +866,10 @@ export class RpgGame {
     // 落としたアイテムはフィールドに落ちる。クリックして拾う(front#276)
     if (def.drop && ITEMS[def.drop] && Math.random() < Math.min(1, def.dropRate * dropRateOf(p.stats))) {
       this.dropItem(def.drop, 1, Math.round(e.x), Math.round(e.y));
+    }
+    // 素材(front#277)はアイテムとは別に落とす。どちらも運が高いほど落ちやすい
+    if (def.material && ITEMS[def.material] && Math.random() < Math.min(1, (def.materialRate ?? 0) * dropRateOf(p.stats))) {
+      this.dropItem(def.material, 1, Math.round(e.x), Math.round(e.y));
     }
     // レベルが上がっても能力は自動では上がらず、ステータスのポイントをもらう(front#223)
     while (p.exp >= this.nextExp()) {

@@ -177,7 +177,18 @@
           </label>
           <label class="field"><span>落とす確率（%）</span><input type="number" min="0" max="100" [ngModel]="Math.round(sel.def.dropRate * 100)" (ngModelChange)="setDropRate($event)" /></label>
         </div>
-        <p class="hint">落とす確率は、プレイヤーの運が高いほど上がります。</p>
+        <div class="grid2">
+          <label class="field">
+            <span>落とす素材</span>
+            <select [ngModel]="sel.def.material ?? ''" (ngModelChange)="setMaterial($event)">
+              @for (m of materials; track m[0]) {
+                <option [value]="m[0]">{{ m[1] }}</option>
+              }
+            </select>
+          </label>
+          <label class="field"><span>素材を落とす確率（%）</span><input type="number" min="0" max="100" [ngModel]="Math.round((sel.def.materialRate ?? 0) * 100)" (ngModelChange)="setMaterialRate($event)" /></label>
+        </div>
+        <p class="hint">アイテムと素材は別々に落ちます（両方落ちることもあります）。落とす確率は、プレイヤーの運が高いほど上がります。</p>
       </div>
 
       <div class="section">
