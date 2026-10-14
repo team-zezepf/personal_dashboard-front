@@ -95,10 +95,26 @@ export interface Enemy extends Mover {
   fromObject?: StaticObj;
 }
 
+/** フィールドに落ちたアイテム(front#276)。クリックすると、そこまで歩いて拾う。from は飛び出した位置、t は落ちてからの秒 */
+export interface Drop {
+  kind: 'drop';
+  id: string;
+  count: number;
+  x: number;
+  y: number;
+  fromX: number;
+  fromY: number;
+  t: number;
+}
+
+/** 落ちたアイテムが消えるまでの秒数(最後の DROP_BLINK_SEC 秒は点滅する) */
+export const DROP_LIFE_SEC = 60;
+export const DROP_BLINK_SEC = 10;
+
 export interface Player extends Mover {
   kind: 'player';
   // 話す相手・攻撃する敵・壊す置物(front#264)
-  target: Npc | Enemy | StaticObj | null;
+  target: Npc | Enemy | StaticObj | Drop | null;
   repath: number;
   atkCd: number;
   lunge: number;
@@ -210,7 +226,9 @@ export class RpgGame {
   // マップ作成画面ではプレイヤーを描かない
   hidePlayer = false;
   mouse: { x: number; y: number } | null = null;
-  hover: Npc | Enemy | StaticObj | null = null;
+  hover: Npc | Enemy | StaticObj | Drop | null = null;
+  // フィールドに落ちているアイテム(front#276)。エリアを移ると消える
+  drops: Drop[] = [];
 
   // 会話・お店などを開いている間はクリックで動かない。敵も止まり、攻撃してこない(front#243)
   locked = false;
@@ -373,6 +391,7 @@ export class RpgGame {
       });
     this.floats.length = 0;
     this.particles.length = 0;
+    this.drops = [];
     this.clickMarker = null;
     this.hover = null;
   }
@@ -531,11 +550,11 @@ export class RpgGame {
     return [Math.round((a + b) / 2), Math.round((b - a) / 2)];
   }
 
-  /** 画面上の位置にいる村人・敵(重なっていれば手前のもの) */
-  pickEntity(mx: number, my: number): Npc | Enemy | StaticObj | null {
+  /** 画面上の位置にいる村人・敵・壊れる置物・落ちたアイテム(重なっていれば手前のもの) */
+  pickEntity(mx: number, my: number): Npc | Enemy | StaticObj | Drop | null {
     const wx = (mx - this.camX) / this.zoom;
     const wy = (my - this.camY) / this.zoom;
-    let best: Npc | Enemy | StaticObj | null = null;
+    let best: Npc | Enemy | StaticObj | Drop | null = null;
     let bestDepth = -Infinity;
     for (const e of [...this.npcs, ...this.enemies.filter((e) => e.alive)]) {
       const [sx, sy0] = iso(e.x, e.y);
@@ -557,6 +576,15 @@ export class RpgGame {
       if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
         bestDepth = o.x + o.y;
         best = o;
+      }
+    }
+    // 落ちたアイテム(front#276)。同じマスなら、人・敵・置物より手前として選ぶ
+    for (const d of this.drops) {
+      const [sx, sy0] = iso(d.x, d.y);
+      const sy = sy0 - this.map.heightAt(d.x, d.y) * HZ;
+      if (wx > sx - 14 && wx < sx + 14 && wy > sy - 26 && wy < sy + 8 && d.x + d.y + 0.01 > bestDepth) {
+        bestDepth = d.x + d.y + 0.01;
+        best = d;
       }
     }
     return best;
@@ -702,11 +730,8 @@ export class RpgGame {
     }
     const c = o.contents;
     if (c?.kind === 'item' && ITEMS[c.id]) {
-      p.inv[c.id] = (p.inv[c.id] ?? 0) + c.count;
-      this.floatText(o.x, o.y, `${ITEMS[c.id].name}×${c.count}`, '#fde68a', 15, -10);
-      this.events.log(`${STATIC_NAMES[o.type]}の中から${ITEMS[c.id].name}×${c.count}を手に入れた！`);
-      this.events.inventoryChanged();
-      this.events.dirty();
+      // 中のアイテムはフィールドに落ちる(front#276)。置物は元に戻るので、置物のマスには落とさない
+      this.dropItem(c.id, c.count, o.x, o.y, true);
       o.respawnIn = BREAK_RESPAWN_SEC;
     } else if (c?.kind === 'enemy' && ENEMIES[c.id]) {
       const e: Enemy = {
@@ -722,6 +747,48 @@ export class RpgGame {
     } else {
       o.respawnIn = BREAK_RESPAWN_SEC;
     }
+  }
+
+  // ===== フィールドに落ちたアイテム(front#276) =====
+
+  /**
+   * (x, y) からアイテムを飛び出させ、近くの通れるマスに落とす。ほかのアイテムが落ちているマスは避ける。
+   * notCenter なら (x, y) 自身には落とさない(元に戻る置物のマス)
+   */
+  dropItem(id: string, count: number, x: number, y: number, notCenter = false): Drop | null {
+    if (!ITEMS[id] || count <= 0) return null;
+    const spots: [number, number][] = [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+    const free = spots
+      .map(([dx, dy]) => [x + dx, y + dy] as [number, number])
+      .filter(([tx, ty], i) => !(notCenter && i === 0) && this.map.walkable(tx, ty) && !this.drops.some((d) => d.x === tx && d.y === ty));
+    // 空いているマスがなければ、ほかのアイテムと重ねて落とす
+    const [tx, ty] = free[0] ?? spots.map(([dx, dy]) => [x + dx, y + dy] as [number, number]).find(([sx, sy]) => this.map.walkable(sx, sy)) ?? [x, y];
+    const drop: Drop = { kind: 'drop', id, count, x: tx, y: ty, fromX: x, fromY: y, t: 0 };
+    this.drops.push(drop);
+    return drop;
+  }
+
+  /** 落ちたアイテムを拾って、持ち物に入れる */
+  private pickUp(d: Drop): void {
+    const p = this.player;
+    this.drops = this.drops.filter((o) => o !== d);
+    p.target = null;
+    p.inv[d.id] = (p.inv[d.id] ?? 0) + d.count;
+    const name = `${ITEMS[d.id].name}${d.count > 1 ? `×${d.count}` : ''}`;
+    this.floatText(d.x, d.y, name, '#fde68a', 14, -10);
+    this.events.log(`${name}を拾った`);
+    this.events.inventoryChanged();
+    this.events.dirty();
+  }
+
+  /** 落ちてからの時間を進め、時間が来たアイテムを消す */
+  private updateDrops(dt: number): void {
+    for (const d of this.drops) d.t += dt;
+    const gone = this.drops.filter((d) => d.t >= DROP_LIFE_SEC);
+    if (!gone.length) return;
+    this.drops = this.drops.filter((d) => d.t < DROP_LIFE_SEC);
+    if (this.player.target?.kind === 'drop' && gone.includes(this.player.target)) this.player.target = null;
+    if (this.hover?.kind === 'drop' && gone.includes(this.hover)) this.hover = null;
   }
 
   /** 叩いたときのゆれ・戻るときの濃さを進め、時間が来た置物を元に戻す。そのマスに誰かいる(通る)間は待つ */
@@ -765,10 +832,9 @@ export class RpgGame {
     for (const done of this.questLog.onDefeat(e.type, this.questEntries())) {
       this.events.log(`クエスト「${done.quest.title}」の目標を達成した。${done.giver}に報告しよう`);
     }
+    // 落としたアイテムはフィールドに落ちる。クリックして拾う(front#276)
     if (def.drop && ITEMS[def.drop] && Math.random() < Math.min(1, def.dropRate * dropRateOf(p.stats))) {
-      p.inv[def.drop] = (p.inv[def.drop] ?? 0) + 1;
-      this.events.log(`${ITEMS[def.drop].name}を手に入れた！`);
-      this.events.inventoryChanged();
+      this.dropItem(def.drop, 1, Math.round(e.x), Math.round(e.y));
     }
     // レベルが上がっても能力は自動では上がらず、ステータスのポイントをもらう(front#223)
     while (p.exp >= this.nextExp()) {
@@ -838,6 +904,7 @@ export class RpgGame {
     // 置物から出て倒された敵は、もう出てこないので消す(front#264)
     if (this.enemies.some((e) => !e.alive && e.fromObject)) this.enemies = this.enemies.filter((e) => e.alive || !e.fromObject);
     this.updateBreakables(dt);
+    this.updateDrops(dt);
     for (const f of this.floats) f.t += dt;
     while (this.floats.length && this.floats[0].t > 1.1) this.floats.shift();
     for (const p of this.particles) {
@@ -863,8 +930,12 @@ export class RpgGame {
 
     const t = p.target;
     if (t) {
-      if ((t.kind === 'enemy' && !t.alive) || (t.kind === 'static' && t.broken)) {
+      if ((t.kind === 'enemy' && !t.alive) || (t.kind === 'static' && t.broken) || (t.kind === 'drop' && !this.drops.includes(t))) {
         p.target = null;
+      } else if (t.kind === 'drop') {
+        // 落ちたアイテムは、そのマスまで歩いて拾う(front#276)
+        if (Math.round(p.x) === t.x && Math.round(p.y) === t.y && !p.path.length) this.pickUp(t);
+        else if (!p.path.length && !this.pathTo(p, t.x, t.y)) p.target = null;
       } else {
         const d = cheb(p.x, p.y, t.x, t.y);
         if (t.kind === 'static' && d <= ATTACK_RANGE) {

@@ -522,7 +522,8 @@ export class RpgPageComponent implements OnDestroy {
       this.hand?.draw(game.time, this.dpr);
       return;
     }
-    const state: GemState = game.hover ? (game.hover.kind === 'npc' ? 'talk' : 'attack') : 'normal';
+    // 村人・落ちたアイテム(front#276)は「話す・拾う」、敵・壊れる置物は「攻撃」
+    const state: GemState = game.hover ? (game.hover.kind === 'npc' || game.hover.kind === 'drop' ? 'talk' : 'attack') : 'normal';
     this.gem.draw(state, dt, game.time, this.dpr);
   }
 
@@ -754,6 +755,13 @@ export class RpgPageComponent implements OnDestroy {
       },
       // マスの上の面の中心の画面上の位置(高いマスは、その高さの分だけ上)
       tilePosition: (x: number, y: number): [number, number] | null => (this.game ? this.game.screenPositionOf({ x, y }) : null),
+      // プレイヤーの近くにアイテムを落とす(拾う動きを見るため。front#276)。落ちたマスの画面上の位置を返す
+      dropNearPlayer: (id: string, count = 1): [number, number] | null => {
+        const game = this.game;
+        if (!game) return null;
+        const drop = game.dropItem(id, count, Math.round(game.player.x) + 2, Math.round(game.player.y));
+        return drop ? game.screenPositionOf(drop) : null;
+      },
       // プレイヤーが立っているマスと高さ
       playerTile: (): [number, number, number] | null =>
         this.game ? [Math.round(this.game.player.x), Math.round(this.game.player.y), this.game.player.z] : null,

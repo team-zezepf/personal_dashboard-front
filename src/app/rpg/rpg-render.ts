@@ -1,6 +1,6 @@
-import { BREAK_HITS, ENEMIES, G, HZ, STATIC_NAMES, StaticObj, TH, TW, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
+import { BREAK_HITS, ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
-import { AreaSlide, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
+import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
@@ -401,12 +401,13 @@ export class RpgRenderer {
   private drawEntities(): void {
     const game = this.game;
     const map = game.map;
-    type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player;
-    // 壊れている置物は描かない(front#264)
-    const list: Drawable[] = [...map.statics.filter((o) => !o.broken), ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
-    // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物を先に。大きな家は、いちばん手前のマスで並べる
+    type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player | Drop;
+    // 壊れている置物は描かない(front#264)。落ちたアイテム(front#276)は同じマスの人・敵より奥に描く
+    const list: Drawable[] = [...map.statics.filter((o) => !o.broken), ...game.drops, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
+    // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物・落ちたアイテムを先に。大きな家は、いちばん手前のマスで並べる
     const depth = (o: Drawable) => (o.kind === 'static' ? staticDepth(o) : o.x + o.y);
-    list.sort((a, b) => depth(a) - depth(b) || (a.kind === 'static' ? -1 : 1));
+    const order = (o: Drawable) => (o.kind === 'static' ? 0 : o.kind === 'drop' ? 1 : 2);
+    list.sort((a, b) => depth(a) - depth(b) || order(a) - order(b));
     if (!map.hasHeights) {
       for (const o of list) this.drawEntity(o);
       return;
@@ -428,8 +429,9 @@ export class RpgRenderer {
     }
   }
 
-  private drawEntity(o: StaticObj | Npc | Enemy | Player): void {
+  private drawEntity(o: StaticObj | Npc | Enemy | Player | Drop): void {
     const game = this.game;
+    if (o.kind === 'drop') return this.drawDrop(o);
     const [sx, sy0] = iso(o.x, o.y);
     // 立っているマスの高さの分だけ上に描く(置物はマスの高さ、人・敵は登り降りの途中の高さ)
     const sy = sy0 - (o.kind === 'static' ? game.map.heightAt(o.x, o.y) : o.z) * HZ;
@@ -444,6 +446,36 @@ export class RpgRenderer {
       if (mark) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3, mark);
     } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
     else if (!game.hidePlayer) this.drawPlayer(sx, sy);
+  }
+
+  // 落ちたアイテム(front#276)。最初の0.5秒で落ちた場所から弧をえがいて飛び出し、そのあとは足元を光らせて小さく上下する。
+  // 消える前の DROP_BLINK_SEC 秒は点滅する。マウスの下・拾いに向かっているときは名前を出す
+  private drawDrop(d: Drop): void {
+    const ctx = this.ctx;
+    const game = this.game;
+    if (DROP_LIFE_SEC - d.t < DROP_BLINK_SEC && Math.floor(d.t * 6) % 2) return;
+    const k = Math.min(1, d.t / 0.5);
+    const [fx, fy] = this.at(d.fromX, d.fromY);
+    const [tx, ty] = this.at(d.x, d.y);
+    const cx = fx + (tx - fx) * k;
+    const cy = fy + (ty - fy) * k - Math.sin(Math.PI * k) * 28;
+    if (!this.onScreen(cx, cy, 60)) return;
+    const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 14);
+    glow.addColorStop(0, `rgba(255,236,150,${0.55 + Math.sin(this.time * 4) * 0.15})`);
+    glow.addColorStop(1, 'rgba(255,236,150,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 16, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const bob = k < 1 ? 0 : Math.sin(this.time * 3 + d.x) * 2;
+    ctx.font = '15px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#000';
+    ctx.fillText(ITEMS[d.id]?.icon ?? '❔', cx, cy - 4 + bob);
+    if (game.hover === d || game.player.target === d) {
+      this.label(`${ITEMS[d.id]?.name ?? ''}${d.count > 1 ? `×${d.count}` : ''}`, cx, cy - 30);
+    }
   }
 
   // 壊れる置物は、叩かれるとゆれ・ひびが入り、元に戻るときはだんだん濃くなる。狙っている・マウスの下なら名前を出す(front#264)

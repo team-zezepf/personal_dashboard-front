@@ -489,6 +489,68 @@ describe('RpgGame', () => {
     });
   });
 
+  describe('フィールドに落ちたアイテム(front#276)', () => {
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    beforeEach(() => {
+      // かならずアイテムを落とし、襲ってこない敵
+      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'hipotion', dropRate: 1, sight: 0 }]);
+      game.loadMap(map('field', { enemies: [{ type: 'test', x: 8, y: 5 }] }));
+      Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
+      game.update(0);
+    });
+
+    afterEach(() => setEnemies(DEFAULT_ENEMIES));
+
+    it('敵を倒すと、落としたアイテムはすぐ持ち物に入らず、倒した場所に落ちる', () => {
+      const enemy = game.enemies[0];
+      (game as unknown as { killEnemy(e: unknown): void }).killEnemy(enemy);
+      expect(game.player.inv['hipotion'] ?? 0).toBe(0);
+      expect(game.drops.map((d) => [d.id, d.count, d.x, d.y])).toEqual([['hipotion', 1, 8, 5]]);
+      expect(ev.messages.some((m) => m.includes('手に入れた'))).toBe(false);
+    });
+
+    it('クリックすると、そこまで歩いて拾い、ログに出る。上を歩いただけでは拾わない', () => {
+      const drop = game.dropItem('potion', 2, 7, 5)!;
+      const before = game.player.inv['potion'] ?? 0;
+      // 落ちたマスを通り過ぎるだけでは拾わない
+      clickTile(9, 5);
+      run(3);
+      expect(game.drops).toEqual([drop]);
+
+      const [sx, sy] = game.screenPositionOf(drop);
+      expect(game.pickEntity(sx, sy - 10)).toBe(drop);
+      game.click(sx, sy - 10);
+      run(3);
+      expect(game.drops).toEqual([]);
+      expect(game.player.inv['potion']).toBe(before + 2);
+      expect(ev.messages.at(-1)).toBe('回復薬×2を拾った');
+    });
+
+    it('近くのマスがふさがっていれば、空いているマスに落とし、ほかのアイテムとも重ならない', () => {
+      game.dropItem('potion', 1, 6, 5);
+      game.dropItem('potion', 1, 6, 5);
+      expect(game.drops.map((d) => [d.x, d.y])).toEqual([[6, 5], [7, 5]]);
+      // 知らないアイテム・0個は落とさない
+      expect(game.dropItem('unknown', 1, 6, 5)).toBeNull();
+      expect(game.dropItem('potion', 0, 6, 5)).toBeNull();
+    });
+
+    it('60秒で消え、エリアに入り直しても消える', () => {
+      const drop = game.dropItem('potion', 1, 7, 5)!;
+      run(59.5);
+      expect(game.drops).toEqual([drop]);
+      run(1);
+      expect(game.drops).toEqual([]);
+
+      game.dropItem('potion', 1, 7, 5);
+      game.loadMap(map('field'));
+      expect(game.drops).toEqual([]);
+    });
+  });
+
   describe('敵の攻撃(front#229)', () => {
     // すぐ襲ってくる、攻撃の間隔の短い敵(HPが高く、こちらからは倒れない)
     const test = (patch: Partial<EnemyDef>): EnemyDef => ({
@@ -719,7 +781,7 @@ describe('RpgGame', () => {
       expect(game.pickEntity(wx, wy - 10)).toBeNull();
     });
 
-    it('中身のアイテムはそのまま持ち物に入り、10秒後に元に戻る(エリアに入り直しても戻る)', () => {
+    it('中身のアイテムは置物のマスの隣に落ち(front#276)、置物は10秒後に元に戻る(エリアに入り直しても戻る)', () => {
       setup([{ type: 'grass', x: 6, y: 5, torch: false, contents: { kind: 'item', id: 'potion', count: 2 } }]);
       const before = game.player.inv['potion'] ?? 0;
       const grass = staticAt(6, 5);
@@ -727,8 +789,9 @@ describe('RpgGame', () => {
       game.update(0.05);
 
       expect(grass.broken).toBe(true);
-      expect(game.player.inv['potion']).toBe(before + 2);
-      expect(ev.messages.at(-1)).toBe('草むらの中から回復薬×2を手に入れた！');
+      // まだ持ち物には入らない。置物のマス(6, 5)には落ちない
+      expect(game.player.inv['potion'] ?? 0).toBe(before);
+      expect(game.drops.map((d) => [d.id, d.count, d.x, d.y])).toEqual([['potion', 2, 7, 5]]);
       run(BREAK_RESPAWN_SEC - 1);
       expect(grass.broken).toBe(true);
       run(1.5);

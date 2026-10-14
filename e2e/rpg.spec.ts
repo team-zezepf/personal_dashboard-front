@@ -168,6 +168,47 @@ test(
 );
 
 test(
+  'E2E-14 RPGで、フィールドに落ちたアイテムをクリックすると、歩いて拾い、持ち物に入る',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(回復薬×3)',
+      'プレイヤーの近くに回復薬を1つ落としておく(テスト用の入り口 rpgTest.dropNearPlayer。敵を倒して落ちる動きは単体テストで見ている)'
+    ],
+    expected: [
+      '落ちた回復薬は、拾うまで持ち物の数に入らない(×3 のまま)',
+      '落ちた回復薬をクリックすると、そこまで歩いて拾い、ログに「回復薬を拾った」と出る',
+      '持ち物の回復薬が ×4 になる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+    let at: [number, number] = [0, 0];
+
+    await step('RPG(/rpg)を開き、プレイヤーの近くに回復薬を1つ落とす', '持ち物の回復薬は ×3 のまま', async () => {
+      await page.goto('/rpg');
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      at = await page.evaluate(() => (window as any).rpgTest.dropNearPlayer('potion', 1) as [number, number]);
+      // 飛び出して落ちきるまで待つ
+      await page.waitForTimeout(700);
+      await expect(items.getByText('×3')).toBeVisible();
+    });
+
+    await step('落ちた回復薬をクリックする', '歩いて拾い、ログに「回復薬を拾った」と出て、持ち物の回復薬が ×4 になる', async () => {
+      const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+      await page.mouse.click(box.x + at[0], box.y + at[1] - 10);
+      await expect(log.getByText('回復薬を拾った')).toBeVisible();
+      await expect(items.getByText('×4')).toBeVisible();
+    });
+  }
+);
+
+test(
   'E2E-08 RPGで、ポイント交換・買い物・装備をして、画面を開き直しても残っている',
   caseOf({
     precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを最初の状態に戻し、10ptを足してある'],
