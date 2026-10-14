@@ -189,6 +189,16 @@
           <label class="field"><span>素材を落とす確率（%）</span><input type="number" min="0" max="100" [ngModel]="Math.round((sel.def.materialRate ?? 0) * 100)" (ngModelChange)="setMaterialRate($event)" /></label>
         </div>
         <p class="hint">アイテムと素材は別々に落ちます（両方落ちることもあります）。落とす確率は、プレイヤーの運が高いほど上がります。</p>
+        <label class="field">
+          <span>叩いたときの音</span>
+          <select [ngModel]="sel.def.hitMaterial ?? ''" (ngModelChange)="setHitMaterial($event)">
+            <option value="">自動（体の形から：{{ autoHitMaterialLabel(sel.def) }}）</option>
+            @for (m of hitMaterials; track m[0]) {
+              <option [value]="m[0]">{{ m[2] }} {{ m[1] }}</option>
+            }
+          </select>
+        </label>
+        <p class="hint">プレイヤーがこの敵を叩いたときに、「BGM・効果音」タブの「〇〇を叩く」の音が鳴ります。</p>
       </div>
 
       <div class="section">

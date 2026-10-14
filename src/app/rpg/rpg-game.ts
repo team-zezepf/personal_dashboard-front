@@ -11,6 +11,7 @@ import {
   TH,
   TW,
   MAX_LUCK,
+  OBJECT_HIT_MATERIAL,
   RECIPES,
   Recipe,
   STATIC_NAMES,
@@ -40,7 +41,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
-import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, hitMaterialOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -175,7 +176,7 @@ export interface RpgGameEvents {
   captureScreen(): CanvasImageSource | null;
   // たおれた(true)/村に戻った(false)
   knockedOut(on: boolean): void;
-  // 効果音を鳴らす場面(front#278。hit_enemy・hit_object・attack_{敵の攻撃の種類})
+  // 効果音を鳴らす場面(front#278。hit_{叩いたものの素材}(front#282)・attack_{敵の攻撃の種類})
   sound?(slot: string): void;
 }
 
@@ -723,7 +724,7 @@ export class RpgGame {
     if (crit) dmg = Math.round(dmg * 1.6);
     e.hp -= dmg;
     e.flash = 0.12;
-    this.events.sound?.('hit_enemy');
+    this.events.sound?.(`hit_${hitMaterialOf(def)}`);
     if (!e.aggro) {
       e.aggro = true;
       e.atkCd = 0.6;
@@ -741,7 +742,7 @@ export class RpgGame {
     p.lunge = 1;
     o.hits = (o.hits ?? 0) + 1;
     o.shake = 1;
-    this.events.sound?.('hit_object');
+    this.events.sound?.(`hit_${OBJECT_HIT_MATERIAL[o.type] ?? 'stone'}`);
     if (o.hits >= (BREAK_HITS[o.type] ?? 1)) this.breakObject(o);
   }
 

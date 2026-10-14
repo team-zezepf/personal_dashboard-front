@@ -217,6 +217,8 @@ export interface RpgEnemy {
   // 落とす素材のIDと確率(0〜1)(front#277)。アイテムとは別に落とす
   material?: string | null;
   materialRate?: number;
+  // 叩いたときの音の素材(front#282。flesh・soft・stone・wood・grass)。null なら体の形から決める
+  hitMaterial?: string | null;
   // 襲ってくる距離(マス)。0なら攻撃されるまで襲ってこない
   sight: number;
   // 倒してから復活するまでの秒数
@@ -249,7 +251,7 @@ export interface RpgSe {
   createdAt: string;
 }
 
-// 効果音を鳴らす場面(hit_enemy・hit_object・attack_{敵の攻撃の種類})と、選んだ効果音
+// 効果音を鳴らす場面(hit_{叩いたものの素材}(front#282)・attack_{敵の攻撃の種類})と、選んだ効果音
 export interface RpgSeSlot {
   slot: string;
   seId: string;

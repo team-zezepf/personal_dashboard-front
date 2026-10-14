@@ -161,6 +161,10 @@ export const STATIC_TYPES: StaticType[] = [
 // 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)。ほかの置物は壊れない
 export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1 };
 export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as StaticType];
+// 叩いたときの音の素材(front#282)。叩ける(壊れる)置物ごと
+export const OBJECT_HIT_MATERIAL: Partial<Record<StaticType, 'stone' | 'wood' | 'grass'>> = {
+  grass: 'grass', fern: 'grass', rock: 'stone', crystal: 'stone', armor: 'stone', pot: 'stone', bones: 'stone', chest: 'wood', barrel: 'wood'
+};
 // 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
 export const BREAK_RESPAWN_SEC = 10;
 export const STATIC_NAMES: Record<StaticType, string> = {
