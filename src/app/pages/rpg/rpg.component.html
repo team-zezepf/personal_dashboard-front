@@ -21,7 +21,9 @@
       @if (testArea) {
         <div class="chip test">テストプレイ中（保存されません）</div>
       }
-      <div class="chip">[1]キー：回復薬</div>
+      @for (s of shortcutChips(); track s.key) {
+        <div class="chip shortcut" [class.empty]="!s.count"><span class="key">{{ s.key }}</span>{{ s.name }} ×{{ s.count }}</div>
+      }
     </div>
 
     <div class="settings">
@@ -51,6 +53,19 @@
               (input)="changeVolume(+$any($event.target).value)"
             />
           </div>
+          <h2 class="shortcut-title">ショートカット</h2>
+          @for (id of shortcuts(); track $index) {
+            <div class="shortcut-row">
+              <span class="key">{{ $index + 1 }}</span>
+              <select [attr.aria-label]="$index + 1 + 'キーで使う道具'" (change)="setShortcut($index, $any($event.target).value)">
+                <option value="" [selected]="!id">なし</option>
+                @for (item of shortcutOptions; track item.id) {
+                  <option [value]="item.id" [selected]="item.id === id">{{ item.icon }} {{ item.name }}</option>
+                }
+              </select>
+            </div>
+          }
+          <button type="button" class="reset-shortcuts" (click)="resetShortcuts()">はじめの設定に戻す</button>
         </div>
       }
     </div>

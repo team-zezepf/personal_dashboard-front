@@ -107,6 +107,67 @@ test(
 );
 
 test(
+  'E2E-13 RPGの設定(歯車)でショートカットキーに道具を登録すると、そのキーで使え、画面を開き直しても残っている',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(HP満タン・回復薬×3・上回復薬なし)',
+      'この端末のブラウザに覚えたショートカットの設定を消してある'
+    ],
+    expected: [
+      '左上に、はじめの設定のショートカット「1 回復薬 ×3」「2 上回復薬 ×0」が出る',
+      '歯車(設定)の「ショートカット」で 3キーに回復薬を選ぶと、左上に「3 回復薬 ×3」が増える',
+      '2キーを押すと、ログに「上回復薬を持っていない」と出る',
+      '3キーを押すと、回復薬を使おうとして、ログに「HPは満タンだ」と出る',
+      '画面を読み込み直しても、3キーは回復薬のまま(設定・左上の表示とも)'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    const settings = page.getByRole('dialog', { name: '設定' });
+    const chips = page.locator('.hud .chip.shortcut');
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    await step('RPG(/rpg)を開く', '左上に「1 回復薬 ×3」「2 上回復薬 ×0」が出る', async () => {
+      await page.goto('/rpg');
+      await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
+      await page.reload();
+      await expect(chips).toHaveText(['1回復薬 ×3', '2上回復薬 ×0']);
+    });
+
+    await step('歯車(設定)を開き、「ショートカット」の 3キーで回復薬を選ぶ', '左上に「3 回復薬 ×3」が増える', async () => {
+      await page.getByRole('button', { name: '設定' }).click();
+      await settings.getByLabel('3キーで使う道具').selectOption({ label: '🧪 回復薬' });
+      await expect(chips).toHaveText(['1回復薬 ×3', '2上回復薬 ×0', '3回復薬 ×3']);
+    });
+
+    await step('ゲーム画面をクリックして設定を閉じ、2キーを押す', 'ログに「上回復薬を持っていない」と出る', async () => {
+      await page.getByLabel('RPGのゲーム画面').click({ position: { x: 40, y: 200 } });
+      await expect(settings).toHaveCount(0);
+      await page.keyboard.press('2');
+      await expect(log.getByText('上回復薬を持っていない')).toBeVisible();
+    });
+
+    await step('3キーを押す', 'HPが満タンなので、ログに「HPは満タンだ」と出る(回復薬は減らない)', async () => {
+      await page.keyboard.press('3');
+      await expect(log.getByText('HPは満タンだ')).toBeVisible();
+      await expect(chips.nth(2)).toHaveText('3回復薬 ×3');
+    });
+
+    await step('画面を読み込み直して、歯車(設定)を開く', '3キーは回復薬のまま(設定・左上の表示とも)', async () => {
+      await page.reload();
+      await expect(chips).toHaveText(['1回復薬 ×3', '2上回復薬 ×0', '3回復薬 ×3']);
+      await page.getByRole('button', { name: '設定' }).click();
+      await expect(settings.getByLabel('3キーで使う道具')).toHaveValue('potion');
+      await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
+    });
+  }
+);
+
+test(
   'E2E-08 RPGで、ポイント交換・買い物・装備をして、画面を開き直しても残っている',
   caseOf({
     precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを最初の状態に戻し、10ptを足してある'],

@@ -602,9 +602,15 @@ export class RpgGame {
     this.events.dirty();
   }
 
-  // [1]キー: 回復薬がなければ上回復薬を使う
-  quickPotion(): void {
-    this.useItem(this.owned('potion') ? 'potion' : 'hipotion');
+  /** ショートカットキー(front#272)に登録した道具を使う。持っていなければログで知らせる */
+  useShortcut(id: string): void {
+    const item = ITEMS[id];
+    if (!item || item.type !== 'use') return;
+    if (!this.owned(id)) {
+      this.events.log(`${item.name}を持っていない`);
+      return;
+    }
+    this.useItem(id);
   }
 
   equip(id: string): void {

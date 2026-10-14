@@ -7,7 +7,8 @@ import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
-import { BgmPlayer } from '../../rpg/rpg-bgm';
+import { BgmPlayer, browserStorage } from '../../rpg/rpg-bgm';
+import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutIndexOf, shortcutItems } from '../../rpg/rpg-shortcuts';
 import { environment } from '../../../environments/environment';
 import {
   ITEMS,
@@ -124,6 +125,9 @@ export class RpgPageComponent implements OnDestroy {
   readonly bgmVolume = signal(Math.round(this.bgmPlayer.settings.volume * 100));
   readonly bgmMuted = signal(this.bgmPlayer.settings.muted);
   readonly bgmUnlocked = signal(false);
+  // ショートカットキー(front#272)。1〜5のキーに登録した道具と、選べる道具
+  readonly shortcuts = signal<Shortcuts>(loadShortcuts(browserStorage()));
+  readonly shortcutOptions = shortcutItems().map((id) => ({ id, icon: ITEMS[id].icon, name: ITEMS[id].name }));
   // 今のダンジョンの曲(なければ null)
   readonly areaBgm = signal<RpgBgm | null>(null);
 
@@ -210,6 +214,16 @@ export class RpgPageComponent implements OnDestroy {
         meta('回復量', (s) => `×${healRateOf(s).toFixed(2)}`)
       ]
     };
+  });
+
+  // 左上に出す、登録したキーと道具・持っている数
+  readonly shortcutChips = computed(() => {
+    this.version();
+    const inv = this.game?.player.inv ?? {};
+    return this.shortcuts()
+      .map((id, i) => ({ key: i + 1, id }))
+      .filter((s) => ITEMS[s.id])
+      .map((s) => ({ key: s.key, name: ITEMS[s.id].name, count: inv[s.id] ?? 0 }));
   });
 
   readonly inventory = computed(() => {
@@ -477,6 +491,16 @@ export class RpgPageComponent implements OnDestroy {
     this.bgmPlayer.setVolume(value / 100);
   }
 
+  setShortcut(index: number, id: string): void {
+    this.shortcuts.update((list) => list.map((old, i) => (i === index ? id : old)));
+    saveShortcuts(browserStorage(), this.shortcuts());
+  }
+
+  resetShortcuts(): void {
+    this.shortcuts.set([...DEFAULT_SHORTCUTS]);
+    saveShortcuts(browserStorage(), this.shortcuts());
+  }
+
   // 宝石のカーソルは、ゲーム画面の中(会話・お店の上も含む)ならどこでもマウスに付いていく。
   // ボタン・音量バーなど押せる部品の上では、宝石の代わりにゲーム用の手を描く(front#252)。描いたものの先がクリック位置
   onAreaMouseMove(event: MouseEvent): void {
@@ -504,7 +528,13 @@ export class RpgPageComponent implements OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (event.key === '1' && !this.talking() && !this.shopMode()) this.game?.quickPotion();
+    // ショートカットキー(front#272)。設定の選ぶ欄などで数字を打ったときは使わない
+    const slot = shortcutIndexOf(event.key);
+    const typing = event.target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName);
+    if (slot >= 0 && !typing && !this.talking() && !this.shopMode()) {
+      const id = this.shortcuts()[slot];
+      if (id) this.game?.useShortcut(id);
+    }
     if (event.key === 'Escape') {
       this.talking.set(null);
       this.closeShop();
