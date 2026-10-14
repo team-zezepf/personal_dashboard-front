@@ -6,7 +6,7 @@ import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence
 // level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
 // 見た目も最初の見た目(ショート・シャツ)に戻し、受けたクエストもなくす(front#239)。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
-async function resetRpg(level = 1): Promise<void> {
+async function resetRpg(level = 1, extraItems: { itemId: string; count: number }[] = []): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -25,7 +25,7 @@ async function resetRpg(level = 1): Promise<void> {
   await graphql('mutation($input: RpgSaveInput!) { saveRpg(input: $input) { level } }', {
     input: {
       level, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
-      items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
+      items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }, ...extraItems],
       area: 'plain', x: 6, y: 7,
       stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3, quests: [],
       look: {
@@ -163,6 +163,69 @@ test(
       await page.getByRole('button', { name: '設定' }).click();
       await expect(settings.getByLabel('3キーで使う道具')).toHaveValue('potion');
       await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
+    });
+  }
+);
+
+test(
+  'E2E-16 RPGで、鍛冶屋に話しかけ、素材とゴールドで装備を作ると、持ち物に入り、開き直しても残っている',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(30G)で、素材のスライムゼリーを6つ持っている',
+      'はじまりの村に「鍛冶屋 ゴンゾウ」がいる(E2E 用のマップのデータ)'
+    ],
+    expected: [
+      '持ち物のスライムゼリーには「素材」の印が付き、使う・装備するボタンはない',
+      '鍛冶屋に話しかけると、会話のあとに鍛冶屋が開き、ゼリーの服(スライムゼリー 6/5・20G)は作れ、牙の剣(恐竜の牙 0/3)は作れない',
+      'ゼリーの服を作ると、ログに「ゼリーの服を作った！（-20G）」と出て、10G・スライムゼリー×1 になり、持ち物にゼリーの服が入る',
+      '画面を開き直しても、ゼリーの服・スライムゼリー×1・10G のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'slime_jelly', count: 6 }]);
+    const items = page.getByRole('region', { name: '持ち物' });
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const smith = page.getByRole('dialog', { name: '鍛冶屋' });
+    const jelly = items.locator('.inv-row', { hasText: 'スライムゼリー' });
+
+    await step('RPG(/rpg)を開く', '持ち物のスライムゼリー(×6)に「素材」の印が付き、ボタンはない', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByText('30G')).toBeVisible();
+      await expect(jelly).toContainText('×6');
+      await expect(jelly).toContainText('素材');
+      await expect(jelly.getByRole('button')).toHaveCount(0);
+    });
+
+    await step('鍛冶屋 ゴンゾウに話しかけ、セリフを進める', '鍛冶屋が開き、ゼリーの服は「作る」を押せ、牙の剣は押せない', async () => {
+      await clickNpc(page, '鍛冶屋 ゴンゾウ');
+      const dialog = page.getByRole('dialog', { name: '鍛冶屋 ゴンゾウとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await expect(smith).toBeVisible();
+      await expect(smith.getByText('スライムゼリー 6/5')).toBeVisible();
+      await expect(smith.getByRole('button', { name: 'ゼリーの服を作る', exact: true })).toBeEnabled();
+      await expect(smith.getByRole('button', { name: '牙の剣を作る', exact: true })).toBeDisabled();
+    });
+
+    await step('ゼリーの服の「作る」を押す', 'ログに「ゼリーの服を作った！（-20G）」と出て、10G・スライムゼリー×1 になり、持ち物にゼリーの服が入る', async () => {
+      await smith.getByRole('button', { name: 'ゼリーの服を作る', exact: true }).click();
+      await expect(page.getByRole('region', { name: 'ログ' }).getByText('ゼリーの服を作った！（-20G）')).toBeVisible();
+      await expect(smith.getByRole('button', { name: 'ゼリーの服を持っている', exact: true })).toBeDisabled();
+      await smith.getByRole('button', { name: '閉じる' }).click();
+      await expect(status.getByText('10G')).toBeVisible();
+      await expect(jelly).toContainText('×1');
+      await expect(items.getByText('ゼリーの服')).toBeVisible();
+    });
+
+    await step('画面を読み込み直す', 'ゼリーの服・スライムゼリー×1・10G のまま', async () => {
+      await page.reload();
+      await expect(status.getByText('10G')).toBeVisible();
+      await expect(jelly).toContainText('×1');
+      await expect(items.getByText('ゼリーの服')).toBeVisible();
     });
   }
 );

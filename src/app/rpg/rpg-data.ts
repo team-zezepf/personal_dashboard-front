@@ -3,7 +3,8 @@
 import { RpgMap, RpgObjectContents } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
-export type ItemType = 'use' | 'weapon' | 'armor';
+// material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
+export type ItemType = 'use' | 'weapon' | 'armor' | 'material';
 
 export interface ItemDef {
   name: string;
@@ -30,8 +31,53 @@ export const ITEMS: Record<string, ItemDef> = {
   leather: { name: '革の鎧', icon: '🦺', type: 'armor', def: 5, price: 60 },
   chain_mail: { name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, price: 260 },
   magic_armor: { name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, price: 800 },
-  star_robe: { name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定' }
+  star_robe: { name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定' },
+  // 鍛冶屋で合成してだけ手に入る装備(front#277)
+  fang_sword: { name: '牙の剣', icon: '🗡️', type: 'weapon', atk: 16, desc: '鍛冶屋で合成' },
+  black_sword: { name: '黒鉄の剣', icon: '⚔️', type: 'weapon', atk: 28, desc: '鍛冶屋で合成' },
+  dark_sword: { name: '闇の剣', icon: '🗡️', type: 'weapon', atk: 38, desc: '鍛冶屋で合成' },
+  dragon_sword: { name: '竜牙の剣', icon: '🔱', type: 'weapon', atk: 46, desc: '鍛冶屋で合成' },
+  jelly_robe: { name: 'ゼリーの服', icon: '👘', type: 'armor', def: 4, desc: '鍛冶屋で合成' },
+  forest_robe: { name: '森の衣', icon: '🥻', type: 'armor', def: 9, desc: '鍛冶屋で合成' },
+  bone_mail: { name: '骨の鎧', icon: '🦺', type: 'armor', def: 15, desc: '鍛冶屋で合成' },
+  dragon_mail: { name: '竜鱗の鎧', icon: '🛡️', type: 'armor', def: 26, desc: '鍛冶屋で合成' },
+  // 素材(front#277)。最初からいる敵ごとに1つ(どの敵が落とすかは「敵」タブで決める)
+  slime_jelly: { name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす' },
+  mushroom_spore: { name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす' },
+  spirit_light: { name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす' },
+  raptor_fang: { name: '恐竜の牙', icon: '🦷', type: 'material', desc: 'ラプトルが落とす' },
+  golem_stone: { name: '岩のかけら', icon: '🧱', type: 'material', desc: 'いわゴーレムが落とす' },
+  ghost_cloth: { name: '霊の布', icon: '🧣', type: 'material', desc: 'ゴーストが落とす' },
+  black_iron: { name: '黒鉄のかけら', icon: '🔩', type: 'material', desc: 'ダークナイトが落とす' },
+  dark_gem: { name: '闇の魔石', icon: '🔮', type: 'material', desc: '闇の魔導士が落とす' },
+  bat_wing: { name: 'コウモリの翼', icon: '🦇', type: 'material', desc: 'ナイトバットが落とす' },
+  old_bone: { name: '古い骨', icon: '🦴', type: 'material', desc: 'ガイコツ兵が落とす' },
+  poison_petal: { name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす' },
+  dragon_scale: { name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす' },
+  mimic_tongue: { name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす' },
+  magic_scrap: { name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす' }
 };
+
+/** 鍛冶屋の合成のレシピ(front#277)。素材とゴールドを払って、装備(result)を1つ作る */
+export interface Recipe {
+  result: string;
+  materials: { id: string; count: number }[];
+  gold: number;
+}
+
+export const RECIPES: Recipe[] = [
+  { result: 'jelly_robe', materials: [{ id: 'slime_jelly', count: 5 }], gold: 20 },
+  { result: 'fang_sword', materials: [{ id: 'raptor_fang', count: 3 }, { id: 'golem_stone', count: 2 }], gold: 120 },
+  { result: 'forest_robe', materials: [{ id: 'mushroom_spore', count: 3 }, { id: 'spirit_light', count: 3 }], gold: 80 },
+  { result: 'bone_mail', materials: [{ id: 'old_bone', count: 5 }, { id: 'bat_wing', count: 3 }], gold: 300 },
+  { result: 'black_sword', materials: [{ id: 'black_iron', count: 4 }, { id: 'old_bone', count: 3 }, { id: 'magic_scrap', count: 1 }], gold: 500 },
+  { result: 'dark_sword', materials: [{ id: 'dark_gem', count: 2 }, { id: 'black_iron', count: 3 }, { id: 'ghost_cloth', count: 2 }], gold: 900 },
+  { result: 'dragon_sword', materials: [{ id: 'dragon_scale', count: 3 }, { id: 'raptor_fang', count: 4 }, { id: 'dark_gem', count: 1 }], gold: 1500 },
+  { result: 'dragon_mail', materials: [{ id: 'dragon_scale', count: 4 }, { id: 'dark_gem', count: 2 }, { id: 'mimic_tongue', count: 1 }], gold: 1600 }
+];
+
+/** 素材のID(持ち物・「敵」タブ・クエストで使う) */
+export const MATERIAL_IDS = Object.keys(ITEMS).filter((id) => ITEMS[id].type === 'material');
 
 export const SHOP_ITEMS = ['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor'];
 

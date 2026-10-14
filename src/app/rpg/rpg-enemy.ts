@@ -59,27 +59,27 @@ export const ENEMY_LIMITS = {
   sight: [0, 8], respawn: [3, 600], dash: [1, 5], charge: [0, 2], range: [1, 5], radius: [1, 2]
 } as const;
 
-const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1 };
+const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0 };
 
 // まだ「敵」タブで保存していないときの15種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
-  { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, sight: 0, respawn: 10 },
-  { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, sight: 2.5, respawn: 10 },
-  { ...base, id: 'kinokon', name: 'キノコン', shape: 'mushroom', color: '#e85d75', dark: '#b83a52', size: 1, hp: 75, atk: 20, def: 8, interval: 1.5, speed: 1.2, exp: 26, gold: 15, drop: 'potion', dropRate: 0.35, sight: 0, respawn: 10 },
-  { ...base, id: 'spirit', name: 'もりのせいれい', shape: 'wisp', color: '#7ef9ff', dark: '#22b8c9', size: 1, hp: 60, atk: 26, def: 6, interval: 1.2, speed: 2.2, exp: 32, gold: 18, drop: 'hipotion', dropRate: 0.2, sight: 3, respawn: 10 },
-  { ...base, id: 'raptor', name: 'ラプトル', shape: 'raptor', color: '#7fb069', dark: '#4f7a3d', size: 1, hp: 130, atk: 34, def: 12, interval: 1.2, speed: 2.4, exp: 60, gold: 32, drop: 'hipotion', dropRate: 0.3, sight: 3.5, respawn: 10 },
-  { ...base, id: 'golem', name: 'いわゴーレム', shape: 'golem', color: '#a3acb6', dark: '#6b7480', size: 1, hp: 240, atk: 42, def: 20, interval: 1.8, speed: 1.1, exp: 110, gold: 65, drop: 'hipotion', dropRate: 0.6, sight: 3, respawn: 10 },
-  { ...base, id: 'ghost', name: 'ゴースト', shape: 'ghost', color: '#f5f3ff', dark: '#a78bfa', size: 1, hp: 170, atk: 48, def: 16, interval: 1.4, speed: 1.8, exp: 120, gold: 55, drop: 'hipotion', dropRate: 0.4, sight: 3, respawn: 10 },
-  { ...base, id: 'knight', name: 'ダークナイト', shape: 'knight', color: '#475569', dark: '#334155', size: 1.15, hp: 320, atk: 62, def: 30, interval: 1.6, speed: 1.4, exp: 220, gold: 110, drop: 'hipotion', dropRate: 0.5, sight: 3, respawn: 10 },
-  { ...base, id: 'darklord', name: '闇の魔導士', shape: 'lord', color: '#6d28d9', dark: '#1e1b4b', size: 1.45, hp: 900, atk: 85, def: 40, interval: 2, speed: 1.2, exp: 1000, gold: 500, drop: 'hipotion', dropRate: 1, sight: 4, respawn: 60, boss: true },
+  { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, material: 'slime_jelly', materialRate: 0.5, sight: 0, respawn: 10 },
+  { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, material: 'slime_jelly', materialRate: 0.6, sight: 2.5, respawn: 10 },
+  { ...base, id: 'kinokon', name: 'キノコン', shape: 'mushroom', color: '#e85d75', dark: '#b83a52', size: 1, hp: 75, atk: 20, def: 8, interval: 1.5, speed: 1.2, exp: 26, gold: 15, drop: 'potion', dropRate: 0.35, material: 'mushroom_spore', materialRate: 0.5, sight: 0, respawn: 10 },
+  { ...base, id: 'spirit', name: 'もりのせいれい', shape: 'wisp', color: '#7ef9ff', dark: '#22b8c9', size: 1, hp: 60, atk: 26, def: 6, interval: 1.2, speed: 2.2, exp: 32, gold: 18, drop: 'hipotion', dropRate: 0.2, material: 'spirit_light', materialRate: 0.4, sight: 3, respawn: 10 },
+  { ...base, id: 'raptor', name: 'ラプトル', shape: 'raptor', color: '#7fb069', dark: '#4f7a3d', size: 1, hp: 130, atk: 34, def: 12, interval: 1.2, speed: 2.4, exp: 60, gold: 32, drop: 'hipotion', dropRate: 0.3, material: 'raptor_fang', materialRate: 0.5, sight: 3.5, respawn: 10 },
+  { ...base, id: 'golem', name: 'いわゴーレム', shape: 'golem', color: '#a3acb6', dark: '#6b7480', size: 1, hp: 240, atk: 42, def: 20, interval: 1.8, speed: 1.1, exp: 110, gold: 65, drop: 'hipotion', dropRate: 0.6, material: 'golem_stone', materialRate: 0.6, sight: 3, respawn: 10 },
+  { ...base, id: 'ghost', name: 'ゴースト', shape: 'ghost', color: '#f5f3ff', dark: '#a78bfa', size: 1, hp: 170, atk: 48, def: 16, interval: 1.4, speed: 1.8, exp: 120, gold: 55, drop: 'hipotion', dropRate: 0.4, material: 'ghost_cloth', materialRate: 0.5, sight: 3, respawn: 10 },
+  { ...base, id: 'knight', name: 'ダークナイト', shape: 'knight', color: '#475569', dark: '#334155', size: 1.15, hp: 320, atk: 62, def: 30, interval: 1.6, speed: 1.4, exp: 220, gold: 110, drop: 'hipotion', dropRate: 0.5, material: 'black_iron', materialRate: 0.5, sight: 3, respawn: 10 },
+  { ...base, id: 'darklord', name: '闇の魔導士', shape: 'lord', color: '#6d28d9', dark: '#1e1b4b', size: 1.45, hp: 900, atk: 85, def: 40, interval: 2, speed: 1.2, exp: 1000, gold: 500, drop: 'hipotion', dropRate: 1, material: 'dark_gem', materialRate: 1, sight: 4, respawn: 60, boss: true },
   // 後から足した形の敵(front#255)
-  { ...base, id: 'nightbat', name: 'ナイトバット', shape: 'bat', color: '#6d28d9', dark: '#2e1065', size: 0.9, hp: 45, atk: 18, def: 3, interval: 1.1, speed: 2.6, exp: 14, gold: 8, drop: 'potion', dropRate: 0.3, sight: 3.5, respawn: 10, attack: 'bite' },
-  { ...base, id: 'skeleton', name: 'ガイコツ兵', shape: 'skeleton', color: '#f5f3ff', dark: '#172554', size: 1, hp: 150, atk: 40, def: 14, interval: 1.4, speed: 1.5, exp: 80, gold: 40, drop: 'hipotion', dropRate: 0.4, sight: 3, respawn: 10, attack: 'claw' },
-  { ...base, id: 'maneater', name: 'ひとくいそう', shape: 'plant', color: '#ec4899', dark: '#4d7c0f', size: 1.1, hp: 110, atk: 30, def: 10, interval: 1.6, speed: 0.5, exp: 40, gold: 22, drop: 'hipotion', dropRate: 0.3, sight: 0, respawn: 10, attack: 'bite' },
-  { ...base, id: 'reddragon', name: 'レッドドラゴン', shape: 'dragon', color: '#ef4444', dark: '#991b1b', size: 1.4, hp: 650, atk: 58, def: 26, interval: 2.2, speed: 1.3, exp: 450, gold: 220, drop: 'hipotion', dropRate: 1, sight: 4, respawn: 60, boss: true, attack: 'fire' },
+  { ...base, id: 'nightbat', name: 'ナイトバット', shape: 'bat', color: '#6d28d9', dark: '#2e1065', size: 0.9, hp: 45, atk: 18, def: 3, interval: 1.1, speed: 2.6, exp: 14, gold: 8, drop: 'potion', dropRate: 0.3, material: 'bat_wing', materialRate: 0.5, sight: 3.5, respawn: 10, attack: 'bite' },
+  { ...base, id: 'skeleton', name: 'ガイコツ兵', shape: 'skeleton', color: '#f5f3ff', dark: '#172554', size: 1, hp: 150, atk: 40, def: 14, interval: 1.4, speed: 1.5, exp: 80, gold: 40, drop: 'hipotion', dropRate: 0.4, material: 'old_bone', materialRate: 0.6, sight: 3, respawn: 10, attack: 'claw' },
+  { ...base, id: 'maneater', name: 'ひとくいそう', shape: 'plant', color: '#ec4899', dark: '#4d7c0f', size: 1.1, hp: 110, atk: 30, def: 10, interval: 1.6, speed: 0.5, exp: 40, gold: 22, drop: 'hipotion', dropRate: 0.3, material: 'poison_petal', materialRate: 0.5, sight: 0, respawn: 10, attack: 'bite' },
+  { ...base, id: 'reddragon', name: 'レッドドラゴン', shape: 'dragon', color: '#ef4444', dark: '#991b1b', size: 1.4, hp: 650, atk: 58, def: 26, interval: 2.2, speed: 1.3, exp: 450, gold: 220, drop: 'hipotion', dropRate: 1, material: 'dragon_scale', materialRate: 1, sight: 4, respawn: 60, boss: true, attack: 'fire' },
   // 化ける敵(front#270)。最初の色は、本物の宝箱・甲冑と同じ
-  { ...base, id: 'mimic', name: 'ミミック', shape: 'mimic', color: '#a8682f', dark: '#4c0519', size: 1, hp: 200, atk: 46, def: 18, interval: 1.3, speed: 2, exp: 90, gold: 120, drop: 'hipotion', dropRate: 0.5, sight: 1.5, respawn: 10, attack: 'bite' },
-  { ...base, id: 'livingarmor', name: 'リビングアーマー', shape: 'livingarmor', color: '#94a3b8', dark: '#dc2626', size: 1, hp: 300, atk: 58, def: 32, interval: 1.6, speed: 1.3, exp: 180, gold: 90, drop: 'hipotion', dropRate: 0.4, sight: 2, respawn: 10 }
+  { ...base, id: 'mimic', name: 'ミミック', shape: 'mimic', color: '#a8682f', dark: '#4c0519', size: 1, hp: 200, atk: 46, def: 18, interval: 1.3, speed: 2, exp: 90, gold: 120, drop: 'hipotion', dropRate: 0.5, material: 'mimic_tongue', materialRate: 0.5, sight: 1.5, respawn: 10, attack: 'bite' },
+  { ...base, id: 'livingarmor', name: 'リビングアーマー', shape: 'livingarmor', color: '#94a3b8', dark: '#dc2626', size: 1, hp: 300, atk: 58, def: 32, interval: 1.6, speed: 1.3, exp: 180, gold: 90, drop: 'hipotion', dropRate: 0.4, material: 'magic_scrap', materialRate: 0.5, sight: 2, respawn: 10 }
 ];
 
 /**

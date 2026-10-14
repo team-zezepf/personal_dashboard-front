@@ -61,7 +61,7 @@ const BGM_FIELDS = `id name filename size createdAt`;
 const SE_FIELDS = `id name filename size createdAt`;
 
 const ENEMY_FIELDS = `
-  id name shape color dark size hp atk def interval speed exp gold drop dropRate sight respawn boss
+  id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate sight respawn boss
   attack dash charge range radius sortOrder updatedAt
 `;
 

@@ -71,7 +71,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly darks = ENEMY_DARKS;
   readonly limits = ENEMY_LIMITS;
   readonly Math = Math;
-  readonly items = [['', 'なし'], ...Object.entries(ITEMS).map(([id, item]) => [id, item.name])] as [string, string][];
+  // 落とすアイテム(素材はのぞく)と、落とす素材(front#277)
+  readonly items = [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type !== 'material').map(([id, item]) => [id, item.name])] as [string, string][];
+  readonly materials = [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type === 'material').map(([id, item]) => [id, `${item.icon} ${item.name}`])] as [string, string][];
 
   readonly rows = signal<EnemyRow[]>([]);
   readonly selectedId = signal<string | null>(null);
@@ -202,6 +204,15 @@ export class RpgEnemyPageComponent implements OnDestroy {
   setDropRate(percent: number | string): void {
     const n = Number(percent);
     if (Number.isFinite(n)) this.change({ dropRate: Math.min(100, Math.max(0, n)) / 100 });
+  }
+
+  setMaterial(material: string): void {
+    this.change({ material: material || null });
+  }
+
+  setMaterialRate(percent: number | string): void {
+    const n = Number(percent);
+    if (Number.isFinite(n)) this.change({ materialRate: Math.min(100, Math.max(0, n)) / 100 });
   }
 
   setBoss(boss: boolean): void {
