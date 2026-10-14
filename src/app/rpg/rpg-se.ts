@@ -1,5 +1,5 @@
 import { BgmAudio, browserStorage } from './rpg-bgm';
-import { ENEMY_ATTACKS } from './rpg-enemy';
+import { ENEMY_ATTACKS, HIT_MATERIALS } from './rpg-enemy';
 
 // RPGの効果音(front#278)。叩いたとき・敵の攻撃が当たる瞬間に、場面(slot)ごとに選んだ音を鳴らす。
 // BGMと同じく、ブラウザは画面を一度クリックするまで音を出せないため、unlock() されるまでは鳴らさない。
@@ -12,10 +12,9 @@ export interface SeSlotDef {
   attack?: string;
 }
 
-/** 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。敵の攻撃は種類ごと */
+/** 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。叩いたときは叩いたものの素材ごと(front#282)、敵の攻撃は種類ごと */
 export const SE_SLOTS: SeSlotDef[] = [
-  { slot: 'hit_enemy', label: '敵を叩く' },
-  { slot: 'hit_object', label: '置物を叩く' },
+  ...HIT_MATERIALS.map(([id, label, icon]) => ({ slot: `hit_${id}`, label: `${icon} ${label}を叩く` })),
   ...ENEMY_ATTACKS.map((a) => ({ slot: `attack_${a.id}`, label: `${a.icon} ${a.label}`, attack: a.id }))
 ];
 

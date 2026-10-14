@@ -759,16 +759,26 @@ describe('RpgGame', () => {
 
     const staticAt = (x: number, y: number) => game.map.statics.find((o) => o.x === x && o.y === y)!;
 
-    it('壊れる置物・敵を叩くと、それぞれの効果音を鳴らす知らせを出す(front#278)', () => {
-      setup([{ type: 'rock', x: 6, y: 5, torch: false }]);
-      game.player.target = staticAt(6, 5);
-      game.update(0.05);
-      expect(ev.sounds).toEqual(['hit_object']);
-
-      game.loadMap(map('field', { enemies: [{ type: 'golem', x: 6, y: 5 }] }));
-      Object.assign(game.player, { x: 5, y: 5, path: [], target: game.enemies[0], atkCd: 0 });
-      game.update(0.05);
-      expect(ev.sounds).toEqual(['hit_object', 'hit_enemy']);
+    it('壊れる置物・敵を叩くと、叩いたものの素材の効果音を鳴らす知らせを出す(front#278・front#282)', () => {
+      // 置物: 岩は岩、たるは木、草むらは草
+      for (const [type, slot] of [['rock', 'hit_stone'], ['barrel', 'hit_wood'], ['grass', 'hit_grass']]) {
+        ev.sounds.length = 0;
+        setup([{ type, x: 6, y: 5, torch: false }]);
+        game.player.atkCd = 0;
+        game.player.target = staticAt(6, 5);
+        game.update(0.05);
+        expect(ev.sounds).toEqual([slot]);
+      }
+      // 敵: ゴーレムは岩、スライムは柔らかいもの、キノコンは生き物。「敵」タブで選んでいればそちら
+      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'rockslime', hitMaterial: 'stone' }]);
+      for (const [type, slot] of [['golem', 'hit_stone'], ['slime', 'hit_soft'], ['kinokon', 'hit_flesh'], ['rockslime', 'hit_stone']]) {
+        ev.sounds.length = 0;
+        game.loadMap(map('field', { enemies: [{ type, x: 6, y: 5 }] }));
+        Object.assign(game.player, { x: 5, y: 5, path: [], target: game.enemies[0], atkCd: 0 });
+        game.update(0.05);
+        expect(ev.sounds).toEqual([slot]);
+      }
+      setEnemies(DEFAULT_ENEMIES);
     });
 
     it('草むら・シダ・水晶・岩だけを狙え、決まった回数叩くと壊れて、そのマスを通れる', () => {

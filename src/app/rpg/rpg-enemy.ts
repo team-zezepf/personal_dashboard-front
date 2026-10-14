@@ -59,7 +59,7 @@ export const ENEMY_LIMITS = {
   sight: [0, 8], respawn: [3, 600], dash: [1, 5], charge: [0, 2], range: [1, 5], radius: [1, 2]
 } as const;
 
-const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0 };
+const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null };
 
 // まだ「敵」タブで保存していないときの15種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
@@ -118,6 +118,24 @@ export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
 export const ringSizeOf = (def: EnemyDef) => RING[def.shape] * def.size;
 // 横に長い形を「敵」タブの見本の枠に収めるための縮め方
 export const thumbFitOf = (def: EnemyDef) => (def.shape === 'dragon' ? 0.72 : 1);
+// ===== 叩いたときの音の素材(front#282) =====
+// 効果音の場面 hit_{素材} を選ぶのに使う。敵は体の形で決まり、「敵」タブの「叩いたときの音」で変えられる
+
+export type HitMaterial = 'flesh' | 'soft' | 'stone' | 'wood' | 'grass';
+export const HIT_MATERIALS: [HitMaterial, string, string][] = [
+  ['flesh', '生き物', '🐾'], ['soft', '柔らかいもの', '💧'], ['stone', '岩', '⛰️'], ['wood', '木', '🌳'], ['grass', '草', '🌿']
+];
+const HIT_MATERIAL_IDS = HIT_MATERIALS.map(([id]) => id);
+// 体の形ごとの素材(金属の騎士・リビングアーマーは岩)
+const SHAPE_MATERIAL: Record<EnemyShape, HitMaterial> = {
+  slime: 'soft', mushroom: 'flesh', wisp: 'flesh', raptor: 'flesh', golem: 'stone', ghost: 'flesh', knight: 'stone', lord: 'flesh',
+  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone'
+};
+export const shapeMaterialOf = (shape: EnemyShape): HitMaterial => SHAPE_MATERIAL[shape];
+/** 叩いたときの音の素材。「敵」タブで選んでいればそれ、なければ体の形から */
+export const hitMaterialOf = (def: Pick<EnemyDef, 'shape' | 'hitMaterial'>): HitMaterial =>
+  def.hitMaterial && (HIT_MATERIAL_IDS as string[]).includes(def.hitMaterial) ? (def.hitMaterial as HitMaterial) : SHAPE_MATERIAL[def.shape];
+
 // 根を張っていて、その場から動かない形(front#255)。歩く速さの設定は使わない
 export const isRooted = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'plant';
 // 置物にばける形(front#270)と、ばけている間(近づかれるまで)の名前。ばけている間は歩き回らず、置物と同じ絵になる

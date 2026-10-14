@@ -13,6 +13,7 @@ import {
   EnemyAttack,
   EnemyDef,
   EnemyShape,
+  HIT_MATERIALS,
   SPELLS,
   attackTiming,
   chargeShake,
@@ -23,6 +24,7 @@ import {
   jumpHeight,
   movesToTarget,
   setEnemies,
+  shapeMaterialOf,
   thumbFitOf
 } from '../../../rpg/rpg-enemy';
 
@@ -65,6 +67,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   readonly shapes = ENEMY_SHAPES;
   readonly isRooted = isRooted;
+  readonly hitMaterials = HIT_MATERIALS;
   readonly disguiseOf = disguiseOf;
   readonly attacks = ENEMY_ATTACKS;
   readonly colors = ENEMY_COLORS;
@@ -213,6 +216,16 @@ export class RpgEnemyPageComponent implements OnDestroy {
   setMaterialRate(percent: number | string): void {
     const n = Number(percent);
     if (Number.isFinite(n)) this.change({ materialRate: Math.min(100, Math.max(0, n)) / 100 });
+  }
+
+  // 叩いたときの音の素材(front#282)。'' なら体の形から(自動)
+  setHitMaterial(material: string): void {
+    this.change({ hitMaterial: material || null });
+  }
+
+  autoHitMaterialLabel(def: EnemyDef): string {
+    const id = shapeMaterialOf(def.shape);
+    return HIT_MATERIALS.find(([m]) => m === id)?.[1] ?? '';
   }
 
   setBoss(boss: boolean): void {
