@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer, browserStorage } from '../../rpg/rpg-bgm';
+import { SePlayer } from '../../rpg/rpg-se';
 import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutIndexOf, shortcutItems } from '../../rpg/rpg-shortcuts';
 import { environment } from '../../../environments/environment';
 import {
@@ -124,6 +125,10 @@ export class RpgPageComponent implements OnDestroy {
   readonly settingsOpen = signal(false);
   readonly bgmVolume = signal(Math.round(this.bgmPlayer.settings.volume * 100));
   readonly bgmMuted = signal(this.bgmPlayer.settings.muted);
+  // 効果音(front#278)。音量・消した状態はBGMとは別に覚える
+  private readonly sePlayer = new SePlayer();
+  readonly seVolume = signal(Math.round(this.sePlayer.settings.volume * 100));
+  readonly seMuted = signal(this.sePlayer.settings.muted);
   readonly bgmUnlocked = signal(false);
   // ショートカットキー(front#272)。1〜5のキーに登録した道具と、選べる道具
   readonly shortcuts = signal<Shortcuts>(loadShortcuts(browserStorage()));
@@ -319,6 +324,8 @@ export class RpgPageComponent implements OnDestroy {
     this.resizeObserver.observe(this.gameArea().nativeElement);
     window.addEventListener('pagehide', this.onPageHide);
     this.exposeForTest();
+    // 効果音の割り当てが読めなくても、音なしで遊べる
+    this.rpgService.getSeSounds().subscribe((urls) => this.sePlayer.setSounds(urls));
 
     // マップ(地形)とセーブデータがそろってからゲームを作る
     // BGMの一覧が読めなくても、曲なしで遊べるようにする
@@ -409,7 +416,8 @@ export class RpgPageComponent implements OnDestroy {
         this.playDungeonBgm(dungeon);
       },
       captureScreen: () => this.captureScreen(),
-      knockedOut: (on) => this.knockedOut.set(on)
+      knockedOut: (on) => this.knockedOut.set(on),
+      sound: (slot) => this.sePlayer.play(slot)
     };
   }
 
@@ -474,6 +482,7 @@ export class RpgPageComponent implements OnDestroy {
   onAreaPointerDown(): void {
     if (this.bgmUnlocked()) return;
     this.bgmPlayer.unlock();
+    this.sePlayer.unlock();
     this.bgmUnlocked.set(true);
   }
 
@@ -489,6 +498,16 @@ export class RpgPageComponent implements OnDestroy {
   changeVolume(value: number): void {
     this.bgmVolume.set(value);
     this.bgmPlayer.setVolume(value / 100);
+  }
+
+  toggleSeMute(): void {
+    this.seMuted.update((muted) => !muted);
+    this.sePlayer.setMuted(this.seMuted());
+  }
+
+  changeSeVolume(value: number): void {
+    this.seVolume.set(value);
+    this.sePlayer.setVolume(value / 100);
   }
 
   setShortcut(index: number, id: string): void {

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, map, tap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
@@ -15,12 +15,17 @@ import {
   RpgMapInput,
   RpgPointShopItem,
   RpgSave,
-  RpgSaveInput
+  RpgSaveInput,
+  RpgSe,
+  RpgSeSlot
 } from '../models/rpg.models';
 
 // BGMの音楽ファイルの大きさの上限(APIと合わせる)
 export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
 export const RPG_BGM_ACCEPT = '.mp3,.ogg,.m4a,.wav';
+
+// 効果音のファイルの大きさの上限(APIと合わせる。front#278)
+export const RPG_SE_MAX_BYTES = 1024 * 1024;
 
 const LOOK_FIELDS = `hair hairColor skin eyes eyeColor mouth clothes clothesColor accentColor`;
 
@@ -52,6 +57,8 @@ const MAP_FIELDS = `
 const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt`;
 
 const BGM_FIELDS = `id name filename size createdAt`;
+
+const SE_FIELDS = `id name filename size createdAt`;
 
 const ENEMY_FIELDS = `
   id name shape color dark size hp atk def interval speed exp gold drop dropRate sight respawn boss
@@ -102,6 +109,66 @@ export class RpgService {
 
   bgmUrl(bgm: RpgBgm): string {
     return `${environment.apiBaseUrl}/rpg-bgm/${encodeURIComponent(bgm.filename)}`;
+  }
+
+  // ===== 効果音(front#278) =====
+
+  getSes(): Observable<RpgSe[]> {
+    const query = `query GetRpgSes { rpgSes { ${SE_FIELDS} } }`;
+    return this.graphql.query<{ rpgSes: RpgSe[] }>(query).pipe(map((res) => res.rpgSes));
+  }
+
+  getSeSlots(): Observable<RpgSeSlot[]> {
+    const query = `query GetRpgSeSlots { rpgSeSlots { slot seId } }`;
+    return this.graphql.query<{ rpgSeSlots: RpgSeSlot[] }>(query).pipe(map((res) => res.rpgSeSlots));
+  }
+
+  // BGMと同じく、音のファイルはREST(multipart)でアップロードする
+  uploadSe(file: File, name: string): Observable<RpgSe> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    if (name.trim()) formData.append('name', name.trim());
+    return this.http.post<RpgSe>(`${environment.apiBaseUrl}/api/rpg-se`, formData).pipe(
+      map((se) => ({ ...se, id: String(se.id) })),
+      catchError((err: HttpErrorResponse) =>
+        throwError(() => new Error(err.error?.message ?? (err.status === 413 ? '効果音は1つ 1MB までのファイルにしてください' : '効果音の登録に失敗しました')))
+      )
+    );
+  }
+
+  renameSe(id: string, name: string): Observable<RpgSe> {
+    const mutation = `mutation RenameRpgSe($id: ID!, $name: String!) { renameRpgSe(id: $id, name: $name) { ${SE_FIELDS} } }`;
+    return this.graphql.mutation<{ renameRpgSe: RpgSe }>(mutation, { id, name }).pipe(map((res) => res.renameRpgSe));
+  }
+
+  deleteSe(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgSe($id: ID!) { deleteRpgSe(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgSe: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgSe));
+  }
+
+  /** 場面に鳴らす効果音を選ぶ(seId が null なら音なし)。選んだあとの場面の一覧を返す */
+  setSeSlot(slot: string, seId: string | null): Observable<RpgSeSlot[]> {
+    const mutation = `mutation SetRpgSeSlot($slot: String!, $seId: ID) { setRpgSeSlot(slot: $slot, seId: $seId) { slot seId } }`;
+    return this.graphql.mutation<{ setRpgSeSlot: RpgSeSlot[] }>(mutation, { slot, seId }).pipe(map((res) => res.setRpgSeSlot));
+  }
+
+  seUrl(se: RpgSe): string {
+    return `${environment.apiBaseUrl}/rpg-se/${encodeURIComponent(se.filename)}`;
+  }
+
+  /** 場面ごとの音のファイルの URL(ゲームで鳴らす)。読めなければ、どの場面も音なし */
+  getSeSounds(): Observable<Map<string, string>> {
+    return forkJoin({ ses: this.getSes(), slots: this.getSeSlots() }).pipe(
+      map(({ ses, slots }) => {
+        const urls = new Map<string, string>();
+        for (const s of slots) {
+          const se = ses.find((x) => String(x.id) === String(s.seId));
+          if (se) urls.set(s.slot, this.seUrl(se));
+        }
+        return urls;
+      }),
+      catchError(() => of(new Map<string, string>()))
+    );
   }
 
   // ===== 敵(front#229) =====

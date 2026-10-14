@@ -53,7 +53,21 @@
               (input)="changeVolume(+$any($event.target).value)"
             />
           </div>
-          <h2 class="shortcut-title">ショートカット</h2>
+          <h2 class="sub-title">効果音</h2>
+          <div class="volume-row">
+            <button type="button" class="mute" [attr.aria-label]="seMuted() ? '効果音を鳴らす' : '効果音を鳴らさない'" (click)="toggleSeMute()">
+              {{ seMuted() ? '🔇' : '🔊' }}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              aria-label="効果音のボリューム"
+              [value]="seVolume()"
+              (input)="changeSeVolume(+$any($event.target).value)"
+            />
+          </div>
+          <h2 class="sub-title">ショートカット</h2>
           @for (id of shortcuts(); track $index) {
             <div class="shortcut-row">
               <span class="key">{{ $index + 1 }}</span>
