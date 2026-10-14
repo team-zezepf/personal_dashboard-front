@@ -235,6 +235,22 @@ export interface RpgEnemy {
 // id が null なら新しい敵として追加する
 export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
 
+// RPGの効果音(front#278 / api#127)。音のファイルは /rpg-se/{filename} で配られる
+export interface RpgSe {
+  id: string;
+  name: string;
+  filename: string;
+  // ファイルの大きさ(バイト)
+  size: number;
+  createdAt: string;
+}
+
+// 効果音を鳴らす場面(hit_enemy・hit_object・attack_{敵の攻撃の種類})と、選んだ効果音
+export interface RpgSeSlot {
+  slot: string;
+  seId: string;
+}
+
 // RPGのBGM(front#218 / api#83)。音楽ファイルは /rpg-bgm/{filename} で配られる
 export interface RpgBgm {
   id: string;

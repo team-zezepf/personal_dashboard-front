@@ -1,0 +1,85 @@
+<section class="se-card" aria-label="効果音の一覧">
+  <h2>効果音</h2>
+  <p class="muted small">敵・置物を叩いたときと、敵の攻撃に鳴らす短い音を登録します。</p>
+  <div
+    class="drop"
+    [class.over]="dragOver()"
+    (dragover)="$event.preventDefault(); dragOver.set(true)"
+    (dragleave)="dragOver.set(false)"
+    (drop)="onDrop($event)"
+  >
+    <div class="drop-icon">🔔</div>
+    <label class="field">
+      <span>効果音の名前（空ならファイル名）</span>
+      <input type="text" maxlength="40" [(ngModel)]="uploadName" placeholder="例：剣で斬る" />
+    </label>
+    <div>
+      ここに音のファイルをドラッグするか、
+      <label class="btn small file-button">
+        {{ uploading() ? '登録中…' : 'ファイルを選ぶ' }}
+        <input type="file" aria-label="効果音のファイル" [accept]="accept" [disabled]="uploading()" (change)="onFileSelected($event)" />
+      </label>
+    </div>
+    <small>mp3・ogg・m4a・wav、1つ 1MB まで。著作権の決まりを守って使える音（フリー素材など）にしてください。</small>
+  </div>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  @for (se of ses(); track se.id) {
+    <div class="sound">
+      <button type="button" class="play" [attr.aria-label]="'鳴らす ' + se.name" (click)="play(se)">▶</button>
+      <div class="sound-info">
+        @if (renamingId() === se.id) {
+          <input type="text" maxlength="40" [(ngModel)]="renameText" aria-label="効果音の名前" (keydown.enter)="rename(se)" />
+        } @else {
+          <div class="sound-name">
+            {{ se.name }}
+            @for (label of usage().get(se.id) ?? []; track label) {
+              <span class="used">{{ label }}</span>
+            }
+          </div>
+        }
+        <div class="muted small">{{ formatSize(se.size) }}</div>
+      </div>
+      @if (renamingId() === se.id) {
+        <button type="button" class="btn small primary" (click)="rename(se)">決める</button>
+        <button type="button" class="btn small" (click)="renamingId.set(null)">やめる</button>
+      } @else {
+        <button type="button" class="btn small" (click)="startRename(se)">名前を変える</button>
+        <button type="button" class="btn small danger" (click)="remove(se)">消す</button>
+      }
+    </div>
+  } @empty {
+    <p class="muted small">まだ効果音がありません。</p>
+  }
+</section>
+
+<section class="se-card" aria-label="効果音を鳴らす場面">
+  <h2>鳴らす場面</h2>
+  <p class="muted small">場面ごとに鳴らす効果音を選びます（選ぶとすぐ保存します）。選ばなかった場面では音は鳴りません。</p>
+  <table class="slot-table">
+    <tbody>
+      @for (def of slotDefs; track def.slot; let i = $index) {
+        @if (i === 0 || (def.attack && !slotDefs[i - 1].attack)) {
+          <tr class="group">
+            <th colspan="3">{{ def.attack ? '敵の攻撃（攻撃の種類ごと）' : '叩いたとき' }}</th>
+          </tr>
+        }
+        <tr>
+          <td class="slot-label">{{ def.label }}</td>
+          <td>
+            <select [attr.aria-label]="def.label + 'の効果音'" [ngModel]="slots().get(def.slot) ?? ''" (ngModelChange)="setSlot(def.slot, $event)">
+              <option value="">（鳴らさない）</option>
+              @for (se of ses(); track se.id) {
+                <option [value]="se.id">{{ se.name }}</option>
+              }
+            </select>
+          </td>
+          <td class="slot-play">
+            <button type="button" class="play small" [disabled]="!seOf(def.slot)" [attr.aria-label]="'鳴らす ' + def.label" (click)="play(seOf(def.slot))">▶</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

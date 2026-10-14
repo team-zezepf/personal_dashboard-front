@@ -168,6 +168,48 @@ test(
 );
 
 test(
+  'E2E-15 RPGの設定(歯車)で効果音を鳴らさないようにし、音量を変えると、画面を開き直しても残っている',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'この端末のブラウザに覚えた効果音の設定を消してある'],
+    expected: [
+      '歯車(設定)に、BGM とは別に「効果音」の「効果音を鳴らさない」ボタンとボリュームがある(はじめは 80)',
+      '「効果音を鳴らさない」を押すと「効果音を鳴らす」に変わり、ボリュームを 30 にできる。BGM のボタンは「音を消す」のまま',
+      '画面を読み込み直しても、効果音は鳴らさないまま・ボリュームは 30 のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    const settings = page.getByRole('dialog', { name: '設定' });
+    const volume = settings.getByRole('slider', { name: '効果音のボリューム' });
+
+    await step('RPG(/rpg)を開き、歯車(設定)を押す', '「効果音を鳴らさない」ボタンと、80 のボリュームがある', async () => {
+      await page.goto('/rpg');
+      await page.evaluate(() => localStorage.removeItem('rpgSeSettings'));
+      await page.reload();
+      await page.getByRole('button', { name: '設定' }).click();
+      await expect(settings.getByRole('button', { name: '効果音を鳴らさない' })).toBeVisible();
+      await expect(volume).toHaveValue('80');
+    });
+
+    await step('「効果音を鳴らさない」を押し、ボリュームを 30 にする', '「効果音を鳴らす」に変わる。BGM のボタンは「音を消す」のまま', async () => {
+      await settings.getByRole('button', { name: '効果音を鳴らさない' }).click();
+      await volume.fill('30');
+      await expect(settings.getByRole('button', { name: '効果音を鳴らす' })).toBeVisible();
+      await expect(settings.getByRole('button', { name: '音を消す', exact: true })).toBeVisible();
+    });
+
+    await step('画面を読み込み直して、歯車(設定)を押す', '効果音は鳴らさないまま・ボリュームは 30 のまま', async () => {
+      await page.reload();
+      await page.getByRole('button', { name: '設定' }).click();
+      await expect(settings.getByRole('button', { name: '効果音を鳴らす' })).toBeVisible();
+      await expect(volume).toHaveValue('30');
+      await page.evaluate(() => localStorage.removeItem('rpgSeSettings'));
+    });
+  }
+);
+
+test(
   'E2E-14 RPGで、フィールドに落ちたアイテムをクリックすると、歩いて拾い、持ち物に入る',
   caseOf({
     precondition: [

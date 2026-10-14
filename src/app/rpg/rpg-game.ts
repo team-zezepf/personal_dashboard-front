@@ -173,6 +173,8 @@ export interface RpgGameEvents {
   captureScreen(): CanvasImageSource | null;
   // たおれた(true)/村に戻った(false)
   knockedOut(on: boolean): void;
+  // 効果音を鳴らす場面(front#278。hit_enemy・hit_object・attack_{敵の攻撃の種類})
+  sound?(slot: string): void;
 }
 
 const ATTACK_RANGE = 1.35;
@@ -694,6 +696,7 @@ export class RpgGame {
     if (crit) dmg = Math.round(dmg * 1.6);
     e.hp -= dmg;
     e.flash = 0.12;
+    this.events.sound?.('hit_enemy');
     if (!e.aggro) {
       e.aggro = true;
       e.atkCd = 0.6;
@@ -711,6 +714,7 @@ export class RpgGame {
     p.lunge = 1;
     o.hits = (o.hits ?? 0) + 1;
     o.shake = 1;
+    this.events.sound?.('hit_object');
     if (o.hits >= (BREAK_HITS[o.type] ?? 1)) this.breakObject(o);
   }
 
@@ -1159,6 +1163,8 @@ export class RpgGame {
     }
     if (!a.hit && a.t >= hitAt) {
       a.hit = true;
+      // 当たる瞬間に鳴らす(よけられたときも)(front#278)
+      this.events.sound?.(`attack_${def.attack}`);
       if (!p.dead && this.actHits(e, def, a)) {
         const melee = def.attack === 'tackle' || def.attack === 'claw' || def.attack === 'bite';
         this.enemyAttack(e, melee && !movesToTarget(def));

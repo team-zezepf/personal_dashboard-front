@@ -15,7 +15,7 @@
     <div class="toolbar">
       <div class="page-tabs" role="tablist">
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
       </div>
       @if (page() !== 'enemy') {
@@ -160,6 +160,9 @@
             </tbody>
           </table>
         </section>
+
+        <!-- 効果音(front#278) -->
+        <app-rpg-se-section />
       </div>
     }
 

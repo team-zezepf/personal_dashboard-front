@@ -21,6 +21,7 @@ import { RpgRenderer, shade } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
+import { RpgSeSectionComponent } from './rpg-se-section/rpg-se-section.component';
 import { setEnemies } from '../../rpg/rpg-enemy';
 import {
   EditorTool,
@@ -67,7 +68,7 @@ export interface LayoutCell {
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent],
+  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent, RpgSeSectionComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })

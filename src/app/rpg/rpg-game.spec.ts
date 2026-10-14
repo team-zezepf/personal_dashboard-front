@@ -6,12 +6,13 @@ import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
 const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
-function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; captured: number } {
+function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; captured: number; sounds: string[] } {
   const result = {
     messages: [] as string[],
     dirtyCount: 0,
     entered: [] as string[],
     captured: 0,
+    sounds: [] as string[],
     log: (message: string) => result.messages.push(message),
     statsChanged: () => undefined,
     inventoryChanged: () => undefined,
@@ -23,7 +24,8 @@ function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; ent
       result.captured++;
       return null;
     },
-    knockedOut: () => undefined
+    knockedOut: () => undefined,
+    sound: (slot: string) => result.sounds.push(slot)
   };
   return result;
 }
@@ -599,6 +601,13 @@ describe('RpgGame', () => {
       }
     });
 
+    it('敵の攻撃が当たる瞬間に、攻撃の種類の効果音を鳴らす知らせを出す(よけても出す)(front#278)', () => {
+      setup(test({ attack: 'fire', range: 5 }), [2, 7], [6, 7]);
+      run(1.6);
+      expect(ev.sounds.filter((s) => s.startsWith('attack_'))).toContain('attack_fire');
+      expect(ev.sounds.every((s) => s === 'attack_fire')).toBe(true);
+    });
+
     it('炎は離れたところから攻撃し、攻撃を始めたマスにいると当たる', () => {
       setup(test({ attack: 'fire', range: 5 }), [2, 7], [6, 7]);
       const hp = game.player.hp;
@@ -698,6 +707,18 @@ describe('RpgGame', () => {
     }
 
     const staticAt = (x: number, y: number) => game.map.statics.find((o) => o.x === x && o.y === y)!;
+
+    it('壊れる置物・敵を叩くと、それぞれの効果音を鳴らす知らせを出す(front#278)', () => {
+      setup([{ type: 'rock', x: 6, y: 5, torch: false }]);
+      game.player.target = staticAt(6, 5);
+      game.update(0.05);
+      expect(ev.sounds).toEqual(['hit_object']);
+
+      game.loadMap(map('field', { enemies: [{ type: 'golem', x: 6, y: 5 }] }));
+      Object.assign(game.player, { x: 5, y: 5, path: [], target: game.enemies[0], atkCd: 0 });
+      game.update(0.05);
+      expect(ev.sounds).toEqual(['hit_object', 'hit_enemy']);
+    });
 
     it('草むら・シダ・水晶・岩だけを狙え、決まった回数叩くと壊れて、そのマスを通れる', () => {
       setup([{ type: 'rock', x: 6, y: 5, torch: false }, { type: 'tree', x: 5, y: 6, torch: false }]);
