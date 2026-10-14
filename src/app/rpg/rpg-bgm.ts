@@ -42,7 +42,8 @@ function saveBgmSettings(storage: Pick<Storage, 'setItem'> | null, settings: Bgm
   }
 }
 
-function browserStorage(): Storage | null {
+// この端末のブラウザの保存先(使えなければ null)。ショートカット(front#272)の設定でも使う
+export function browserStorage(): Storage | null {
   try {
     return window.localStorage;
   } catch {

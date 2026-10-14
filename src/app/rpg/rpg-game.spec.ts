@@ -217,6 +217,22 @@ describe('RpgGame', () => {
       expect(game.player.inv['potion']).toBe(1);
     });
 
+    it('ショートカットキーの道具を使う。持っていなければログで知らせ、使う道具でなければ何もしない(front#272)', () => {
+      game.player.hp = 10;
+      game.useShortcut('hipotion');
+      expect(ev.messages.at(-1)).toBe('上回復薬を持っていない');
+      expect(game.player.hp).toBe(10);
+
+      game.useShortcut('potion');
+      expect(game.player.hp).toBe(45);
+      expect(game.player.inv['potion']).toBe(1);
+
+      const count = ev.messages.length;
+      game.useShortcut('copper_sword');
+      game.useShortcut('unknown');
+      expect(ev.messages.length).toBe(count);
+    });
+
     it('装備を付け替えると攻撃力が変わる', () => {
       const before = game.atk();
       game.equip('wood_sword');
