@@ -362,39 +362,6 @@ textarea {
   line-height: 1.5;
 }
 
-/* いまの道具(front#290) */
-.current-tool {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--indigo);
-  background: var(--indigo-soft);
-  border-radius: 10px;
-  padding: 6px 9px;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.current-tool.none {
-  border-color: var(--line);
-  background: var(--surface);
-}
-
-.current-icon {
-  font-size: 20px;
-  width: 24px;
-  text-align: center;
-}
-
-.current-name {
-  font-weight: 700;
-}
-
-.current-sub {
-  font-size: 10.5px;
-  color: var(--muted);
-}
-
 /* 「このマップで使用中」「すべて」の見出し(front#290) */
 .item-group {
   display: flex;

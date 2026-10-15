@@ -184,22 +184,6 @@
           }
         </div>
         <div class="palette-body">
-          <!-- いまの道具(front#290)。選んでいる物をもう一度押すと選択が外れ、「選ぶ・動かす」に戻る -->
-          <div class="current-tool" [class.none]="tool().tool.kind === 'select'" aria-label="いまの道具">
-            @if (tool().tool.kind === 'select') {
-              <span class="current-icon">👆</span>
-              <div>
-                <div class="current-name">選ぶ・動かす</div>
-                <div class="current-sub">置いてある物をクリックで選べます</div>
-              </div>
-            } @else {
-              <span class="current-icon">{{ tool().icon ?? (tool().tool.kind === 'enemy' ? '👾' : '🖌️') }}</span>
-              <div>
-                <div class="current-name">いまの道具：{{ itemLabel(tool()) }}</div>
-                <div class="current-sub">もう一度押すと選択が外れます</div>
-              </div>
-            }
-          </div>
           <p class="hint">{{ tabHint() }}</p>
           @if (usedItems().length) {
             <div class="item-group">このマップで使用中</div>
