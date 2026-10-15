@@ -59,6 +59,7 @@
 
 .list-head {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 10px;
   border-bottom: 1px solid var(--line);
@@ -66,6 +67,182 @@
 
 .list-head .btn {
   flex: 1;
+}
+
+/* CSV の書き出し・取り込み(front#297) */
+.list-head .csv {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.list-head .csv .btn {
+  min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.small {
+  font-size: 11.5px;
+}
+
+.csv-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+}
+
+.csv-card {
+  width: min(760px, 100%);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.csv-head {
+  padding: 16px 20px 8px;
+}
+
+.csv-head h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.csv-summary {
+  display: flex;
+  gap: 8px;
+  padding: 8px 20px 12px;
+}
+
+.chip {
+  flex: 1;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: var(--surface);
+}
+
+.chip b {
+  display: block;
+  font-size: 18px;
+}
+
+.chip.change {
+  background: var(--indigo-soft);
+}
+
+.chip.add {
+  background: var(--green-soft);
+  color: var(--green-text);
+}
+
+.chip.err {
+  background: var(--red-soft);
+  color: var(--red-text);
+}
+
+.csv-body {
+  padding: 0 20px 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.csv-group {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 12px 0 6px;
+}
+
+.csv-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.csv-item.add {
+  background: var(--green-soft);
+}
+
+.csv-item.err {
+  background: var(--red-soft);
+}
+
+.csv-title {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.csv-line {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.csv-msg {
+  color: var(--red-text);
+  margin-top: 4px;
+}
+
+.csv-diff {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 2px 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.csv-diff .k,
+.csv-diff .old {
+  color: var(--muted);
+}
+
+.csv-diff .old {
+  text-decoration: line-through;
+}
+
+.csv-diff .arrow {
+  margin: 0 4px;
+  color: var(--muted);
+}
+
+.csv-diff .new {
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+.csv-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.csv-note {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.csv-note.ng {
+  color: var(--red-text);
+  font-weight: 700;
 }
 
 .list-body {

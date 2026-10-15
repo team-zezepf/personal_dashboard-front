@@ -27,6 +27,7 @@ import {
   shapeMaterialOf,
   thumbFitOf
 } from '../../../rpg/rpg-enemy';
+import { CsvImport, decodeCsv, enemiesToCsv, readEnemyCsv } from '../../../rpg/rpg-enemy-csv';
 
 type NumberKey = 'size' | 'hp' | 'atk' | 'def' | 'interval' | 'speed' | 'exp' | 'gold' | 'sight' | 'respawn' | 'dash' | 'charge' | 'range' | 'radius';
 
@@ -84,6 +85,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly saving = signal(false);
   readonly message = signal('');
   readonly dir = signal(1);
+  // CSV の取り込みの確認(front#297)。反映するまで画面の敵は変えない
+  readonly csvImport = signal<CsvImport | null>(null);
+  readonly csvFileName = signal('');
 
   readonly selected = computed(() => this.rows().find((r) => r.def.id === this.selectedId()) ?? null);
   readonly isDirty = computed(() => this.dirtyIds().size > 0);
@@ -314,6 +318,49 @@ export class RpgEnemyPageComponent implements OnDestroy {
         this.flash(err.message || '保存に失敗しました');
       }
     });
+  }
+
+  // ===== CSV の書き出し・取り込み(front#297) =====
+
+  /** 画面の敵(保存していない変更も含む)を CSV でダウンロードする */
+  exportCsv(): void {
+    const csv = enemiesToCsv(this.rows());
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rpg-enemies-${stamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** 選んだ CSV を読み、今の敵との違いを確認の画面に出す */
+  async importCsv(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.rows().length) return;
+    const text = decodeCsv(await file.arrayBuffer());
+    this.csvFileName.set(file.name);
+    this.csvImport.set(readEnemyCsv(text, this.rows().map((r) => r.def), this.rows()[0].def));
+  }
+
+  cancelImport(): void {
+    this.csvImport.set(null);
+  }
+
+  /** 確認した違いを画面の敵に反映する(保存は「敵を保存する」で行う) */
+  applyImport(): void {
+    const result = this.csvImport();
+    if (!result || result.errors.length) return;
+    const changed = new Map(result.changes.map((c) => [c.id, c.def]));
+    const added = result.additions.map((a) => ({ def: { ...a.def, id: `new-${++this.newCount}` } as EnemyDef, isNew: true }));
+    this.rows.update((rows) => [...rows.map((r) => (changed.has(r.def.id) ? { ...r, def: changed.get(r.def.id)! } : r)), ...added]);
+    for (const id of [...changed.keys(), ...added.map((a) => a.def.id)]) this.markDirty(id);
+    this.csvImport.set(null);
+    this.restartAttack();
+    this.flash(`CSV を反映しました（変わる敵 ${changed.size}・増える敵 ${added.length}）。「敵を保存する」で保存してください`);
   }
 
   // 保存してある敵(新しい敵・保存していない変更は含めない)を、ゲームの敵の種類にする

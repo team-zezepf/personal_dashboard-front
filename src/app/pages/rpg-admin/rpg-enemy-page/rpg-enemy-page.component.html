@@ -3,6 +3,12 @@
     <div class="list-head">
       <button type="button" class="btn small" (click)="add()">＋ 新しい敵</button>
       <button type="button" class="btn small" [disabled]="!selected()" (click)="copy()">⧉ 複製</button>
+      <!-- CSV の書き出し・取り込み(front#297) -->
+      <div class="csv">
+        <button type="button" class="btn small" title="全部の敵を CSV でダウンロードします" (click)="exportCsv()">⬇ CSV 書き出し</button>
+        <button type="button" class="btn small" title="CSV を選ぶと、違いを確認してから反映します" (click)="csvFile.click()">⬆ CSV 取り込み</button>
+        <input #csvFile type="file" accept=".csv,text/csv" hidden aria-label="取り込む CSV" (change)="importCsv($event)" />
+      </div>
     </div>
     <div class="list-body">
       @for (row of rows(); track row.def.id) {
@@ -221,3 +227,73 @@
     }
   </aside>
 </div>
+
+<!-- CSV の取り込みの確認(front#297) -->
+@if (csvImport(); as result) {
+  <div class="csv-modal">
+    <div class="csv-card" role="dialog" aria-label="CSV の取り込みの確認">
+      <div class="csv-head">
+        <h2>CSV の取り込みの確認</h2>
+        <div class="muted small">{{ csvFileName() }}（{{ result.rowCount }} 行）</div>
+      </div>
+      <div class="csv-summary">
+        <div class="chip change"><b>{{ result.changes.length }}</b>変わる敵</div>
+        <div class="chip add"><b>{{ result.additions.length }}</b>新しく増える敵</div>
+        <div class="chip"><b>{{ result.unchanged }}</b>変わらない敵</div>
+        <div class="chip" [class.err]="result.errors.length"><b>{{ result.errors.length }}</b>エラーのある行</div>
+      </div>
+      <div class="csv-body">
+        @if (result.errors.length) {
+          <div class="csv-group">エラーのある行（直してから取り込み直してください）</div>
+          @for (e of result.errors; track $index) {
+            <div class="csv-item err">
+              <div class="csv-title">{{ e.name }}<span class="csv-line">{{ e.line ? e.line + ' 行目' : '' }}{{ e.column ? '・「' + e.column + '」の列' : '' }}</span></div>
+              <div class="csv-msg">{{ e.message }}</div>
+              @if (e.allowed) {
+                <div class="muted small">使える値：{{ e.allowed }}</div>
+              }
+            </div>
+          }
+        }
+        @if (result.changes.length) {
+          <div class="csv-group">変わる敵（変わる項目だけ）</div>
+          @for (c of result.changes; track c.id) {
+            <div class="csv-item">
+              <div class="csv-title">{{ c.name }}<span class="csv-line">{{ c.line }} 行目</span></div>
+              <div class="csv-diff">
+                @for (d of c.diffs; track d.label) {
+                  <span class="k">{{ d.label }}</span>
+                  <span><span class="old">{{ d.before || '（空）' }}</span><span class="arrow">→</span><span class="new">{{ d.after || '（空）' }}</span></span>
+                }
+              </div>
+            </div>
+          }
+        }
+        @if (result.additions.length) {
+          <div class="csv-group">新しく増える敵</div>
+          @for (a of result.additions; track a.line) {
+            <div class="csv-item add">
+              <div class="csv-title">🆕 {{ a.def.name }}<span class="csv-line">{{ a.line }} 行目</span></div>
+              <div class="csv-diff">
+                <span class="k">HP・攻撃・防御</span><span>{{ a.def.hp }}・{{ a.def.atk }}・{{ a.def.def }}</span>
+                <span class="k">落とす物</span><span class="muted">なし（反映したあと、画面で設定してください）</span>
+              </div>
+            </div>
+          }
+        }
+        @if (!result.errors.length && !result.changes.length && !result.additions.length) {
+          <p class="muted">今の敵と違うところはありません。</p>
+        }
+      </div>
+      <div class="csv-foot">
+        @if (result.errors.length) {
+          <span class="csv-note ng">エラーのある行があるため、反映できません。CSV を直して、もう一度取り込んでください。</span>
+        } @else {
+          <span class="csv-note">「反映する」を押すと画面の敵が書き換わります。まだ保存はされないので、プレビューで確かめてから「敵を保存する」を押してください。CSV にない敵は消えません。落とすアイテム・素材は変わりません。</span>
+        }
+        <button type="button" class="btn" (click)="cancelImport()">やめる</button>
+        <button type="button" class="btn primary" [disabled]="result.errors.length > 0 || (!result.changes.length && !result.additions.length)" (click)="applyImport()">反映する</button>
+      </div>
+    </div>
+  </div>
+}
