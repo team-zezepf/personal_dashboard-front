@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -181,6 +181,12 @@ describe('RpgGame', () => {
       expect(walkSpeedOf(game.player.stats)).toBe(3);
       game.allocate({ spd: 3 });
       expect(walkSpeedOf(game.player.stats)).toBeGreaterThan(3);
+    });
+
+    it('攻撃の間隔は速さ0で1.10秒、速さ99で0.325秒になり、それより振っても変わらない(front#286)', () => {
+      expect(attackIntervalOf(ZERO_STATS)).toBeCloseTo(1.1, 5);
+      expect(attackIntervalOf({ ...ZERO_STATS, spd: 99 })).toBeCloseTo(0.325, 5);
+      expect(attackIntervalOf({ ...ZERO_STATS, spd: 150 })).toBeCloseTo(0.325, 5);
     });
   });
 
