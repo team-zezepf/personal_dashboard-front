@@ -36,6 +36,8 @@ interface EnemyRow {
   def: EnemyDef;
   // まだ保存していない新しい敵(ID は仮のもの)
   isNew: boolean;
+  // 保存してある並び順(新しい敵にはない)。一覧の位置と違えば、保存するときに並び順も送る(front#299)
+  sortOrder?: number;
 }
 
 const LIMIT_OF: Record<NumberKey, readonly [number, number]> = {
@@ -88,6 +90,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
   // CSV の取り込みの確認(front#297)。反映するまで画面の敵は変えない
   readonly csvImport = signal<CsvImport | null>(null);
   readonly csvFileName = signal('');
+  // ドラッグで並び替え(front#299)。つかんでいる敵と、落とす位置(その敵の前か後ろ)
+  readonly dragId = signal<string | null>(null);
+  readonly dropAt = signal<{ id: string; after: boolean } | null>(null);
 
   readonly selected = computed(() => this.rows().find((r) => r.def.id === this.selectedId()) ?? null);
   readonly isDirty = computed(() => this.dirtyIds().size > 0);
@@ -116,7 +121,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   constructor() {
     afterNextRender(() => {
-      this.rows.set(this.enemies().map((e) => ({ def: toDef(e), isNew: false })));
+      this.rows.set(this.enemies().map((e) => ({ def: toDef(e), isNew: false, sortOrder: e.sortOrder })));
       this.selectedId.set(this.rows()[0]?.def.id ?? null);
       this.loop();
     });
@@ -284,16 +289,67 @@ export class RpgEnemyPageComponent implements OnDestroy {
     this.select(this.rows()[Math.max(0, index - 1)]?.def.id ?? '');
   }
 
-  /** 変えた敵をまとめて保存する */
+  // ===== ドラッグで並び替え(front#299) =====
+
+  onDragStart(id: string, event: DragEvent): void {
+    this.dragId.set(id);
+    event.dataTransfer?.setData('text/plain', id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onDragOver(id: string, event: DragEvent): void {
+    if (!this.dragId()) return;
+    event.preventDefault();
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const after = event.clientY > rect.top + rect.height / 2;
+    const cur = this.dropAt();
+    if (cur?.id !== id || cur.after !== after) this.dropAt.set({ id, after });
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    const from = this.dragId();
+    const to = this.dropAt();
+    if (from && to) this.moveRow(from, to.id, to.after);
+    this.onDragEnd();
+  }
+
+  onDragEnd(): void {
+    this.dragId.set(null);
+    this.dropAt.set(null);
+  }
+
+  /** 敵 id を、敵 targetId の前(after なら後ろ)へ動かす。位置が変わった敵に「保存していない変更」の印を付ける */
+  moveRow(id: string, targetId: string, after: boolean): void {
+    if (id === targetId) return;
+    const rows = this.rows();
+    const moving = rows.find((r) => r.def.id === id);
+    const target = rows.find((r) => r.def.id === targetId);
+    if (!moving || !target) return;
+    const next = moveItem(rows, moving, target, after);
+    if (next.every((r, i) => r === rows[i])) return;
+    this.rows.set(next);
+    for (const id of this.orderChangedIds()) this.markDirty(id);
+  }
+
+  // 保存してある並び順と、一覧の位置(1 から)が違う敵
+  private orderChangedIds(): string[] {
+    return this.rows().filter((r, i) => !r.isNew && r.sortOrder !== i + 1).map((r) => r.def.id);
+  }
+
+  /** 変えた敵をまとめて保存する。並び順は一覧の位置(1 から)にそろえて送る */
   save(): void {
-    const targets = this.rows().filter((r) => this.dirtyIds().has(r.def.id));
+    const orderChanged = new Set(this.orderChangedIds());
+    const targets = this.rows().filter((r) => this.dirtyIds().has(r.def.id) || orderChanged.has(r.def.id));
     if (!targets.length || this.saving()) return;
     if (targets.some((r) => !r.def.name.trim())) {
       this.flash('名前が空の敵があります');
       return;
     }
     this.saving.set(true);
-    concat(...targets.map((r) => this.rpgService.saveEnemy(toInput(r)))).pipe(toArray()).subscribe({
+    const position = (r: EnemyRow) => this.rows().indexOf(r) + 1;
+    concat(...targets.map((r) => this.rpgService.saveEnemy(toInput(r, position(r))))).pipe(toArray()).subscribe({
       next: (savedList) => {
         // 新しい敵は、APIが決めたIDに置き換える
         const selected = this.selectedId();
@@ -303,7 +359,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
             const i = targets.indexOf(r);
             if (i < 0) return r;
             if (r.def.id === selected) nextSelected = savedList[i].id;
-            return { def: toDef(savedList[i]), isNew: false };
+            return { def: toDef(savedList[i]), isNew: false, sortOrder: savedList[i].sortOrder };
           })
         );
         this.selectedId.set(nextSelected);
@@ -502,14 +558,22 @@ export class RpgEnemyPageComponent implements OnDestroy {
   }
 }
 
+/** item を target の前(after なら後ろ)へ動かした新しい並びを返す(front#299) */
+export function moveItem<T>(list: T[], item: T, target: T, after: boolean): T[] {
+  if (item === target) return list;
+  const rest = list.filter((x) => x !== item);
+  const at = rest.indexOf(target) + (after ? 1 : 0);
+  return [...rest.slice(0, at), item, ...rest.slice(at)];
+}
+
 function toDef(e: RpgEnemy): EnemyDef {
   const { sortOrder: _s, updatedAt: _u, ...rest } = e;
   return rest as EnemyDef;
 }
 
-function toInput(r: EnemyRow): RpgEnemyInput {
+function toInput(r: EnemyRow, sortOrder: number): RpgEnemyInput {
   const { id, ...rest } = r.def;
-  return { ...rest, id: r.isNew ? null : id, name: rest.name.trim() };
+  return { ...rest, id: r.isNew ? null : id, name: rest.name.trim(), sortOrder };
 }
 
 // 一覧・体の形の見本(足元を下のほうに置き、大きさに合わせて縮める)
