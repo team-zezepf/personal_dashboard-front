@@ -201,7 +201,8 @@
           </div>
           <ng-template #paletteItem let-item let-count="count">
             <button type="button" class="item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
-              @if (count) {
+              <!-- 使っている数は敵だけに出す(地面・置物は並び順だけ。front#294) -->
+              @if (count && item.tool.kind === 'enemy') {
                 <span class="item-count">{{ count }}</span>
               }
               @if (item.icon) {
