@@ -184,21 +184,52 @@
           }
         </div>
         <div class="palette-body">
-          <p class="hint">{{ tabHint() }}</p>
-          <div class="items">
-            @for (item of tabItems(); track item.id) {
-              <button type="button" class="item" [class.active]="tool().id === item.id" (click)="tool.set(item)">
-                @if (item.icon) {
-                  <span class="item-icon">{{ item.icon }}</span>
-                } @else if (item.tool.kind === 'enemy') {
-                  <span class="item-dot" [style.background]="swatch(item)"></span>
-                } @else {
-                  <span class="item-swatch" [style.background]="swatch(item)"></span>
-                }
-                <span>{{ itemLabel(item) }}</span>
-              </button>
+          <!-- いまの道具(front#290)。選んでいる物をもう一度押すと選択が外れ、「選ぶ・動かす」に戻る -->
+          <div class="current-tool" [class.none]="tool().tool.kind === 'select'" aria-label="いまの道具">
+            @if (tool().tool.kind === 'select') {
+              <span class="current-icon">👆</span>
+              <div>
+                <div class="current-name">選ぶ・動かす</div>
+                <div class="current-sub">置いてある物をクリックで選べます</div>
+              </div>
+            } @else {
+              <span class="current-icon">{{ tool().icon ?? (tool().tool.kind === 'enemy' ? '👾' : '🖌️') }}</span>
+              <div>
+                <div class="current-name">いまの道具：{{ itemLabel(tool()) }}</div>
+                <div class="current-sub">もう一度押すと選択が外れます</div>
+              </div>
             }
           </div>
+          <p class="hint">{{ tabHint() }}</p>
+          @if (usedItems().length) {
+            <div class="item-group">このマップで使用中</div>
+            <div class="items used-items" aria-label="このマップで使用中">
+              @for (u of usedItems(); track u.item.id) {
+                <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: u.item, count: u.count }" />
+              }
+            </div>
+            <div class="item-group">すべて</div>
+          }
+          <div class="items">
+            @for (item of tabItems(); track item.id) {
+              <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item, count: 0 }" />
+            }
+          </div>
+          <ng-template #paletteItem let-item let-count="count">
+            <button type="button" class="item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
+              @if (count) {
+                <span class="item-count">{{ count }}</span>
+              }
+              @if (item.icon) {
+                <span class="item-icon">{{ item.icon }}</span>
+              } @else if (item.tool.kind === 'enemy') {
+                <span class="item-dot" [style.background]="swatch(item)"></span>
+              } @else {
+                <span class="item-swatch" [style.background]="swatch(item)"></span>
+              }
+              <span class="item-label">{{ itemLabel(item) }}</span>
+            </button>
+          </ng-template>
           @if (tab() === 'ground' || tab() === 'height') {
             <div class="brush">
               <span>筆の大きさ</span>
@@ -224,7 +255,14 @@
           <button type="button" class="btn small" (click)="fitView()">全体</button>
           <button type="button" class="btn small" (click)="zoomBy(1.15)" aria-label="拡大">＋</button>
         </div>
-        <div class="stage-hint">左クリック・ドラッグ：塗る／置く　右ドラッグ：画面を動かす　ホイール：拡大・縮小</div>
+        <div class="stage-hint">
+          @if (!selectsPlaced()) {
+            左クリック・ドラッグ：塗る／消す
+          } @else {
+            クリック：{{ tool().tool.kind === 'select' ? '選ぶ' : '置く／置いてある物を選ぶ' }}　ドラッグ：動かす　Delete・Backspace：消す
+          }
+          　右ドラッグ：画面を動かす　ホイール：拡大・縮小
+        </div>
         @if (hoverTile(); as t) {
           <div class="coord">x {{ t[0] }} ・ y {{ t[1] }}</div>
         }
@@ -359,6 +397,10 @@
                     <p class="muted small">強さ・落とすアイテムは、種類ごとに決まっています。</p>
                     <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
                   }
+                  @case ('object') {
+                    <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                  }
                   @case ('breakable') {
                     <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
                     <div class="field">
@@ -407,9 +449,10 @@
                     <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
                   }
                 }
+                <p class="muted small">Delete・Backspace キーでも消せます。ドラッグで動かせます。</p>
               } @else {
                 <p class="muted small">
-                  「その他」の「選ぶ・動かす」で、置いた敵・壊れる置物をクリックすると、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
+                  置いてある物をクリックすると選べます。敵・壊れる置物は、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
                 </p>
               }
             </div>

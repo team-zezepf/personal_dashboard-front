@@ -1,4 +1,5 @@
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -32,12 +33,17 @@ import {
   PALETTE,
   PaletteItem,
   RpgMapEditor,
+  SELECT_ITEM,
   Selection,
+  selectsPlaced,
   blankMap,
   blankQuest,
   cloneMap,
   toMapInput
 } from '../../rpg/rpg-editor';
+
+// パレットの上に「このマップで使用中」を出すタブ(front#290)
+const USAGE_TABS = ['ground', 'object', 'enemy'];
 
 const NO_EVENTS: RpgGameEvents = {
   log: () => undefined,
@@ -70,7 +76,7 @@ export interface LayoutCell {
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent, RpgCraftPageComponent, RpgSeSectionComponent],
+  imports: [HeaderComponent, FormsModule, NgTemplateOutlet,RpgLookEditorComponent, RpgEnemyPageComponent, RpgCraftPageComponent, RpgSeSectionComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -181,6 +187,17 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.enemies();
     return PALETTE.find((t) => t.id === this.tab())?.items ?? [];
   });
+  // このマップで使っている物を、多い順に(地面・置物・敵のタブだけ。front#290)
+  readonly usedItems = computed(() => {
+    this.version();
+    const editor = this.editor;
+    if (!editor || !USAGE_TABS.includes(this.tab())) return [];
+    return this.tabItems()
+      .map((item) => ({ item, count: editor.countOf(item.tool) }))
+      .filter((u) => u.count > 0)
+      .sort((a, b) => b.count - a.count);
+  });
+  readonly selectsPlaced = computed(() => selectsPlaced(this.tool().tool));
   readonly isDirty = computed(() => this.dirtyIds().size > 0 || this.dirtyDungeonIds().size > 0);
   readonly canUndo = computed(() => {
     this.version();
@@ -415,6 +432,13 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.tool.set(PALETTE.find((t) => t.id === id)!.items[0]);
   }
 
+  /** パレットの物を押す。選んでいる物をもう一度押すと選択を外し、「選ぶ・動かす」に戻す(front#290) */
+  pickTool(item: PaletteItem): void {
+    const cur = this.tool();
+    const same = cur.id === item.id && cur.tool.kind === item.tool.kind;
+    this.tool.set(same ? SELECT_ITEM : item);
+  }
+
   itemLabel(item: PaletteItem): string {
     return item.tool.kind === 'ground' && item.tool.ground === 'w' ? this.currentTheme().liquidName : item.label;
   }
@@ -453,8 +477,9 @@ export class RpgAdminPageComponent implements OnDestroy {
     }
     const [x, y] = game.screenToTile(event.offsetX, event.offsetY);
     const tool = this.tool().tool;
-    if (tool.kind === 'select') {
-      const hit = editor.entityAt(x, y);
+    // 置いてある物をクリックしたら、置かずにその物を選ぶ。そのままドラッグすると動かす(front#290)
+    const hit = selectsPlaced(tool) ? editor.entityAt(x, y) : null;
+    if (hit || tool.kind === 'select') {
       this.selection.set(hit);
       if (hit) {
         editor.checkpoint();
@@ -537,7 +562,9 @@ export class RpgAdminPageComponent implements OnDestroy {
     } else if (event.ctrlKey && event.key === 'y') {
       event.preventDefault();
       this.redo();
-    } else if (event.key === 'Delete' && this.selection()) {
+    } else if ((event.key === 'Delete' || event.key === 'Backspace') && this.selection() && !this.npcModal() && !this.houseModal()) {
+      // 選んでいる物を消す(Backspace も。front#290)
+      event.preventDefault();
       this.deleteSelected();
     }
   }

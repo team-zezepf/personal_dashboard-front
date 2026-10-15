@@ -57,7 +57,7 @@ export const PALETTE: PaletteTab[] = [
     ]
   },
   {
-    id: 'object', label: '置物', hint: '木・岩・家などを置きます。置物のマスは通れません。家は置いたあと、形・向き・屋根の色を選べます。',
+    id: 'object', label: '置物', hint: '木・岩・家などを置きます。置物のマスは通れません。家は置いたあと、形・向き・屋根の色を選べます。置いてある物をクリックすると選べます。',
     items: [
       { id: 'tree', label: '木', icon: '🌳', tool: { kind: 'object', type: 'tree' } },
       { id: 'rock', label: '岩', icon: '🪨', tool: { kind: 'object', type: 'rock' } },
@@ -89,7 +89,7 @@ export const PALETTE: PaletteTab[] = [
     ]
   },
   {
-    id: 'enemy', label: '敵', hint: '敵が出てくる場所を置きます。敵はこの場所のまわりを歩き回ります。敵の見た目・強さは「👾 敵」タブで作れます。',
+    id: 'enemy', label: '敵', hint: '空いているマスをクリックすると、敵が出てくる場所を1つ置きます。敵はこの場所のまわりを歩き回ります。敵の見た目・強さは「👾 敵」タブで作れます。',
     // 敵の種類は「敵」タブ(front#229)で増やせるため、読むたびに今の種類から作る
     get items(): PaletteItem[] {
       return Object.entries(ENEMIES).map(([type, e]) => ({ id: type, label: e.name, tool: { kind: 'enemy', type } as EditorTool }));
@@ -100,7 +100,7 @@ export const PALETTE: PaletteTab[] = [
     items: [{ id: 'npc', label: 'NPCを置く', icon: '🧑', tool: { kind: 'npc' } }]
   },
   {
-    id: 'other', label: 'その他', hint: '「選ぶ・動かす」で、置いたNPC・家・ポータル・敵をクリックすると中身を変えられ、ドラッグで動かせます。',
+    id: 'other', label: 'その他', hint: '「選ぶ・動かす」では何も置かず、置いてある物を選んで動かします。ほかの道具を選んでいるときに、その道具をもう一度押しても「選ぶ・動かす」に戻ります。',
     items: [
       { id: 'select', label: '選ぶ・動かす', icon: '👆', tool: { kind: 'select' } },
       { id: 'start', label: '出発地点', icon: '🚩', tool: { kind: 'start' } },
@@ -108,6 +108,13 @@ export const PALETTE: PaletteTab[] = [
     ]
   }
 ];
+
+export const SELECT_ITEM = PALETTE.find((t) => t.id === 'other')!.items[0];
+
+/** 置いてある物をクリックしたとき、その物を選ぶ道具か(地面・高さ・消しゴムは、物の上でも塗る・消す)(front#290) */
+export function selectsPlaced(tool: EditorTool): boolean {
+  return tool.kind !== 'ground' && tool.kind !== 'height' && tool.kind !== 'erase';
+}
 
 export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼', smith: '鍛冶屋' };
 
@@ -127,7 +134,9 @@ export type Selection =
   | { kind: 'house'; ref: RpgMapObject }
   | { kind: 'enemy'; ref: RpgMapEnemy }
   // 壊れる置物(front#264)。中身を選べる
-  | { kind: 'breakable'; ref: RpgMapObject };
+  | { kind: 'breakable'; ref: RpgMapObject }
+  // そのほかの置物(木・岩など)。選んで動かす・消すだけ(front#290)
+  | { kind: 'object'; ref: RpgMapObject };
 
 export interface MapCheck {
   ok: boolean;
@@ -271,6 +280,7 @@ export class RpgMapEditor {
     const house = this.objectAt(x, y);
     if (house?.type === 'house') return { kind: 'house', ref: house };
     if (house && isBreakable(house.type)) return { kind: 'breakable', ref: house };
+    if (house) return { kind: 'object', ref: house };
     return null;
   }
 
@@ -282,6 +292,20 @@ export class RpgMapEditor {
     this.map.npcs = this.map.npcs.filter(keep);
     this.map.enemies = this.map.enemies.filter(keep);
     return before !== this.countAll();
+  }
+
+  /** その道具で置いた物が、このマップにいくつあるか(地面はマスの数)。パレットの「このマップで使用中」に使う(front#290) */
+  countOf(tool: EditorTool): number {
+    switch (tool.kind) {
+      case 'ground':
+        return this.map.ground.reduce((n, row) => n + row.split(tool.ground).length - 1, 0);
+      case 'object':
+        return this.map.objects.filter((o) => o.type === tool.type && !!o.torch === !!tool.torch).length;
+      case 'enemy':
+        return this.map.enemies.filter((e) => e.type === tool.type).length;
+      default:
+        return 0;
+    }
   }
 
   private countAll(): number {
@@ -372,7 +396,8 @@ export class RpgMapEditor {
         return first && isBreakable(tool.type) ? { kind: 'breakable', ref: placed } : null;
       }
       case 'enemy':
-        if (canPlace) this.map.enemies.push({ type: tool.type, x, y });
+        // 1回のクリックで1体だけ置く(ドラッグで続けて置かない。front#290)
+        if (first && canPlace) this.map.enemies.push({ type: tool.type, x, y });
         return null;
       case 'npc': {
         if (!first || !canPlace) return null;
