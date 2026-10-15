@@ -765,7 +765,8 @@ export class RpgGame {
       // 中のアイテムはフィールドに落ちる(front#276)。置物は元に戻るので、置物のマスには落とさない
       this.dropItem(c.id, c.count, o.x, o.y, true);
       o.respawnIn = BREAK_RESPAWN_SEC;
-    } else if (c?.kind === 'enemy' && ENEMIES[c.id]) {
+    } else if (c?.kind === 'enemy' && ENEMIES[c.id] && Math.random() < (c.chance ?? 1)) {
+      // 中の敵は出る確率(front#284)で出る。出なければ中身なしと同じ
       const e: Enemy = {
         kind: 'enemy', type: c.id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
         moving: false, wander: 0, repath: 0, atkCd: 0.8, flash: 0, lunge: 0, aggro: true, respawn: 0, seed: Math.random() * 6, act: null, fromObject: o

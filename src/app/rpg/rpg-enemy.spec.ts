@@ -6,10 +6,10 @@ import {
 describe('rpg-enemy', () => {
   afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
-  it('最初は15種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
+  it('最初は18種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
     expect(Object.keys(ENEMIES)).toEqual([
       'slime', 'blue', 'kinokon', 'spirit', 'raptor', 'golem', 'ghost', 'knight', 'darklord', 'nightbat', 'skeleton', 'maneater', 'reddragon',
-      'mimic', 'livingarmor'
+      'mimic', 'livingarmor', 'hornrabbit', 'mitsubachin', 'hikarislime'
     ]);
     expect(Object.values(ENEMIES).slice(0, 9).every((e) => e.attack === 'tackle' && e.dash === 1 && e.charge === 0)).toBe(true);
     expect(Object.values(ENEMIES).slice(9, 13).map((e) => e.shape)).toEqual(['bat', 'skeleton', 'plant', 'dragon']);
@@ -28,12 +28,23 @@ describe('rpg-enemy', () => {
   });
 
   it('ミミック・リビングアーマーは宝箱・甲冑にばける形で、ばけている間もばけていない間も描ける(front#270)', () => {
-    expect(ENEMY_SHAPES.slice(12)).toEqual([['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー']]);
+    expect(ENEMY_SHAPES.slice(12, 14)).toEqual([['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー']]);
     expect(Object.values(ENEMIES).map((e) => [e.id, disguiseOf(e)]).filter(([, d]) => d)).toEqual([['mimic', '宝箱'], ['livingarmor', '甲冑']]);
     expect(Object.values(ENEMIES).filter(isRooted).map((e) => e.id)).toEqual(['maneater']);
     const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
     for (const def of [ENEMIES['mimic'], ENEMIES['livingarmor']]) {
       for (const pose of [{}, { flash: true }, { aggro: true, moving: true }, { aggro: true, lunge: 0.6 }, { aggro: true, flash: true }]) {
+        expect(drawEnemyBody(c, def, { dir: -1, time: 1.3, ...pose })).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('つのウサギ・ミツバチンの形と光る敵を、どの状態でも描ける。スライムは、まれにヒカリスライムに入れかわる(front#284)', () => {
+    expect(ENEMY_SHAPES.slice(14)).toEqual([['rabbit', 'うさぎ'], ['bee', 'はち']]);
+    expect(ENEMIES['hikarislime'].glow).toBe(true);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const def of [ENEMIES['hornrabbit'], ENEMIES['mitsubachin'], ENEMIES['hikarislime']]) {
+      for (const pose of [{}, { moving: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
         expect(drawEnemyBody(c, def, { dir: -1, time: 1.3, ...pose })).toBeGreaterThan(0);
       }
     }

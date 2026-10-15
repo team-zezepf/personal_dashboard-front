@@ -68,8 +68,11 @@ describe('RpgMapEditor', () => {
     editor.map.objects[0].contents = { kind: 'item', id: 'potion', count: 2 };
     editor.map.objects[1].contents = { kind: 'enemy', id: 'slime', count: 1 };
     const saved = toMapInput(editor.map).objects;
-    expect(saved[0].contents).toEqual({ kind: 'item', id: 'potion', count: 2 });
+    expect(saved[0].contents).toEqual({ kind: 'item', id: 'potion', count: 2, chance: 1 });
     expect(saved[1].contents).toBeNull();
+    // 中の敵の出る確率(front#284)
+    editor.map.objects[0].contents = { kind: 'enemy', id: 'hikarislime', count: 1, chance: 0.001 };
+    expect(toMapInput(editor.map).objects[0].contents).toEqual({ kind: 'enemy', id: 'hikarislime', count: 1, chance: 0.001 });
   });
 
   it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {

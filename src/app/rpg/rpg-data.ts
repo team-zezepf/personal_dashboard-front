@@ -55,7 +55,10 @@ export const ITEMS: Record<string, ItemDef> = {
   poison_petal: { name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす' },
   dragon_scale: { name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす' },
   mimic_tongue: { name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす' },
-  magic_scrap: { name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす' }
+  magic_scrap: { name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす' },
+  // 草原の敵(front#284)
+  rabbit_horn: { name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす' },
+  honey: { name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす' }
 };
 
 /** 鍛冶屋の合成のレシピ(front#277)。素材とゴールドを払って、装備(result)を1つ作る */

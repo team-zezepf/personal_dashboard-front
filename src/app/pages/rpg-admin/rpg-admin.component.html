@@ -376,14 +376,21 @@
                           </label>
                         </div>
                       } @else {
-                        <label class="field">
-                          <span>敵</span>
-                          <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
-                            @for (e of enemyTypes(); track e.id) {
-                              <option [value]="e.id">{{ e.name }}</option>
-                            }
-                          </select>
-                        </label>
+                        <div class="row2">
+                          <label class="field">
+                            <span>敵</span>
+                            <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
+                              @for (e of enemyTypes(); track e.id) {
+                                <option [value]="e.id">{{ e.name }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field">
+                            <span>出る確率（%）</span>
+                            <input type="number" min="0.1" max="100" step="0.1" [ngModel]="chancePercent(c)" (focus)="beginEdit()" (ngModelChange)="c.chance = clampChance($event); edited()" />
+                          </label>
+                        </div>
+                        <p class="muted small">壊したとき、この確率で敵が出ます（0.1〜100%）。出なければ中身なしと同じです。</p>
                       }
                     }
                     <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>

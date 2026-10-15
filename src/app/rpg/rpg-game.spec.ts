@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -495,8 +495,9 @@ describe('RpgGame', () => {
     afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
     it('素材は14種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
-      expect(MATERIAL_IDS).toHaveLength(14);
-      expect(DEFAULT_ENEMIES.every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
+      expect(MATERIAL_IDS).toHaveLength(16);
+      // ヒカリスライム(front#284)は素材の代わりに上回復薬を落とす
+      expect(DEFAULT_ENEMIES.filter((e) => e.id !== 'hikarislime').every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
       expect(RECIPES).toHaveLength(8);
       for (const r of RECIPES) {
         expect(['weapon', 'armor']).toContain(ITEMS[r.result]?.type);
@@ -902,6 +903,32 @@ describe('RpgGame', () => {
       run(BREAK_RESPAWN_SEC + 2);
       expect(fern.broken).toBe(false);
       expect(game.enemies.some((e) => e.fromObject === fern)).toBe(false);
+    });
+
+    it('中の敵は出る確率で出る。出なければ中身なしと同じで、時間がたつと元に戻る(front#284)', () => {
+      const random = vi.spyOn(Math, 'random');
+      try {
+        const contents = { kind: 'enemy' as const, id: 'hikarislime', count: 1, chance: 0.001 };
+        // 確率より大きい → 出ない
+        random.mockReturnValue(0.5);
+        setup([{ type: 'grass', x: 6, y: 5, torch: false, contents }]);
+        const grass = staticAt(6, 5);
+        game.player.target = grass;
+        game.update(0.05);
+        expect(grass.broken).toBe(true);
+        expect(game.enemies.some((e) => e.fromObject === grass)).toBe(false);
+        expect(grass.respawnIn).toBeGreaterThan(BREAK_RESPAWN_SEC - 1);
+        // 確率より小さい → 出る
+        random.mockReturnValue(0.0005);
+        setup([{ type: 'grass', x: 6, y: 5, torch: false, contents }]);
+        const grass2 = staticAt(6, 5);
+        game.player.atkCd = 0;
+        game.player.target = grass2;
+        game.update(0.05);
+        expect(game.enemies.find((e) => e.fromObject === grass2)?.type).toBe('hikarislime');
+      } finally {
+        random.mockRestore();
+      }
     });
   });
 

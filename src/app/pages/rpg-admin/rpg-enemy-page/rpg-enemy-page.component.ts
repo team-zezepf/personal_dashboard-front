@@ -232,6 +232,10 @@ export class RpgEnemyPageComponent implements OnDestroy {
     this.change({ boss });
   }
 
+  setGlow(glow: boolean): void {
+    this.change({ glow });
+  }
+
   /** 新しい敵(base を元にした複製、なければ黄色のスライム) */
   add(base?: EnemyDef): void {
     const id = `new-${++this.newCount}`;

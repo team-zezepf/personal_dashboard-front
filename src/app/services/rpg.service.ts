@@ -41,7 +41,7 @@ const SAVE_FIELDS = `
 
 const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
-  objects { type x y roof torch shape rotation lowRoof wall noWindow contents { kind id count } }
+  objects { type x y roof torch shape rotation lowRoof wall noWindow contents { kind id count chance } }
   npcs {
     name x y hair body role notice lines look { ${LOOK_FIELDS} }
     quests {
@@ -61,7 +61,7 @@ const BGM_FIELDS = `id name filename size createdAt`;
 const SE_FIELDS = `id name filename size createdAt`;
 
 const ENEMY_FIELDS = `
-  id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial sight respawn boss
+  id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow sight respawn boss
   attack dash charge range radius sortOrder updatedAt
 `;
 
