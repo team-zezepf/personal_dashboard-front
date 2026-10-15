@@ -12,7 +12,23 @@
     </div>
     <div class="list-body">
       @for (row of rows(); track row.def.id) {
-        <button type="button" class="enemy-row" [class.active]="row.def.id === selectedId()" [attr.aria-pressed]="row.def.id === selectedId()" (click)="select(row.def.id)">
+        <!-- ドラッグで並び替え(front#299) -->
+        <button
+          type="button"
+          class="enemy-row"
+          draggable="true"
+          [class.active]="row.def.id === selectedId()"
+          [class.dragging]="row.def.id === dragId()"
+          [class.drop-before]="dropAt()?.id === row.def.id && !dropAt()?.after"
+          [class.drop-after]="dropAt()?.id === row.def.id && dropAt()?.after"
+          [attr.aria-pressed]="row.def.id === selectedId()"
+          (click)="select(row.def.id)"
+          (dragstart)="onDragStart(row.def.id, $event)"
+          (dragover)="onDragOver(row.def.id, $event)"
+          (drop)="onDrop($event)"
+          (dragend)="onDragEnd()"
+        >
+          <span class="grip" title="ドラッグで並び替え" aria-hidden="true">⠿</span>
           <canvas #thumb width="88" height="88" [attr.data-id]="row.def.id"></canvas>
           <span class="row-text">
             <span class="name">

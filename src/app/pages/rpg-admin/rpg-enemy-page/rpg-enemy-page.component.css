@@ -255,17 +255,58 @@
 }
 
 .enemy-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   border: 2px solid transparent;
   background: none;
   border-radius: 10px;
-  padding: 4px 6px;
+  padding: 4px 6px 4px 2px;
   cursor: pointer;
   text-align: left;
   font: inherit;
   color: inherit;
+}
+
+/* ドラッグで並び替え(front#299)。つかむ印・つかんでいる行・落とす位置の線 */
+.grip {
+  width: 10px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0.5;
+  cursor: grab;
+}
+
+.enemy-row:hover .grip {
+  color: var(--indigo);
+  opacity: 1;
+}
+
+.enemy-row.dragging {
+  opacity: 0.4;
+}
+
+.enemy-row.drop-before::before,
+.enemy-row.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--indigo);
+  pointer-events: none;
+}
+
+.enemy-row.drop-before::before {
+  top: -4px;
+}
+
+.enemy-row.drop-after::after {
+  bottom: -4px;
 }
 
 .enemy-row:hover {
