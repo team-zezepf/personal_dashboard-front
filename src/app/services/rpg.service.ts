@@ -6,11 +6,14 @@ import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
 import {
   RpgBgm,
+  RpgCraft,
+  RpgCraftInput,
   RpgDungeon,
   RpgDungeonInput,
   RpgEnemy,
   RpgEnemyInput,
   RpgExchangeResult,
+  RpgItemCount,
   RpgMap,
   RpgMapInput,
   RpgPointShopItem,
@@ -59,6 +62,8 @@ const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt
 const BGM_FIELDS = `id name filename size createdAt`;
 
 const SE_FIELDS = `id name filename size createdAt`;
+
+const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt`;
 
 const ENEMY_FIELDS = `
   id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow sight respawn boss
@@ -187,6 +192,31 @@ export class RpgService {
   deleteEnemy(id: string): Observable<boolean> {
     const mutation = `mutation DeleteRpgEnemy($id: ID!) { deleteRpgEnemy(id: $id) }`;
     return this.graphql.mutation<{ deleteRpgEnemy: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgEnemy));
+  }
+
+  // ===== 合成の装備とレシピ(front#288) =====
+
+  getCrafts(): Observable<RpgCraft[]> {
+    const query = `query GetRpgCrafts { rpgCrafts { ${CRAFT_FIELDS} } }`;
+    return this.graphql.query<{ rpgCrafts: RpgCraft[] }>(query).pipe(map((res) => res.rpgCrafts));
+  }
+
+  // 装備ごとの、持っている人の数(管理者・開発者だけ。api#134)
+  getCraftOwners(): Observable<RpgItemCount[]> {
+    const query = `query GetRpgCraftOwners { rpgCraftOwners { itemId count } }`;
+    return this.graphql.query<{ rpgCraftOwners: RpgItemCount[] }>(query).pipe(map((res) => res.rpgCraftOwners));
+  }
+
+  // 管理者・開発者だけが保存・削除できる(api#134)
+  saveCraft(input: RpgCraftInput): Observable<RpgCraft> {
+    const mutation = `mutation SaveRpgCraft($input: RpgCraftInput!) { saveRpgCraft(input: $input) { ${CRAFT_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgCraft: RpgCraft }>(mutation, { input }).pipe(map((res) => res.saveRpgCraft));
+  }
+
+  // マップ・敵で使っている装備は消せない。消すと持ち物から外し、装備していたら初期装備に戻す
+  deleteCraft(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgCraft($id: ID!) { deleteRpgCraft(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgCraft: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgCraft));
   }
 
   getSave(): Observable<RpgSave> {

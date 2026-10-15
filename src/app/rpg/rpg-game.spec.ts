@@ -1,5 +1,5 @@
-import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
+import { BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf, setCrafts, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -546,6 +546,43 @@ describe('RpgGame', () => {
       expect(game.player.armor).toBe('jelly_robe');
       // レシピにないもの
       expect(game.craft('potion')).toBe(false);
+    });
+  });
+
+  describe('合成の装備の入れ替え(front#288)', () => {
+    afterEach(() => setCrafts(DEFAULT_CRAFTS));
+
+    const thunder: RpgCraft = {
+      id: 'craft1', name: '雷の剣', icon: '⚡', type: 'weapon', power: 30, gold: 600,
+      materials: [{ itemId: 'golem_stone', count: 3 }], sortOrder: 1
+    };
+
+    it('APIから読んだ装備とレシピに入れ替わり、前の合成の装備は消える', () => {
+      setCrafts([{ ...DEFAULT_CRAFTS[0], sortOrder: 2 }, thunder]);
+
+      expect(RECIPES.map((r) => r.result)).toEqual(['craft1', 'jelly_robe']);
+      expect(ITEMS['craft1']).toMatchObject({ name: '雷の剣', icon: '⚡', type: 'weapon', atk: 30, desc: '鍛冶屋で合成' });
+      expect(ITEMS['jelly_robe']).toMatchObject({ type: 'armor', def: 4 });
+      expect(ITEMS['fang_sword']).toBeUndefined();
+      expect(isCraftItem('craft1')).toBe(true);
+      expect(isCraftItem('iron_sword')).toBe(false);
+      // お店・ポイント交換の装備、素材は残る
+      expect(ITEMS['iron_sword']?.atk).toBe(12);
+      expect(ITEMS['golem_stone']?.type).toBe('material');
+    });
+
+    it('もとからあるアイテムと同じIDの装備は使わない', () => {
+      setCrafts([{ ...thunder, id: 'potion' }]);
+      expect(ITEMS['potion'].type).toBe('use');
+      expect(RECIPES).toEqual([]);
+    });
+
+    it('消えた合成の装備は、セーブデータを読むときに持ち物から外し、装備は初期装備に戻す', () => {
+      setCrafts([thunder]);
+      game.loadSave(save({ weapon: 'fang_sword', items: [...save().items, { itemId: 'fang_sword', count: 1 }, { itemId: 'craft1', count: 1 }] }));
+      expect(game.player.weapon).toBe('wood_sword');
+      expect(game.player.inv['fang_sword']).toBeUndefined();
+      expect(game.player.inv['craft1']).toBe(1);
     });
   });
 

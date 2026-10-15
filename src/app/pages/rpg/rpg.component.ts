@@ -5,17 +5,19 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
+import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer, browserStorage } from '../../rpg/rpg-bgm';
 import { SePlayer } from '../../rpg/rpg-se';
 import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutIndexOf, shortcutItems } from '../../rpg/rpg-shortcuts';
 import { environment } from '../../../environments/environment';
 import {
+  DEFAULT_CRAFTS,
   ITEMS,
   MAX_LUCK,
   POINT_SHOP_ICONS,
   RECIPES,
+  setCrafts,
   SHOP_ITEMS,
   STAT_DEFS,
   StatKey,
@@ -354,16 +356,20 @@ export class RpgPageComponent implements OnDestroy {
     const bgms$ = this.rpgService.getBgms().pipe(catchError(() => of([] as RpgBgm[])));
     // 敵の種類(front#229)が読めなければ、最初の9種類で遊べるようにする
     const enemies$ = this.rpgService.getEnemies().pipe(catchError(() => of(DEFAULT_ENEMIES as unknown as RpgEnemy[])));
+    // 合成の装備(front#288)が読めなければ、最初の8つで遊べるようにする。セーブデータを読む前に入れておく(知らない装備は捨てるため)
+    const crafts$ = this.rpgService.getCrafts().pipe(catchError(() => of(DEFAULT_CRAFTS as RpgCraft[])));
     forkJoin({
       maps: this.rpgService.getMaps(),
       dungeons: this.rpgService.getDungeons(),
       save: this.rpgService.getSave(),
       bgms: bgms$,
-      enemies: enemies$
+      enemies: enemies$,
+      crafts: crafts$
     }).subscribe({
-      next: ({ maps, dungeons, save, bgms, enemies }) => {
+      next: ({ maps, dungeons, save, bgms, enemies, crafts }) => {
         this.bgms = bgms;
         setEnemies(enemies);
+        setCrafts(crafts);
         if (maps.length === 0) {
           this.loadError.set('エリアがまだ1つもありません');
           this.isLoading.set(false);

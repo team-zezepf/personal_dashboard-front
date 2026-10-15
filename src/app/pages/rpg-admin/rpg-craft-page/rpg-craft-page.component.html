@@ -1,0 +1,299 @@
+<div class="craft-page">
+  <div class="subbar">
+    <div class="view" role="tablist" aria-label="表示">
+      <button type="button" role="tab" class="btn" [class.on]="view() === 'edit'" [attr.aria-selected]="view() === 'edit'" (click)="view.set('edit')">レシピを編集</button>
+      <button type="button" role="tab" class="btn" [class.on]="view() === 'overview'" [attr.aria-selected]="view() === 'overview'" (click)="view.set('overview')">全体を見る</button>
+    </div>
+    <span class="spacer"></span>
+    @if (message()) {
+      <span class="message" role="status">{{ message() }}</span>
+    }
+    @if (isDirty()) {
+      <span class="dirty">● 保存していない変更があります</span>
+    }
+    <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
+      {{ saving() ? '保存中…' : '合成の装備を保存する' }}
+    </button>
+  </div>
+
+  @if (view() === 'edit') {
+    <div class="workspace">
+      <!-- 左: 合成でできる装備の一覧 -->
+      <aside class="list" aria-label="合成の装備の一覧">
+        <div class="list-head">
+          <button type="button" class="btn small" (click)="add()">＋ 新しい装備</button>
+          <button type="button" class="btn small" [disabled]="!selected()" (click)="copy()">⧉ 複製</button>
+        </div>
+        <div class="list-body">
+          @for (group of [{ label: '武器', rows: weapons() }, { label: '防具', rows: armors() }]; track group.label) {
+            <div class="group">{{ group.label }}（{{ group.rows.length }}）</div>
+            @for (row of group.rows; track row.craft.id) {
+              <div class="row-wrap" [class.active]="row.craft.id === selectedId()">
+              <button type="button" class="craft-row" [attr.aria-pressed]="row.craft.id === selectedId()" (click)="select(row.craft.id)">
+                <span class="ic">{{ row.craft.icon }}</span>
+                <span class="row-text">
+                  <span class="name">
+                    {{ row.craft.name || '（名前なし）' }}
+                    @if (row.isNew) {
+                      <span class="badge new">新しい</span>
+                    } @else if (dirtyIds().has(row.craft.id)) {
+                      <span class="dot" title="保存していない変更があります">●</span>
+                    }
+                    @if (hasNg(row.craft.id)) {
+                      <span class="badge ng">作れない</span>
+                    } @else if (problemsOfRow(row.craft.id).length) {
+                      <span class="badge warn">注意</span>
+                    }
+                  </span>
+                  <span class="sub">{{ typeLabel(row.craft.type) }}+{{ row.craft.power }}・{{ row.craft.gold }}G・素材{{ row.craft.materials.length }}種</span>
+                </span>
+              </button>
+              @if (row.craft.id === selectedId()) {
+                <span class="move">
+                  <button type="button" title="鍛冶屋で上へ" aria-label="上へ" (click)="move(row.craft.id, -1, $event)">▲</button>
+                  <button type="button" title="鍛冶屋で下へ" aria-label="下へ" (click)="move(row.craft.id, 1, $event)">▼</button>
+                </span>
+              }
+              </div>
+            }
+          }
+        </div>
+      </aside>
+
+      <!-- まんなか: 鍛冶屋での見え方・素材の入手先・強さの並び -->
+      <main class="stage">
+        <section class="card" aria-label="鍛冶屋での見え方">
+          <h3>鍛冶屋での見え方 <span class="sub">ゲームの鍛冶屋に、この順番で並びます（左の一覧の ▲▼ で並べ替え）</span></h3>
+          <div class="smith">
+            <div class="smith-title">⚒️ 鍛冶屋「素材とゴールドで装備を作るよ」</div>
+            @for (row of rows(); track row.craft.id) {
+              <div class="smith-row" [class.me]="row.craft.id === selectedId()">
+                <span class="smith-icon">{{ row.craft.icon }}</span>
+                <div>
+                  <div class="nm">{{ row.craft.name || '（名前なし）' }} <span class="st">{{ typeLabel(row.craft.type) }} +{{ row.craft.power }}</span></div>
+                  <div class="mats">
+                    @for (m of row.craft.materials; track $index) {
+                      <span class="material-chip">{{ itemIcon(m.itemId) }} {{ itemName(m.itemId) }} 0/{{ m.count }}</span>
+                    }
+                  </div>
+                </div>
+                <span class="gold">{{ row.craft.gold }} G</span>
+              </div>
+            }
+          </div>
+        </section>
+
+        @if (selected(); as sel) {
+          <section class="card" aria-label="素材の入手先">
+            <h3>素材の入手先 <span class="sub">落とす確率から見た、集めるのに倒す数の目安（運0のとき）</span></h3>
+            <table class="table">
+              <thead>
+                <tr><th>素材</th><th class="num">必要</th><th>落とす敵</th><th class="num">倒す数の目安</th></tr>
+              </thead>
+              <tbody>
+                @for (s of sources().rows; track $index) {
+                  <tr>
+                    <td>{{ itemIcon(s.itemId) }} {{ itemName(s.itemId) }}</td>
+                    <td class="num">{{ s.count }}</td>
+                    @if (s.drops.length) {
+                      <td>{{ dropsText(s.itemId) }}</td>
+                      <td class="num">約{{ s.kills }}体</td>
+                    } @else {
+                      <td class="ng" colspan="2">落とす敵がいません（作れない）</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="total">
+              @if (sources().total !== null) {
+                ぜんぶ集めるのに、合わせて <b>約{{ sources().total }}体</b> 倒す目安 ＋ <b>{{ sel.craft.gold }}G</b>
+              } @else {
+                <span class="ng">作れない素材があるため、目安を出せません。</span>
+              }
+            </p>
+          </section>
+
+          <section class="card" aria-label="強さの並び">
+            <h3>
+              {{ sel.craft.type === 'weapon' ? '武器' : '防具' }}の強さの並び
+              <span class="legend"><span><span class="src shop">店</span>お店</span><span><span class="src point">交換</span>ポイント交換</span><span><span class="src craft">合成</span>鍛冶屋</span></span>
+            </h3>
+            <ng-container *ngTemplateOutlet="ladderTpl; context: { type: sel.craft.type, me: sel.craft.id }" />
+          </section>
+        }
+      </main>
+
+      <!-- 右: 装備とレシピの編集欄 -->
+      <aside class="props" aria-label="装備とレシピ">
+        @if (selected(); as sel) {
+          <div class="section">
+            <h2>装備</h2>
+            <div class="field" role="group" aria-label="種類">
+              <span>種類</span>
+              <div class="chips">
+                <button type="button" class="chip" [class.active]="sel.craft.type === 'weapon'" [attr.aria-pressed]="sel.craft.type === 'weapon'" (click)="setType('weapon')">🗡️ 武器</button>
+                <button type="button" class="chip" [class.active]="sel.craft.type === 'armor'" [attr.aria-pressed]="sel.craft.type === 'armor'" (click)="setType('armor')">🛡️ 防具</button>
+              </div>
+            </div>
+            <div class="grid2">
+              <label class="field"><span>名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.craft.name" (ngModelChange)="setName($event)" /></label>
+              <label class="field"><span>{{ typeLabel(sel.craft.type) }}力</span><input type="number" [min]="limits.power[0]" [max]="limits.power[1]" [ngModel]="sel.craft.power" (ngModelChange)="setPower($event)" /></label>
+            </div>
+            <div class="field" role="group" aria-label="アイコン">
+              <span>アイコン（絵文字）</span>
+              <div class="icons">
+                @for (icon of icons; track icon) {
+                  <button type="button" [class.active]="sel.craft.icon === icon" [attr.aria-pressed]="sel.craft.icon === icon" [attr.aria-label]="'アイコン ' + icon" (click)="setIcon(icon)">{{ icon }}</button>
+                }
+              </div>
+              <label class="other-icon">ほかの絵文字 <input type="text" maxlength="8" [ngModel]="sel.craft.icon" (change)="setIcon($any($event.target).value)" /></label>
+            </div>
+            <p class="hint">説明は「鍛冶屋で合成」と自動で付きます。</p>
+          </div>
+
+          <div class="section">
+            <h2>レシピ</h2>
+            @for (m of sel.craft.materials; track $index; let i = $index) {
+              <div class="mat-row">
+                <select [attr.aria-label]="'素材' + (i + 1)" [ngModel]="m.itemId" (ngModelChange)="setMaterial(i, $event)">
+                  @for (id of materialIds; track id) {
+                    <option [value]="id">{{ itemIcon(id) }} {{ itemName(id) }}{{ hasDrops(id) ? '' : '（落とす敵なし）' }}</option>
+                  }
+                </select>
+                <input type="number" [attr.aria-label]="'素材' + (i + 1) + 'の個数'" [min]="limits.count[0]" [max]="limits.count[1]" [ngModel]="m.count" (ngModelChange)="setCount(i, $event)" />
+                <button type="button" class="x" title="この素材を外す" [attr.aria-label]="'素材' + (i + 1) + 'を外す'" (click)="removeMaterial(i)">×</button>
+                <span class="mat-from">
+                  @if (hasDrops(m.itemId)) {
+                    落とす敵: {{ dropsText(m.itemId) }}
+                  } @else {
+                    <span class="ng">落とす敵がいません</span>
+                  }
+                </span>
+              </div>
+            }
+            <button type="button" class="btn small" [disabled]="sel.craft.materials.length >= limits.materials" (click)="addMaterial()">＋ 素材を足す</button>
+            <span class="hint inline">（{{ limits.materials }}種まで）</span>
+            <label class="field gold-field"><span>ゴールド</span><input type="number" [min]="limits.gold[0]" [max]="limits.gold[1]" step="10" [ngModel]="sel.craft.gold" (ngModelChange)="setGold($event)" /></label>
+          </div>
+
+          <div class="section" aria-label="チェック">
+            <h2>チェック</h2>
+            <div class="checks">
+              @for (p of problemsOfRow(sel.craft.id); track p.text) {
+                <div class="check" [class.ng]="p.ng">{{ p.ng ? '⛔' : '⚠️' }} {{ p.text }}</div>
+              } @empty {
+                <div class="check ok">✅ 問題はありません</div>
+              }
+            </div>
+            <p class="hint">⛔ があると保存できません。⚠️ は保存できます。</p>
+          </div>
+
+          <div class="section">
+            <button type="button" class="btn danger" (click)="delete()">🗑 この装備を消す</button>
+            <p class="hint">
+              @if (sel.isNew) {
+                まだ保存していない装備です。
+              } @else if (ownersOf(sel.craft.id)) {
+                いま <b>{{ ownersOf(sel.craft.id) }}人</b> が持っています。消すと、持っている人の持ち物・装備からもなくなります（装備中なら初期装備に戻ります）。
+              } @else {
+                持っている人はいません。
+              }
+              マップの置物の中身・クエスト・敵の落とし物で使っている装備は消せません。
+            </p>
+          </div>
+        } @else {
+          <p class="hint">左の一覧から装備を選んでください。</p>
+        }
+      </aside>
+    </div>
+  } @else {
+    <!-- 全体を見る: 素材×レシピの表と、強さの並び -->
+    <div class="overview">
+      <section class="card matrix-card" aria-label="素材×レシピ">
+        <h3>素材 × レシピ <span class="sub">数字は必要な個数。列の見出しを押すと、その装備の編集に移ります</span></h3>
+        <div class="matrix-wrap">
+          <table class="table matrix">
+            <thead>
+              <tr>
+                <th>素材</th>
+                <th>落とす敵</th>
+                @for (row of rows(); track row.craft.id) {
+                  <th>
+                    <button type="button" class="col-head" (click)="openEdit(row.craft.id)">
+                      <span class="ic">{{ row.craft.icon }}</span>{{ row.craft.name || '（名前なし）' }}
+                    </button>
+                  </th>
+                }
+                <th class="num">合計</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of matrix(); track m.id) {
+                <tr [class.unused]="!m.sum">
+                  <td class="mat-name">
+                    {{ itemIcon(m.id) }} {{ itemName(m.id) }}
+                    @if (!m.sum) {
+                      <span class="badge warn">使われていない</span>
+                    }
+                  </td>
+                  <td class="drop">
+                    @if (m.drops.length) {
+                      {{ dropsText(m.id) }}
+                    } @else {
+                      <span class="ng">なし</span>
+                    }
+                  </td>
+                  @for (n of m.counts; track $index) {
+                    <td class="cell">
+                      @if (n) {
+                        <b>{{ n }}</b>
+                      }
+                    </td>
+                  }
+                  <td class="num"><b>{{ m.sum || '' }}</b></td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>ゴールド</td>
+                <td></td>
+                @for (row of rows(); track row.craft.id) {
+                  <td class="cell">{{ row.craft.gold }}G</td>
+                }
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+      <div class="ladders">
+        <section class="card" aria-label="武器の強さの並び">
+          <h3>武器の強さの並び</h3>
+          <ng-container *ngTemplateOutlet="ladderTpl; context: { type: 'weapon', me: null }" />
+        </section>
+        <section class="card" aria-label="防具の強さの並び">
+          <h3>防具の強さの並び</h3>
+          <ng-container *ngTemplateOutlet="ladderTpl; context: { type: 'armor', me: null }" />
+        </section>
+      </div>
+    </div>
+  }
+</div>
+
+<ng-template #ladderTpl let-type="type" let-me="me">
+  <div class="ladder">
+    @for (r of ladder(type); track r.id) {
+      <div class="rung" [class.me]="r.id === me">
+        <span class="ic">{{ r.icon }}</span>
+        <span class="rung-name"><span class="src" [class]="'src ' + r.source">{{ sourceLabels[r.source] }}</span>{{ r.name }}</span>
+        <span class="bar-wrap">
+          <span class="val">+{{ r.power }}</span>
+          <span class="bar" [class]="'bar ' + r.source" [style.width.%]="(r.power / ladderMax(type)) * 100"></span>
+        </span>
+        <span class="cost">{{ r.cost }}</span>
+      </div>
+    }
+  </div>
+</ng-template>
