@@ -163,7 +163,7 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
       wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null,
-      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count } : null
+      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count, chance: o.contents.chance ?? 1 } : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,

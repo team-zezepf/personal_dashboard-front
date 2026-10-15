@@ -132,6 +132,8 @@ export interface RpgObjectContents {
   kind: 'item' | 'enemy';
   id: string;
   count: number;
+  // 中の敵が出る確率(front#284。0.001〜1)。なければ1(かならず出る)
+  chance?: number;
 }
 
 // quest はクエスト依頼(front#239)
@@ -219,9 +221,7 @@ export interface RpgEnemy {
   materialRate?: number;
   // 叩いたときの音の素材(front#282。flesh・soft・stone・wood・grass)。null なら体の形から決める
   hitMaterial?: string | null;
-  // まれに入れかわる敵のIDと確率(0〜0.2)、光る(front#284)
-  rareVariant?: string | null;
-  rareRate?: number;
+  // 光る(front#284)
   glow?: boolean;
   // 襲ってくる距離(マス)。0なら攻撃されるまで襲ってこない
   sight: number;

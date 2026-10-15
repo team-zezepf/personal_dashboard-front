@@ -4,7 +4,7 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
+import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
 import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import {
   DEFAULT_ROOF, DEFAULT_WALL, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
@@ -686,6 +686,17 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   clampCount(value: number): number {
     return Math.min(9, Math.max(1, Math.round(Number(value) || 1)));
+  }
+
+  // 中の敵が出る確率(front#284)。画面では%(0.1きざみ)で、データでは0.001〜1
+  chancePercent(c: RpgObjectContents): number {
+    return Math.round((c.chance ?? 1) * 1000) / 10;
+  }
+
+  clampChance(percent: number | string): number {
+    const n = Number(percent);
+    if (!Number.isFinite(n)) return 1;
+    return Math.min(1000, Math.max(1, Math.round(n * 10))) / 1000;
   }
 
   // ===== クエスト(front#239) =====

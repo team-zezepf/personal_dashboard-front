@@ -59,11 +59,11 @@ export const ENEMY_LIMITS = {
   sight: [0, 8], respawn: [3, 600], dash: [1, 5], charge: [0, 2], range: [1, 5], radius: [1, 2]
 } as const;
 
-const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, rareVariant: null as string | null, rareRate: 0, glow: false };
+const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false };
 
 // まだ「敵」タブで保存していないときの18種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
-  { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, material: 'slime_jelly', materialRate: 0.5, rareVariant: 'hikarislime', rareRate: 0.02, sight: 0, respawn: 10 },
+  { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, material: 'slime_jelly', materialRate: 0.5, sight: 0, respawn: 10 },
   { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, material: 'slime_jelly', materialRate: 0.6, sight: 2.5, respawn: 10 },
   { ...base, id: 'kinokon', name: 'キノコン', shape: 'mushroom', color: '#e85d75', dark: '#b83a52', size: 1, hp: 75, atk: 20, def: 8, interval: 1.5, speed: 1.2, exp: 26, gold: 15, drop: 'potion', dropRate: 0.35, material: 'mushroom_spore', materialRate: 0.5, sight: 0, respawn: 10 },
   { ...base, id: 'spirit', name: 'もりのせいれい', shape: 'wisp', color: '#7ef9ff', dark: '#22b8c9', size: 1, hp: 60, atk: 26, def: 6, interval: 1.2, speed: 2.2, exp: 32, gold: 18, drop: 'hipotion', dropRate: 0.2, material: 'spirit_light', materialRate: 0.4, sight: 3, respawn: 10 },

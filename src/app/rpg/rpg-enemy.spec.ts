@@ -41,7 +41,6 @@ describe('rpg-enemy', () => {
 
   it('つのウサギ・ミツバチンの形と光る敵を、どの状態でも描ける。スライムは、まれにヒカリスライムに入れかわる(front#284)', () => {
     expect(ENEMY_SHAPES.slice(14)).toEqual([['rabbit', 'うさぎ'], ['bee', 'はち']]);
-    expect([ENEMIES['slime'].rareVariant, ENEMIES['slime'].rareRate]).toEqual(['hikarislime', 0.02]);
     expect(ENEMIES['hikarislime'].glow).toBe(true);
     const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
     for (const def of [ENEMIES['hornrabbit'], ENEMIES['mitsubachin'], ENEMIES['hikarislime']]) {

@@ -210,22 +210,6 @@
         <p class="hint">0 にすると、こちらから攻撃するまで襲ってきません。</p>
         <label class="check"><input type="checkbox" [ngModel]="sel.def.boss" (ngModelChange)="setBoss($event)" /> ボス（いつも名前とHPを出す）</label>
         <label class="check"><input type="checkbox" [ngModel]="sel.def.glow ?? false" (ngModelChange)="setGlow($event)" /> 光る（体のまわりがきらきら光る）</label>
-        <div class="grid2">
-          <label class="field">
-            <span>まれに入れかわる敵</span>
-            <select [ngModel]="sel.def.rareVariant ?? ''" (ngModelChange)="setRareVariant($event)">
-              <option value="">なし</option>
-              @for (r of rareOptions(sel.def.id); track r.def.id) {
-                <option [value]="r.def.id">{{ r.def.name }}</option>
-              }
-            </select>
-          </label>
-          <label class="field">
-            <span>入れかわる確率（%）</span>
-            <input type="number" min="0" max="20" step="0.5" [disabled]="!sel.def.rareVariant" [ngModel]="Math.round((sel.def.rareRate ?? 0) * 1000) / 10" (ngModelChange)="setRareRate($event)" />
-          </label>
-        </div>
-        <p class="hint">この敵が出る・復活するたびに、この確率で別の敵になって出ます（0〜20%）。めずらしい敵を出すのに使います。</p>
       </div>
 
       <div class="section">
