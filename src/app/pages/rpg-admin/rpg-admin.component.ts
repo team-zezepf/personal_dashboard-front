@@ -4,7 +4,7 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
+import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
 import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import {
   DEFAULT_ROOF, DEFAULT_WALL, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
@@ -14,6 +14,7 @@ import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
   BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, exitOf, neighborOf, sideLabel,
+  setCrafts,
   themeOf
 } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
@@ -21,6 +22,7 @@ import { RpgRenderer, shade } from '../../rpg/rpg-render';
 import { lookFromColors } from '../../rpg/rpg-look';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
+import { RpgCraftPageComponent } from './rpg-craft-page/rpg-craft-page.component';
 import { RpgSeSectionComponent } from './rpg-se-section/rpg-se-section.component';
 import { setEnemies } from '../../rpg/rpg-enemy';
 import {
@@ -68,7 +70,7 @@ export interface LayoutCell {
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent, RpgSeSectionComponent],
+  imports: [HeaderComponent, FormsModule, RpgLookEditorComponent, RpgEnemyPageComponent, RpgCraftPageComponent, RpgSeSectionComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -86,6 +88,9 @@ export class RpgAdminPageComponent implements OnDestroy {
   // 敵の種類(「敵」タブで保存すると変わる。front#229)
   readonly enemies = signal<RpgEnemy[]>([]);
   readonly enemyDirty = signal(false);
+  // 合成の装備とレシピ(front#288)
+  readonly crafts = signal<RpgCraft[]>([]);
+  readonly craftDirty = signal(false);
   readonly enemyTypes = computed(() => {
     this.enemies();
     return Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
@@ -198,7 +203,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
-  readonly page = signal<'map' | 'bgm' | 'enemy'>('map');
+  readonly page = signal<'map' | 'bgm' | 'enemy' | 'craft'>('map');
   readonly bgms = signal<RpgBgm[]>([]);
   readonly bgmAccept = RPG_BGM_ACCEPT;
   readonly uploading = signal(false);
@@ -239,7 +244,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   private placedToOpen: Selection | null = null;
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (this.isDirty() || this.enemyDirty()) e.preventDefault();
+    if (this.isDirty() || this.enemyDirty() || this.craftDirty()) e.preventDefault();
   };
 
   constructor() {
@@ -249,11 +254,15 @@ export class RpgAdminPageComponent implements OnDestroy {
         maps: this.rpgService.getMaps(),
         dungeons: this.rpgService.getDungeons(),
         bgms: this.rpgService.getBgms(),
-        enemies: this.rpgService.getEnemies()
+        enemies: this.rpgService.getEnemies(),
+        crafts: this.rpgService.getCrafts()
       }).subscribe({
-        next: ({ maps, dungeons, bgms, enemies }) => {
+        next: ({ maps, dungeons, bgms, enemies, crafts }) => {
           setEnemies(enemies);
           this.enemies.set(enemies);
+          // 置物の中身・クエストの報酬で選べるよう、合成の装備も ITEMS に入れておく
+          setCrafts(crafts);
+          this.crafts.set(crafts);
           this.maps.set(maps.map(cloneMap));
           this.dungeons.set(dungeons.map((d) => ({ ...d })));
           this.bgms.set(bgms);
@@ -281,7 +290,7 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   /** 保存していない変更があるとき、ほかの画面へ移る前に確かめる(ルートの canDeactivate から呼ぶ) */
   confirmLeave(): boolean {
-    return (!this.isDirty() && !this.enemyDirty()) || confirm('保存していない変更があります。保存せずに移動しますか？');
+    return (!this.isDirty() && !this.enemyDirty() && !this.craftDirty()) || confirm('保存していない変更があります。保存せずに移動しますか？');
   }
 
   // 「敵」タブで保存・削除したら、パレット・マップの敵を描き直す(front#229)

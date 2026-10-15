@@ -245,6 +245,27 @@ export interface RpgEnemy {
 // id が null なら新しい敵として追加する
 export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
 
+// 鍛冶屋で合成してできる装備とレシピ(front#288 / api#134)。管理画面の「合成」タブで作る
+export interface RpgCraft {
+  // 装備のID(持ち物・装備のIDと同じ)
+  id: string;
+  name: string;
+  // アイコン(絵文字)
+  icon: string;
+  type: 'weapon' | 'armor';
+  // 攻撃力(武器)・防御力(防具)
+  power: number;
+  // 合成に払うゴールドと素材
+  gold: number;
+  materials: RpgItemCount[];
+  // 鍛冶屋に並ぶ順番
+  sortOrder: number;
+  updatedAt?: string | null;
+}
+
+// id が null なら新しい装備として追加する。sortOrder が null なら今の順番のまま(新しければ最後)
+export type RpgCraftInput = Omit<RpgCraft, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder: number | null };
+
 // RPGの効果音(front#278 / api#127)。音のファイルは /rpg-se/{filename} で配られる
 export interface RpgSe {
   id: string;

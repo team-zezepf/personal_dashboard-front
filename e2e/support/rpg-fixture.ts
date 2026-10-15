@@ -8,7 +8,7 @@ import { SANDBOX_DATA_DIR } from './env';
  * テストの間だけ e2e/fixtures/rpg/ のデータに置き換え、終わったら元に戻す。
  * API はこのファイルを毎回読むので、起動し直さなくてよい
  */
-const FILES = ['rpg_dungeons.json', 'rpg_maps.json', 'rpg_enemies.json'];
+const FILES = ['rpg_dungeons.json', 'rpg_maps.json', 'rpg_enemies.json', 'rpg_crafts.json'];
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures', 'rpg');
 // 退避先。元のファイルがなかったものは manifest に記録し、戻すときに消す
 const BACKUP_DIR = path.join(SANDBOX_DATA_DIR, '.e2e-rpg-backup');

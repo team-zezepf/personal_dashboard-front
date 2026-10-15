@@ -1,0 +1,18 @@
+[
+  { "id": "jelly_robe", "name": "ゼリーの服", "icon": "👘", "type": "armor", "power": 4, "gold": 20,
+    "materials": [{ "item_id": "slime_jelly", "count": 5 }], "sort_order": 1 },
+  { "id": "fang_sword", "name": "牙の剣", "icon": "🗡️", "type": "weapon", "power": 16, "gold": 120,
+    "materials": [{ "item_id": "raptor_fang", "count": 3 }, { "item_id": "golem_stone", "count": 2 }], "sort_order": 2 },
+  { "id": "forest_robe", "name": "森の衣", "icon": "🥻", "type": "armor", "power": 9, "gold": 80,
+    "materials": [{ "item_id": "mushroom_spore", "count": 3 }, { "item_id": "spirit_light", "count": 3 }], "sort_order": 3 },
+  { "id": "bone_mail", "name": "骨の鎧", "icon": "🦺", "type": "armor", "power": 15, "gold": 300,
+    "materials": [{ "item_id": "old_bone", "count": 5 }, { "item_id": "bat_wing", "count": 3 }], "sort_order": 4 },
+  { "id": "black_sword", "name": "黒鉄の剣", "icon": "⚔️", "type": "weapon", "power": 28, "gold": 500,
+    "materials": [{ "item_id": "black_iron", "count": 4 }, { "item_id": "old_bone", "count": 3 }, { "item_id": "magic_scrap", "count": 1 }], "sort_order": 5 },
+  { "id": "dark_sword", "name": "闇の剣", "icon": "🗡️", "type": "weapon", "power": 38, "gold": 900,
+    "materials": [{ "item_id": "dark_gem", "count": 2 }, { "item_id": "black_iron", "count": 3 }, { "item_id": "ghost_cloth", "count": 2 }], "sort_order": 6 },
+  { "id": "dragon_sword", "name": "竜牙の剣", "icon": "🔱", "type": "weapon", "power": 46, "gold": 1500,
+    "materials": [{ "item_id": "dragon_scale", "count": 3 }, { "item_id": "raptor_fang", "count": 4 }, { "item_id": "dark_gem", "count": 1 }], "sort_order": 7 },
+  { "id": "dragon_mail", "name": "竜鱗の鎧", "icon": "🛡️", "type": "armor", "power": 26, "gold": 1600,
+    "materials": [{ "item_id": "dragon_scale", "count": 4 }, { "item_id": "dark_gem", "count": 2 }, { "item_id": "mimic_tongue", "count": 1 }], "sort_order": 8 }
+]

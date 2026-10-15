@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgMap, RpgObjectContents } from '../models/rpg.models';
+import { RpgCraft, RpgMap, RpgObjectContents } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
@@ -32,15 +32,7 @@ export const ITEMS: Record<string, ItemDef> = {
   chain_mail: { name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, price: 260 },
   magic_armor: { name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, price: 800 },
   star_robe: { name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定' },
-  // 鍛冶屋で合成してだけ手に入る装備(front#277)
-  fang_sword: { name: '牙の剣', icon: '🗡️', type: 'weapon', atk: 16, desc: '鍛冶屋で合成' },
-  black_sword: { name: '黒鉄の剣', icon: '⚔️', type: 'weapon', atk: 28, desc: '鍛冶屋で合成' },
-  dark_sword: { name: '闇の剣', icon: '🗡️', type: 'weapon', atk: 38, desc: '鍛冶屋で合成' },
-  dragon_sword: { name: '竜牙の剣', icon: '🔱', type: 'weapon', atk: 46, desc: '鍛冶屋で合成' },
-  jelly_robe: { name: 'ゼリーの服', icon: '👘', type: 'armor', def: 4, desc: '鍛冶屋で合成' },
-  forest_robe: { name: '森の衣', icon: '🥻', type: 'armor', def: 9, desc: '鍛冶屋で合成' },
-  bone_mail: { name: '骨の鎧', icon: '🦺', type: 'armor', def: 15, desc: '鍛冶屋で合成' },
-  dragon_mail: { name: '竜鱗の鎧', icon: '🛡️', type: 'armor', def: 26, desc: '鍛冶屋で合成' },
+  // 鍛冶屋で合成してだけ手に入る装備(front#277)は、管理画面の「合成」タブで作る(front#288)。setCrafts で足す
   // 素材(front#277)。最初からいる敵ごとに1つ(どの敵が落とすかは「敵」タブで決める)
   slime_jelly: { name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす' },
   mushroom_spore: { name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす' },
@@ -68,16 +60,50 @@ export interface Recipe {
   gold: number;
 }
 
-export const RECIPES: Recipe[] = [
-  { result: 'jelly_robe', materials: [{ id: 'slime_jelly', count: 5 }], gold: 20 },
-  { result: 'fang_sword', materials: [{ id: 'raptor_fang', count: 3 }, { id: 'golem_stone', count: 2 }], gold: 120 },
-  { result: 'forest_robe', materials: [{ id: 'mushroom_spore', count: 3 }, { id: 'spirit_light', count: 3 }], gold: 80 },
-  { result: 'bone_mail', materials: [{ id: 'old_bone', count: 5 }, { id: 'bat_wing', count: 3 }], gold: 300 },
-  { result: 'black_sword', materials: [{ id: 'black_iron', count: 4 }, { id: 'old_bone', count: 3 }, { id: 'magic_scrap', count: 1 }], gold: 500 },
-  { result: 'dark_sword', materials: [{ id: 'dark_gem', count: 2 }, { id: 'black_iron', count: 3 }, { id: 'ghost_cloth', count: 2 }], gold: 900 },
-  { result: 'dragon_sword', materials: [{ id: 'dragon_scale', count: 3 }, { id: 'raptor_fang', count: 4 }, { id: 'dark_gem', count: 1 }], gold: 1500 },
-  { result: 'dragon_mail', materials: [{ id: 'dragon_scale', count: 4 }, { id: 'dark_gem', count: 2 }, { id: 'mimic_tongue', count: 1 }], gold: 1600 }
+/** 鍛冶屋のレシピ(鍛冶屋に並ぶ順)。setCrafts で中身を入れ替える */
+export const RECIPES: Recipe[] = [];
+
+/**
+ * 合成の装備とレシピの最初の8つ(api#134 の default_crafts.json と同じ)。
+ * APIから読めないとき・まだ読んでいないときに使う
+ */
+const craft = (id: string, name: string, icon: string, type: 'weapon' | 'armor', power: number, gold: number, materials: [string, number][], sortOrder: number): RpgCraft =>
+  ({ id, name, icon, type, power, gold, materials: materials.map(([itemId, count]) => ({ itemId, count })), sortOrder });
+export const DEFAULT_CRAFTS: RpgCraft[] = [
+  craft('jelly_robe', 'ゼリーの服', '👘', 'armor', 4, 20, [['slime_jelly', 5]], 1),
+  craft('fang_sword', '牙の剣', '🗡️', 'weapon', 16, 120, [['raptor_fang', 3], ['golem_stone', 2]], 2),
+  craft('forest_robe', '森の衣', '🥻', 'armor', 9, 80, [['mushroom_spore', 3], ['spirit_light', 3]], 3),
+  craft('bone_mail', '骨の鎧', '🦺', 'armor', 15, 300, [['old_bone', 5], ['bat_wing', 3]], 4),
+  craft('black_sword', '黒鉄の剣', '⚔️', 'weapon', 28, 500, [['black_iron', 4], ['old_bone', 3], ['magic_scrap', 1]], 5),
+  craft('dark_sword', '闇の剣', '🗡️', 'weapon', 38, 900, [['dark_gem', 2], ['black_iron', 3], ['ghost_cloth', 2]], 6),
+  craft('dragon_sword', '竜牙の剣', '🔱', 'weapon', 46, 1500, [['dragon_scale', 3], ['raptor_fang', 4], ['dark_gem', 1]], 7),
+  craft('dragon_mail', '竜鱗の鎧', '🛡️', 'armor', 26, 1600, [['dragon_scale', 4], ['dark_gem', 2], ['mimic_tongue', 1]], 8)
 ];
+
+// setCrafts で ITEMS に足した装備のID(入れ替えるときに消す)
+const craftItemIds = new Set<string>();
+
+/** 合成の装備のIDか(管理画面で、お店・ポイント交換の装備と分けるのに使う) */
+export const isCraftItem = (id: string) => craftItemIds.has(id);
+
+/**
+ * 合成の装備とレシピを入れ替える(front#288)。ゲーム・管理画面がAPIから読んだもので呼ぶ。
+ * ITEMS・RECIPES の中身を入れ替えるだけなので、使っている所(持ち物・鍛冶屋・描画)はそのまま新しい装備を使える
+ */
+export function setCrafts(list: RpgCraft[]): void {
+  for (const id of craftItemIds) delete ITEMS[id];
+  craftItemIds.clear();
+  RECIPES.length = 0;
+  for (const c of [...list].sort((a, b) => a.sortOrder - b.sortOrder)) {
+    // 回復薬など、もとからあるアイテムと同じIDは使わない
+    if (ITEMS[c.id]) continue;
+    ITEMS[c.id] = { name: c.name, icon: c.icon, type: c.type, ...(c.type === 'weapon' ? { atk: c.power } : { def: c.power }), desc: '鍛冶屋で合成' };
+    craftItemIds.add(c.id);
+    RECIPES.push({ result: c.id, materials: c.materials.map((m) => ({ id: m.itemId, count: m.count })), gold: c.gold });
+  }
+}
+
+setCrafts(DEFAULT_CRAFTS);
 
 /** 素材のID(持ち物・「敵」タブ・クエストで使う) */
 export const MATERIAL_IDS = Object.keys(ITEMS).filter((id) => ITEMS[id].type === 'material');

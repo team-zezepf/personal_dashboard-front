@@ -17,8 +17,9 @@
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
       </div>
-      @if (page() !== 'enemy') {
+      @if (page() !== 'enemy' && page() !== 'craft') {
       <span class="sep"></span>
       <label class="toolbar-label">
         ダンジョン
@@ -68,6 +69,15 @@
       [maps]="maps()"
       (saved)="onEnemiesSaved($event)"
       (dirtyChange)="enemyDirty.set($event)"
+    />
+
+    <!-- 合成タブ(front#288)も、ほかのタブに移っても編集中の内容を残すため、隠すだけにする -->
+    <app-rpg-craft-page
+      [style.display]="page() === 'craft' ? null : 'none'"
+      [crafts]="crafts()"
+      [enemies]="enemies()"
+      (saved)="crafts.set($event)"
+      (dirtyChange)="craftDirty.set($event)"
     />
 
     @if (page() === 'bgm') {
