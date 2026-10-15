@@ -197,6 +197,11 @@ export class RpgAdminPageComponent implements OnDestroy {
       .filter((u) => u.count > 0)
       .sort((a, b) => b.count - a.count);
   });
+  // 「その他」の段: このマップで使っていない物を、いつもの順番で(使用中の物がなければ全部。front#295)
+  readonly otherItems = computed(() => {
+    const used = new Set(this.usedItems().map((u) => u.item));
+    return this.tabItems().filter((item) => !used.has(item));
+  });
   readonly selectsPlaced = computed(() => selectsPlaced(this.tool().tool));
   readonly isDirty = computed(() => this.dirtyIds().size > 0 || this.dirtyDungeonIds().size > 0);
   readonly canUndo = computed(() => {

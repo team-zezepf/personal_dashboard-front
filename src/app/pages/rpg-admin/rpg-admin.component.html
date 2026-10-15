@@ -192,10 +192,12 @@
                 <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: u.item, count: u.count }" />
               }
             </div>
-            <div class="item-group">すべて</div>
+            @if (otherItems().length) {
+              <div class="item-group">その他</div>
+            }
           }
           <div class="items">
-            @for (item of tabItems(); track item.id) {
+            @for (item of otherItems(); track item.id) {
               <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item, count: 0 }" />
             }
           </div>
