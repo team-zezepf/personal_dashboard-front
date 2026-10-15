@@ -128,8 +128,8 @@ export const baseDefOf = (s: Stats) => 2 + s.def * 2;
 export const healRateOf = (s: Stats) => 1 + s.mag * 0.02;
 // 歩く速さ(マス/秒): 3.0 → 6.0
 export const walkSpeedOf = (s: Stats) => 3 + 3 * rate99(s.spd);
-// 攻撃の間隔(秒): 0.85 → 0.425
-export const attackIntervalOf = (s: Stats) => 0.85 * (1 - 0.5 * rate99(s.spd));
+// 攻撃の間隔(秒): 1.10 → 0.325(front#286)
+export const attackIntervalOf = (s: Stats) => 1.1 - 0.775 * rate99(s.spd);
 // 会心率 5% → 70%、回避率 0% → 60%(0〜1)
 export const critRateOf = (s: Stats) => 0.05 + 0.65 * rate99(s.luk);
 export const evadeRateOf = (s: Stats) => 0.6 * rate99(s.luk);
