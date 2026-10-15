@@ -1,5 +1,5 @@
 import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { NPC_ROLES, RpgMapEditor, blankMap, blankQuest, toMapInput } from './rpg-editor';
+import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, selectsPlaced, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
 import { PALETTE } from './rpg-editor';
@@ -343,5 +343,51 @@ describe('RpgMapEditor', () => {
     expect([input.dungeonId, input.gridX, input.gridY]).toEqual(['sea', 0, 0]);
     expect(input.npcs[0].lines).toEqual(['こんにちは']);
     expect(toMapInput(editor.map, null).id).toBeNull();
+  });
+
+  describe('マップ編集の使いやすさ(front#290)', () => {
+    it('木・岩などの普通の置物も選べて、動かせる', () => {
+      editor.apply({ kind: 'object', type: 'tree' }, 2, 2, true);
+      const sel = editor.entityAt(2, 2);
+      expect(sel).toEqual({ kind: 'object', ref: editor.map.objects[0] });
+
+      expect(editor.moveTo(sel!, 4, 3)).toBe(true);
+      expect(editor.map.objects[0]).toMatchObject({ type: 'tree', x: 4, y: 3 });
+      expect(editor.entityAt(2, 2)).toBeNull();
+    });
+
+    it('敵はクリック1回で1体だけ置き、ドラッグでは続けて置かない', () => {
+      editor.apply({ kind: 'enemy', type: 'slime' }, 2, 2, true);
+      editor.apply({ kind: 'enemy', type: 'slime' }, 3, 2, false);
+      editor.apply({ kind: 'enemy', type: 'slime' }, 4, 2, false);
+      expect(editor.map.enemies).toEqual([{ type: 'slime', x: 2, y: 2 }]);
+    });
+
+    it('このマップで使っている数を数える(地面はマスの数、たいまつ柱と柱は分ける)', () => {
+      editor.apply({ kind: 'ground', ground: 'w' }, 5, 5, true, 3);
+      editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
+      editor.apply({ kind: 'object', type: 'tree' }, 2, 1, true);
+      editor.apply({ kind: 'object', type: 'pillar' }, 3, 1, true);
+      editor.apply({ kind: 'object', type: 'pillar', torch: true }, 4, 1, true);
+      editor.apply({ kind: 'enemy', type: 'slime' }, 1, 3, true);
+
+      expect(editor.countOf({ kind: 'ground', ground: 'w' })).toBe(9);
+      expect(editor.countOf({ kind: 'ground', ground: 'g' })).toBe(14 * 12 - 9);
+      expect(editor.countOf({ kind: 'object', type: 'tree' })).toBe(2);
+      expect(editor.countOf({ kind: 'object', type: 'pillar' })).toBe(1);
+      expect(editor.countOf({ kind: 'object', type: 'pillar', torch: true })).toBe(1);
+      expect(editor.countOf({ kind: 'enemy', type: 'slime' })).toBe(1);
+      expect(editor.countOf({ kind: 'npc' })).toBe(0);
+    });
+
+    it('地面・高さ・消しゴムのほかは、置いてある物をクリックすると選ぶ道具', () => {
+      expect(selectsPlaced({ kind: 'object', type: 'tree' })).toBe(true);
+      expect(selectsPlaced({ kind: 'enemy', type: 'slime' })).toBe(true);
+      expect(selectsPlaced({ kind: 'select' })).toBe(true);
+      expect(selectsPlaced({ kind: 'ground', ground: 'g' })).toBe(false);
+      expect(selectsPlaced({ kind: 'height', op: 'up' })).toBe(false);
+      expect(selectsPlaced({ kind: 'erase' })).toBe(false);
+      expect(SELECT_ITEM.tool.kind).toBe('select');
+    });
   });
 });
