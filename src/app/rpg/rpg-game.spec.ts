@@ -1,5 +1,5 @@
 import { RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, buildAreaMap, exitOf, linkArrival, maxHpOf, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -70,11 +70,15 @@ function save(partial: Partial<RpgSave> = {}): RpgSave {
   };
 }
 
+// テストでは、スライムが運でヒカリスライムに入れかわらないようにする(front#284。入れかわりは専用のテストで見る)
+const NO_RARE = DEFAULT_ENEMIES.map((e) => ({ ...e, rareVariant: null, rareRate: 0 }));
+
 describe('RpgGame', () => {
   let ev: ReturnType<typeof events>;
   let game: RpgGame;
 
   beforeEach(() => {
+    setEnemies(NO_RARE);
     ev = events();
     game = new RpgGame(ev, MAPS, DUNGEONS);
     game.viewW = 800;
@@ -495,8 +499,9 @@ describe('RpgGame', () => {
     afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
     it('素材は14種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
-      expect(MATERIAL_IDS).toHaveLength(14);
-      expect(DEFAULT_ENEMIES.every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
+      expect(MATERIAL_IDS).toHaveLength(16);
+      // ヒカリスライム(front#284)は素材の代わりに上回復薬を落とす
+      expect(DEFAULT_ENEMIES.filter((e) => e.id !== 'hikarislime').every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
       expect(RECIPES).toHaveLength(8);
       for (const r of RECIPES) {
         expect(['weapon', 'armor']).toContain(ITEMS[r.result]?.type);
@@ -507,7 +512,7 @@ describe('RpgGame', () => {
     });
 
     it('敵を倒すと、アイテムとは別に素材もフィールドに落ちる', () => {
-      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'potion', dropRate: 1, material: 'slime_jelly', materialRate: 1, sight: 0 }]);
+      setEnemies([...NO_RARE, { ...NO_RARE[0], id: 'test', drop: 'potion', dropRate: 1, material: 'slime_jelly', materialRate: 1, sight: 0 }]);
       game.loadMap(map('field', { enemies: [{ type: 'test', x: 8, y: 5 }] }));
       (game as unknown as { killEnemy(e: unknown): void }).killEnemy(game.enemies[0]);
       expect(game.drops.map((d) => d.id).sort()).toEqual(['potion', 'slime_jelly']);
@@ -542,6 +547,28 @@ describe('RpgGame', () => {
     });
   });
 
+  describe('まれに入れかわる敵(front#284)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+      setEnemies(DEFAULT_ENEMIES);
+    });
+
+    it('出る・復活するたびに確率で決め、入れかわったら別の敵として戦う。倒したら次はまた確率で決まる', () => {
+      setEnemies(DEFAULT_ENEMIES);
+      const random = vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      game.loadMap(map('field', { enemies: [{ type: 'slime', x: 8, y: 5 }, { type: 'blue', x: 3, y: 3 }] }));
+      const [slime, blue] = game.enemies;
+      // 2%より小さいのでヒカリスライムに。ブルースライムには入れかわる敵がない
+      expect([slime.type, slime.baseType, slime.hp]).toEqual(['hikarislime', 'slime', ENEMIES['hikarislime'].hp]);
+      expect(blue.type).toBe('blue');
+
+      (game as unknown as { killEnemy(e: unknown): void }).killEnemy(slime);
+      random.mockReturnValue(0.5);
+      for (let t = 0; t < ENEMIES['hikarislime'].respawn + 1; t += 0.5) game.update(0.5);
+      expect([slime.alive, slime.type, slime.hp]).toEqual([true, 'slime', ENEMIES['slime'].hp]);
+    });
+  });
+
   describe('フィールドに落ちたアイテム(front#276)', () => {
     function run(seconds: number): void {
       for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
@@ -549,7 +576,7 @@ describe('RpgGame', () => {
 
     beforeEach(() => {
       // かならずアイテムを落とし、襲ってこない敵
-      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'test', drop: 'hipotion', dropRate: 1, material: null, sight: 0 }]);
+      setEnemies([...NO_RARE, { ...NO_RARE[0], id: 'test', drop: 'hipotion', dropRate: 1, material: null, sight: 0 }]);
       game.loadMap(map('field', { enemies: [{ type: 'test', x: 8, y: 5 }] }));
       Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
       game.update(0);
@@ -607,11 +634,11 @@ describe('RpgGame', () => {
   describe('敵の攻撃(front#229)', () => {
     // すぐ襲ってくる、攻撃の間隔の短い敵(HPが高く、こちらからは倒れない)
     const test = (patch: Partial<EnemyDef>): EnemyDef => ({
-      ...DEFAULT_ENEMIES[0], id: 'test', name: 'テスト', hp: 9999, atk: 20, sight: 8, interval: 0.5, speed: 1, ...patch
+      ...NO_RARE[0], id: 'test', name: 'テスト', hp: 9999, atk: 20, sight: 8, interval: 0.5, speed: 1, ...patch
     });
 
     function setup(def: EnemyDef, enemyAt: [number, number], playerAt: [number, number]): void {
-      setEnemies([...DEFAULT_ENEMIES, def]);
+      setEnemies([...NO_RARE, def]);
       game.loadMap(map('field', { enemies: [{ type: 'test', x: enemyAt[0], y: enemyAt[1] }] }));
       game.player.x = playerAt[0];
       game.player.y = playerAt[1];
@@ -708,7 +735,7 @@ describe('RpgGame', () => {
 
     it('体当たりは、崖の手前で止まる', () => {
       const heights = Array.from({ length: 12 }, () => '0000' + '2' + '0000000');
-      setEnemies([...DEFAULT_ENEMIES, test({ attack: 'tackle', dash: 3, sight: 0 })]);
+      setEnemies([...NO_RARE, test({ attack: 'tackle', dash: 3, sight: 0 })]);
       game.loadMap(map('cliff', { heights, enemies: [{ type: 'test', x: 2, y: 7 }] }));
       game.player.x = 5;
       game.player.y = 7;
@@ -770,7 +797,7 @@ describe('RpgGame', () => {
         expect(ev.sounds).toEqual([slot]);
       }
       // 敵: ゴーレムは岩、スライムは柔らかいもの、キノコンは生き物。「敵」タブで選んでいればそちら
-      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'rockslime', hitMaterial: 'stone' }]);
+      setEnemies([...NO_RARE, { ...NO_RARE[0], id: 'rockslime', hitMaterial: 'stone' }]);
       for (const [type, slot] of [['golem', 'hit_stone'], ['slime', 'hit_soft'], ['kinokon', 'hit_flesh'], ['rockslime', 'hit_stone']]) {
         ev.sounds.length = 0;
         game.loadMap(map('field', { enemies: [{ type, x: 6, y: 5 }] }));

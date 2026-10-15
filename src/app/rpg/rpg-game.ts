@@ -78,7 +78,9 @@ export interface Npc extends RpgMapNpc, Mover {
 
 export interface Enemy extends Mover {
   kind: 'enemy';
+  // 今出ている敵の種類。まれに入れかわる敵(front#284)なら、baseType(マップに置いた敵)とちがうことがある
   type: string;
+  baseType: string;
   // 出現位置(ここから離れすぎると追いかけるのをやめて戻る)
   hx: number;
   hy: number;
@@ -389,8 +391,9 @@ export class RpgGame {
       .filter((e) => ENEMIES[e.type])
       .map((e) => {
         const [x, y] = this.map.nearestWalkable(e.x, e.y);
+        const type = this.rollVariant(e.type);
         return {
-          kind: 'enemy', type: e.type, x, y, z: this.map.heightAt(x, y), hx: x, hy: y, hp: ENEMIES[e.type].hp, alive: true, path: [], dir: -1, moving: false,
+          kind: 'enemy', type, baseType: e.type, x, y, z: this.map.heightAt(x, y), hx: x, hy: y, hp: ENEMIES[type].hp, alive: true, path: [], dir: -1, moving: false,
           wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6, act: null
         };
       });
@@ -767,7 +770,7 @@ export class RpgGame {
       o.respawnIn = BREAK_RESPAWN_SEC;
     } else if (c?.kind === 'enemy' && ENEMIES[c.id]) {
       const e: Enemy = {
-        kind: 'enemy', type: c.id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
+        kind: 'enemy', type: c.id, baseType: c.id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
         moving: false, wander: 0, repath: 0, atkCd: 0.8, flash: 0, lunge: 0, aggro: true, respawn: 0, seed: Math.random() * 6, act: null, fromObject: o
       };
       this.enemies.push(e);
@@ -1083,7 +1086,9 @@ export class RpgGame {
       if (e.fromObject) return;
       e.respawn -= dt;
       if (e.respawn <= 0) {
-        Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false, act: null });
+        // 復活するたびに、まれに入れかわる敵になるかを決め直す(front#284)
+        e.type = this.rollVariant(e.baseType);
+        Object.assign(e, { alive: true, hp: ENEMIES[e.type].hp, x: e.hx, y: e.hy, path: [], aggro: false, act: null });
         this.snapZ(e);
       }
       return;
@@ -1136,6 +1141,13 @@ export class RpgGame {
     if (rooted) e.path = [];
     e.moving = !e.act && !rooted && this.moveAlong(e, e.aggro ? def.speed * 1.5 : def.speed, dt);
     this.settleZ(e, dt);
+  }
+
+  /** まれに入れかわる敵(front#284)。この敵に決めてあれば、その確率で入れかわった敵の種類を返す */
+  private rollVariant(type: string): string {
+    const def = ENEMIES[type];
+    const rare = def?.rareVariant;
+    return rare && rare !== type && ENEMIES[rare] && Math.random() < (def.rareRate ?? 0) ? rare : type;
   }
 
   // ===== 敵の攻撃(front#229) =====

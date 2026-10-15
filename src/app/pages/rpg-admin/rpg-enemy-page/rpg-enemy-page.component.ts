@@ -232,6 +232,25 @@ export class RpgEnemyPageComponent implements OnDestroy {
     this.change({ boss });
   }
 
+  // まれに入れかわる敵と確率(front#284)。入れかわる敵を「なし」にしたら確率も0にする
+  setRareVariant(id: string): void {
+    this.change(id ? { rareVariant: id, rareRate: this.selected()?.def.rareRate || 0.02 } : { rareVariant: null, rareRate: 0 });
+  }
+
+  setRareRate(percent: number | string): void {
+    const n = Number(percent);
+    if (Number.isFinite(n)) this.change({ rareRate: Math.min(20, Math.max(0, n)) / 100 });
+  }
+
+  setGlow(glow: boolean): void {
+    this.change({ glow });
+  }
+
+  // 入れかわる先に選べる敵(自分以外)
+  rareOptions(id: string): EnemyRow[] {
+    return this.rows().filter((r) => r.def.id !== id);
+  }
+
   /** 新しい敵(base を元にした複製、なければ黄色のスライム) */
   add(base?: EnemyDef): void {
     const id = `new-${++this.newCount}`;
