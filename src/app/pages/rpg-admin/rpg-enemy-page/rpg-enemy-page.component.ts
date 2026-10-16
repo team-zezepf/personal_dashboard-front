@@ -20,12 +20,12 @@ import {
   disguiseOf,
   drawAttackEffect,
   drawEnemyBody,
+  drawEnemyThumb,
   isRooted,
   jumpHeight,
   movesToTarget,
   setEnemies,
-  shapeMaterialOf,
-  thumbFitOf
+  shapeMaterialOf
 } from '../../../rpg/rpg-enemy';
 import { CsvImport, decodeCsv, enemiesToCsv, readEnemyCsv } from '../../../rpg/rpg-enemy-csv';
 
@@ -135,7 +135,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
         const shape = cv.dataset['shape'] as EnemyShape | undefined;
         const base = shape ? sel?.def : rows.find((r) => r.def.id === id)?.def;
         if (!base) continue;
-        drawThumb(cv, shape ? { ...base, shape, size: 1 } : base);
+        drawEnemyThumb(cv, shape ? { ...base, shape, size: 1 } : base);
       }
     });
   }
@@ -574,17 +574,4 @@ function toDef(e: RpgEnemy): EnemyDef {
 function toInput(r: EnemyRow, sortOrder: number): RpgEnemyInput {
   const { id, ...rest } = r.def;
   return { ...rest, id: r.isNew ? null : id, name: rest.name.trim(), sortOrder };
-}
-
-// 一覧・体の形の見本(足元を下のほうに置き、大きさに合わせて縮める)
-function drawThumb(cv: HTMLCanvasElement, def: EnemyDef): void {
-  const c = cv.getContext('2d');
-  if (!c) return;
-  c.setTransform(1, 0, 0, 1, 0, 0);
-  c.clearRect(0, 0, cv.width, cv.height);
-  const sc = (cv.width / 88) * (1.25 / Math.max(1, def.size * 0.85)) * thumbFitOf(def);
-  c.translate(cv.width / 2, cv.height * 0.86);
-  c.scale(sc, sc);
-  // 化ける敵(front#270)は、ばけていない本当の姿を見せる
-  drawEnemyBody(c, def, { dir: 1, time: 0, aggro: !!disguiseOf(def) });
 }

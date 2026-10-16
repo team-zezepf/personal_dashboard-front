@@ -122,6 +122,21 @@ export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
 export const ringSizeOf = (def: EnemyDef) => RING[def.shape] * def.size;
 // 横に長い形を「敵」タブの見本の枠に収めるための縮め方
 export const thumbFitOf = (def: EnemyDef) => (def.shape === 'dragon' ? 0.72 : 1);
+
+/**
+ * 一覧の見本(敵タブの一覧・体の形、マップ作成のパレット。front#310)。足元を下のほうに置き、大きさに合わせて縮める。
+ * 化ける敵(front#270)は、ばけていない本当の姿を見せる
+ */
+export function drawEnemyThumb(cv: HTMLCanvasElement, def: EnemyDef): void {
+  const c = cv.getContext('2d');
+  if (!c) return;
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, cv.width, cv.height);
+  const sc = (cv.width / 88) * (1.25 / Math.max(1, def.size * 0.85)) * thumbFitOf(def);
+  c.translate(cv.width / 2, cv.height * 0.86);
+  c.scale(sc, sc);
+  drawEnemyBody(c, def, { dir: 1, time: 0, aggro: !!disguiseOf(def) });
+}
 // ===== 叩いたときの音の素材(front#282) =====
 // 効果音の場面 hit_{素材} を選ぶのに使う。敵は体の形で決まり、「敵」タブの「叩いたときの音」で変えられる
 

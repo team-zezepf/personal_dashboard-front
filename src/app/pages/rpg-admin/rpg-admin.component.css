@@ -421,17 +421,69 @@ textarea {
   white-space: nowrap;
 }
 
-.item-count {
-  position: absolute;
-  top: -6px;
-  right: -5px;
-  background: var(--indigo);
-  color: #fff;
-  font-size: 9.5px;
+/* パレットの敵: 敵タブの一覧と同じく、絵・名前・HP・攻撃の1行(front#310) */
+.items.enemy-list {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.enemy-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  border: 2px solid transparent;
+  background: none;
+  border-radius: 10px;
+  padding: 3px 6px 3px 2px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.enemy-item:hover {
+  background: var(--surface);
+}
+
+.enemy-item.active {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+}
+
+.enemy-item canvas {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.enemy-item .row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.enemy-item .name {
+  font-size: 13px;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-item .sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.enemy-item .badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
   border-radius: 999px;
-  padding: 0 5px;
-  line-height: 15px;
+  background: var(--red-soft);
+  color: var(--red-text);
+  margin-left: 4px;
 }
 
 .item.active {
@@ -444,13 +496,6 @@ textarea {
   width: 28px;
   height: 17px;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-}
-
-.item-dot {
-  width: 20px;
-  height: 15px;
-  border-radius: 50% 50% 40% 40%;
-  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .item-icon {
