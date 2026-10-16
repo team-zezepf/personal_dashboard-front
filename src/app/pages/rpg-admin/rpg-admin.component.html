@@ -126,8 +126,8 @@
                 } @else {
                   <div class="song-name">
                     {{ bgm.name }}
-                    @for (area of bgmUsage().get(bgm.id) ?? []; track area) {
-                      <span class="used">{{ area }}</span>
+                    @for (use of bgmUsage().get(bgm.id) ?? []; track use.label) {
+                      <span class="used" [class.area]="use.area">{{ use.label }}</span>
                     }
                   </div>
                 }
@@ -148,7 +148,7 @@
 
         <section class="bgm-card" aria-label="ダンジョンごとの曲">
           <h2>ダンジョンごとの曲</h2>
-          <p class="muted small">ダンジョンに入ったときに流す曲です（ダンジョンの中のエリアを移っても流れ続けます）。変えたら「保存する」を押してください。マップの「ダンジョンの設定」でも選べます。</p>
+          <p class="muted small">ダンジョンに入ったときに流す曲です（ダンジョンの中のエリアを移っても流れ続けます）。変えたら「保存する」を押してください。マップの「ダンジョンの設定」でも選べます。マップの「エリアの設定」で、エリアだけ別の曲にもできます。</p>
           <table class="area-table">
             <thead>
               <tr><th>ダンジョン</th><th>曲</th></tr>
@@ -286,7 +286,7 @@
                 }
               </select>
             </label>
-            <p class="muted small">ダンジョンの中のすべてのエリアで共通です。</p>
+            <p class="muted small">ダンジョンの中のすべてのエリアで流れます。エリアの設定で、エリアだけ別の曲にもできます。</p>
           </section>
 
           <section aria-label="エリアの配置">
@@ -358,6 +358,17 @@
                 <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
               </label>
             </div>
+            <!-- エリアだけで流す曲(front#304) -->
+            <label class="field">
+              <span>BGM</span>
+              <select [ngModel]="map.bgmId ?? ''" (ngModelChange)="setAreaBgm($event)">
+                <option value="">（ダンジョンの曲）</option>
+                @for (bgm of bgms(); track bgm.id) {
+                  <option [value]="bgm.id">{{ bgm.name }}</option>
+                }
+              </select>
+            </label>
+            <p class="muted small">このエリアにいる間だけ流す曲です。「（ダンジョンの曲）」なら、ダンジョンの曲が流れます。</p>
             <div class="links" role="group" aria-label="端のつながり">
               <span class="links-title">端のつながり</span>
               @for (row of linkRows(map); track row.label) {

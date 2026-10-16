@@ -1,5 +1,11 @@
 // RPGのBGM(front#218)。エリアに入るとその曲をくり返し流し、エリアを移るときは前の曲を小さくしてから切り替える。
 // ブラウザは画面を一度クリックするまで音を出せないため、unlock() されるまでは流さずに待つ
+import { RpgDungeon, RpgMap } from '../models/rpg.models';
+
+/** エリアで流す曲の id。エリアの曲(front#304)があればその曲、なければダンジョンの曲。どちらもなければ null */
+export function areaBgmId(area: Pick<RpgMap, 'bgmId'>, dungeon: Pick<RpgDungeon, 'bgmId'>): string | null {
+  return area.bgmId ?? dungeon.bgmId ?? null;
+}
 
 /** 音を鳴らす部分(テストでは偽物に差し替える。ふだんは HTMLAudioElement) */
 export interface BgmAudio {

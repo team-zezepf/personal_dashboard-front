@@ -240,13 +240,13 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly dragOver = signal(false);
   private previewAudio: HTMLAudioElement | null = null;
 
-  // 曲ごとの、使っているダンジョンの名前
+  // 曲ごとの、使っているダンジョンと、エリアだけで使っているエリア(「ダンジョン ／ エリア」。front#304)
   readonly bgmUsage = computed(() => {
     this.version();
-    const usage = new Map<string, string[]>();
-    for (const d of this.dungeons()) {
-      if (d.bgmId) usage.set(d.bgmId, [...(usage.get(d.bgmId) ?? []), d.name]);
-    }
+    const usage = new Map<string, { label: string; area: boolean }[]>();
+    const add = (id: string, label: string, area: boolean) => usage.set(id, [...(usage.get(id) ?? []), { label, area }]);
+    for (const d of this.dungeons()) if (d.bgmId) add(d.bgmId, d.name, false);
+    for (const m of this.maps()) if (m.bgmId) add(m.bgmId, `${this.dungeonName(m.dungeonId)} ／ ${m.name}`, true);
     return usage;
   });
 
@@ -679,6 +679,15 @@ export class RpgAdminPageComponent implements OnDestroy {
     return this.dungeons().find((d) => d.id === id)?.sortOrder ?? 0;
   }
 
+  // このエリアにいる間だけ流す曲(front#304)。空ならダンジョンの曲
+  setAreaBgm(bgmId: string): void {
+    const map = this.editor?.map;
+    if (!map) return;
+    this.editor?.checkpoint();
+    map.bgmId = bgmId || null;
+    this.markDirty();
+  }
+
   setLink(side: Side, to: string): void {
     const map = this.editor?.map;
     if (!map) return;
@@ -1032,15 +1041,16 @@ export class RpgAdminPageComponent implements OnDestroy {
   deleteBgm(bgm: RpgBgm): void {
     const used = this.bgmUsage().get(bgm.id) ?? [];
     const message = used.length
-      ? `「${bgm.name}」は ${used.join('・')} で使っています。消すと、そのダンジョンは曲なしになります。消しますか？`
+      ? `「${bgm.name}」は ${used.map((u) => u.label).join('・')} で使っています。消すと、そのダンジョンは曲なしに、エリアはダンジョンの曲になります。消しますか？`
       : `「${bgm.name}」を消しますか？`;
     if (!confirm(message)) return;
     if (this.previewId() === bgm.id) this.stopPreview();
     this.rpgService.deleteBgm(bgm.id).subscribe({
       next: () => {
         this.bgms.set(this.bgms().filter((b) => b.id !== bgm.id));
-        // API側で、保存済みのダンジョンは曲なしになっている。画面の中のダンジョンも合わせる
+        // API側で、保存済みのダンジョンは曲なしに、エリアはダンジョンの曲になっている。画面の中のダンジョン・エリアも合わせる
         for (const d of this.dungeons()) if (d.bgmId === bgm.id) d.bgmId = null;
+        for (const m of this.maps()) if (m.bgmId === bgm.id) m.bgmId = null;
         this.refresh();
         this.toast(`「${bgm.name}」を消しました`);
       },
