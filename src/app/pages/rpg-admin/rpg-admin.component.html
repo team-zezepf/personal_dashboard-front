@@ -187,7 +187,7 @@
           <p class="hint">{{ tabHint() }}</p>
           @if (usedItems().length) {
             <div class="item-group">このマップで使用中</div>
-            <div class="items used-items" aria-label="このマップで使用中">
+            <div class="items used-items" [class.enemy-list]="tab() === 'enemy'" aria-label="このマップで使用中">
               @for (u of usedItems(); track u.item.id) {
                 <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: u.item, count: u.count }" />
               }
@@ -196,26 +196,36 @@
               <div class="item-group">その他</div>
             }
           }
-          <div class="items">
+          <div class="items" [class.enemy-list]="tab() === 'enemy'">
             @for (item of otherItems(); track item.id) {
               <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item, count: 0 }" />
             }
           </div>
           <ng-template #paletteItem let-item let-count="count">
-            <button type="button" class="item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
-              <!-- 使っている数は敵だけに出す(地面・置物は並び順だけ。front#294) -->
-              @if (count && item.tool.kind === 'enemy') {
-                <span class="item-count">{{ count }}</span>
-              }
-              @if (item.icon) {
-                <span class="item-icon">{{ item.icon }}</span>
-              } @else if (item.tool.kind === 'enemy') {
-                <span class="item-dot" [style.background]="swatch(item)"></span>
-              } @else {
-                <span class="item-swatch" [style.background]="swatch(item)"></span>
-              }
-              <span class="item-label">{{ itemLabel(item) }}</span>
-            </button>
+            <!-- 敵は、敵タブの一覧と同じく絵・名前・HP・攻撃の1行にする(front#310) -->
+            @if (enemyOf(item); as e) {
+              <button type="button" class="enemy-item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="e.name" (click)="pickTool(item)">
+                <canvas #enemyThumb width="88" height="88" [attr.data-enemy]="item.id"></canvas>
+                <span class="row-text">
+                  <span class="name">
+                    {{ e.name }}
+                    @if (e.boss) {
+                      <span class="badge">ボス</span>
+                    }
+                  </span>
+                  <span class="sub">HP {{ e.hp }}・攻撃 {{ e.atk }}{{ count ? '・このマップに ' + count + '体' : '' }}</span>
+                </span>
+              </button>
+            } @else {
+              <button type="button" class="item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
+                @if (item.icon) {
+                  <span class="item-icon">{{ item.icon }}</span>
+                } @else {
+                  <span class="item-swatch" [style.background]="swatch(item)"></span>
+                }
+                <span class="item-label">{{ itemLabel(item) }}</span>
+              </button>
+            }
           </ng-template>
           @if (tab() === 'ground' || tab() === 'height') {
             <div class="brush">

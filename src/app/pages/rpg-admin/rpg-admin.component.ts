@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, afterRenderEffect, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { concat, forkJoin, toArray } from 'rxjs';
@@ -25,7 +25,7 @@ import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-loo
 import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
 import { RpgCraftPageComponent } from './rpg-craft-page/rpg-craft-page.component';
 import { RpgSeSectionComponent } from './rpg-se-section/rpg-se-section.component';
-import { setEnemies } from '../../rpg/rpg-enemy';
+import { EnemyDef, drawEnemyThumb, setEnemies } from '../../rpg/rpg-enemy';
 import {
   EditorTool,
   MAP_SIZE,
@@ -86,6 +86,8 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   private readonly stage = viewChild<ElementRef<HTMLDivElement>>('stage');
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
+  // パレットの敵の見本(front#310)
+  private readonly enemyThumbs = viewChildren<ElementRef<HTMLCanvasElement>>('enemyThumb');
 
   readonly allowed = isRoleAllowed(this.authService.currentUser()?.role, TOOL_ACCESS['/rpg/admin']);
   readonly palette = PALETTE;
@@ -273,6 +275,14 @@ export class RpgAdminPageComponent implements OnDestroy {
   };
 
   constructor() {
+    // パレットの敵の見本は、一覧が変わったとき・敵を作り直したときに描き直す(front#310)
+    afterRenderEffect(() => {
+      this.enemies();
+      for (const ref of this.enemyThumbs()) {
+        const def = ENEMIES[ref.nativeElement.dataset['enemy'] ?? ''];
+        if (def) drawEnemyThumb(ref.nativeElement, def);
+      }
+    });
     afterNextRender(() => {
       if (!this.allowed) return;
       forkJoin({
@@ -451,10 +461,14 @@ export class RpgAdminPageComponent implements OnDestroy {
     return item.tool.kind === 'ground' && item.tool.ground === 'w' ? this.currentTheme().liquidName : item.label;
   }
 
+  // パレットの敵の項目の、敵の情報(front#310)。敵でなければ null
+  enemyOf(item: PaletteItem): EnemyDef | null {
+    return item.tool.kind === 'enemy' ? (ENEMIES[item.tool.type] ?? null) : null;
+  }
+
   // 地面の見本の色
   swatch(item: PaletteItem): string {
     const tool = item.tool;
-    if (tool.kind === 'enemy') return ENEMIES[tool.type].color;
     if (tool.kind !== 'ground') return '';
     const t = this.currentTheme();
     switch (GROUND_CHARS.indexOf(tool.ground)) {
