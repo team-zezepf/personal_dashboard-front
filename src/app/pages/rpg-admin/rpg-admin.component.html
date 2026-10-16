@@ -291,28 +291,53 @@
 
           <section aria-label="エリアの配置">
             <h2>エリアの配置</h2>
-            <div class="layout-grid" [style.grid-template-columns]="'repeat(' + layout().columns + ', 56px)'">
+            <!-- エリアをドラッグして、ほかのエリアと入れ替え・空いたマスへ移す(front#301) -->
+            <div
+              class="layout-grid"
+              [style.grid-template-columns]="'repeat(' + layout().columns + ', 56px)'"
+              (dragover)="onLayoutDragOver($event)"
+              (dragleave)="onLayoutDragLeave($event)"
+              (drop)="onLayoutDrop($event)"
+            >
               @for (cell of layout().cells; track cell.x + ',' + cell.y) {
+                @let key = cell.x + ',' + cell.y;
+                @let droppable = !!dragAreaId() && canDropArea(cell.x, cell.y);
                 @if (cell.area; as a) {
                   <button
                     type="button"
                     class="cell area"
+                    draggable="true"
+                    [attr.data-cell]="key"
                     [class.active]="a.id === currentId()"
+                    [class.dragging]="a.id === dragAreaId()"
+                    [class.droppable]="droppable"
+                    [class.over]="droppable && dropCell() === key"
                     [attr.aria-pressed]="a.id === currentId()"
                     [title]="a.name"
                     (click)="selectArea(a.id)"
+                    (dragstart)="onAreaDragStart(a.id, $event)"
+                    (dragend)="onAreaDragEnd()"
                   >
                     {{ a.name }}{{ dirtyIds().has(a.id) ? ' ●' : '' }}
                   </button>
                 } @else if (cell.addable) {
-                  <button type="button" class="cell add" title="ここに新しいエリアを作る" aria-label="ここに新しいエリアを作る" (click)="openNewArea(cell.x, cell.y)">＋</button>
+                  <button
+                    type="button"
+                    class="cell add"
+                    title="ここに新しいエリアを作る"
+                    aria-label="ここに新しいエリアを作る"
+                    [attr.data-cell]="key"
+                    [class.droppable]="droppable"
+                    [class.over]="droppable && dropCell() === key"
+                    (click)="openNewArea(cell.x, cell.y)"
+                  >＋</button>
                 } @else {
-                  <span class="cell empty"></span>
+                  <span class="cell empty" [attr.data-cell]="key" [class.droppable]="droppable" [class.over]="droppable && dropCell() === key"></span>
                 }
               }
             </div>
             <p class="muted small">
-              隣り合うエリアは、向かい合う端でつながります（右の列は画面の右下の端、下の行は画面の左下の端）。クリックで編集するエリアを切り替え、「＋」で隣に新しいエリアを作ります。
+              隣り合うエリアは、向かい合う端でつながります（右の列は画面の右下の端、下の行は画面の左下の端）。クリックで編集するエリアを切り替え、「＋」で隣に新しいエリアを作ります。エリアはドラッグして、ほかのエリアと入れ替えたり、空いたマスへ移したりできます。
             </p>
           </section>
         }

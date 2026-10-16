@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
 import {
+  RpgAreaMove,
   RpgBgm,
   RpgCraft,
   RpgCraftInput,
@@ -237,6 +238,16 @@ export class RpgService {
       }
     `;
     return this.graphql.mutation<{ saveRpgMap: RpgMap }>(mutation, { input }).pipe(map((res) => res.saveRpgMap));
+  }
+
+  // 同じダンジョンのエリアの位置だけを、まとめて変える(入れ替え・移動。front#301 / api#138)
+  moveAreas(dungeonId: string, moves: RpgAreaMove[]): Observable<RpgMap[]> {
+    const mutation = `
+      mutation MoveRpgAreas($dungeonId: ID!, $moves: [RpgAreaMoveInput!]!) {
+        moveRpgAreas(dungeonId: $dungeonId, moves: $moves) { id gridX gridY }
+      }
+    `;
+    return this.graphql.mutation<{ moveRpgAreas: RpgMap[] }>(mutation, { dungeonId, moves }).pipe(map((res) => res.moveRpgAreas));
   }
 
   // ===== ダンジョン(front#234 / api#96) =====

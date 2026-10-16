@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgCraft, RpgMap, RpgObjectContents } from '../models/rpg.models';
+import { RpgAreaMove, RpgCraft, RpgMap, RpgObjectContents } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
@@ -322,6 +322,25 @@ export function sideLabel([dx, dy]: Side): string {
 /** 同じダンジョンの中で、area の side の向きに隣り合うエリア */
 export function neighborOf(maps: readonly RpgMap[], area: RpgMap, [dx, dy]: Side): RpgMap | undefined {
   return maps.find((m) => m.id !== area.id && m.dungeonId === area.dungeonId && m.gridX === area.gridX + dx && m.gridY === area.gridY + dy);
+}
+
+/**
+ * エリアの配置で、area をマス(x, y)へドラッグして離したときの位置の変更(front#301)。
+ * ほかのエリアの上なら入れ替え、空いたマスならそこへ移す。
+ * 空いたマスは、ほかのエリアと1辺でも接するときだけ(どこともつながらないエリアにしない)。置けなければ null
+ */
+export function areaDropMoves(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): RpgAreaMove[] | null {
+  if (area.gridX === x && area.gridY === y) return null;
+  const others = maps.filter((m) => m.id !== area.id && m.dungeonId === area.dungeonId);
+  const target = others.find((m) => m.gridX === x && m.gridY === y);
+  if (target) {
+    return [
+      { id: area.id, gridX: x, gridY: y },
+      { id: target.id, gridX: area.gridX, gridY: area.gridY }
+    ];
+  }
+  const touches = SIDES.some(([dx, dy]) => others.some((m) => m.gridX === x + dx && m.gridY === y + dy));
+  return touches ? [{ id: area.id, gridX: x, gridY: y }] : null;
 }
 
 /**

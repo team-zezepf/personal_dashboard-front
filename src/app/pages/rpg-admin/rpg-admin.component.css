@@ -620,6 +620,30 @@ textarea {
   color: #6076e0;
 }
 
+/* ドラッグで入れ替え・移動(front#301)。つかんでいるエリア・置けるマス・上に乗っているマス */
+.cell.area.dragging {
+  opacity: 0.4;
+}
+
+.cell.droppable {
+  outline: 2px dashed #8fa0ff;
+  outline-offset: 1px;
+}
+
+.cell.empty.droppable {
+  background: rgba(96, 118, 224, 0.08);
+}
+
+.cell.over {
+  outline-style: solid;
+  background: rgba(96, 118, 224, 0.25);
+}
+
+.cell.area.over {
+  background: #c9d2ff;
+  color: #1f2a6b;
+}
+
 .field input,
 .field select,
 .field textarea {
