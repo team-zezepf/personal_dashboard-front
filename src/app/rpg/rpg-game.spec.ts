@@ -616,6 +616,8 @@ describe('RpgGame', () => {
     });
 
     it('クリックすると、そこまで歩いて拾い、ログに出る。上を歩いただけでは拾わない', () => {
+      // 敵はランダムに歩き、アイテムの近くに来るとクリックで敵が選ばれてしまうので、この確認では置かない(front#308)
+      game.enemies = [];
       const drop = game.dropItem('potion', 2, 7, 5)!;
       const before = game.player.inv['potion'] ?? 0;
       // 落ちたマスを通り過ぎるだけでは拾わない
