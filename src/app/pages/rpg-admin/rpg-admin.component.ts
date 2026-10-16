@@ -5,7 +5,7 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
+import { RpgAreaMove, RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
 import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import {
   DEFAULT_ROOF, DEFAULT_WALL, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
@@ -14,7 +14,7 @@ import {
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
-  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, exitOf, neighborOf, sideLabel,
+  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, sideLabel,
   setCrafts,
   themeOf
 } from '../../rpg/rpg-data';
@@ -127,6 +127,9 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
   readonly newDungeonOpen = signal(false);
+  // エリアの配置のドラッグ(front#301)。つかんでいるエリアと、上に乗っているマス("x,y")
+  readonly dragAreaId = signal<string | null>(null);
+  readonly dropCell = signal<string | null>(null);
   // NPC・家の中身を変えるモーダル(front#236)。家は、決めるまでは下書き(houseDraft)を変える
   readonly npcModal = signal<RpgMapNpc | null>(null);
   readonly houseModal = signal<RpgMapObject | null>(null);
@@ -1047,6 +1050,83 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   formatSize(bytes: number): string {
     return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+  }
+
+  // ===== エリアの配置のドラッグ(front#301) =====
+
+  // つかんでいるエリアを、マス(x, y)で離したときの位置の変更(置けなければ null)
+  private dropMoves(x: number, y: number): RpgAreaMove[] | null {
+    const area = this.maps().find((m) => m.id === this.dragAreaId());
+    return area ? areaDropMoves(this.maps(), area, x, y) : null;
+  }
+
+  canDropArea(x: number, y: number): boolean {
+    return !!this.dropMoves(x, y);
+  }
+
+  onAreaDragStart(id: string, event: DragEvent): void {
+    this.dragAreaId.set(id);
+    event.dataTransfer?.setData('text/plain', id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  // マス目の上のイベントは、まとめてマス目で受け取る。どのマスかは data-cell("x,y")で見分ける
+  private cellOf(event: DragEvent): [number, number] | null {
+    const key = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-cell]')?.dataset['cell'];
+    if (!key) return null;
+    const [x, y] = key.split(',').map(Number);
+    return [x, y];
+  }
+
+  onLayoutDragOver(event: DragEvent): void {
+    const cell = this.cellOf(event);
+    if (!this.dragAreaId() || !cell || !this.canDropArea(...cell)) {
+      if (this.dropCell()) this.dropCell.set(null);
+      return;
+    }
+    event.preventDefault();
+    if (this.dropCell() !== cell.join(',')) this.dropCell.set(cell.join(','));
+  }
+
+  onLayoutDragLeave(event: DragEvent): void {
+    const grid = event.currentTarget as HTMLElement;
+    if (!grid.contains(event.relatedTarget as Node | null)) this.dropCell.set(null);
+  }
+
+  onLayoutDrop(event: DragEvent): void {
+    event.preventDefault();
+    const cell = this.cellOf(event);
+    const moves = cell ? this.dropMoves(...cell) : null;
+    this.onAreaDragEnd();
+    if (moves) this.moveAreas(moves);
+  }
+
+  onAreaDragEnd(): void {
+    this.dragAreaId.set(null);
+    this.dropCell.set(null);
+  }
+
+  // 位置だけをすぐに保存する(位置のほかの、保存していない変更はそのまま残る)
+  private moveAreas(moves: RpgAreaMove[]): void {
+    const dungeonId = this.currentDungeonId();
+    if (!dungeonId || this.saving()) return;
+    const [moving, swapped] = moves.map((mv) => this.maps().find((m) => m.id === mv.id)!);
+    this.saving.set(true);
+    this.rpgService.moveAreas(dungeonId, moves).subscribe({
+      next: () => {
+        this.saving.set(false);
+        for (const mv of moves) {
+          const map = this.maps().find((m) => m.id === mv.id);
+          if (map) [map.gridX, map.gridY] = [mv.gridX, mv.gridY];
+        }
+        this.refresh();
+        this.toast(swapped ? `「${moving.name}」と「${swapped.name}」を入れ替えました` : `「${moving.name}」を移しました`);
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.toast(`動かせませんでした：${err.message}`);
+      }
+    });
   }
 
   // ===== 新しいダンジョン・エリア、保存・テストプレイ =====

@@ -295,6 +295,13 @@ export interface RpgBgm {
 // id が null なら新しいエリアとして追加する
 export type RpgMapInput = Omit<RpgMap, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null };
 
+// エリアの位置の変更(エリアの配置での入れ替え・移動。front#301 / api#138)
+export interface RpgAreaMove {
+  id: string;
+  gridX: number;
+  gridY: number;
+}
+
 // ポイント交換所の品物(値段と中身はAPIが決める)
 export interface RpgPointShopItem {
   id: string;
