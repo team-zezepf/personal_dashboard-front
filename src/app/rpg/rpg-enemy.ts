@@ -7,7 +7,7 @@ import { drawArmor, drawChest, mix, shade } from './rpg-props';
  * 形・攻撃の名前はAPI(RpgEnemyService)と合わせる。
  */
 
-export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee';
+export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus';
 export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
@@ -16,7 +16,7 @@ export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['slime', 'スライム'], ['mushroom', 'キノコ'], ['wisp', '精霊'], ['raptor', 'ラプトル'],
   ['golem', 'ゴーレム'], ['ghost', 'ゴースト'], ['knight', '騎士'], ['lord', '魔導士'],
   ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン'],
-  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち']
+  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス']
 ];
 
 export interface AttackSpec {
@@ -111,11 +111,11 @@ setEnemies(DEFAULT_ENEMIES);
 // 形ごとの、クリックで選べる高さ・足元の印の大きさ(大きさ 1 のとき)
 const HIT_HEIGHT: Record<EnemyShape, number> = {
   slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 65, bat: 46, skeleton: 48, plant: 50, dragon: 68,
-  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46
+  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62
 };
 const RING: Record<EnemyShape, number> = {
   slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
-  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8
+  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5
 };
 
 export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
@@ -133,7 +133,7 @@ const HIT_MATERIAL_IDS = HIT_MATERIALS.map(([id]) => id);
 // 体の形ごとの素材(金属の騎士・リビングアーマーは岩)
 const SHAPE_MATERIAL: Record<EnemyShape, HitMaterial> = {
   slime: 'soft', mushroom: 'flesh', wisp: 'flesh', raptor: 'flesh', golem: 'stone', ghost: 'flesh', knight: 'stone', lord: 'flesh',
-  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh'
+  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh'
 };
 export const shapeMaterialOf = (shape: EnemyShape): HitMaterial => SHAPE_MATERIAL[shape];
 /** 叩いたときの音の素材。「敵」タブで選んでいればそれ、なければ体の形から */
@@ -242,6 +242,7 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
     case 'livingarmor': top = drawLivingArmor(c, def, pose); break;
     case 'rabbit': top = drawRabbit(c, def, pose); break;
     case 'bee': top = drawBee(c, def, pose); break;
+    case 'cerberus': top = drawCerberus(c, def, pose); break;
   }
   if (def.glow) drawGlow(c, HIT_HEIGHT[def.shape], pose.time, true);
   c.restore();
@@ -904,6 +905,122 @@ function drawBee(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): numb
   c.beginPath(); c.ellipse(-d * 4, cy - 10, 5.5, 10 - flap * 2, d * 0.4, 0, Math.PI * 2); c.fill(); c.stroke();
   c.restore();
   return 46 - fl;
+}
+
+// ケルベロス(front#306)。3つ首の犬。首はそれぞれ少しずつずれて揺れ、目は赤く光り、しっぽの先に火がともる
+function drawCerberus(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time;
+  const d = p.dir;
+  const bob = p.moving ? -Math.abs(Math.sin(t * 9)) * 2.5 : Math.sin(t * 2 + (p.seed ?? 0)) * 0.8;
+  const step = p.moving ? Math.sin(t * 12) * 3.5 : 0;
+  const lunge = p.lunge ?? 0;
+  const col = p.flash ? '#fff' : def.color;
+  const dk = p.flash ? '#fff' : def.dark;
+  shadow(c, 30, 9, 0.22);
+  // しっぽと、先の火
+  const sw = Math.sin(t * 3) * 4;
+  c.strokeStyle = col;
+  c.lineWidth = 5;
+  c.lineCap = 'round';
+  c.beginPath(); c.moveTo(-d * 18, bob - 26); c.quadraticCurveTo(-d * 30, bob - 30 + sw, -d * 30, bob - 42 + sw); c.stroke();
+  tailFlame(c, -d * 30, bob - 44 + sw, t);
+  // 足(対角の足が同時に上がる)と肉球。奥の足は少し暗くする
+  for (const [x, s] of [[-15, 1], [-7, -1], [10, 1], [17, -1]]) {
+    const up = Math.max(0, s * step);
+    c.fillStyle = s === -1 && !p.flash ? shade(def.dark, 0.8) : dk;
+    c.beginPath(); c.roundRect(d * x - 4, bob - 18 - up, 8, 18 + up - bob, 3); c.fill();
+    c.beginPath(); c.ellipse(d * x + d * 1.5, -1.5 - up * 0.3, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
+  }
+  // 奥の首(いちばん高く・後ろ)は胴より先に描く
+  cerberusHead(c, def, p, d * 13, bob - 58, 0.92, 2.1, true);
+  // 胴・背中の毛並み・背中のとげ
+  c.fillStyle = col;
+  c.beginPath(); c.ellipse(0, bob - 25, 23, 13, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = p.flash ? '#fff' : mix(def.color, '#ffffff', 0.28);
+  c.lineWidth = 1.3;
+  c.stroke();
+  c.fillStyle = p.flash ? '#fff' : mix(def.color, '#ffffff', 0.12);
+  c.beginPath(); c.ellipse(-d * 3, bob - 31, 15, 5, 0, 0, Math.PI * 2); c.fill();
+  for (let i = -2; i <= 1; i++) poly(c, [[d * i * 7 - 3, bob - 35], [d * i * 7 - d * 3, bob - 42], [d * i * 7 + 3, bob - 35]], dk);
+  // とげの付いた首輪
+  c.fillStyle = p.flash ? '#fff' : '#7f1d1d';
+  c.beginPath(); c.ellipse(d * 14, bob - 31, 6, 9, d * 0.4, 0, Math.PI * 2); c.fill();
+  for (const k of [-1, 0, 1]) poly(c, [[d * 16 + k * 3, bob - 33 + k * 5], [d * 22 + k * 3, bob - 34 + k * 5], [d * 17 + k * 3, bob - 30 + k * 5]], '#e5e7eb');
+  // まん中の首・手前の首
+  cerberusHead(c, def, p, d * 29, bob - 46, 1, 0, false);
+  cerberusHead(c, def, p, d * 23, bob - 29, 1.05, 4.2, false);
+  // 炎の攻撃: まん中の口から火の粉
+  if (lunge && def.attack === 'fire') {
+    for (let i = 0; i < 6; i++) {
+      c.fillStyle = `rgba(255,${150 + i * 18},${60 + i * 10},${Math.min(1, lunge * 1.3) * (1 - i / 7)})`;
+      c.beginPath(); c.arc(d * (42 + lunge * 7 + i * 6), bob - 43 + Math.sin(t * 20 + i) * 2, 3.8 - i * 0.45, 0, Math.PI * 2); c.fill();
+    }
+  }
+  return 64;
+}
+
+/** ケルベロスの首と頭。(hx, hy) は頭の真ん中、s は大きさ、ph は揺れ方のずれ、far は奥の首(少し暗くする) */
+function cerberusHead(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose, hx: number, hy: number, s: number, ph: number, far: boolean): void {
+  const t = p.time;
+  const d = p.dir;
+  const lunge = p.lunge ?? 0;
+  const sway = Math.sin(t * 3 + ph) * 1.6 + (p.moving ? Math.sin(t * 9 + ph) * 1.2 : 0);
+  // 攻撃のときは3つの首が前へ出る
+  const x = hx + d * lunge * 7;
+  const y = hy + sway;
+  const col = p.flash ? '#fff' : far ? shade(def.color, 0.75) : def.color;
+  const dk = p.flash ? '#fff' : far ? shade(def.dark, 0.75) : def.dark;
+  // 首(ふちを少し明るくして、重なった首を見分けやすくする)
+  const nx = d * 11;
+  const ny = p.moving ? y + 18 : hy + 16;
+  c.lineCap = 'round';
+  c.strokeStyle = p.flash ? '#fff' : mix(def.color, '#ffffff', 0.22);
+  c.lineWidth = 10 * s;
+  c.beginPath(); c.moveTo(nx, ny); c.lineTo(x - d * 3 * s, y + 3 * s); c.stroke();
+  c.strokeStyle = col;
+  c.lineWidth = 8 * s;
+  c.beginPath(); c.moveTo(nx, ny); c.lineTo(x - d * 3 * s, y + 3 * s); c.stroke();
+  // 耳・頭・鼻先
+  poly(c, [[x - d * 2 * s, y - 5 * s], [x - d * 7 * s, y - 16 * s], [x + d * 2 * s, y - 6 * s]], dk);
+  c.fillStyle = col;
+  c.strokeStyle = p.flash ? '#fff' : mix(def.color, '#ffffff', far ? 0.18 : 0.32);
+  c.lineWidth = 1.3 * s;
+  c.beginPath(); c.ellipse(x, y, 9 * s, 7.5 * s, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.beginPath(); c.ellipse(x + d * 8 * s, y + 2 * s, 6.5 * s, 4.3 * s, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.beginPath(); c.ellipse(x + d * 2 * s, y + 1 * s, 7 * s, 5.5 * s, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#0b0b10';
+  c.beginPath(); c.arc(x + d * 14 * s, y + 0.8 * s, 1.8 * s, 0, Math.PI * 2); c.fill();
+  // 口(襲ってくるときは少し、攻撃のときは大きく開けて牙を見せる)
+  const open = lunge ? lunge : p.aggro ? 0.3 + Math.sin(t * 6 + ph) * 0.12 : 0;
+  if (open > 0.02) {
+    poly(c, [[x + d * 3 * s, y + 4 * s], [x + d * 14 * s, y + 4 * s], [x + d * 12 * s, y + (5 + open * 7) * s], [x + d * 3 * s, y + (6 + open * 2) * s]], '#7f1d1d');
+    for (const k of [6, 9, 12]) poly(c, [[x + d * (k - 1) * s, y + 4 * s], [x + d * k * s, y + 6.2 * s], [x + d * (k + 1) * s, y + 4 * s]], '#f8fafc');
+  }
+  // 赤く光る目(襲ってくるとき・攻撃のときは強く光り、怒った目つきになる)
+  const angry = p.aggro || lunge > 0;
+  const ex = x + d * 3 * s;
+  const ey = y - 2 * s;
+  const g = c.createRadialGradient(ex, ey, 0, ex, ey, 7 * s);
+  g.addColorStop(0, `rgba(255,70,40,${angry ? 0.75 : 0.45})`);
+  g.addColorStop(1, 'rgba(255,70,40,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(ex, ey, 7 * s, 0, Math.PI * 2); c.fill();
+  c.fillStyle = angry ? '#ff3b30' : '#f97316';
+  c.beginPath(); c.ellipse(ex, ey, 2.3 * s, 1.6 * s, 0, 0, Math.PI * 2); c.fill();
+  if (angry) {
+    c.strokeStyle = '#0b0b10';
+    c.lineWidth = 1.6 * s;
+    c.beginPath(); c.moveTo(x - d * 1 * s, y - 5.5 * s); c.lineTo(x + d * 6 * s, y - 3.5 * s); c.stroke();
+  }
+}
+
+// ケルベロスのしっぽの先でゆらめく火
+function tailFlame(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const f = Math.sin(t * 14) * 1.2;
+  c.fillStyle = 'rgba(249,115,22,0.85)';
+  c.beginPath(); c.ellipse(x, y - 2, 3.4, 5.5 + f, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(253,224,71,0.95)';
+  c.beginPath(); c.ellipse(x, y - 1, 1.8, 3 + f * 0.5, 0, 0, Math.PI * 2); c.fill();
 }
 
 // 光る(front#284): 体のまわりをやわらかく光らせ(体の前に描く)、小さな星をきらきら散らす(体のあとに描く)

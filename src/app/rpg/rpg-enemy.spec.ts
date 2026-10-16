@@ -40,12 +40,23 @@ describe('rpg-enemy', () => {
   });
 
   it('つのウサギ・ミツバチンの形と光る敵を、どの状態でも描ける。スライムは、まれにヒカリスライムに入れかわる(front#284)', () => {
-    expect(ENEMY_SHAPES.slice(14)).toEqual([['rabbit', 'うさぎ'], ['bee', 'はち']]);
+    expect(ENEMY_SHAPES.slice(14, 16)).toEqual([['rabbit', 'うさぎ'], ['bee', 'はち']]);
     expect(ENEMIES['hikarislime'].glow).toBe(true);
     const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
     for (const def of [ENEMIES['hornrabbit'], ENEMIES['mitsubachin'], ENEMIES['hikarislime']]) {
       for (const pose of [{}, { moving: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
         expect(drawEnemyBody(c, def, { dir: -1, time: 1.3, ...pose })).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('ケルベロスの形を選べ、どの状態・どの向きでも描ける(front#306)', () => {
+    expect(ENEMY_SHAPES.slice(16)).toEqual([['cerberus', 'ケルベロス']]);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    const def = { ...ENEMIES['knight'], shape: 'cerberus' as const, attack: 'fire' as const, size: 1.45 };
+    for (const dir of [1, -1]) {
+      for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
+        expect(drawEnemyBody(c, def, { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
       }
     }
   });
