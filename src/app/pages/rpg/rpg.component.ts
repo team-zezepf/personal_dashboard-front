@@ -5,9 +5,9 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
+import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
-import { BgmPlayer, browserStorage } from '../../rpg/rpg-bgm';
+import { BgmPlayer, areaBgmId, browserStorage } from '../../rpg/rpg-bgm';
 import { SePlayer } from '../../rpg/rpg-se';
 import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutIndexOf, shortcutItems } from '../../rpg/rpg-shortcuts';
 import { environment } from '../../../environments/environment';
@@ -387,7 +387,7 @@ export class RpgPageComponent implements OnDestroy {
         }
         // テストプレイでは保存しない
         this.loaded = !this.testArea;
-        this.playDungeonBgm(game.dungeon);
+        this.playAreaBgm(game.area, game.dungeon);
         this.isLoading.set(false);
         this.log(game.area.id === 'plain' ? `${game.dungeon.name}にやってきた。村長に話しかけてみよう` : `${game.dungeon.name}にやってきた`);
         this.showAreaTitle(game.dungeon);
@@ -439,10 +439,9 @@ export class RpgPageComponent implements OnDestroy {
         this.syncLock();
       },
       fade: (on) => this.fading.set(on),
-      dungeonEntered: (dungeon) => {
-        this.showAreaTitle(dungeon);
-        this.playDungeonBgm(dungeon);
-      },
+      dungeonEntered: (dungeon) => this.showAreaTitle(dungeon),
+      // 同じ曲のエリアどうしでは、曲は最初に戻らず流れ続ける(BgmPlayer は同じ曲なら何もしない)
+      areaEntered: (area, dungeon) => this.playAreaBgm(area, dungeon),
       captureScreen: () => this.captureScreen(),
       knockedOut: (on) => this.knockedOut.set(on),
       sound: (slot) => this.sePlayer.play(slot)
@@ -500,8 +499,10 @@ export class RpgPageComponent implements OnDestroy {
 
   // ===== BGM =====
 
-  private playDungeonBgm(dungeon: RpgDungeon): void {
-    const bgm = this.bgms.find((b) => b.id === dungeon.bgmId) ?? null;
+  // エリアの曲(front#304)があればその曲、なければダンジョンの曲を流す
+  private playAreaBgm(area: RpgMap, dungeon: RpgDungeon): void {
+    const id = areaBgmId(area, dungeon);
+    const bgm = this.bgms.find((b) => b.id === id) ?? null;
     this.areaBgm.set(bgm);
     this.bgmPlayer.play(bgm ? this.rpgService.bgmUrl(bgm) : null);
   }

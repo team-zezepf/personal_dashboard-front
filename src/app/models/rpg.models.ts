@@ -192,6 +192,8 @@ export interface RpgMap {
   startY: number;
   sortOrder: number;
   updatedAt?: string | null;
+  // このエリアにいる間だけ流す曲(RpgBgm の id。front#304)。なければダンジョンの曲
+  bgmId?: string | null;
 }
 
 // RPGの敵(front#229 / api#94)。マップ作成画面の「敵」タブで作る。絵の描き方・攻撃の動きは rpg/rpg-enemy.ts

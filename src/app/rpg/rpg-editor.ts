@@ -182,7 +182,8 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     })),
     enemies: map.enemies.map((e) => ({ ...e })),
     links: (map.links ?? []).map((l) => ({ dx: l.dx, dy: l.dy, to: l.to })),
-    startX: map.startX, startY: map.startY
+    startX: map.startX, startY: map.startY,
+    bgmId: map.bgmId ?? null
   };
 }
 

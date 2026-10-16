@@ -172,6 +172,8 @@ export interface RpgGameEvents {
   fade(on: boolean): void;
   // ほかのダンジョンに入った(暗転が明けたとき)。同じダンジョンの中のエリアの移動では呼ばない(front#234)
   dungeonEntered(dungeon: RpgDungeon): void;
+  // エリアを移った(同じダンジョンの中の移動も。front#304)。エリアごとの曲に切り替えるのに使う
+  areaEntered?(area: RpgMap, dungeon: RpgDungeon): void;
   // 隣のエリアへスライドする直前の画面(スライドで押し出す絵)。描く画面がなければ null
   captureScreen(): CanvasImageSource | null;
   // たおれた(true)/村に戻った(false)
@@ -419,6 +421,7 @@ export class RpgGame {
       after?.();
       this.transitioning = false;
       this.events.fade(false);
+      this.events.areaEntered?.(dest, this.dungeon);
       // 同じダンジョンの中の移動(倒れて村に戻ったときなど)では、ダンジョン名を出さない
       if (this.dungeon.id !== before) {
         this.events.dungeonEntered(this.dungeon);
@@ -457,6 +460,7 @@ export class RpgGame {
     this.snapZ(this.player);
     this.slide = { side, t: 0, image };
     this.transitioning = true;
+    this.events.areaEntered?.(dest, this.dungeon);
     this.events.dirty();
   }
 

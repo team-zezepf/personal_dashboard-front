@@ -1,4 +1,4 @@
-import { BgmAudio, BgmPlayer, loadBgmSettings } from './rpg-bgm';
+import { BgmAudio, BgmPlayer, areaBgmId, loadBgmSettings } from './rpg-bgm';
 
 class FakeAudio implements BgmAudio {
   src = '';
@@ -108,5 +108,14 @@ describe('BgmPlayer', () => {
     expect(loadBgmSettings(memoryStorage({ rpgBgmSettings: '{broken' }))).toEqual({ volume: 0.6, muted: false });
     expect(loadBgmSettings(memoryStorage({ rpgBgmSettings: '{"volume":5}' }))).toEqual({ volume: 1, muted: false });
     expect(loadBgmSettings(null)).toEqual({ volume: 0.6, muted: false });
+  });
+});
+
+describe('areaBgmId(front#304)', () => {
+  it('エリアの曲があればその曲、なければダンジョンの曲、どちらもなければ null', () => {
+    expect(areaBgmId({ bgmId: '5' }, { bgmId: '1' })).toBe('5');
+    expect(areaBgmId({ bgmId: null }, { bgmId: '1' })).toBe('1');
+    expect(areaBgmId({}, { bgmId: '1' })).toBe('1');
+    expect(areaBgmId({}, {})).toBeNull();
   });
 });

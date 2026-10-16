@@ -55,7 +55,7 @@ const MAP_FIELDS = `
   }
   enemies { type x y }
   links { dx dy to }
-  startX startY sortOrder updatedAt
+  startX startY sortOrder updatedAt bgmId
 `;
 
 const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt`;

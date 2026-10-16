@@ -285,6 +285,12 @@ textarea {
   font-weight: 700;
 }
 
+/* エリアだけで使っている曲(front#304) */
+.used.area {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .btn.danger {
   color: var(--red-text);
 }

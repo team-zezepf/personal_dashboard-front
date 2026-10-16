@@ -6,11 +6,13 @@ import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
 const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
-function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; captured: number; sounds: string[] } {
+function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; areas: string[]; captured: number; sounds: string[] } {
   const result = {
     messages: [] as string[],
     dirtyCount: 0,
     entered: [] as string[],
+    // 入ったエリア(「エリア/ダンジョン」。front#304)
+    areas: [] as string[],
     captured: 0,
     sounds: [] as string[],
     log: (message: string) => result.messages.push(message),
@@ -20,6 +22,7 @@ function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; ent
     talk: () => undefined,
     fade: () => undefined,
     dungeonEntered: (dungeon: RpgDungeon) => result.entered.push(dungeon.id),
+    areaEntered: (area: RpgMap, dungeon: RpgDungeon) => result.areas.push(`${area.id}/${dungeon.id}`),
     captureScreen: () => {
       result.captured++;
       return null;
@@ -272,6 +275,8 @@ describe('RpgGame', () => {
       expect(game.area.id).toBe('forest');
       expect([game.player.x, game.player.y]).toEqual([1, 7]);
       expect(ev.entered).toEqual(['forest']);
+      // エリアに入ったことも知らせる(エリアごとの曲に切り替えるため。front#304)
+      expect(ev.areas).toEqual(['forest/forest']);
       // 見た目はダンジョンのもの
       expect(game.theme).toBe(THEMES['forest']);
       expect(ev.messages).toContain('精霊の森にやってきた');
@@ -357,8 +362,9 @@ describe('RpgGame', () => {
       walk();
       expect(game.slide).toBeNull();
       expect(game.transitioning).toBe(false);
-      // 同じダンジョンの中なので、ダンジョン名は出さない
+      // 同じダンジョンの中なので、ダンジョン名は出さない。エリアに入ったことは知らせる(front#304)
       expect(ev.entered).toEqual([]);
+      expect(ev.areas).toEqual(['cave2/cave']);
       expect(ev.messages.filter((m) => m.includes('やってきた'))).toEqual([]);
       expect(game.dungeon.id).toBe('cave');
       expect(game.theme).toBe(THEMES['tower']);
