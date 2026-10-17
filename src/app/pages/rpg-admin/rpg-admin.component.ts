@@ -232,6 +232,8 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   // ===== BGM(front#218) =====
   readonly page = signal<'map' | 'bgm' | 'enemy' | 'craft'>('map');
+  // 「BGM・効果音」の中のタブ(front#318)
+  readonly soundTab = signal<'bgm' | 'se'>('bgm');
   readonly bgms = signal<RpgBgm[]>([]);
   readonly bgmAccept = RPG_BGM_ACCEPT;
   readonly uploading = signal(false);
