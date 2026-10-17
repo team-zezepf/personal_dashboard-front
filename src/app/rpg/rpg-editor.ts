@@ -172,7 +172,9 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
       wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null,
-      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count, chance: o.contents.chance ?? 1 } : null
+      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count, chance: o.contents.chance ?? 1 } : null,
+      // 看板の文章(front#314)。前後の空白・空の行は API が捨てる
+      lines: o.type === 'sign' ? (o.lines ?? []) : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,
@@ -393,8 +395,10 @@ export class RpgMapEditor {
         this.removeAt(x, y);
         const placed: RpgMapObject = { type: tool.type, x, y, roof: tool.roof ?? null, torch: !!tool.torch };
         this.map.objects.push(placed);
-        // 壊れる置物は、置いたものを選んだ状態にする(中身を選べる)
-        return first && isBreakable(tool.type) ? { kind: 'breakable', ref: placed } : null;
+        // 壊れる置物は、置いたものを選んだ状態にする(中身を選べる)。看板も選んだ状態にする(文章を書ける。front#314)
+        if (!first) return null;
+        if (isBreakable(tool.type)) return { kind: 'breakable', ref: placed };
+        return tool.type === 'sign' ? { kind: 'object', ref: placed } : null;
       }
       case 'enemy':
         // 1回のクリックで1体だけ置く(ドラッグで続けて置かない。front#290)

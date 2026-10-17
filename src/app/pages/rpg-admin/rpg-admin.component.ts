@@ -14,7 +14,8 @@ import {
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
-  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, sideLabel,
+  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, sideLabel, signExit,
+  signLinesOf,
   setCrafts,
   themeOf
 } from '../../rpg/rpg-data';
@@ -459,6 +460,29 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   itemLabel(item: PaletteItem): string {
     return item.tool.kind === 'ground' && item.tool.ground === 'w' ? this.currentTheme().liquidName : item.label;
+  }
+
+  // ===== 看板の文章(front#314) =====
+
+  signText(o: RpgMapObject): string {
+    return (o.lines ?? []).join('\n');
+  }
+
+  // 打っている途中の空の行も残す(前後の空白・空の行は API が捨てる)
+  setSignText(o: RpgMapObject, text: string): void {
+    o.lines = text.split('\n');
+    this.edited();
+  }
+
+  // 欄の下に出す、ゲームでの見え方
+  signPreview(o: RpgMapObject): string {
+    const own = (o.lines ?? []).filter((l) => l.trim()).length;
+    if (own) return `${own}ページ。クリックすると、この順に出ます。`;
+    const map = this.current();
+    const exit = map ? signExit(this.maps(), map, o.x, o.y) : null;
+    const to = exit ? this.dungeons().find((d) => d.id === exit.to.dungeonId) : null;
+    const auto = signLinesOf([], to ?? null);
+    return auto ? `空なので、ゲームでは「${auto[0]}」と出ます。` : '空なので、ゲームではクリックしても何も出ません。';
   }
 
   // パレットの敵の項目の、敵の情報(front#310)。敵でなければ null

@@ -6,13 +6,15 @@ import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
 const LOOK = { ...DEFAULT_LOOK, hair: 'ponytail', eyes: 'glasses', clothes: 'robe', clothesColor: '#8b5cf6', accentColor: '#fbbf24' };
 
-function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; areas: string[]; captured: number; sounds: string[] } {
+function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; entered: string[]; areas: string[]; reads: [string, string[]][]; captured: number; sounds: string[] } {
   const result = {
     messages: [] as string[],
     dirtyCount: 0,
     entered: [] as string[],
     // 入ったエリア(「エリア/ダンジョン」。front#304)
     areas: [] as string[],
+    // 読んだ看板(front#314)
+    reads: [] as [string, string[]][],
     captured: 0,
     sounds: [] as string[],
     log: (message: string) => result.messages.push(message),
@@ -23,6 +25,7 @@ function events(): RpgGameEvents & { messages: string[]; dirtyCount: number; ent
     fade: () => undefined,
     dungeonEntered: (dungeon: RpgDungeon) => result.entered.push(dungeon.id),
     areaEntered: (area: RpgMap, dungeon: RpgDungeon) => result.areas.push(`${area.id}/${dungeon.id}`),
+    read: (title: string, lines: string[]) => result.reads.push([title, lines]),
     captureScreen: () => {
       result.captured++;
       return null;
@@ -589,6 +592,42 @@ describe('RpgGame', () => {
       expect(game.player.weapon).toBe('wood_sword');
       expect(game.player.inv['fang_sword']).toBeUndefined();
       expect(game.player.inv['craft1']).toBe(1);
+    });
+  });
+
+  describe('看板(front#314)', () => {
+    const sign = (x: number, y: number, lines?: string[]) => ({ type: 'sign', x, y, roof: null, torch: false, lines });
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    beforeEach(() => {
+      game.loadMap(map('field', { objects: [sign(8, 5, ['この先 霧の沼。', '足元に注意！']), sign(3, 9)] }));
+      Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
+      game.update(0);
+    });
+
+    it('文章のある看板をクリックすると、そばまで歩いて読み、叩かない', () => {
+      clickTile(8, 5);
+      run(3);
+      expect(ev.reads).toEqual([['看板', ['この先 霧の沼。', '足元に注意！']]]);
+      expect(Math.max(Math.abs(game.player.x - 8), Math.abs(game.player.y - 5))).toBeLessThanOrEqual(1.5);
+      expect(game.map.statics.find((o) => o.x === 8 && o.y === 5)?.hits ?? 0).toBe(0);
+    });
+
+    it('文章がなく、指す端もない看板は、クリックしても何も起きない', () => {
+      const [sx, sy] = game.screenPositionOf({ x: 3, y: 9 });
+      expect(game.pickEntity(sx, sy - 20)).toBeNull();
+      clickTile(3, 9);
+      run(3);
+      expect(ev.reads).toEqual([]);
+    });
+
+    it('文章がなく、ほかのダンジョンへの端を指す看板は、行き先の案内を出す', () => {
+      // 始まりの草原は、右下の端が精霊の森(推奨 Lv4)につながる
+      game.loadMap(map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }], objects: [sign(9, 5)] }));
+      const o = game.map.statics.find((s) => s.type === 'sign')!;
+      expect(game.signLines(o)).toEqual(['この先 精霊の森（推奨 Lv4〜）']);
     });
   });
 

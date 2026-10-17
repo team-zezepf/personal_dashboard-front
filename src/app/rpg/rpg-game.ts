@@ -36,6 +36,8 @@ import {
   maxHpOf,
   neighborOf,
   nextExpOf,
+  signExit,
+  signLinesOf,
   themeOf,
   totalStatPointsOf,
   walkSpeedOf
@@ -174,6 +176,8 @@ export interface RpgGameEvents {
   dungeonEntered(dungeon: RpgDungeon): void;
   // エリアを移った(同じダンジョンの中の移動も。front#304)。エリアごとの曲に切り替えるのに使う
   areaEntered?(area: RpgMap, dungeon: RpgDungeon): void;
+  // 看板を読んだ(front#314)。lines は1行が1ページ
+  read?(title: string, lines: string[]): void;
   // 隣のエリアへスライドする直前の画面(スライドで押し出す絵)。描く画面がなければ null
   captureScreen(): CanvasImageSource | null;
   // たおれた(true)/村に戻った(false)
@@ -259,6 +263,13 @@ export class RpgGame {
   }
 
   /** エリアが入っているダンジョン(見つからなければ、エリアの名前で最初の見た目のダンジョンとして扱う) */
+  /** 看板をクリックしたときに出す文(front#314)。看板でない・読めない看板は null */
+  signLines(o: StaticObj): string[] | null {
+    if (o.type !== 'sign') return null;
+    const exit = signExit(this.maps, this.area, o.x, o.y);
+    return signLinesOf(o.lines, exit ? this.dungeonOf(exit.to) : null);
+  }
+
   dungeonOf(area: RpgMap): RpgDungeon {
     return this.dungeons.find((d) => d.id === area.dungeonId) ?? { id: area.dungeonId, name: area.name, recommendedLevel: 1, theme: 'plain', sortOrder: 0 };
   }
@@ -576,12 +587,12 @@ export class RpgGame {
         best = e;
       }
     }
-    // 壊れる置物(壊れていないもの)もクリックで狙える(front#264)。人・敵と重なれば手前のもの
+    // 壊れる置物(壊れていないもの)・読める看板(front#314)もクリックで狙える(front#264)。人・敵と重なれば手前のもの
     for (const o of this.map.statics) {
-      if (!BREAK_HITS[o.type] || o.broken) continue;
+      if ((!BREAK_HITS[o.type] || o.broken) && !this.signLines(o)) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
-      const ht = o.type === 'armor' ? 52 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' ? 28 : 24;
+      const ht = o.type === 'armor' ? 52 : o.type === 'sign' ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' ? 28 : 24;
       if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
         bestDepth = o.x + o.y;
         best = o;
@@ -979,7 +990,15 @@ export class RpgGame {
         else if (!p.path.length && !this.pathTo(p, t.x, t.y)) p.target = null;
       } else {
         const d = cheb(p.x, p.y, t.x, t.y);
-        if (t.kind === 'static' && d <= ATTACK_RANGE) {
+        const signLines = t.kind === 'static' ? this.signLines(t) : null;
+        if (signLines && d <= 1.5 && !p.path.length) {
+          // 看板のそばまで来たら読む(front#314)
+          this.faceTo(p, t);
+          p.target = null;
+          this.events.read?.('看板', signLines);
+        } else if (signLines) {
+          if (!p.path.length) this.pathNear(p, t.x, t.y);
+        } else if (t.kind === 'static' && d <= ATTACK_RANGE) {
           // 壊れる置物の隣まで来たら叩く(front#264)
           p.path = [];
           this.faceTo(p, t);

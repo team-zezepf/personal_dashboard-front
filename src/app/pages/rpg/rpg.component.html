@@ -96,8 +96,8 @@
     }
 
     @if (talking(); as talk) {
-      <div class="dialog" role="dialog" [attr.aria-label]="talk.npc.name + 'との会話'" (click)="nextLine()">
-        <div class="dialog-name">{{ talk.npc.name }}</div>
+      <div class="dialog" role="dialog" [attr.aria-label]="talk.npc ? talk.name + 'との会話' : talk.name" (click)="nextLine()">
+        <div class="dialog-name" [class.sign]="!talk.npc">{{ talk.name }}</div>
         <p class="dialog-text">{{ talk.lines[talk.index] }}</p>
         @if (choosing()) {
           <div class="dialog-choices">

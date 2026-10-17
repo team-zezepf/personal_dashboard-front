@@ -125,6 +125,8 @@ export interface RpgMapObject {
   noWindow?: boolean | null;
   // 壊れる置物(草むら・シダ・水晶・岩・宝箱・甲冑)の中身(front#264)。なければ中身なし
   contents?: RpgObjectContents | null;
+  // 看板の文章(front#314 / api#146)。1行が1ページ。看板でなければ空
+  lines?: string[] | null;
 }
 
 // 壊れる置物の中身(front#264)。item はアイテムの ID と個数、enemy は敵の ID(個数は1)

@@ -94,8 +94,10 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話中のNPCと、話しているセリフ・表示しているセリフの番号。
   // クエスト(front#239)の会話では、依頼(offer)・進み具合(progress)・報告(report)のどれか
+  // 看板(front#314)は npc が null で、name だけを出す
   readonly talking = signal<{
-    npc: Npc;
+    npc: Npc | null;
+    name: string;
     lines: string[];
     index: number;
     quest?: { quest: RpgQuest; mode: 'offer' | 'progress' | 'report' };
@@ -440,6 +442,11 @@ export class RpgPageComponent implements OnDestroy {
       },
       fade: (on) => this.fading.set(on),
       dungeonEntered: (dungeon) => this.showAreaTitle(dungeon),
+      // 看板を読む(front#314)。会話と同じ窓に、1行ずつ出す
+      read: (title, lines) => {
+        this.talking.set({ npc: null, name: title, lines, index: 0 });
+        this.syncLock();
+      },
       // 同じ曲のエリアどうしでは、曲は最初に戻らず流れ続ける(BgmPlayer は同じ曲なら何もしない)
       areaEntered: (area, dungeon) => this.playAreaBgm(area, dungeon),
       captureScreen: () => this.captureScreen(),
@@ -571,7 +578,8 @@ export class RpgPageComponent implements OnDestroy {
       return;
     }
     // 村人・落ちたアイテム(front#276)は「話す・拾う」、敵・壊れる置物は「攻撃」
-    const state: GemState = game.hover ? (game.hover.kind === 'npc' || game.hover.kind === 'drop' ? 'talk' : 'attack') : 'normal';
+    const readable = game.hover?.kind === 'static' && game.hover.type === 'sign';
+    const state: GemState = game.hover ? (game.hover.kind === 'npc' || game.hover.kind === 'drop' || readable ? 'talk' : 'attack') : 'normal';
     this.gem.draw(state, dt, game.time, this.dpr);
   }
 
@@ -605,7 +613,8 @@ export class RpgPageComponent implements OnDestroy {
     if (current.quest?.mode === 'offer') return;
     this.talking.set(null);
     if (current.quest?.mode === 'report') this.game?.reportQuest(current.quest.quest);
-    if (current.npc.role === 'shop' || current.npc.role === 'exchange' || current.npc.role === 'smith') this.openShop(current.npc.role);
+    const role = current.npc?.role;
+    if (role === 'shop' || role === 'exchange' || role === 'smith') this.openShop(role);
     this.syncLock();
   }
 
@@ -615,18 +624,18 @@ export class RpgPageComponent implements OnDestroy {
   private conversationOf(npc: Npc): NonNullable<ReturnType<typeof this.talking>> {
     const game = this.game;
     const quest = game?.questLog.currentQuest(npc);
-    const plain = { npc, lines: npc.lines.length ? npc.lines : ['……'], index: 0 };
+    const plain = { npc, name: npc.name, lines: npc.lines.length ? npc.lines : ['……'], index: 0 };
     if (!game || !quest) return plain;
     const log = game.questLog;
     if (!log.stateOf(quest)) {
-      return { npc, lines: quest.offerLines.length ? quest.offerLines : [`「${quest.title}」を引き受けてくれんか？`], index: 0, quest: { quest, mode: 'offer' } };
+      return { npc, name: npc.name, lines: quest.offerLines.length ? quest.offerLines : [`「${quest.title}」を引き受けてくれんか？`], index: 0, quest: { quest, mode: 'offer' } };
     }
     if (log.isCleared(quest, game.player.inv)) {
-      return { npc, lines: quest.doneLines.length ? quest.doneLines : ['ありがとう！ これはお礼だ。'], index: 0, quest: { quest, mode: 'report' } };
+      return { npc, name: npc.name, lines: quest.doneLines.length ? quest.doneLines : ['ありがとう！ これはお礼だ。'], index: 0, quest: { quest, mode: 'report' } };
     }
     const lines = quest.progressLines.length ? [...quest.progressLines] : ['たのんだぞ。'];
     if (quest.kind !== 'visit') lines[lines.length - 1] += `（${log.progressOf(quest, game.player.inv)}/${quest.count}）`;
-    return { npc, lines, index: 0, quest: { quest, mode: 'progress' } };
+    return { npc, name: npc.name, lines, index: 0, quest: { quest, mode: 'progress' } };
   }
 
   acceptQuest(): void {

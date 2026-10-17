@@ -156,12 +156,15 @@ describe('RpgMapEditor', () => {
       expect(editor.map.objects).toHaveLength(0);
     });
 
-    it('保存する形では、形・向きは家だけが持つ', () => {
+    it('保存する形では、形・向きは家だけが、文章は看板だけが持つ。看板は置くと選んだ状態になる(front#314)', () => {
       editor.apply({ kind: 'object', type: 'tree' }, 1, 1, true);
       editor.apply({ kind: 'object', type: 'house' }, 4, 4, true);
+      const sign = editor.apply({ kind: 'object', type: 'sign' }, 10, 2, true)!.ref as RpgMapObject;
+      sign.lines = ['この先 霧の沼。', ''];
       expect(toMapInput(editor.map).objects).toEqual([
-        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null },
-        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, contents: null }
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null, lines: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, contents: null, lines: null },
+        { type: 'sign', x: 10, y: 2, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null, lines: ['この先 霧の沼。', ''] }
       ]);
     });
 
@@ -196,7 +199,8 @@ describe('RpgMapEditor', () => {
   it('ポータルはなく、看板を置物として置ける。端のつながりは保存する形に入る(front#274)', () => {
     expect(PALETTE.some((t) => t.id === 'portal')).toBe(false);
     expect(PALETTE.find((t) => t.id === 'object')!.items.some((i) => i.label === '看板')).toBe(true);
-    expect(editor.apply({ kind: 'object', type: 'sign' }, 3, 3, true)).toBeNull();
+    // 看板は置くと選んだ状態になり、文章を書ける(front#314)
+    expect(editor.apply({ kind: 'object', type: 'sign' }, 3, 3, true)).toEqual({ kind: 'object', ref: editor.map.objects.at(-1) });
     expect(editor.map.objects.at(-1)?.type).toBe('sign');
 
     editor.map.links.push({ dx: 1, dy: 0, to: 'plain' });
