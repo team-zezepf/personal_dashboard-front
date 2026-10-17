@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, afterRenderEffect, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, afterRenderEffect, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { concat, forkJoin, toArray } from 'rxjs';
@@ -127,6 +127,11 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly showHeights = signal(false);
   readonly showCliffs = signal(true);
   readonly selection = signal<Selection | null>(null);
+  // 右の欄のタブ(front#317)。マップの上で物を選んだ・置いたら、選んでいるものが見えるよう「エリア」にする
+  readonly propsTab = signal<'dungeon' | 'area'>('area');
+  private readonly showSelectedArea = effect(() => {
+    if (this.selection()) this.propsTab.set('area');
+  });
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
   readonly newDungeonOpen = signal(false);
