@@ -296,6 +296,11 @@
   margin-bottom: 8px;
 }
 
+/* 看板を読んでいるとき(front#314)は、木の色の名札 */
+.dialog-name.sign {
+  background: #a16207;
+}
+
 .dialog-text {
   font-size: 15px;
   line-height: 1.7;

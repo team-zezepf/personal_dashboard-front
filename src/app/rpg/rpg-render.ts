@@ -103,9 +103,11 @@ export class RpgRenderer {
     for (const o of game.map.statics) {
       if (o.type !== 'sign') continue;
       const exit = signExit(game.maps, game.area, o.x, o.y);
-      if (!exit) continue;
       const [sx, sy] = this.at(o.x, o.y);
-      if (this.onScreen(sx, sy, 80)) this.label(`▶ ${game.dungeonOf(exit.to).name}`, sx, sy - 52, 'rgba(124,58,237,0.88)');
+      if (!this.onScreen(sx, sy, 80)) continue;
+      if (exit) this.label(`▶ ${game.dungeonOf(exit.to).name}`, sx, sy - 52, 'rgba(124,58,237,0.88)');
+      // 読める看板にカーソルを乗せると「看板を読む」(front#314)
+      if (game.hover === o && game.signLines(o)) this.label('看板を読む', sx, sy - (exit ? 74 : 52));
     }
     this.drawEffects();
     ctx.restore();

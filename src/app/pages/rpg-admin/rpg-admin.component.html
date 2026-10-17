@@ -432,6 +432,14 @@
                   }
                   @case ('object') {
                     <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                    <!-- 看板の文章(front#314) -->
+                    @if (sel.ref.type === 'sign') {
+                      <label class="field">
+                        <span>看板の文章（1行が1ページ・20行まで）</span>
+                        <textarea rows="4" maxlength="4200" [ngModel]="signText(sel.ref)" (focus)="beginEdit()" (ngModelChange)="setSignText(sel.ref, $event)"></textarea>
+                      </label>
+                      <p class="muted small">{{ signPreview(sel.ref) }}</p>
+                    }
                     <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
                   }
                   @case ('breakable') {

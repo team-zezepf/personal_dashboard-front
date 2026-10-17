@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgAreaMove, RpgCraft, RpgMap, RpgObjectContents } from '../models/rpg.models';
+import { RpgAreaMove, RpgCraft, RpgDungeon, RpgMap, RpgObjectContents } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
@@ -223,6 +223,8 @@ export interface StaticObj {
   respawnIn?: number | null;
   shake?: number;
   fade?: number;
+  // 看板の文章(front#314)
+  lines?: string[];
 }
 
 /**
@@ -406,6 +408,16 @@ export function linkArrival(maps: readonly RpgMap[], from: RpgMap, fromSide: Sid
   return best ?? [to.startX, to.startY];
 }
 
+/**
+ * 看板をクリックしたときに出す文(front#314)。1行が1ページ。
+ * 文章があればその文章、なければ指すダンジョンへの案内(「この先 闇の塔(推奨 Lv15〜)」)。どちらもなければ null(読めない看板)
+ */
+export function signLinesOf(lines: readonly string[] | null | undefined, to: Pick<RpgDungeon, 'name' | 'recommendedLevel'> | null): string[] | null {
+  const own = (lines ?? []).map((l) => l.trim()).filter((l) => l);
+  if (own.length) return own;
+  return to ? [`この先 ${to.name}（${recLabel(to.recommendedLevel)}）`] : null;
+}
+
 /** 看板(front#274)が指す、いちばん近い「ほかのダンジョンへの端」。そのエリアにほかのダンジョンへの端がなければ null */
 export function signExit(maps: readonly RpgMap[], area: RpgMap, x: number, y: number): AreaExit | null {
   const dist = ([dx, dy]: Side) => (dx === 1 ? area.width - 1 - x : dx === -1 ? x : dy === 1 ? area.height - 1 - y : y);
@@ -494,7 +506,8 @@ export function buildAreaMap(map: RpgMap): AreaMap {
       kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
       shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined,
       wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined,
-      contents: isBreakable(o.type) ? (o.contents ?? undefined) : undefined
+      contents: isBreakable(o.type) ? (o.contents ?? undefined) : undefined,
+      lines: o.type === 'sign' ? (o.lines ?? undefined) : undefined
     }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>
