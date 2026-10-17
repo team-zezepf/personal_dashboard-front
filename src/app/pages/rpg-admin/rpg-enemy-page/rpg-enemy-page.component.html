@@ -313,3 +313,35 @@
     </div>
   </div>
 }
+
+<!-- 保存しようとしたら、ほかで変えられていた敵(front#312) -->
+@if (stale(); as list) {
+  <div class="csv-modal">
+    <div class="csv-card" role="dialog" aria-label="ほかで変えられた敵があります">
+      <div class="csv-head">
+        <h2>ほかで変えられた敵があります</h2>
+        <div class="muted small">この画面を開いたあとに、ほかの画面やデータの直接の修正で、次の敵が変えられています。古い内容で上書きしないよう、<b>1体も保存していません</b>。</div>
+      </div>
+      <div class="csv-body">
+        @for (s of list; track s.id) {
+          <div class="csv-item err">
+            <div class="csv-title">
+              {{ s.name }}
+              @if (s.now && s.now.name !== s.name) {
+                <span class="csv-line">（いまの名前: {{ s.now.name }}）</span>
+              }
+            </div>
+            <div class="csv-msg">
+              {{ s.now ? (formatSavedAt(s.now.updatedAt) ? formatSavedAt(s.now.updatedAt) + ' に保存されています' : 'ほかで保存されています') : 'ほかで消されています' }}
+            </div>
+          </div>
+        }
+        <p class="muted small">「読み込み直す」を押すと、敵の一覧を今の内容で読み込み直します。<b>この画面でまだ保存していない変更は消えます</b>。必要なら、読み込み直したあとにもう一度変更してください。</p>
+      </div>
+      <div class="csv-foot">
+        <button type="button" class="btn" (click)="closeStale()">閉じる（変更は残す）</button>
+        <button type="button" class="btn danger" (click)="reloadEnemies()">読み込み直す</button>
+      </div>
+    </div>
+  </div>
+}

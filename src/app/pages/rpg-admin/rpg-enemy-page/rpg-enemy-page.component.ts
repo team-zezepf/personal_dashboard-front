@@ -38,6 +38,26 @@ interface EnemyRow {
   isNew: boolean;
   // 保存してある並び順(新しい敵にはない)。一覧の位置と違えば、保存するときに並び順も送る(front#299)
   sortOrder?: number;
+  // 読み込んだとき(保存したとき)の更新日時。保存する前に、ほかで変えられていないか確かめるのに使う(front#312)
+  updatedAt?: string | null;
+}
+
+/** 読み込んだあとにほかで変えられた敵(front#312)。now は今の内容(ほかで消されていれば null) */
+export interface StaleEnemy {
+  id: string;
+  name: string;
+  now: RpgEnemy | null;
+}
+
+/** 保存しようとしている敵のうち、読み込んだあと(保存したあと)にほかで変えられた・消された敵。新しい敵は確かめない */
+export function staleEnemies(rows: { def: { id: string; name: string }; isNew: boolean; updatedAt?: string | null }[], current: RpgEnemy[]): StaleEnemy[] {
+  const byId = new Map(current.map((e) => [e.id, e]));
+  return rows
+    .filter((r) => !r.isNew)
+    .flatMap((r) => {
+      const now = byId.get(r.def.id) ?? null;
+      return !now || (now.updatedAt ?? '') !== (r.updatedAt ?? '') ? [{ id: r.def.id, name: r.def.name, now }] : [];
+    });
 }
 
 const LIMIT_OF: Record<NumberKey, readonly [number, number]> = {
@@ -86,6 +106,8 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly dirtyIds = signal<Set<string>>(new Set());
   readonly saving = signal(false);
   readonly message = signal('');
+  // 保存しようとしたら、ほかで変えられていた敵(front#312)。あれば知らせを出す
+  readonly stale = signal<StaleEnemy[] | null>(null);
   readonly dir = signal(1);
   // CSV の取り込みの確認(front#297)。反映するまで画面の敵は変えない
   readonly csvImport = signal<CsvImport | null>(null);
@@ -121,7 +143,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   constructor() {
     afterNextRender(() => {
-      this.rows.set(this.enemies().map((e) => ({ def: toDef(e), isNew: false, sortOrder: e.sortOrder })));
+      this.rows.set(this.enemies().map(rowOf));
       this.selectedId.set(this.rows()[0]?.def.id ?? null);
       this.loop();
     });
@@ -348,6 +370,25 @@ export class RpgEnemyPageComponent implements OnDestroy {
       return;
     }
     this.saving.set(true);
+    // 保存する前に今の一覧を読み、ほかで変えられた敵があれば1体も保存しない(front#312)
+    this.rpgService.getEnemies().subscribe({
+      next: (current) => {
+        const stale = staleEnemies(targets, current);
+        if (stale.length) {
+          this.saving.set(false);
+          this.stale.set(stale);
+          return;
+        }
+        this.saveRows(targets);
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.flash(err.message || '保存に失敗しました');
+      }
+    });
+  }
+
+  private saveRows(targets: EnemyRow[]): void {
     const position = (r: EnemyRow) => this.rows().indexOf(r) + 1;
     concat(...targets.map((r) => this.rpgService.saveEnemy(toInput(r, position(r))))).pipe(toArray()).subscribe({
       next: (savedList) => {
@@ -359,7 +400,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
             const i = targets.indexOf(r);
             if (i < 0) return r;
             if (r.def.id === selected) nextSelected = savedList[i].id;
-            return { def: toDef(savedList[i]), isNew: false, sortOrder: savedList[i].sortOrder };
+            return rowOf(savedList[i]);
           })
         );
         this.selectedId.set(nextSelected);
@@ -420,10 +461,40 @@ export class RpgEnemyPageComponent implements OnDestroy {
   }
 
   // 保存してある敵(新しい敵・保存していない変更は含めない)を、ゲームの敵の種類にする
+  // ===== 読み込んだあとにほかで変えられた敵(front#312) =====
+
+  closeStale(): void {
+    this.stale.set(null);
+  }
+
+  /** 敵の一覧を今の内容で読み込み直す。この画面でまだ保存していない変更は消える */
+  reloadEnemies(): void {
+    if (this.dirtyIds().size && !confirm('この画面でまだ保存していない変更は消えます。読み込み直しますか？')) return;
+    this.rpgService.getEnemies().subscribe({
+      next: (current) => {
+        const selected = this.selectedId();
+        this.rows.set(current.map(rowOf));
+        this.selectedId.set(current.some((e) => e.id === selected) ? selected : (current[0]?.id ?? null));
+        this.dirtyIds.set(new Set());
+        this.dirtyChange.emit(false);
+        this.stale.set(null);
+        this.publish();
+        this.flash('敵の一覧を読み込み直しました');
+      },
+      error: (err: Error) => this.flash(err.message || '読み込めませんでした')
+    });
+  }
+
+  // 「2026-10-16T23:21:34」を「10/16 23:21」に(更新日時がなければ空)
+  formatSavedAt(at: string | null | undefined): string {
+    const m = at?.match(/^\d{4}-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    return m ? `${Number(m[1])}/${Number(m[2])} ${m[3]}:${m[4]}` : '';
+  }
+
   private publish(): void {
     const list = this.rows()
       .filter((r) => !r.isNew)
-      .map((r, i) => ({ ...r.def, sortOrder: i + 1 }) as RpgEnemy);
+      .map((r, i) => ({ ...r.def, sortOrder: i + 1, updatedAt: r.updatedAt ?? null }) as RpgEnemy);
     setEnemies(list);
     this.saved.emit(list);
   }
@@ -566,6 +637,10 @@ export function moveItem<T>(list: T[], item: T, target: T, after: boolean): T[] 
   return [...rest.slice(0, at), item, ...rest.slice(at)];
 }
 
+function rowOf(e: RpgEnemy): EnemyRow {
+  return { def: toDef(e), isNew: false, sortOrder: e.sortOrder, updatedAt: e.updatedAt ?? null };
+}
+
 function toDef(e: RpgEnemy): EnemyDef {
   const { sortOrder: _s, updatedAt: _u, ...rest } = e;
   return rest as EnemyDef;
@@ -573,5 +648,6 @@ function toDef(e: RpgEnemy): EnemyDef {
 
 function toInput(r: EnemyRow, sortOrder: number): RpgEnemyInput {
   const { id, ...rest } = r.def;
-  return { ...rest, id: r.isNew ? null : id, name: rest.name.trim(), sortOrder };
+  // 読み込んだときの更新日時を送り、ほかで変えられていればAPIでも止める(新しい敵は送らない。front#312 / api#144)
+  return { ...rest, id: r.isNew ? null : id, name: rest.name.trim(), sortOrder, expectedUpdatedAt: r.isNew ? null : (r.updatedAt ?? '') };
 }

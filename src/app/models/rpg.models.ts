@@ -245,7 +245,8 @@ export interface RpgEnemy {
 }
 
 // id が null なら新しい敵として追加する。sortOrder がなければ今の並び順のまま(front#299 / api#136)
-export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder?: number | null };
+// expectedUpdatedAt: 読み込んだときの更新日時(まだ保存していない敵は '')。送ると、ほかで変えられていれば保存しない(front#312 / api#144)
+export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder?: number | null; expectedUpdatedAt?: string | null };
 
 // 鍛冶屋で合成してできる装備とレシピ(front#288 / api#134)。管理画面の「合成」タブで作る
 export interface RpgCraft {
