@@ -266,7 +266,12 @@
       </div>
 
       <aside class="props">
-        @if (currentDungeon(); as dungeon) {
+        <!-- ダンジョンの設定・エリアの設定をタブで切り替える(front#317) -->
+        <div class="props-tabs" role="tablist" aria-label="設定の切り替え">
+          <button type="button" role="tab" class="tab" [class.active]="propsTab() === 'dungeon'" [attr.aria-selected]="propsTab() === 'dungeon'" (click)="propsTab.set('dungeon')">🏰 ダンジョン</button>
+          <button type="button" role="tab" class="tab" [class.active]="propsTab() === 'area'" [attr.aria-selected]="propsTab() === 'area'" (click)="propsTab.set('area')">🗺️ エリア</button>
+        </div>
+        @if (propsTab() === 'dungeon' && currentDungeon(); as dungeon) {
           <section aria-label="ダンジョンの設定">
             <h2>ダンジョンの設定</h2>
             <label class="field">
@@ -352,152 +357,154 @@
           </section>
         }
         @if (current(); as map) {
-          <section aria-label="エリアの設定">
-            <h2>エリアの設定</h2>
-            <label class="field">
-              <span>エリアの名前</span>
-              <input type="text" maxlength="30" [ngModel]="map.name" (focus)="beginEdit()" (ngModelChange)="map.name = $event; edited()" />
-            </label>
-            <div class="row2">
+          @if (propsTab() === 'area') {
+            <section aria-label="エリアの設定">
+              <h2>エリアの設定</h2>
               <label class="field">
-                <span>幅（マス）</span>
-                <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.width" (change)="changeSize($any($event.target).value, map.height)" />
+                <span>エリアの名前</span>
+                <input type="text" maxlength="30" [ngModel]="map.name" (focus)="beginEdit()" (ngModelChange)="map.name = $event; edited()" />
               </label>
+              <div class="row2">
+                <label class="field">
+                  <span>幅（マス）</span>
+                  <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.width" (change)="changeSize($any($event.target).value, map.height)" />
+                </label>
+                <label class="field">
+                  <span>奥行き（マス）</span>
+                  <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
+                </label>
+              </div>
+              <!-- エリアだけで流す曲(front#304) -->
               <label class="field">
-                <span>奥行き（マス）</span>
-                <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
+                <span>BGM</span>
+                <select [ngModel]="map.bgmId ?? ''" (ngModelChange)="setAreaBgm($event)">
+                  <option value="">（ダンジョンの曲）</option>
+                  @for (bgm of bgms(); track bgm.id) {
+                    <option [value]="bgm.id">{{ bgm.name }}</option>
+                  }
+                </select>
               </label>
-            </div>
-            <!-- エリアだけで流す曲(front#304) -->
-            <label class="field">
-              <span>BGM</span>
-              <select [ngModel]="map.bgmId ?? ''" (ngModelChange)="setAreaBgm($event)">
-                <option value="">（ダンジョンの曲）</option>
-                @for (bgm of bgms(); track bgm.id) {
-                  <option [value]="bgm.id">{{ bgm.name }}</option>
-                }
-              </select>
-            </label>
-            <p class="muted small">このエリアにいる間だけ流す曲です。「（ダンジョンの曲）」なら、ダンジョンの曲が流れます。</p>
-            <div class="links" role="group" aria-label="端のつながり">
-              <span class="links-title">端のつながり</span>
-              @for (row of linkRows(map); track row.label) {
-                <div class="link-row">
-                  <span class="link-side">{{ row.label }}</span>
-                  @if (row.neighbor) {
-                    <span class="muted small">同じダンジョンの「{{ row.neighbor }}」</span>
-                  } @else {
-                    <select [attr.aria-label]="row.label + 'の端のつながり'" [ngModel]="row.to" (ngModelChange)="setLink(row.side, $event)">
-                      <option value="">なし</option>
-                      @for (m of linkTargets(); track m.id) {
-                        <option [value]="m.id">{{ dungeonName(m.dungeonId) }} ／ {{ m.name }}</option>
-                      }
-                    </select>
-                  }
-                </div>
-              }
-              <p class="muted small">
-                同じダンジョンの隣のエリアがない端だけ、ほかのダンジョンのエリアを選べます。その端で止まると、画面が暗くなって移ります。
-                行き先のエリアにも、こちらへ戻るつながりを決めると行き来できます（そのときは戻る側の端に着きます。決めていなければ、行き先のエリアの最初の位置に着きます）。
-              </p>
-            </div>
-          </section>
-
-          <section aria-label="選んでいるもの">
-            <h2>選んでいるもの</h2>
-            <div class="selected-box">
-              @if (selected(); as sel) {
-                @switch (sel.kind) {
-                  @case ('npc') {
-                    <div class="selected-title">🧑 NPC <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <p class="muted small">{{ sel.ref.name }}</p>
-                    <button type="button" class="btn small" (click)="openModal(sel)">NPCの中身を変える</button>
-                  }
-                  @case ('house') {
-                    <div class="selected-title">🏠 家 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <button type="button" class="btn small" (click)="openModal(sel)">家の形・向き・色を変える</button>
-                  }
-                  @case ('enemy') {
-                    <div class="selected-title">👾 敵の出る場所 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <label class="field">
-                      <span>敵の種類</span>
-                      <select [ngModel]="sel.ref.type" (focus)="beginEdit()" (ngModelChange)="sel.ref.type = $event; edited()">
-                        @for (e of enemyTypes(); track e.id) {
-                          <option [value]="e.id">{{ e.name }}</option>
+              <p class="muted small">このエリアにいる間だけ流す曲です。「（ダンジョンの曲）」なら、ダンジョンの曲が流れます。</p>
+              <div class="links" role="group" aria-label="端のつながり">
+                <span class="links-title">端のつながり</span>
+                @for (row of linkRows(map); track row.label) {
+                  <div class="link-row">
+                    <span class="link-side">{{ row.label }}</span>
+                    @if (row.neighbor) {
+                      <span class="muted small">同じダンジョンの「{{ row.neighbor }}」</span>
+                    } @else {
+                      <select [attr.aria-label]="row.label + 'の端のつながり'" [ngModel]="row.to" (ngModelChange)="setLink(row.side, $event)">
+                        <option value="">なし</option>
+                        @for (m of linkTargets(); track m.id) {
+                          <option [value]="m.id">{{ dungeonName(m.dungeonId) }} ／ {{ m.name }}</option>
                         }
                       </select>
-                    </label>
-                    <p class="muted small">強さ・落とすアイテムは、種類ごとに決まっています。</p>
-                    <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
-                  }
-                  @case ('object') {
-                    <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <!-- 看板の文章(front#314) -->
-                    @if (sel.ref.type === 'sign') {
-                      <label class="field">
-                        <span>看板の文章（1行が1ページ・20行まで）</span>
-                        <textarea rows="4" maxlength="4200" [ngModel]="signText(sel.ref)" (focus)="beginEdit()" (ngModelChange)="setSignText(sel.ref, $event)"></textarea>
-                      </label>
-                      <p class="muted small">{{ signPreview(sel.ref) }}</p>
                     }
-                    <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
-                  }
-                  @case ('breakable') {
-                    <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                    <div class="field">
-                      <span>中身</span>
-                      <div class="seg" role="group" aria-label="置物の中身">
-                        <button type="button" class="btn small" [class.active]="!sel.ref.contents" [attr.aria-pressed]="!sel.ref.contents" (click)="setContentsKind(sel.ref, null)">なし</button>
-                        <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'item'" [attr.aria-pressed]="sel.ref.contents?.kind === 'item'" (click)="setContentsKind(sel.ref, 'item')">アイテム</button>
-                        <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'enemy'" [attr.aria-pressed]="sel.ref.contents?.kind === 'enemy'" (click)="setContentsKind(sel.ref, 'enemy')">敵</button>
-                      </div>
-                    </div>
-                    @if (sel.ref.contents; as c) {
-                      @if (c.kind === 'item') {
-                        <div class="row2">
-                          <label class="field">
-                            <span>アイテム</span>
-                            <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
-                              @for (item of itemOptions; track item.id) {
-                                <option [value]="item.id">{{ item.name }}</option>
-                              }
-                            </select>
-                          </label>
-                          <label class="field">
-                            <span>個数</span>
-                            <input type="number" min="1" max="9" [ngModel]="c.count" (focus)="beginEdit()" (ngModelChange)="c.count = clampCount($event); edited()" />
-                          </label>
-                        </div>
-                      } @else {
-                        <div class="row2">
-                          <label class="field">
-                            <span>敵</span>
-                            <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
-                              @for (e of enemyTypes(); track e.id) {
-                                <option [value]="e.id">{{ e.name }}</option>
-                              }
-                            </select>
-                          </label>
-                          <label class="field">
-                            <span>出る確率（%）</span>
-                            <input type="number" min="0.1" max="100" step="0.1" [ngModel]="chancePercent(c)" (focus)="beginEdit()" (ngModelChange)="c.chance = clampChance($event); edited()" />
-                          </label>
-                        </div>
-                        <p class="muted small">壊したとき、この確率で敵が出ます（0.1〜100%）。出なければ中身なしと同じです。</p>
-                      }
-                    }
-                    <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>
-                    <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
-                  }
+                  </div>
                 }
-                <p class="muted small">Delete・Backspace キーでも消せます。ドラッグで動かせます。</p>
-              } @else {
                 <p class="muted small">
-                  置いてある物をクリックすると選べます。敵・壊れる置物は、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
+                  同じダンジョンの隣のエリアがない端だけ、ほかのダンジョンのエリアを選べます。その端で止まると、画面が暗くなって移ります。
+                  行き先のエリアにも、こちらへ戻るつながりを決めると行き来できます（そのときは戻る側の端に着きます。決めていなければ、行き先のエリアの最初の位置に着きます）。
                 </p>
-              }
-            </div>
-          </section>
+              </div>
+            </section>
+
+            <section aria-label="選んでいるもの">
+              <h2>選んでいるもの</h2>
+              <div class="selected-box">
+                @if (selected(); as sel) {
+                  @switch (sel.kind) {
+                    @case ('npc') {
+                      <div class="selected-title">🧑 NPC <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                      <p class="muted small">{{ sel.ref.name }}</p>
+                      <button type="button" class="btn small" (click)="openModal(sel)">NPCの中身を変える</button>
+                    }
+                    @case ('house') {
+                      <div class="selected-title">🏠 家 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                      <button type="button" class="btn small" (click)="openModal(sel)">家の形・向き・色を変える</button>
+                    }
+                    @case ('enemy') {
+                      <div class="selected-title">👾 敵の出る場所 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                      <label class="field">
+                        <span>敵の種類</span>
+                        <select [ngModel]="sel.ref.type" (focus)="beginEdit()" (ngModelChange)="sel.ref.type = $event; edited()">
+                          @for (e of enemyTypes(); track e.id) {
+                            <option [value]="e.id">{{ e.name }}</option>
+                          }
+                        </select>
+                      </label>
+                      <p class="muted small">強さ・落とすアイテムは、種類ごとに決まっています。</p>
+                      <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
+                    }
+                    @case ('object') {
+                      <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                      <!-- 看板の文章(front#314) -->
+                      @if (sel.ref.type === 'sign') {
+                        <label class="field">
+                          <span>看板の文章（1行が1ページ・20行まで）</span>
+                          <textarea rows="4" maxlength="4200" [ngModel]="signText(sel.ref)" (focus)="beginEdit()" (ngModelChange)="setSignText(sel.ref, $event)"></textarea>
+                        </label>
+                        <p class="muted small">{{ signPreview(sel.ref) }}</p>
+                      }
+                      <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                    }
+                    @case ('breakable') {
+                      <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
+                      <div class="field">
+                        <span>中身</span>
+                        <div class="seg" role="group" aria-label="置物の中身">
+                          <button type="button" class="btn small" [class.active]="!sel.ref.contents" [attr.aria-pressed]="!sel.ref.contents" (click)="setContentsKind(sel.ref, null)">なし</button>
+                          <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'item'" [attr.aria-pressed]="sel.ref.contents?.kind === 'item'" (click)="setContentsKind(sel.ref, 'item')">アイテム</button>
+                          <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'enemy'" [attr.aria-pressed]="sel.ref.contents?.kind === 'enemy'" (click)="setContentsKind(sel.ref, 'enemy')">敵</button>
+                        </div>
+                      </div>
+                      @if (sel.ref.contents; as c) {
+                        @if (c.kind === 'item') {
+                          <div class="row2">
+                            <label class="field">
+                              <span>アイテム</span>
+                              <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
+                                @for (item of itemOptions; track item.id) {
+                                  <option [value]="item.id">{{ item.name }}</option>
+                                }
+                              </select>
+                            </label>
+                            <label class="field">
+                              <span>個数</span>
+                              <input type="number" min="1" max="9" [ngModel]="c.count" (focus)="beginEdit()" (ngModelChange)="c.count = clampCount($event); edited()" />
+                            </label>
+                          </div>
+                        } @else {
+                          <div class="row2">
+                            <label class="field">
+                              <span>敵</span>
+                              <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
+                                @for (e of enemyTypes(); track e.id) {
+                                  <option [value]="e.id">{{ e.name }}</option>
+                                }
+                              </select>
+                            </label>
+                            <label class="field">
+                              <span>出る確率（%）</span>
+                              <input type="number" min="0.1" max="100" step="0.1" [ngModel]="chancePercent(c)" (focus)="beginEdit()" (ngModelChange)="c.chance = clampChance($event); edited()" />
+                            </label>
+                          </div>
+                          <p class="muted small">壊したとき、この確率で敵が出ます（0.1〜100%）。出なければ中身なしと同じです。</p>
+                        }
+                      }
+                      <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>
+                      <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                    }
+                  }
+                  <p class="muted small">Delete・Backspace キーでも消せます。ドラッグで動かせます。</p>
+                } @else {
+                  <p class="muted small">
+                    置いてある物をクリックすると選べます。敵・壊れる置物は、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
+                  </p>
+                }
+              </div>
+            </section>
+          }
 
           <section aria-label="保存する前の確認">
             <h2>保存する前の確認</h2>
