@@ -181,6 +181,30 @@ textarea {
   padding: 20px;
 }
 
+/* 曲・効果音のタブ(front#318)。2列のグリッドの上に全幅で置く */
+.sound-tabs {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+}
+
+.sound-tab {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sound-tab.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+}
+
 .bgm-card {
   background: var(--card);
   border: 1px solid var(--line);
