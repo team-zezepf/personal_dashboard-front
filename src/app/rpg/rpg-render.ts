@@ -1,10 +1,10 @@
-import { BREAK_HITS, ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
+import { BREAK_HITS, ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { SIGN_BANDS, drawArmor, drawBarrel, drawBones, drawBookshelf, drawCandle, drawChest, drawGrave, drawPot, drawSign } from './rpg-props';
+import { SIGN_BANDS, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -525,6 +525,10 @@ export class RpgRenderer {
       case 'bookshelf': return drawBookshelf(this.ctx, sx, sy, shelfFace(this.game.map, o), o.x * 7 + o.y * 13);
       case 'candle': return drawCandle(this.ctx, sx, sy, this.time);
       case 'grave': return drawGrave(this.ctx, sx, sy);
+      // 牢獄の置物(front#321)
+      case 'bars': return drawBars(this.ctx, sx, sy, barsAlong(this.game.map, o));
+      case 'shackle': return drawShackle(this.ctx, sx, sy);
+      case 'bucket': return drawBucket(this.ctx, sx, sy);
       case 'sign': {
         // 看板(front#274)は、いちばん近いほかのダンジョンへの端を指し、行き先のダンジョンの色の帯を入れる
         const exit = signExit(this.game.maps, this.game.area, o.x, o.y);
