@@ -192,23 +192,33 @@
         </div>
         <div class="palette-body">
           <p class="hint">{{ tabHint() }}</p>
-          @if (usedItems().length) {
-            <div class="item-group">このマップで使用中</div>
-            <div class="items used-items" [class.enemy-list]="tab() === 'enemy'" aria-label="このマップで使用中">
-              @for (u of usedItems(); track u.item.id) {
-                <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: u.item, count: u.count }" />
+          <!-- 段は「このエリアで使用中」「このダンジョンで使用中」「その他」(front#323)。物のない段は出さない -->
+          @let groups = paletteGroups();
+          @if (groups.area.length) {
+            <div class="item-group">このエリアで使用中</div>
+            <div class="items used-items" [class.enemy-list]="tab() === 'enemy'" aria-label="このエリアで使用中">
+              @for (item of groups.area; track item.id) {
+                <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item }" />
               }
             </div>
-            @if (otherItems().length) {
-              <div class="item-group">その他</div>
-            }
+          }
+          @if (groups.dungeon.length) {
+            <div class="item-group">このダンジョンで使用中</div>
+            <div class="items used-items" [class.enemy-list]="tab() === 'enemy'" aria-label="このダンジョンで使用中">
+              @for (item of groups.dungeon; track item.id) {
+                <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item }" />
+              }
+            </div>
+          }
+          @if ((groups.area.length || groups.dungeon.length) && groups.other.length) {
+            <div class="item-group">その他</div>
           }
           <div class="items" [class.enemy-list]="tab() === 'enemy'">
-            @for (item of otherItems(); track item.id) {
-              <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item, count: 0 }" />
+            @for (item of groups.other; track item.id) {
+              <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item }" />
             }
           </div>
-          <ng-template #paletteItem let-item let-count="count">
+          <ng-template #paletteItem let-item>
             <!-- 敵は、敵タブの一覧と同じく絵・名前・HP・攻撃の1行にする(front#310) -->
             @if (enemyOf(item); as e) {
               <button type="button" class="enemy-item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="e.name" (click)="pickTool(item)">
@@ -220,7 +230,8 @@
                       <span class="badge">ボス</span>
                     }
                   </span>
-                  <span class="sub">HP {{ e.hp }}・攻撃 {{ e.atk }}{{ count ? '・このマップに ' + count + '体' : '' }}</span>
+                  <!-- 経験値・HP・攻撃・防御(front#323) -->
+                  <span class="sub">経験値 {{ e.exp }}・HP {{ e.hp }}・攻撃 {{ e.atk }}・防御 {{ e.def }}</span>
                 </span>
               </button>
             } @else {

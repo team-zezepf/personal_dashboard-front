@@ -116,6 +116,42 @@ export const PALETTE: PaletteTab[] = [
 export const SELECT_ITEM = PALETTE.find((t) => t.id === 'other')!.items[0];
 
 /** 置いてある物をクリックしたとき、その物を選ぶ道具か(地面・高さ・消しゴムは、物の上でも塗る・消す)(front#290) */
+/** その道具で置いた物が、マップにいくつあるか(地面はマスの数。たいまつ柱と柱は分ける)。地面・置物・敵のほかは0 */
+export function countInMap(map: Pick<RpgMap, 'ground' | 'objects' | 'enemies'>, tool: EditorTool): number {
+  switch (tool.kind) {
+    case 'ground':
+      return map.ground.reduce((n, row) => n + row.split(tool.ground).length - 1, 0);
+    case 'object':
+      return map.objects.filter((o) => o.type === tool.type && !!o.torch === !!tool.torch).length;
+    case 'enemy':
+      return map.enemies.filter((e) => e.type === tool.type).length;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * パレットの3つの段(front#323)。
+ * area: 開いているエリアで使っている物(多い順)、dungeon: 同じダンジョンのほかのエリア(others)で使っていて area に入らない物(合計の多い順)、
+ * other: どちらでも使っていない物(いつもの順)
+ */
+export function paletteGroups(
+  items: readonly PaletteItem[],
+  area: Pick<RpgMap, 'ground' | 'objects' | 'enemies'>,
+  others: readonly Pick<RpgMap, 'ground' | 'objects' | 'enemies'>[]
+): { area: PaletteItem[]; dungeon: PaletteItem[]; other: PaletteItem[] } {
+  const used = (count: (item: PaletteItem) => number, from: readonly PaletteItem[]) =>
+    from
+      .map((item) => ({ item, n: count(item) }))
+      .filter((u) => u.n > 0)
+      .sort((a, b) => b.n - a.n)
+      .map((u) => u.item);
+  const inArea = used((item) => countInMap(area, item.tool), items);
+  const rest = items.filter((item) => !inArea.includes(item));
+  const inDungeon = used((item) => others.reduce((n, m) => n + countInMap(m, item.tool), 0), rest);
+  return { area: inArea, dungeon: inDungeon, other: rest.filter((item) => !inDungeon.includes(item)) };
+}
+
 export function selectsPlaced(tool: EditorTool): boolean {
   return tool.kind !== 'ground' && tool.kind !== 'height' && tool.kind !== 'erase';
 }
@@ -301,18 +337,9 @@ export class RpgMapEditor {
     return before !== this.countAll();
   }
 
-  /** その道具で置いた物が、このマップにいくつあるか(地面はマスの数)。パレットの「このマップで使用中」に使う(front#290) */
+  /** その道具で置いた物が、このマップにいくつあるか(地面はマスの数)。パレットの「このエリアで使用中」に使う(front#290) */
   countOf(tool: EditorTool): number {
-    switch (tool.kind) {
-      case 'ground':
-        return this.map.ground.reduce((n, row) => n + row.split(tool.ground).length - 1, 0);
-      case 'object':
-        return this.map.objects.filter((o) => o.type === tool.type && !!o.torch === !!tool.torch).length;
-      case 'enemy':
-        return this.map.enemies.filter((e) => e.type === tool.type).length;
-      default:
-        return 0;
-    }
+    return countInMap(this.map, tool);
   }
 
   private countAll(): number {
