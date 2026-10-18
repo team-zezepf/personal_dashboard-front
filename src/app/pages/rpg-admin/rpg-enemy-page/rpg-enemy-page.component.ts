@@ -18,6 +18,7 @@ import {
   attackTiming,
   chargeShake,
   disguiseOf,
+  castOf,
   drawAttackEffect,
   drawEnemyBody,
   drawEnemyThumb,
@@ -596,12 +597,12 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
     // 敵
     c.save(); c.translate(ex, ey); c.scale(s, s);
-    const top = drawEnemyBody(c, def, { dir: d, time: this.time, aggro: this.actT !== null, lunge });
+    const top = drawEnemyBody(c, def, { dir: d, time: this.time, aggro: this.actT !== null, lunge, cast: this.actT !== null ? castOf(def, t) : 0 });
     c.restore();
     if (this.actT !== null) {
       drawAttackEffect(c, {
         attack: def.attack, k, time: this.time, ex: ex0 + ox, ey: cy, tx: px, ty: cy, dir: d, s,
-        radiusPx: (def.radius + 0.5) * 32 * s * 1.4, hitK: hitAt / duration
+        radiusPx: (def.radius + 0.5) * 32 * s * 1.4, radius: def.radius, hitK: hitAt / duration
       });
     }
     if (hitting) {

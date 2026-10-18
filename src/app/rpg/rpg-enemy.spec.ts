@@ -1,6 +1,6 @@
 import { RpgEnemy } from '../models/rpg.models';
 import {
-  DEFAULT_ENEMIES, ENEMIES, ENEMY_SHAPES, attackReach, attackTiming, disguiseOf, drawEnemyBody, isRooted, movesToTarget, setEnemies
+  DEFAULT_ENEMIES, ENEMIES, ENEMY_ATTACKS, ENEMY_SHAPES, SPELLS, attackReach, attackTiming, castOf, disguiseOf, drawAttackEffect, drawEnemyBody, isRooted, movesToTarget, setEnemies
 } from './rpg-enemy';
 
 describe('rpg-enemy', () => {
@@ -70,6 +70,34 @@ describe('rpg-enemy', () => {
     for (const dir of [1, -1]) {
       for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
         expect(drawEnemyBody(c, ENEMIES['rat'], { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('闇の魔導士(魔導士の形)は、どの状態・向きでも描け、背が高くなった(front#327)', () => {
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const dir of [1, -1]) {
+      for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, cast: 1 }, { flash: true }]) {
+        expect(drawEnemyBody(c, ENEMIES['darklord'], { dir, time: 1.3, ...pose })).toBeGreaterThan(80 * ENEMIES['darklord'].size);
+      }
+    }
+    // 騎士(二頭身)は今までどおり
+    expect(drawEnemyBody(c, ENEMIES['knight'], { dir: 1, time: 1.3 })).toBe(54 * ENEMIES['knight'].size);
+  });
+
+  it('魔法陣は離れたところへの攻撃で、0.53秒で当たり 0.93秒で終わる。詠唱の強さは当たったあと弱まる。範囲0〜2で描ける(front#327)', () => {
+    expect(ENEMY_ATTACKS.at(-1)).toMatchObject({ id: 'circle', label: '魔法陣', kind: 'rule' });
+    expect(SPELLS).toContain('circle');
+    const def = { ...ENEMIES['darklord'], attack: 'circle' as const, range: 3, radius: 1 };
+    const { duration, hitAt } = attackTiming(def);
+    expect([hitAt, duration].map((v) => Math.round(v * 100) / 100)).toEqual([0.53, 0.93]);
+    expect(attackReach(def, 1)).toBeCloseTo(3.35);
+    expect([castOf(def, 0), castOf(def, 0.3), castOf(def, 0.9)]).toEqual([0, 1, 0]);
+    expect(castOf({ ...def, attack: 'tackle' }, 0.3)).toBe(0);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const radius of [0, 1, 2]) {
+      for (const k of [0.1, 0.5, 0.6, 0.8, 1]) {
+        expect(() => drawAttackEffect(c, { attack: 'circle', k, time: 1, ex: 0, ey: 0, tx: 100, ty: 50, dir: 1, s: 1, radiusPx: 40, radius, hitK: hitAt / duration })).not.toThrow();
       }
     }
   });

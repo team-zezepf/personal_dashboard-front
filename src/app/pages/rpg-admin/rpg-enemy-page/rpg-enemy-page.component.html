@@ -160,6 +160,13 @@
               <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
             </div>
           }
+          @case ('circle') {
+            <!-- 魔法陣(front#327): 何マス先の相手に使うか(射程)と、足元のまわり何マスに当たるか(範囲) -->
+            <div class="grid2">
+              <label class="field"><span>射程（マス）</span><input type="number" [min]="limits.range[0]" [max]="limits.range[1]" step="1" [ngModel]="sel.def.range" (ngModelChange)="setNumber('range', $event)" /></label>
+              <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
+            </div>
+          }
           @case ('claw') {}
           @case ('bite') {}
           @default {

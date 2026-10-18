@@ -8,7 +8,7 @@ import { drawArmor, drawChest, mix, shade } from './rpg-props';
  */
 
 export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus' | 'rat';
-export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave';
+export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave' | 'circle';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
 
@@ -38,11 +38,13 @@ export const ENEMY_ATTACKS: AttackSpec[] = [
   { id: 'wind', label: '風', icon: '🌪️', kind: 'rule', desc: '相手のいたマスに竜巻が起こり、その場で回って消える（動かない）。できはじめたら離れればよけられる。' },
   { id: 'thunder', label: '雷', icon: '⚡', kind: 'rule', desc: '相手の頭の上に小さな雷雲が出て、少しあとに稲妻が落ちる。雲が出たマスから離れればよけられる。' },
   { id: 'dark', label: '暗黒', icon: '🌑', kind: 'rule', desc: '相手の足元に黒い影が広がり、少しあとに闇の柱が立ちのぼる。影が出たマスから離れればよけられる。' },
-  { id: 'shockwave', label: '衝撃波', icon: '🌀', kind: 'rule', desc: '足元の地面が一瞬赤く光り、輪がすばやく広がる。範囲の中にいると、輪が届いたときに当たる。' }
+  { id: 'shockwave', label: '衝撃波', icon: '🌀', kind: 'rule', desc: '足元の地面が一瞬赤く光り、輪がすばやく広がる。範囲の中にいると、輪が届いたときに当たる。' },
+  // 闇の魔導士の専用の攻撃(front#327)。ほかの敵も選べる
+  { id: 'circle', label: '魔法陣', icon: '🔯', kind: 'rule', desc: '杖を掲げて詠唱し、相手の足元に魔法陣を浮かべる。0.4秒後、魔法陣から太い闇の柱が立ちのぼる。範囲（まわり何マス。1なら3×3）の中にいると当たる。詠唱が短く、よけるのはむずかしい。' }
 ];
 
-// 離れたところ(相手の足元)に出す攻撃
-export const SPELLS: EnemyAttack[] = ['fire', 'water', 'wind', 'thunder', 'dark'];
+// 離れたところ(相手の足元)に出す攻撃。魔法陣(front#327)は、足元のまわり(範囲)にも当たる
+export const SPELLS: EnemyAttack[] = ['fire', 'water', 'wind', 'thunder', 'dark', 'circle'];
 
 export const ENEMY_COLORS = [
   '#7ddc6f', '#6fb6ff', '#e85d75', '#7ef9ff', '#7fb069', '#a3acb6', '#f5f3ff', '#475569', '#6d28d9', '#fbbf24', '#f97316', '#ec4899', '#1f2937', '#8b5a2b',
@@ -114,11 +116,11 @@ setEnemies(DEFAULT_ENEMIES);
 
 // 形ごとの、クリックで選べる高さ・足元の印の大きさ(大きさ 1 のとき)
 const HIT_HEIGHT: Record<EnemyShape, number> = {
-  slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 65, bat: 46, skeleton: 48, plant: 50, dragon: 68,
+  slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 92, bat: 46, skeleton: 48, plant: 50, dragon: 68,
   mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62, rat: 26
 };
 const RING: Record<EnemyShape, number> = {
-  slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
+  slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1.2, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
   mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5, rat: 0.9
 };
 
@@ -167,6 +169,10 @@ export const disguiseOf = (def: Pick<EnemyDef, 'shape'>): string | null => DISGU
 
 // ===== 攻撃の長さ(秒)と当たる時(攻撃を始めてからの秒) =====
 
+// 魔法陣(front#327)の、詠唱(魔法陣が出ている間)と、闇の柱が伸びる時間(秒)
+const CIRCLE_CAST = 0.4;
+const CIRCLE_RISE = 0.13;
+
 /** 体当たり・ジャンプで、相手まで動くか(距離1なら、その場で少し前に出るだけ) */
 export const movesToTarget = (def: EnemyDef) => (def.attack === 'tackle' || def.attack === 'jump') && def.dash > 1;
 
@@ -183,7 +189,16 @@ export function attackTiming(def: EnemyDef): { duration: number; hitAt: number }
     case 'thunder': return { duration: 0.9, hitAt: 0.41 };
     case 'dark': return { duration: 1.0, hitAt: 0.45 };
     case 'shockwave': return { duration: 0.75, hitAt: 0.38 };
+    // 詠唱 0.4秒 → 柱が伸びて 0.53秒で当たる → 消えていく(front#327)
+    case 'circle': return { duration: CIRCLE_CAST + CIRCLE_RISE + 0.4, hitAt: CIRCLE_CAST + CIRCLE_RISE };
   }
+}
+
+/** 詠唱の強さ(0〜1。front#327)。攻撃を始めてから強まり、当たったあと弱まる。離れたところへの攻撃(SPELLS)だけ */
+export function castOf(def: EnemyDef, t: number): number {
+  if (!SPELLS.includes(def.attack)) return 0;
+  const { hitAt } = attackTiming(def);
+  return t < hitAt ? Math.min(1, t / 0.15) : Math.max(0, 1 - (t - hitAt) / 0.25);
 }
 
 /** 攻撃を始められる距離(マス)。この距離まで近づいたら、止まって攻撃する */
@@ -208,6 +223,8 @@ export interface EnemyPose {
   lunge?: number;
   // 揺れ方をずらす
   seed?: number;
+  // 詠唱の強さ(0〜1)。離れたところへの攻撃(SPELLS)をしている間。魔導士(front#327)は杖を掲げて宝珠を光らせる
+  cast?: number;
 }
 
 function shadow(c: CanvasRenderingContext2D, rx: number, ry: number, a = 0.18): void {
@@ -251,8 +268,8 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
     case 'raptor': top = drawRaptor(c, def, pose); break;
     case 'golem': top = drawGolem(c, def, pose); break;
     case 'ghost': top = drawGhost(c, def, pose); break;
-    case 'knight': top = drawChibi(c, def, pose, false); break;
-    case 'lord': top = drawChibi(c, def, pose, true); break;
+    case 'knight': top = drawChibi(c, def, pose); break;
+    case 'lord': top = drawLord(c, def, pose); break;
     case 'bat': top = drawBat(c, def, pose); break;
     case 'skeleton': top = drawSkeleton(c, def, pose); break;
     case 'plant': top = drawPlant(c, def, pose); break;
@@ -428,52 +445,33 @@ function drawGhost(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
   return 48 - fl;
 }
 
-// 騎士・魔導士(二頭身)。体=明るい色、髪=暗い色。目はいつも光る。魔導士は帽子・杖・オーラ、騎士は剣・羽飾り
-function drawChibi(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose, lord: boolean): number {
+// 騎士(二頭身)。体=明るい色、髪=暗い色。目はいつも光る。剣・羽飾り(魔導士は front#327 で drawLord に分けた)
+function drawChibi(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
   const t = p.time;
   const d = p.dir;
   const bob = p.moving ? -Math.abs(Math.sin(t * 10)) * 3 : Math.sin(t * 2 + (p.seed ?? 0)) * 0.8;
   const y0 = bob;
   const f = d * 2.5;
-  if (lord) {
-    const g = c.createRadialGradient(0, 0, 4, 0, 0, 30);
-    g.addColorStop(0, `rgba(167,139,250,${0.6 + Math.sin(t * 3) * 0.2})`);
-    g.addColorStop(1, 'rgba(167,139,250,0)');
-    c.fillStyle = g;
-    c.beginPath(); c.ellipse(0, 0, 30, 13, 0, 0, Math.PI * 2); c.fill();
-  }
   shadow(c, 13, 5);
   const step = p.moving ? Math.sin(t * 14) * 2.5 : 0;
   c.fillStyle = '#5b4636';
   c.beginPath(); c.ellipse(-4, -2 - Math.max(0, step), 3.5, 2.5, 0, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.ellipse(4, -2 - Math.max(0, -step), 3.5, 2.5, 0, 0, Math.PI * 2); c.fill();
   c.lineCap = 'round';
-  if (lord) {
-    c.strokeStyle = '#3b2414';
-    c.lineWidth = 3;
-    c.beginPath(); c.moveTo(d * 11, y0 - 4); c.lineTo(d * 13, y0 - 46); c.stroke();
-    c.save();
-    c.shadowColor = '#e879f9';
-    c.shadowBlur = 12;
-    c.fillStyle = '#e879f9';
-    c.beginPath(); c.arc(d * 13, y0 - 49, 4.5, 0, Math.PI * 2); c.fill();
-    c.restore();
-  } else {
-    const hx = d * 10;
-    const hy = y0 - 12;
-    c.strokeStyle = '#94a3b8';
-    c.lineWidth = 3.5;
-    c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx + d * 9, hy - 16); c.stroke();
-    c.strokeStyle = '#6b4a2b';
-    c.lineWidth = 3;
-    c.beginPath(); c.moveTo(hx - 3, hy + 1); c.lineTo(hx + 4 * d, hy - 1); c.stroke();
-  }
+  const hx = d * 10;
+  const hy = y0 - 12;
+  c.strokeStyle = '#94a3b8';
+  c.lineWidth = 3.5;
+  c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx + d * 9, hy - 16); c.stroke();
+  c.strokeStyle = '#6b4a2b';
+  c.lineWidth = 3;
+  c.beginPath(); c.moveTo(hx - 3, hy + 1); c.lineTo(hx + 4 * d, hy - 1); c.stroke();
   c.fillStyle = p.flash ? '#ff9b9b' : def.color;
   c.beginPath(); c.roundRect(-9, y0 - 20, 18, 16, 6); c.fill();
   c.strokeStyle = 'rgba(0,0,0,0.15)';
   c.lineWidth = 1;
   c.stroke();
-  c.fillStyle = lord ? '#ddd6fe' : '#1f2937';
+  c.fillStyle = '#1f2937';
   c.beginPath(); c.arc(0, y0 - 31, 12, 0, Math.PI * 2); c.fill(); c.stroke();
   c.fillStyle = def.dark;
   c.beginPath();
@@ -482,27 +480,162 @@ function drawChibi(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose, lor
   c.quadraticCurveTo(f * 2, y0 - 36, -13, y0 - 29);
   c.closePath();
   c.fill();
-  if (lord) {
-    // 帽子は髪(暗い色)と体(明るい色)の間の色
-    poly(c, [[-15, y0 - 38], [15, y0 - 38], [d * 8, y0 - 66]], mix(def.dark, def.color, 0.25));
-    c.fillStyle = mix(def.dark, def.color, 0.4);
-    c.beginPath(); c.ellipse(0, y0 - 38, 17, 4, 0, 0, Math.PI * 2); c.fill();
-  } else {
-    c.fillStyle = '#dc2626';
-    c.beginPath(); c.ellipse(-d * 2, y0 - 48, 3.5, 8, -d * 0.3, 0, Math.PI * 2); c.fill();
-  }
+  c.fillStyle = '#dc2626';
+  c.beginPath(); c.ellipse(-d * 2, y0 - 48, 3.5, 8, -d * 0.3, 0, Math.PI * 2); c.fill();
   c.save();
-  const eye = lord ? '#e11d48' : '#f87171';
+  const eye = '#f87171';
   c.shadowColor = eye;
   c.shadowBlur = 8;
   eyes(c, f, y0 - 27, 4, 1.8, 2.6, eye);
   c.restore();
-  if (!lord && p.lunge && p.lunge > 0) {
+  if (p.lunge && p.lunge > 0) {
     c.strokeStyle = `rgba(255,255,255,${p.lunge})`;
     c.lineWidth = 3;
     c.beginPath(); c.arc(d * 14, y0 - 16, 15, -1.2, 1.2); c.stroke();
   }
-  return lord ? 66 : 54;
+  return 54;
+}
+
+// 闇の魔導士(front#327)。宙に浮くローブ姿。明るい色=マントの裏地・ローブの模様・宝珠・オーラ、暗い色=ローブ・マント・フード。
+// 角・冠・肩当ての縁(金)は色を変えない。まわりを闇の玉が3つ回る。襲ってくると目・オーラ・宝珠が強く光り、詠唱(cast)中は杖を掲げる
+function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const cast = p.cast ?? 0;
+  const power = p.aggro ? 1 : 0.55;
+  const hz = 9 + Math.sin(t * 2) * 3;
+  const gold = '#d4a72c';
+  const white = (color: string) => (p.flash ? '#ffffff' : color);
+  const rgba = (hex: string, a: number) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+  };
+  // 足元の闇のオーラ
+  const ag = c.createRadialGradient(0, 0, 3, 0, 0, 34);
+  ag.addColorStop(0, rgba(def.color, 0.55 * power + 0.25 * cast));
+  ag.addColorStop(0.5, 'rgba(20,8,40,0.45)');
+  ag.addColorStop(1, 'rgba(20,8,40,0)');
+  c.fillStyle = ag;
+  c.beginPath(); c.ellipse(0, 0, 34, 14, 0, 0, Math.PI * 2); c.fill();
+  shadow(c, 14, 5, 0.25);
+  // まわりを回る闇の玉。うしろ半分は体より先に描く
+  const orbs = [0, 1, 2].map((i) => {
+    const a = t * 1.6 + (i * Math.PI * 2) / 3;
+    return { x: Math.cos(a) * 26, y: -40 - hz + Math.sin(a) * 9 + Math.sin(t * 3 + i) * 3, front: Math.sin(a) > 0 };
+  });
+  const orb = (o: { x: number; y: number }) => {
+    const g = c.createRadialGradient(o.x - 1, o.y - 1, 0.5, o.x, o.y, 6);
+    g.addColorStop(0, rgba(def.color, 0.95));
+    g.addColorStop(0.45, 'rgba(30,10,60,0.95)');
+    g.addColorStop(1, 'rgba(30,10,60,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(o.x, o.y, 6, 0, Math.PI * 2); c.fill();
+  };
+  orbs.filter((o) => !o.front).forEach(orb);
+
+  c.save();
+  c.translate(0, -hz);
+  // マント(うしろ)。すそが波打つ。裏地は明るい色
+  const capeEdge = (w: number, y: number): [number, number][] =>
+    Array.from({ length: 7 }, (_, i) => [-w + (i / 6) * w * 2, y + (i % 2 ? 4 : 0) + Math.sin(t * 3 + i * 1.3) * 2.5] as [number, number]);
+  poly(c, [[-13, -46], [13, -46], ...capeEdge(23, 0).reverse().map(([x, y]) => [x + 1.5, y + 1] as [number, number])], white(mix(def.color, def.dark, 0.35)));
+  poly(c, [[-12, -46], [12, -46], ...capeEdge(21, -2).reverse()], white(mix(def.dark, '#000000', 0.25)));
+  // ローブ。すそは裂けていて、ゆらめく
+  const hem = Array.from({ length: 9 }, (_, i) => [-15 + (i / 8) * 30, -4 + (i % 2 ? -5 : 0) + Math.sin(t * 4 + i) * 1.5] as [number, number]);
+  const rg = c.createLinearGradient(0, -48, 0, -4);
+  rg.addColorStop(0, mix(def.dark, def.color, 0.25));
+  rg.addColorStop(1, mix(def.dark, '#000000', 0.15));
+  c.fillStyle = p.flash ? '#ffffff' : rg;
+  c.beginPath();
+  c.moveTo(-10, -46); c.lineTo(10, -46);
+  for (const [x, y] of hem.slice().reverse()) c.lineTo(x, y);
+  c.closePath(); c.fill();
+  // 前の合わせ目の模様(明るい色の線と、ひし形のルーン)
+  c.strokeStyle = rgba(def.color, 0.9);
+  c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(d * 1.5, -44); c.lineTo(d * 2.5, -8); c.stroke();
+  c.save();
+  c.shadowColor = def.color;
+  c.shadowBlur = 6 * power;
+  for (const y of [-34, -24, -14]) poly(c, [[d * 2, y - 3], [d * 2 + 2.2, y], [d * 2, y + 3], [d * 2 - 2.2, y]], rgba(def.color, 0.95));
+  c.restore();
+  // 帯(金)
+  c.fillStyle = gold;
+  c.fillRect(-10.5, -31, 21, 3);
+  c.fillStyle = '#8a6514';
+  c.fillRect(-10.5, -28.5, 21, 0.8);
+  // 杖。詠唱中は高く掲げる。先は三日月の形で、闇の宝珠が脈打つ
+  const raise = cast * 10;
+  const [sx0, sy0, sx1, sy1] = [d * 15, -6 - raise, d * 17, -80 - raise];
+  c.lineCap = 'round';
+  c.strokeStyle = '#1c1022';
+  c.lineWidth = 3.4;
+  c.beginPath(); c.moveTo(sx0, sy0); c.lineTo(sx1, sy1); c.stroke();
+  c.strokeStyle = '#4b2a5a';
+  c.lineWidth = 1.2;
+  c.beginPath(); c.moveTo(sx0 - 0.8, sy0); c.lineTo(sx1 - 0.8, sy1); c.stroke();
+  c.strokeStyle = gold;
+  c.lineWidth = 2.6;
+  c.beginPath(); c.arc(sx1, sy1 - 7, 8, Math.PI * 0.15, Math.PI * 0.85, true); c.stroke();
+  const or = 4.5 + cast * 2;
+  c.save();
+  c.shadowColor = def.color;
+  c.shadowBlur = 10 + 10 * power + 18 * cast;
+  const og = c.createRadialGradient(sx1 - 1, sy1 - 9, 0.5, sx1, sy1 - 8, or);
+  og.addColorStop(0, '#ffffff');
+  og.addColorStop(0.35, def.color);
+  og.addColorStop(1, '#2e1065');
+  c.fillStyle = og;
+  c.beginPath(); c.arc(sx1, sy1 - 8, or + (0.5 + Math.sin(t * 5) * 0.5) * 0.6, 0, Math.PI * 2); c.fill();
+  c.restore();
+  // 詠唱中は、宝珠から光の粒が立ちのぼる
+  for (let i = 0; cast > 0 && i < 8; i++) {
+    const life = (t * 1.5 + i / 8) % 1;
+    c.fillStyle = rgba(def.color, cast * (1 - life));
+    c.beginPath(); c.arc(sx1 + Math.sin(i * 2.1 + t * 3) * 8 * life, sy1 - 10 - life * 26, 1.8 * (1 - life) + 0.6, 0, Math.PI * 2); c.fill();
+  }
+  // 袖(杖を持つ手の側)と手
+  poly(c, [[d * 6, -44], [d * 17, sy0 - 34 + raise * 0.4], [d * 18, sy0 - 22 + raise * 0.3], [d * 9, -30]], white(mix(def.dark, def.color, 0.15)));
+  c.fillStyle = '#e5d6ff';
+  c.beginPath(); c.arc(d * 16.5, -35 - raise * 0.6, 2.4, 0, Math.PI * 2); c.fill();
+  // 肩当て(とげ・金の縁)
+  for (const sd of [-1, 1]) {
+    const bx = sd * 11;
+    poly(c, [[bx - 6, -44], [bx + sd * 2, -52], [bx + sd * 6, -49], [bx + sd * 10, -55], [bx + sd * 9, -45], [bx + sd * 12, -46], [bx + sd * 7, -40], [bx - 5, -40]], white('#1a1324'));
+    c.strokeStyle = gold;
+    c.lineWidth = 1;
+    c.beginPath(); c.moveTo(bx - 5, -40); c.lineTo(bx + sd * 7, -40); c.stroke();
+  }
+  // フード。奥は影で、赤く光る目だけが見える
+  c.fillStyle = white(mix(def.dark, '#000000', 0.1));
+  c.beginPath(); c.moveTo(-11, -44); c.quadraticCurveTo(-13, -62, 0, -66); c.quadraticCurveTo(13, -62, 11, -44); c.closePath(); c.fill();
+  c.fillStyle = '#05020a';
+  c.beginPath(); c.ellipse(d * 1.5, -52, 7, 7.5, 0, 0, Math.PI * 2); c.fill();
+  c.save();
+  c.shadowColor = '#ff2a4f';
+  c.shadowBlur = 6 + 8 * power;
+  const eye = p.aggro ? '#ff4766' : '#e11d48';
+  for (const sd of [-1, 1]) poly(c, [[d * 1.5 + sd * 1.2, -53], [d * 1.5 + sd * 5, -54.5 - (p.aggro ? 1 : 0)], [d * 1.5 + sd * 4.2, -51.8]], eye);
+  c.restore();
+  // 角
+  for (const sd of [-1, 1]) {
+    const hg = c.createLinearGradient(sd * 6, -60, sd * 15, -80);
+    hg.addColorStop(0, '#d6d3d1');
+    hg.addColorStop(1, '#3f3a36');
+    c.fillStyle = p.flash ? '#ffffff' : hg;
+    c.beginPath(); c.moveTo(sd * 5, -60); c.quadraticCurveTo(sd * 14, -64, sd * 15, -80); c.quadraticCurveTo(sd * 10, -68, sd * 8.5, -58); c.closePath(); c.fill();
+  }
+  // 冠(金の輪と、明るい色の宝石)
+  poly(c, [[-9, -60], [-6, -64], [-3, -61], [0, -67], [3, -61], [6, -64], [9, -60], [8, -58], [-8, -58]], gold);
+  c.save();
+  c.shadowColor = def.color;
+  c.shadowBlur = 8;
+  c.fillStyle = mix(def.color, '#ffffff', 0.25);
+  c.beginPath(); c.arc(0, -61.5, 1.8, 0, Math.PI * 2); c.fill();
+  c.restore();
+  c.restore();
+  orbs.filter((o) => o.front).forEach(orb);
+  return 86 + hz;
 }
 
 // コウモリ(front#255): 宙に浮いて羽ばたく。体=明るい色、羽=暗い色。襲ってくると羽ばたきが速くなる
@@ -1218,6 +1351,8 @@ export interface EffectFrame {
   s: number;
   // 衝撃波の範囲の、画面上の半径(横方向)
   radiusPx: number;
+  // 範囲(まわり何マス)。魔法陣(front#327)の大きさに使う
+  radius: number;
   // 当たる時(attackTiming の hitAt / duration)。ジャンプの着地に使う
   hitK: number;
 }
@@ -1265,6 +1400,7 @@ export function drawAttackEffect(c: CanvasRenderingContext2D, f: EffectFrame): v
   if (attack === 'thunder') drawThunder(c, k, time, tx, ty, s);
   if (attack === 'dark') drawDark(c, k, time, tx, ty, s);
   if (attack === 'shockwave') drawShockwave(c, k, time, ex, ey, f.radiusPx);
+  if (attack === 'circle') drawMagicCircle(c, f);
   void d;
 }
 
@@ -1458,10 +1594,18 @@ function drawDark(c: CanvasRenderingContext2D, k: number, time: number, x: numbe
   }
   c.restore();
   if (k < 0.45) return;
-  const q = (k - 0.45) / 0.55;
+  drawDarkColumn(c, (k - 0.45) / 0.55, time, x, y, s);
+}
+
+/**
+ * 闇の柱(暗黒・魔法陣 front#327)。q: 0〜1(0.3 までに伸びきり、0.6 から消える)。
+ * wide: 太さ(1 が暗黒の柱)。太い柱は、まっすぐな側面と上へ消えていく頭にし、高さも少し高くする
+ */
+function drawDarkColumn(c: CanvasRenderingContext2D, q: number, time: number, x: number, y: number, s: number, wide = 1): void {
   const up = Math.min(1, q / 0.3);
   const fade = q > 0.6 ? Math.max(0, 1 - (q - 0.6) / 0.4) : 1;
-  const hgt = up * 80 * s;
+  const hgt = up * 80 * s * (1 + (wide - 1) * 0.3);
+  const rx = 15 * s * wide;
   c.save();
   c.globalAlpha = fade;
   const g = c.createLinearGradient(0, y - hgt, 0, y);
@@ -1469,14 +1613,122 @@ function drawDark(c: CanvasRenderingContext2D, k: number, time: number, x: numbe
   g.addColorStop(0.3, 'rgba(59,7,100,0.75)');
   g.addColorStop(1, 'rgba(10,5,25,0.95)');
   c.fillStyle = g;
-  c.beginPath(); c.ellipse(x, y - hgt / 2, 15 * s, hgt / 2 + 1, 0, 0, Math.PI * 2); c.fill();
-  for (let i = 0; i < 10; i++) {
-    const life = (time * 1.8 + i / 10) % 1;
+  c.beginPath();
+  if (wide === 1) c.ellipse(x, y - hgt / 2, rx, hgt / 2 + 1, 0, 0, Math.PI * 2);
+  else {
+    // 足元はつぶした円、側面はまっすぐ、頭は丸く
+    c.ellipse(x, y, rx, rx * 0.5, 0, 0, Math.PI);
+    c.lineTo(x - rx, y - hgt + rx * 0.6);
+    c.quadraticCurveTo(x - rx, y - hgt, x, y - hgt);
+    c.quadraticCurveTo(x + rx, y - hgt, x + rx, y - hgt + rx * 0.6);
+    c.closePath();
+  }
+  c.fill();
+  // 太い柱は、中を流れ上がる闇の筋
+  for (let i = 0; wide > 1 && i < 6; i++) {
+    const ox = (i / 5 - 0.5) * rx * 1.5 + Math.sin(time * 3 + i) * rx * 0.08;
+    const life = (time * 1.4 + i / 6) % 1;
+    c.strokeStyle = `rgba(192,132,252,${0.35 * (1 - life)})`;
+    c.lineWidth = 2 * s;
+    c.beginPath(); c.moveTo(x + ox, y - hgt * life * 0.6); c.lineTo(x + ox, y - hgt * (life * 0.6 + 0.35)); c.stroke();
+  }
+  const n = Math.round(10 * Math.max(1, wide * 0.8));
+  for (let i = 0; i < n; i++) {
+    const life = (time * 1.8 + i / n) % 1;
     const a = time * 6 + i * 2.4;
     c.fillStyle = `rgba(168,85,247,${0.55 * (1 - life)})`;
-    c.beginPath(); c.arc(x + Math.cos(a) * 16 * s * (0.5 + life * 0.5), y - life * hgt, (3 + life * 4) * s, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + Math.cos(a) * (rx + s) * (0.5 + life * 0.5), y - life * hgt, (3 + life * 4) * s, 0, Math.PI * 2); c.fill();
   }
   c.restore();
+}
+
+/**
+ * 魔法陣(front#327)。相手の足元に魔法陣が浮かんで回りながら広がり(詠唱)、魔法陣いっぱいの太い闇の柱が立ちのぼる。
+ * 柱が伸びきった時(hitK)に当たり、魔法陣が弾けて闇のかけらが飛び散る。魔法陣の大きさは範囲のマス(1なら3×3)の外のふち
+ */
+function drawMagicCircle(c: CanvasRenderingContext2D, f: EffectFrame): void {
+  const { k, time, tx: x, ty: y, s, hitK } = f;
+  const radius = Math.max(0, Math.round(f.radius));
+  const sec = k * attackTiming({ attack: 'circle' } as EnemyDef).duration;
+  // 範囲のマスの外のふち(マスの幅は rpg-data の TW = 64)。範囲0なら暗黒の柱くらい
+  const R = radius ? (radius + 0.5) * 64 * s : 30 * s;
+  const pillarK = (hitK * CIRCLE_CAST) / (CIRCLE_CAST + CIRCLE_RISE);
+  const grow = Math.min(1, sec / 0.24);
+  const fade = k > hitK ? Math.max(0, 1 - (k - hitK) / (1 - hitK)) : 1;
+  const charge = Math.min(1, k / hitK);
+  // 地面の魔法陣(つぶした円): 二重の輪・回る六芒星・逆に回るルーンの印
+  c.save();
+  c.translate(x, y);
+  c.scale(1, 0.5);
+  c.globalAlpha = fade;
+  const r = R * (0.3 + 0.7 * grow);
+  const bg = c.createRadialGradient(0, 0, 2, 0, 0, r);
+  bg.addColorStop(0, `rgba(168,85,247,${0.15 + 0.35 * charge})`);
+  bg.addColorStop(0.8, 'rgba(46,16,101,0.35)');
+  bg.addColorStop(1, 'rgba(46,16,101,0)');
+  c.fillStyle = bg;
+  c.beginPath(); c.arc(0, 0, r * 1.08, 0, Math.PI * 2); c.fill();
+  c.shadowColor = '#a855f7';
+  c.shadowBlur = 10 + 14 * charge;
+  c.strokeStyle = `rgba(233,213,255,${0.55 + 0.4 * charge})`;
+  c.lineWidth = 2.2 * s;
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+  c.lineWidth = 1.2 * s;
+  c.beginPath(); c.arc(0, 0, r * 0.82, 0, Math.PI * 2); c.stroke();
+  c.save();
+  c.rotate(time * 1.4);
+  c.strokeStyle = 'rgba(168,85,247,0.9)';
+  c.lineWidth = 1.6 * s;
+  for (const off of [0, Math.PI / 3]) {
+    c.beginPath();
+    for (let i = 0; i <= 3; i++) {
+      const a = off + (i * Math.PI * 2) / 3 - Math.PI / 2;
+      if (i) c.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8);
+      else c.moveTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8);
+    }
+    c.stroke();
+  }
+  c.restore();
+  c.save();
+  c.rotate(-time * 0.9);
+  c.fillStyle = 'rgba(245,208,254,0.85)';
+  const marks = radius ? 16 : 10;
+  for (let i = 0; i < marks; i++) {
+    c.save();
+    c.rotate((i * Math.PI * 2) / marks);
+    c.fillRect(r * 0.86, -1.5 * s, r * 0.08, 3 * s);
+    c.restore();
+  }
+  c.restore();
+  // 当たった瞬間に広がる光の輪
+  if (k >= hitK) {
+    const q = (k - hitK) / (1 - hitK);
+    c.shadowBlur = 0;
+    c.globalAlpha = 1;
+    c.strokeStyle = `rgba(245,208,254,${1 - q})`;
+    c.lineWidth = (4 * (1 - q) + 1) * s;
+    c.beginPath(); c.arc(0, 0, R * (0.6 + q * 0.8), 0, Math.PI * 2); c.stroke();
+  }
+  c.restore();
+  // 魔法陣から立つ太い闇の柱(当たる時に伸びきる)。太さは魔法陣の7割くらい
+  if (k >= pillarK) drawDarkColumn(c, Math.min(1, ((k - pillarK) / (hitK - pillarK)) * 0.3), time, x, y, s, Math.max(1, (R * 0.7) / (15 * s)));
+  // 当たった瞬間の白い光と、飛び散る闇のかけら
+  if (k >= hitK) {
+    const q = (k - hitK) / (1 - hitK);
+    if (q < 0.25) {
+      c.fillStyle = `rgba(255,255,255,${0.5 * (1 - q / 0.25)})`;
+      c.beginPath(); c.ellipse(x, y - 10 * s, R * 0.9, R * 0.45, 0, 0, Math.PI * 2); c.fill();
+    }
+    for (let i = 0; i < 14; i++) {
+      const n1 = Math.sin(i * 5.3 * 12.9898) * 43758.5453;
+      const n2 = Math.sin(i * 9.1 * 12.9898) * 43758.5453;
+      const a = (n1 - Math.floor(n1)) * Math.PI * 2;
+      const sp = (30 + (n2 - Math.floor(n2)) * 50) * s;
+      const px = x + Math.cos(a) * sp * q;
+      const py = y - 12 * s - (60 * q - 70 * q * q) * s - Math.sin(a) * sp * q * 0.3;
+      poly(c, [[px, py - 3 * s], [px + 2 * s, py], [px, py + 3 * s], [px - 2 * s, py]], i % 3 ? `rgba(27,11,51,${1 - q})` : `rgba(168,85,247,${1 - q})`);
+    }
+  }
 }
 
 // 衝撃波: 足元が一瞬赤く光り、輪がすばやく広がって薄くなる

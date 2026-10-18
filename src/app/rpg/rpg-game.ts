@@ -1232,6 +1232,8 @@ export class RpgGame {
   /** 攻撃が当たったか(当たる時に、相手がその場所にいるか) */
   private actHits(e: Enemy, def: EnemyDef, a: EnemyAct): boolean {
     const p = this.player;
+    // 魔法陣(front#327)は、攻撃を始めたマスのまわり(範囲)にいても当たる
+    if (def.attack === 'circle') return cheb(p.x, p.y, a.tx, a.ty) <= def.radius + 0.5;
     if (SPELLS.includes(def.attack)) return cheb(p.x, p.y, a.tx, a.ty) < 0.6;
     if (def.attack === 'shockwave') return cheb(p.x, p.y, e.x, e.y) <= def.radius + 0.5;
     if (movesToTarget(def)) return cheb(p.x, p.y, e.x, e.y) <= 1.0;

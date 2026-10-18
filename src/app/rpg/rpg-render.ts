@@ -3,7 +3,7 @@ import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallCol
 import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
-import { SPELLS, attackTiming, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
+import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
 import { SIGN_BANDS, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign } from './rpg-props';
 
 type Pt = [number, number];
@@ -827,7 +827,8 @@ export class RpgRenderer {
     ctx.save();
     ctx.translate(x, y);
     const top = drawEnemyBody(ctx, def, {
-      dir: e.dir, time: this.time, moving: e.moving, flash: e.flash > 0, aggro: e.aggro, lunge: e.lunge, seed: e.seed
+      dir: e.dir, time: this.time, moving: e.moving, flash: e.flash > 0, aggro: e.aggro, lunge: e.lunge, seed: e.seed,
+      cast: e.act ? castOf(def, elapsed) : 0
     });
     ctx.restore();
     const hovered = game.hover === e;
@@ -856,7 +857,7 @@ export class RpgRenderer {
       if (!this.onScreen(ex, ey, 300) && !this.onScreen(tx, ty, 200)) continue;
       drawAttackEffect(this.ctx, {
         attack: def.attack, k: Math.min(1, e.act.t / duration), time: this.time, ex, ey, tx, ty, dir: e.dir, s: 1,
-        radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, hitK: hitAt / duration
+        radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, radius: def.radius, hitK: hitAt / duration
       });
     }
   }
