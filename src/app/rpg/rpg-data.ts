@@ -50,7 +50,11 @@ export const ITEMS: Record<string, ItemDef> = {
   magic_scrap: { name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす' },
   // 草原の敵(front#284)
   rabbit_horn: { name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす' },
-  honey: { name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす' }
+  honey: { name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす' },
+  // 牢獄の敵(front#321)
+  rat_tail: { name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす' },
+  rusty_key: { name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす' },
+  iron_chain: { name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす' }
 };
 
 /** 鍛冶屋の合成のレシピ(front#277)。素材とゴールドを払って、装備(result)を1つ作る */
@@ -182,23 +186,24 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor' | 'wall'
-  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign';
+  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket';
 export const STATIC_TYPES: StaticType[] = [
-  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign'
+  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket'
 ];
 
-// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)。ほかの置物は壊れない
-export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1 };
+// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)、木のおけ(front#321)。ほかの置物は壊れない
+export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1, bucket: 1 };
 export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as StaticType];
 // 叩いたときの音の素材(front#282)。叩ける(壊れる)置物ごと
 export const OBJECT_HIT_MATERIAL: Partial<Record<StaticType, 'stone' | 'wood' | 'grass'>> = {
-  grass: 'grass', fern: 'grass', rock: 'stone', crystal: 'stone', armor: 'stone', pot: 'stone', bones: 'stone', chest: 'wood', barrel: 'wood'
+  grass: 'grass', fern: 'grass', rock: 'stone', crystal: 'stone', armor: 'stone', pot: 'stone', bones: 'stone', chest: 'wood', barrel: 'wood', bucket: 'wood'
 };
 // 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
 export const BREAK_RESPAWN_SEC = 10;
 export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
-  barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板'
+  barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板',
+  bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ'
 };
 
 export interface StaticObj {
@@ -235,6 +240,15 @@ export function shelfFace(map: Pick<AreaMap, 'inMap' | 'ground' | 'statics'>, o:
   const back = (x: number, y: number) =>
     !map.inMap(x, y) || map.ground[y][x] === G.VOID || map.statics.some((s) => s.type === 'wall' && s.x === x && s.y === y);
   return !back(o.x - 1, o.y) && back(o.x, o.y - 1) ? 'y' : 'x';
+}
+
+/**
+ * 鉄格子(front#321)の向き。左右(x)のとなりに壁か鉄格子があれば x の向き、なければ y の向きに並ぶ。
+ * 続けて置くと1本の柵になり、壁と壁の間に置くと壁につながる
+ */
+export function barsAlong(map: Pick<AreaMap, 'statics'>, o: Pick<StaticObj, 'x' | 'y'>): 'x' | 'y' {
+  const fence = (x: number, y: number) => map.statics.some((s) => (s.type === 'wall' || s.type === 'bars') && s.x === x && s.y === y);
+  return fence(o.x - 1, o.y) || fence(o.x + 1, o.y) ? 'x' : 'y';
 }
 
 /** 奥から順に描くときの奥行き。大きな家は、いちばん手前のマスで並べる */

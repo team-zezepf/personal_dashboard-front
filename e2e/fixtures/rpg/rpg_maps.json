@@ -9,6 +9,16 @@
   "ground" : [ "ggggggggggggggggggfgggggfggggggg", "gggggfgggfgggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "ggggggggggggggggggggggggggfgggfg", "ggggggggggggggggggggggggfggggggg", "gggggggggggggggggggggggggggggggg", "gggfggggggggggpggggggggggggggggg", "ggggggggggggggpfgggppppppggggggg", "ggggggggggggggpggggpgggggggggggg", "ggggggggggggggpgfgfpgggggggggggg", "ggggggggggggggpggggpgggfgggggggg", "gggggggfggggpppppppppgfgfggfgggg", "ggggggggggggpppppppppggfggfggggg", "ggggggggggggpppppppppfgggggggggg", "gggggggppppppppfsfpppppppppppppp", "ggggggggfggfpppswspppppppppppppp", "gggggggfggggpppfsfpppppppppppppp", "gggfggggggggpppppppppggggggggggg", "fgggggggpppppppppppppppppggggggg", "ggggggfgpgggpppppppppgggpggggggg", "fgggggggpgfggggpppggggggpgggfggg", "ggggggggpgfggggpppggggggpggggggg", "ggggggggpffggggpppggggfggsssgggg", "gggggggggggggggpppggggggswwwsggg", "gggggggggggfgggpppgggggswwwwwsgg", "ggggggggggfggggpppgggggswwwwwsgg", "gggggggggggggggpppgggggswwwwwsgg", "gggggggggggggggpppggggfgswwwsggg", "ggggfggggggfgggpppgggggggsssgggg", "gggggggggggggggpppggggggggggfggg", "gggggggggggggggpppgggggggggggggg" ],
   "heights" : null,
   "objects" : [ {
+    "type" : "bucket",
+    "x" : 4,
+    "y" : 7,
+    "torch" : false,
+    "contents" : {
+      "kind" : "enemy",
+      "id" : "rat",
+      "count" : 1
+    }
+  }, {
     "type" : "house",
     "x" : 12,
     "y" : 10,

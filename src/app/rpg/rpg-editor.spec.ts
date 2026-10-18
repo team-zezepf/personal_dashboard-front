@@ -59,6 +59,14 @@ describe('RpgMapEditor', () => {
       editor.removeAt(8, 8);
     }
     expect(['たる', 'つぼ', '骨の山', '本棚', '燭台', '墓石'].every((l) => objects.some((i) => i.label === l))).toBe(true);
+    // 牢獄の置物(front#321)。木のおけは壊れる置物、鉄格子・鎖の杭は壊れない置物
+    expect(editor.apply({ kind: 'object', type: 'bucket' }, 8, 8, true)?.kind).toBe('breakable');
+    editor.removeAt(8, 8);
+    for (const type of ['bars', 'shackle'] as const) {
+      expect(editor.apply({ kind: 'object', type }, 8, 8, true)).toBeNull();
+      editor.removeAt(8, 8);
+    }
+    expect(['鉄格子', '鎖の杭', '木のおけ'].every((l) => objects.some((i) => i.label === l))).toBe(true);
 
     const placed = editor.apply({ kind: 'object', type: 'grass' }, 2, 2, true);
     expect(placed).toEqual({ kind: 'breakable', ref: editor.map.objects.at(-1) });

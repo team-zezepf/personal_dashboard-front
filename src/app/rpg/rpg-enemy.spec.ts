@@ -6,10 +6,10 @@ import {
 describe('rpg-enemy', () => {
   afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
-  it('最初は18種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
+  it('最初は21種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
     expect(Object.keys(ENEMIES)).toEqual([
       'slime', 'blue', 'kinokon', 'spirit', 'raptor', 'golem', 'ghost', 'knight', 'darklord', 'nightbat', 'skeleton', 'maneater', 'reddragon',
-      'mimic', 'livingarmor', 'hornrabbit', 'mitsubachin', 'hikarislime'
+      'mimic', 'livingarmor', 'hornrabbit', 'mitsubachin', 'hikarislime', 'rat', 'jailer', 'captiveghost'
     ]);
     expect(Object.values(ENEMIES).slice(0, 9).every((e) => e.attack === 'tackle' && e.dash === 1 && e.charge === 0)).toBe(true);
     expect(Object.values(ENEMIES).slice(9, 13).map((e) => e.shape)).toEqual(['bat', 'skeleton', 'plant', 'dragon']);
@@ -51,12 +51,25 @@ describe('rpg-enemy', () => {
   });
 
   it('ケルベロスの形を選べ、どの状態・どの向きでも描ける(front#306)', () => {
-    expect(ENEMY_SHAPES.slice(16)).toEqual([['cerberus', 'ケルベロス']]);
+    expect(ENEMY_SHAPES.slice(16, 17)).toEqual([['cerberus', 'ケルベロス']]);
     const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
     const def = { ...ENEMIES['knight'], shape: 'cerberus' as const, attack: 'fire' as const, size: 1.45 };
     for (const dir of [1, -1]) {
       for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
         expect(drawEnemyBody(c, def, { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('ネズミの形を選べ、どの状態・どの向きでも描ける。牢獄の敵は、ネズミ・騎士・ゴーストの形で素材を落とす(front#321)', () => {
+    expect(ENEMY_SHAPES.slice(17)).toEqual([['rat', 'ネズミ']]);
+    expect(['rat', 'jailer', 'captiveghost'].map((id) => [ENEMIES[id].shape, ENEMIES[id].material])).toEqual([
+      ['rat', 'rat_tail'], ['knight', 'rusty_key'], ['ghost', 'iron_chain']
+    ]);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const dir of [1, -1]) {
+      for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
+        expect(drawEnemyBody(c, ENEMIES['rat'], { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
       }
     }
   });

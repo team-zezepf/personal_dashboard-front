@@ -1,5 +1,5 @@
 import { RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf, setCrafts, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import { BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf, setCrafts, shelfFace, signExit, walkSpeedOf } from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -509,8 +509,8 @@ describe('RpgGame', () => {
   describe('素材と鍛冶屋の合成(front#277)', () => {
     afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
-    it('素材は14種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
-      expect(MATERIAL_IDS).toHaveLength(16);
+    it('素材は19種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
+      expect(MATERIAL_IDS).toHaveLength(19);
       // ヒカリスライム(front#284)は素材の代わりに上回復薬を落とす
       expect(DEFAULT_ENEMIES.filter((e) => e.id !== 'hikarislime').every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
       expect(RECIPES).toHaveLength(8);
@@ -934,6 +934,33 @@ describe('RpgGame', () => {
         game.update(0.05);
         expect(staticAt(6, 5).broken).toBe(true);
       }
+    });
+
+    it('木のおけは1回で壊れ、鉄格子・鎖の杭は通れず、狙えず、壊れない(front#321)', () => {
+      setup([
+        { type: 'bucket', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'rat', count: 1 } },
+        { type: 'bars', x: 5, y: 6, torch: false }, { type: 'shackle', x: 4, y: 5, torch: false }
+      ]);
+      for (const [x, y] of [[5, 6], [4, 5]]) {
+        expect(game.map.walkable(x, y)).toBe(false);
+        const [sx, sy] = game.screenPositionOf({ x, y });
+        expect(game.pickEntity(sx, sy - 10)).toBeNull();
+      }
+      const bucket = staticAt(6, 5);
+      game.player.target = bucket;
+      game.update(0.05);
+      expect(bucket.broken).toBe(true);
+      expect(ev.messages.at(-1)).toBe('木のおけの中からドブネズミが現れた！');
+    });
+
+    it('鉄格子は、左右(x)のとなりに壁か鉄格子があれば x の向き、なければ y の向きに並ぶ(front#321)', () => {
+      const objects: RpgMap['objects'] = [
+        { type: 'wall', x: 2, y: 4, torch: false }, { type: 'bars', x: 3, y: 4, torch: false }, { type: 'bars', x: 4, y: 4, torch: false },
+        { type: 'bars', x: 8, y: 2, torch: false }, { type: 'bars', x: 8, y: 3, torch: false }, { type: 'bars', x: 10, y: 10, torch: false }
+      ];
+      const area = buildAreaMap(map('cell', { objects }));
+      // 壁のとなり・鉄格子のとなりは x、縦に続けた鉄格子・ひとつだけの鉄格子は y
+      expect([[3, 4], [4, 4], [8, 2], [8, 3], [10, 10]].map(([x, y]) => barsAlong(area, { x, y }))).toEqual(['x', 'x', 'y', 'y', 'y']);
     });
 
     it('本棚は、壁ぎわ・「なし」の端に置くと部屋の内側を向く(front#270)', () => {

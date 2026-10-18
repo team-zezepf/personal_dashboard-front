@@ -572,3 +572,35 @@ test(
     });
   }
 );
+
+test(
+  'E2E-17 RPGで、木のおけをクリックすると、歩いて叩いて1回で壊し、中からドブネズミが現れる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(始まりの草原の村の (6, 7))',
+      'E2E 用の RPG データで、村の (4, 7) に木のおけ(中身はドブネズミ)を置いてある(front#321)'
+    ],
+    expected: [
+      '木のおけ(front#321 で足した置物)をクリックすると、そこまで歩いて叩き、1回で壊れる',
+      'ログに「木のおけの中からドブネズミが現れた！」と出る(ネズミの形の敵 front#321)'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    await step('RPG(/rpg)を開き、村の (4, 7) の木のおけをクリックする', '歩いて叩いて壊し、ログに「木のおけの中からドブネズミが現れた！」と出る', async () => {
+      await page.goto('/rpg');
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      const [x, y] = (await page.evaluate(() => (window as any).rpgTest.tilePosition(4, 7))) as [number, number];
+      const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+      // 木のおけの胴(足元から少し上)をクリックする
+      await page.mouse.click(box.x + x, box.y + y - 10);
+      await expect(log.getByText('木のおけの中からドブネズミが現れた！')).toBeVisible();
+    });
+  }
+);

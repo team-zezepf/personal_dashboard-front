@@ -81,6 +81,10 @@ export const PALETTE: PaletteTab[] = [
       { id: 'bookshelf', label: '本棚', icon: '📚', tool: { kind: 'object', type: 'bookshelf' } },
       { id: 'candle', label: '燭台', icon: '🕯️', tool: { kind: 'object', type: 'candle' } },
       { id: 'grave', label: '墓石', icon: '🪦', tool: { kind: 'object', type: 'grave' } },
+      // 牢獄の置物(front#321)。鉄格子は壁と同じく通れず、向こうが透けて見える。続けて置くと1本の柵になる。木のおけは壊れる置物
+      { id: 'bars', label: '鉄格子', icon: '▥', tool: { kind: 'object', type: 'bars' } },
+      { id: 'shackle', label: '鎖の杭', icon: '⛓️', tool: { kind: 'object', type: 'shackle' } },
+      { id: 'bucket', label: '木のおけ', icon: '🧺', tool: { kind: 'object', type: 'bucket' } },
       // 看板(front#274)。いちばん近い「ほかのダンジョンへの端」を指し、行き先のダンジョンの名前を出す
       { id: 'sign', label: '看板', icon: '➡️', tool: { kind: 'object', type: 'sign' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },

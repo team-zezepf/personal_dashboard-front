@@ -107,7 +107,7 @@ export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'recommendedLevel' | 'th
 // RPGのマップ(エリア)(front#217 / api#82)。マップ作成画面で作り、ゲームはこれを読んで地形を作る
 export interface RpgMapObject {
   // tree / rock / house / cliff / fern / crystal / pillar / volcano / grass / chest / armor / wall /
-  // barrel / pot / bones / bookshelf / candle / grave
+  // barrel / pot / bones / bookshelf / candle / grave / sign / bars / shackle / bucket
   type: string;
   x: number;
   y: number;

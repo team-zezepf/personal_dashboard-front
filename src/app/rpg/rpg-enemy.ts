@@ -7,7 +7,7 @@ import { drawArmor, drawChest, mix, shade } from './rpg-props';
  * 形・攻撃の名前はAPI(RpgEnemyService)と合わせる。
  */
 
-export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus';
+export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus' | 'rat';
 export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
@@ -16,7 +16,7 @@ export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['slime', 'スライム'], ['mushroom', 'キノコ'], ['wisp', '精霊'], ['raptor', 'ラプトル'],
   ['golem', 'ゴーレム'], ['ghost', 'ゴースト'], ['knight', '騎士'], ['lord', '魔導士'],
   ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン'],
-  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス']
+  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス'], ['rat', 'ネズミ']
 ];
 
 export interface AttackSpec {
@@ -61,7 +61,7 @@ export const ENEMY_LIMITS = {
 
 const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false };
 
-// まだ「敵」タブで保存していないときの18種類(APIの default_enemies.json と同じ)
+// まだ「敵」タブで保存していないときの21種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
   { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, material: 'slime_jelly', materialRate: 0.5, sight: 0, respawn: 10 },
   { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, material: 'slime_jelly', materialRate: 0.6, sight: 2.5, respawn: 10 },
@@ -83,7 +83,11 @@ export const DEFAULT_ENEMIES: EnemyDef[] = [
   // 草原の敵(front#284)。ヒカリスライムはスライムから、まれに入れかわって出る
   { ...base, id: 'hornrabbit', name: 'つのウサギ', shape: 'rabbit', color: '#f3e8d8', dark: '#f9a8d4', size: 1, hp: 35, atk: 12, def: 3, interval: 1.4, speed: 2, exp: 10, gold: 6, drop: 'potion', dropRate: 0.15, material: 'rabbit_horn', materialRate: 0.5, sight: 3, respawn: 10, attack: 'jump', dash: 2, charge: 0.4 },
   { ...base, id: 'mitsubachin', name: 'ミツバチン', shape: 'bee', color: '#fde047', dark: '#1f2937', size: 0.9, hp: 25, atk: 10, def: 1, interval: 1.1, speed: 2.8, exp: 8, gold: 5, drop: 'potion', dropRate: 0.1, material: 'honey', materialRate: 0.5, sight: 3.5, respawn: 10, attack: 'tackle', dash: 2, charge: 0.3 },
-  { ...base, id: 'hikarislime', name: 'ヒカリスライム', shape: 'slime', color: '#fde047', dark: '#ca8a04', size: 1.05, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 200, drop: 'hipotion', dropRate: 1, sight: 2.5, respawn: 10, glow: true }
+  { ...base, id: 'hikarislime', name: 'ヒカリスライム', shape: 'slime', color: '#fde047', dark: '#ca8a04', size: 1.05, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 200, drop: 'hipotion', dropRate: 1, sight: 2.5, respawn: 10, glow: true },
+  // 牢獄の敵(front#321)。看守はダークナイト、囚われの亡霊はゴーストの色違い
+  { ...base, id: 'rat', name: 'ドブネズミ', shape: 'rat', color: '#8b7d72', dark: '#4a3f38', size: 0.85, hp: 70, atk: 30, def: 6, interval: 1, speed: 2.6, exp: 30, gold: 12, drop: 'potion', dropRate: 0.3, material: 'rat_tail', materialRate: 0.5, sight: 3, respawn: 10, attack: 'bite' },
+  { ...base, id: 'jailer', name: '看守', shape: 'knight', color: '#7a5a3c', dark: '#3b2a1e', size: 1.15, hp: 360, atk: 64, def: 30, interval: 1.6, speed: 1.4, exp: 240, gold: 130, drop: 'hipotion', dropRate: 0.5, material: 'rusty_key', materialRate: 0.4, sight: 3.5, respawn: 10 },
+  { ...base, id: 'captiveghost', name: '囚われの亡霊', shape: 'ghost', color: '#dbeafe', dark: '#64748b', size: 1, hp: 190, atk: 50, def: 16, interval: 1.4, speed: 1.8, exp: 130, gold: 50, drop: 'hipotion', dropRate: 0.4, material: 'iron_chain', materialRate: 0.5, sight: 2.5, respawn: 10 }
 ];
 
 /**
@@ -111,11 +115,11 @@ setEnemies(DEFAULT_ENEMIES);
 // 形ごとの、クリックで選べる高さ・足元の印の大きさ(大きさ 1 のとき)
 const HIT_HEIGHT: Record<EnemyShape, number> = {
   slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 65, bat: 46, skeleton: 48, plant: 50, dragon: 68,
-  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62
+  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62, rat: 26
 };
 const RING: Record<EnemyShape, number> = {
   slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
-  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5
+  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5, rat: 0.9
 };
 
 export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
@@ -148,7 +152,7 @@ const HIT_MATERIAL_IDS = HIT_MATERIALS.map(([id]) => id);
 // 体の形ごとの素材(金属の騎士・リビングアーマーは岩)
 const SHAPE_MATERIAL: Record<EnemyShape, HitMaterial> = {
   slime: 'soft', mushroom: 'flesh', wisp: 'flesh', raptor: 'flesh', golem: 'stone', ghost: 'flesh', knight: 'stone', lord: 'flesh',
-  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh'
+  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh', rat: 'flesh'
 };
 export const shapeMaterialOf = (shape: EnemyShape): HitMaterial => SHAPE_MATERIAL[shape];
 /** 叩いたときの音の素材。「敵」タブで選んでいればそれ、なければ体の形から */
@@ -258,6 +262,7 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
     case 'rabbit': top = drawRabbit(c, def, pose); break;
     case 'bee': top = drawBee(c, def, pose); break;
     case 'cerberus': top = drawCerberus(c, def, pose); break;
+    case 'rat': top = drawRat(c, def, pose); break;
   }
   if (def.glow) drawGlow(c, HIT_HEIGHT[def.shape], pose.time, true);
   c.restore();
@@ -874,6 +879,66 @@ function drawRabbit(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): n
   c.beginPath(); c.arc(d * 18.5, -20 + crouch, 1.5, 0, Math.PI * 2); c.fill();
   c.restore();
   return 44 + hop;
+}
+
+// ドブネズミ(front#321): 体・頭=明るい色、耳・背中の影=暗い色。丸い背中・とがった鼻・大きな耳・長いしっぽ。
+// 歩くと体が上下して、しっぽがゆれる。かみつくときは前に飛び出す
+function drawRat(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const bob = p.moving ? Math.abs(Math.sin(t * 12)) * 1.6 : Math.abs(Math.sin(t * 2)) * 0.5;
+  const lunge = (p.lunge ?? 0) * 7;
+  const body = p.flash ? '#fff' : def.color;
+  const dark = p.flash ? '#fff' : def.dark;
+  shadow(c, 15, 5);
+  c.save();
+  c.translate(d * lunge, 0);
+  // しっぽ(体のうしろから、波打ちながら伸びる)
+  c.strokeStyle = p.flash ? '#fff' : '#d6a5a0';
+  c.lineWidth = 2;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(-d * 11, -5);
+  for (let i = 1; i <= 10; i++) c.lineTo(-d * (11 + i * 1.8), -5 + Math.sin(t * (p.moving ? 10 : 4) + i * 0.7) * 2.6 + i * 0.6);
+  c.stroke();
+  // 足
+  c.fillStyle = '#e8b4b0';
+  for (const [x, ph] of [[-6, 0], [6, Math.PI]]) {
+    c.beginPath(); c.ellipse(d * x + (p.moving ? Math.sin(t * 12 + ph) * 1.6 : 0), 0, 2.6, 1.4, 0, 0, Math.PI * 2); c.fill();
+  }
+  // 体
+  const g = c.createRadialGradient(-d * 2, -13 - bob, 2, 0, -8 - bob, 16);
+  g.addColorStop(0, body);
+  g.addColorStop(1, dark);
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(-d * 1, -8 - bob, 13, 8.5, 0, 0, Math.PI * 2); c.fill();
+  // 頭(とがった鼻先へ)
+  c.fillStyle = body;
+  c.beginPath();
+  c.moveTo(d * 5, -14 - bob);
+  c.quadraticCurveTo(d * 17, -10 - bob, d * 20, -5 - bob);
+  c.quadraticCurveTo(d * 12, -1 - bob, d * 4, -3 - bob);
+  c.closePath();
+  c.fill();
+  // 耳
+  for (const x of [5, 9]) {
+    c.fillStyle = dark;
+    c.beginPath(); c.ellipse(d * x, -15 - bob, 4, 4.5, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = p.flash ? '#fff' : '#e8a3a0';
+    c.beginPath(); c.ellipse(d * (x + 0.3), -14.6 - bob, 2.3, 2.8, 0, 0, Math.PI * 2); c.fill();
+  }
+  // 鼻・目(襲ってくるときは赤く光る)・ひげ
+  c.fillStyle = '#f2a0a8';
+  c.beginPath(); c.arc(d * 20, -5 - bob, 1.6, 0, Math.PI * 2); c.fill();
+  c.fillStyle = p.aggro ? '#ef4444' : '#1f2937';
+  c.beginPath(); c.arc(d * 12.5, -9 - bob, 1.6, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.6)';
+  c.lineWidth = 0.7;
+  for (const k of [-1.5, 0.5, 2.5]) {
+    c.beginPath(); c.moveTo(d * 18, -5 - bob); c.lineTo(d * 25, -5 - bob + k * 1.5); c.stroke();
+  }
+  c.restore();
+  return 22 + bob;
 }
 
 // ミツバチン(front#284): 体=明るい色(黄色)、しま・頭・針=暗い色。宙に浮いて、すばやく羽ばたく

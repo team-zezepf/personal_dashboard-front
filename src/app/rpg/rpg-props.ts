@@ -472,3 +472,127 @@ export function drawSign(c: CanvasRenderingContext2D, cx: number, cy: number, si
   c.fillStyle = '#94603a';
   c.beginPath(); c.ellipse(cx, cy - 30, 2.4, 1.2, 0, 0, Math.PI * 2); c.fill();
 }
+
+// ===== 牢獄の置物(front#321) =====
+
+// 鉄格子の高さ。人の背より少し高く、壁(200)よりずっと低い
+export const BARS_HEIGHT = 72;
+
+// 鉄格子(front#321)。マスのまんなかの線に沿って鉄の棒を8本立て、下・まんなか・上に横木を通す。
+// along が 'x' なら x の向き(右下へ)、'y' なら y の向き(左下へ)に並ぶ(向きは置いた場所から決める: barsAlong)。
+// 棒のすき間から向こうが見えるよう、面は塗らない
+export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, along: 'x' | 'y'): void {
+  const at = (t: number, z: number) => (along === 'x' ? boxPoint(cx, cy, t, 0.5, z) : boxPoint(cx, cy, 0.5, t, z));
+  const line = (a: Pt, b: Pt, color: string, width: number) => {
+    c.strokeStyle = color;
+    c.lineWidth = width;
+    c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
+  };
+  // 床の影
+  line([at(0, 0)[0], at(0, 0)[1] + 2], [at(1, 0)[0], at(1, 0)[1] + 2], 'rgba(0,0,0,0.3)', 5);
+  const rail = (z: number, w: number) => {
+    line(at(0, z), at(1, z), '#1f1d2b', w + 1.5);
+    const [a, b] = [at(0, z), at(1, z)];
+    line([a[0], a[1] - 0.6], [b[0], b[1] - 0.6], '#6b6880', w - 1);
+  };
+  c.lineCap = 'butt';
+  rail(2, 4);
+  for (let i = 0; i < 8; i++) {
+    const t = 0.0625 + i * 0.125;
+    const [x0, y0] = at(t, 0);
+    const [x1, y1] = at(t, BARS_HEIGHT - 2);
+    line([x0, y0], [x1, y1], '#1f1d2b', 3.4);
+    line([x0 - 0.6, y0], [x1 - 0.6, y1], '#8a879c', 1.2);
+    // 棒の先のとがり
+    poly(c, [[x1 - 2.2, y1], [x1, y1 - 6], [x1 + 2.2, y1]], '#3a374d');
+  }
+  rail(BARS_HEIGHT * 0.55, 3.5);
+  rail(BARS_HEIGHT - 6, 4);
+}
+
+// 鎖の輪を、縦・横を交互にして並べる
+function chainLinks(c: CanvasRenderingContext2D, pts: Pt[]): void {
+  pts.forEach(([x, y], i) => {
+    const [rx, ry] = i % 2 ? [2, 3] : [3.6, 1.8];
+    for (const [color, w] of [['#1f1d2b', 2.6], ['#9ca3af', 1]] as const) {
+      c.strokeStyle = color;
+      c.lineWidth = w;
+      c.beginPath(); c.ellipse(x, y, rx, ry, 0.4, 0, Math.PI * 2); c.stroke();
+    }
+  });
+}
+
+// 2次ベジエ曲線の上に n 個の点
+function curvePoints(a: Pt, ctrl: Pt, b: Pt, n: number): Pt[] {
+  return Array.from({ length: n }, (_, i) => {
+    const s = i / (n - 1);
+    return [(1 - s) ** 2 * a[0] + 2 * (1 - s) * s * ctrl[0] + s * s * b[0], (1 - s) ** 2 * a[1] + 2 * (1 - s) * s * ctrl[1] + s * s * b[1]] as Pt;
+  });
+}
+
+// 鎖の杭(front#321)。床に打った鉄の杭(上に輪)から、鎖が2本床をはって、半分開いた手かせにつながる
+export function drawShackle(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+  shadow(c, cx, cy + 2, 16, 6, 0.2);
+  chainLinks(c, curvePoints([cx - 2, cy - 10], [cx - 12, cy - 2], [cx - 19, cy + 5], 7));
+  chainLinks(c, curvePoints([cx + 2, cy - 10], [cx + 10, cy + 2], [cx + 17, cy + 3], 7));
+  for (const [x, y] of [[cx - 22, cy + 7], [cx + 20, cy + 4]]) {
+    for (const [color, w] of [['#1f1d2b', 4], ['#6b7280', 2]] as const) {
+      c.strokeStyle = color;
+      c.lineWidth = w;
+      c.beginPath(); c.ellipse(x, y, 6, 3, 0, 0.3, Math.PI * 1.7); c.stroke();
+    }
+  }
+  const g = c.createLinearGradient(cx - 4, 0, cx + 4, 0);
+  g.addColorStop(0, '#6b6880');
+  g.addColorStop(1, '#25222f');
+  c.fillStyle = g;
+  c.fillRect(cx - 3.5, cy - 20, 7, 20);
+  c.fillStyle = '#3a374d';
+  c.beginPath(); c.ellipse(cx, cy, 5.5, 2.5, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#8a879c';
+  c.beginPath(); c.ellipse(cx, cy - 20, 4.5, 2, 0, 0, Math.PI * 2); c.fill();
+  for (const [color, w] of [['#1f1d2b', 3], ['#9ca3af', 1.2]] as const) {
+    c.strokeStyle = color;
+    c.lineWidth = w;
+    c.beginPath(); c.arc(cx, cy - 25, 5, 0, Math.PI * 2); c.stroke();
+  }
+}
+
+// 木のおけ(front#321)。下が少しすぼまった木のおけに、鉄のたが2本と取っ手。中は暗い水
+export function drawBucket(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+  shadow(c, cx, cy + 1, 12, 5, 0.18);
+  const [rt, rb, h, ry] = [10, 8, 16, 4.5];
+  const g = c.createLinearGradient(cx - rt, 0, cx + rt, 0);
+  g.addColorStop(0, '#b47d45');
+  g.addColorStop(0.45, '#966131');
+  g.addColorStop(1, '#6a4120');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(cx - rt, cy - h);
+  c.lineTo(cx - rb, cy);
+  c.ellipse(cx, cy, rb, ry * 0.8, 0, Math.PI, 0, true);
+  c.lineTo(cx + rt, cy - h);
+  c.closePath();
+  c.fill();
+  // 板のすき間
+  c.strokeStyle = 'rgba(60,30,10,0.35)';
+  c.lineWidth = 1;
+  for (const k of [-0.5, 0, 0.5]) {
+    c.beginPath(); c.moveTo(cx + k * rt, cy - h + ry * 0.8); c.lineTo(cx + k * rb, cy + ry * 0.7); c.stroke();
+  }
+  // たが(手前の半分だけ見える)
+  c.strokeStyle = '#3f3f46';
+  c.lineWidth = 1.8;
+  for (const [z, r] of [[3, rb + 0.6], [h - 3, rt - 0.2]]) {
+    c.beginPath(); c.ellipse(cx, cy - z, r, ry * 0.85, 0, 0, Math.PI); c.stroke();
+  }
+  c.fillStyle = '#c99158';
+  c.beginPath(); c.ellipse(cx, cy - h, rt, ry, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#1e293b';
+  c.beginPath(); c.ellipse(cx, cy - h + 0.6, rt - 2, ry - 1.4, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(148,163,184,0.5)';
+  c.beginPath(); c.ellipse(cx - 2, cy - h, 3, 1, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#3f3f46';
+  c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(cx - rt, cy - h); c.quadraticCurveTo(cx - 4, cy - h - 13, cx + rt, cy - h); c.stroke();
+}
