@@ -41,6 +41,10 @@ export class RpgRenderer {
   private game!: RpgGame;
   // ホタルの位置はマップの広さに対する割合(0〜1)で持つ
   private readonly fireflies = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6 }));
+  // 守られているボス(front#330)ごとの、前の描画で守られていたか。守りがなくなったときに障壁を割る
+  private readonly guardWas = new WeakMap<Enemy, boolean>();
+  // 割れている障壁(画面上の中心・大きさと、割れた時刻)
+  private shatters: { x: number; y: number; rx: number; ry: number; t: number }[] = [];
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
   // 家の形・向きごとの部品(front#236。毎回求めないよう、覚えておく)
   private readonly houses = new Map<string, { pieces: HousePiece[]; ridge: number; door: { at: readonly [number, number]; normal: readonly [number, number] } }>();
@@ -831,6 +835,7 @@ export class RpgRenderer {
       cast: e.act ? castOf(def, elapsed) : 0
     });
     ctx.restore();
+    if (def.boss) this.drawGuardBarrier(e, x, y, top);
     const hovered = game.hover === e;
     const barY = y - top;
     // ふりをしている化ける敵(front#270)は、置物と同じように名前だけを出す
@@ -888,6 +893,64 @@ export class RpgRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x, y);
+  }
+
+  /**
+   * 守られているボス(front#330)のまわりの闇の障壁(六角の模様)。守る敵が全部倒れたら、障壁が割れてかけらが飛び散る。
+   * 守る敵とボスをつなぐ線は描かない
+   */
+  private drawGuardBarrier(e: Enemy, x: number, y: number, top: number): void {
+    const ctx = this.ctx;
+    const guarded = this.game.bossGuards() > 0;
+    const rx = Math.max(30, top * 0.55);
+    const ry = top * 0.6 + 8;
+    const cy = y - top / 2;
+    if (this.guardWas.get(e) && !guarded) this.shatters.push({ x, y: cy, rx, ry, t: this.time });
+    this.guardWas.set(e, guarded);
+    if (guarded) {
+      ctx.save();
+      ctx.translate(x, cy);
+      const g = ctx.createRadialGradient(0, 0, ry * 0.4, 0, 0, ry);
+      g.addColorStop(0, 'rgba(88,28,135,0)');
+      g.addColorStop(0.85, 'rgba(147,51,234,0.18)');
+      g.addColorStop(1, 'rgba(216,180,254,0.45)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = `rgba(216,180,254,${0.35 + Math.sin(this.time * 3) * 0.15})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(216,180,254,0.15)';
+      ctx.lineWidth = 1;
+      for (let yy = -ry, row = 0; yy < ry; yy += 14, row++) {
+        for (let xx = -rx; xx < rx; xx += 16) {
+          ctx.beginPath();
+          for (let i = 0; i <= 6; i++) {
+            const a = (i * Math.PI) / 3;
+            const px = xx + (row % 2) * 8 + Math.cos(a) * 7;
+            const py = yy + Math.sin(a) * 7 + Math.sin(this.time * 2);
+            if (i) ctx.lineTo(px, py);
+            else ctx.moveTo(px, py);
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+    this.shatters = this.shatters.filter((s) => this.time - s.t < 0.8);
+    for (const s of this.shatters) {
+      const q = (this.time - s.t) / 0.8;
+      ctx.fillStyle = `rgba(216,180,254,${1 - q})`;
+      for (let i = 0; i < 18; i++) {
+        const n1 = Math.sin(i * 3.3 * 12.9898) * 43758.5453;
+        const n2 = Math.sin(i * 7.1 * 12.9898) * 43758.5453;
+        const a = (n1 - Math.floor(n1)) * Math.PI * 2;
+        const sp = 40 + (n2 - Math.floor(n2)) * 50;
+        const px = s.x + Math.cos(a) * (s.rx * 0.8 + sp * q);
+        const py = s.y + Math.sin(a) * (s.ry * 0.8 + sp * q * 0.6) + 60 * q * q;
+        ctx.beginPath(); ctx.moveTo(px, py - 5); ctx.lineTo(px + 4, py); ctx.lineTo(px, py + 5); ctx.lineTo(px - 3, py); ctx.closePath(); ctx.fill();
+      }
+    }
   }
 
   private hpBar(x: number, y: number, ratio: number): void {

@@ -67,7 +67,7 @@ const SE_FIELDS = `id name filename size createdAt`;
 const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt`;
 
 const ENEMY_FIELDS = `
-  id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow sight respawn boss
+  id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow guard sight respawn boss
   attack dash charge range radius sortOrder updatedAt
 `;
 

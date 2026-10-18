@@ -227,6 +227,8 @@ export interface RpgEnemy {
   hitMaterial?: string | null;
   // 光る(front#284)
   glow?: boolean;
+  // ボスを守る(front#330 / api#153)。同じエリアで生きている守る敵1体につき、ボスに与えるダメージが1/4ずつ減る
+  guard?: boolean;
   // 襲ってくる距離(マス)。0なら攻撃されるまで襲ってこない
   sight: number;
   // 倒してから復活するまでの秒数
