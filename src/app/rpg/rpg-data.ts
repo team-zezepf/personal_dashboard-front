@@ -54,7 +54,12 @@ export const ITEMS: Record<string, ItemDef> = {
   // 牢獄の敵(front#321)
   rat_tail: { name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす' },
   rusty_key: { name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす' },
-  iron_chain: { name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす' }
+  iron_chain: { name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす' },
+  // 闇の魔導士の取り巻きとガーゴイル(front#329)
+  cursed_page: { name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす' },
+  shadow_shard: { name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす' },
+  dark_crystal: { name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす' },
+  gargoyle_wing: { name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす' }
 };
 
 /** 鍛冶屋の合成のレシピ(front#277)。素材とゴールドを払って、装備(result)を1つ作る */

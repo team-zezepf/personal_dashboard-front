@@ -7,7 +7,8 @@ import { drawArmor, drawChest, mix, shade } from './rpg-props';
  * 形・攻撃の名前はAPI(RpgEnemyService)と合わせる。
  */
 
-export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus' | 'rat';
+export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus' | 'rat'
+  | 'grimoire' | 'shade' | 'wardcrystal' | 'gargoyle';
 export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave' | 'circle';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
@@ -16,7 +17,9 @@ export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['slime', 'スライム'], ['mushroom', 'キノコ'], ['wisp', '精霊'], ['raptor', 'ラプトル'],
   ['golem', 'ゴーレム'], ['ghost', 'ゴースト'], ['knight', '騎士'], ['lord', '魔導士'],
   ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン'],
-  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス'], ['rat', 'ネズミ']
+  ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス'], ['rat', 'ネズミ'],
+  // 闇の魔導士の取り巻きとガーゴイル(front#329)
+  ['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル']
 ];
 
 export interface AttackSpec {
@@ -63,7 +66,7 @@ export const ENEMY_LIMITS = {
 
 const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false };
 
-// まだ「敵」タブで保存していないときの21種類(APIの default_enemies.json と同じ)
+// まだ「敵」タブで保存していないときの25種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
   { ...base, id: 'slime', name: 'スライム', shape: 'slime', color: '#7ddc6f', dark: '#3fa24a', size: 1, hp: 22, atk: 8, def: 1, interval: 1.4, speed: 1.3, exp: 6, gold: 4, drop: 'potion', dropRate: 0.25, material: 'slime_jelly', materialRate: 0.5, sight: 0, respawn: 10 },
   { ...base, id: 'blue', name: 'ブルースライム', shape: 'slime', color: '#6fb6ff', dark: '#2c74d6', size: 1.2, hp: 50, atk: 14, def: 5, interval: 1.3, speed: 1.6, exp: 16, gold: 10, drop: 'potion', dropRate: 0.35, material: 'slime_jelly', materialRate: 0.6, sight: 2.5, respawn: 10 },
@@ -89,7 +92,12 @@ export const DEFAULT_ENEMIES: EnemyDef[] = [
   // 牢獄の敵(front#321)。看守はダークナイト、囚われの亡霊はゴーストの色違い
   { ...base, id: 'rat', name: 'ドブネズミ', shape: 'rat', color: '#8b7d72', dark: '#4a3f38', size: 0.85, hp: 70, atk: 30, def: 6, interval: 1, speed: 2.6, exp: 30, gold: 12, drop: 'potion', dropRate: 0.3, material: 'rat_tail', materialRate: 0.5, sight: 3, respawn: 10, attack: 'bite' },
   { ...base, id: 'jailer', name: '看守', shape: 'knight', color: '#7a5a3c', dark: '#3b2a1e', size: 1.15, hp: 360, atk: 64, def: 30, interval: 1.6, speed: 1.4, exp: 240, gold: 130, drop: 'hipotion', dropRate: 0.5, material: 'rusty_key', materialRate: 0.4, sight: 3.5, respawn: 10 },
-  { ...base, id: 'captiveghost', name: '囚われの亡霊', shape: 'ghost', color: '#dbeafe', dark: '#64748b', size: 1, hp: 190, atk: 50, def: 16, interval: 1.4, speed: 1.8, exp: 130, gold: 50, drop: 'hipotion', dropRate: 0.4, material: 'iron_chain', materialRate: 0.5, sight: 2.5, respawn: 10 }
+  { ...base, id: 'captiveghost', name: '囚われの亡霊', shape: 'ghost', color: '#dbeafe', dark: '#64748b', size: 1, hp: 190, atk: 50, def: 16, interval: 1.4, speed: 1.8, exp: 130, gold: 50, drop: 'hipotion', dropRate: 0.4, material: 'iron_chain', materialRate: 0.5, sight: 2.5, respawn: 10 },
+  // 闇の魔導士の取り巻き(浮かぶ魔導書・影の分身・闇の水晶)と、ガーゴイル(front#329)
+  { ...base, id: 'grimoire', name: '浮かぶ魔導書', shape: 'grimoire', color: '#a855f7', dark: '#2e1065', size: 1, hp: 220, atk: 70, def: 20, interval: 1.8, speed: 1.6, exp: 150, gold: 60, drop: 'hipotion', dropRate: 0.4, material: 'cursed_page', materialRate: 0.5, sight: 3.5, respawn: 10, attack: 'dark' },
+  { ...base, id: 'shadow', name: '影の分身', shape: 'shade', color: '#3b3355', dark: '#05030a', size: 1.2, hp: 300, atk: 80, def: 25, interval: 2, speed: 1.4, exp: 200, gold: 80, drop: 'hipotion', dropRate: 0.4, material: 'shadow_shard', materialRate: 0.5, sight: 3, respawn: 10, attack: 'dark' },
+  { ...base, id: 'wardcrystal', name: '闇の水晶', shape: 'wardcrystal', color: '#a855f7', dark: '#1e1b4b', size: 1, hp: 400, atk: 0, def: 40, interval: 2, speed: 0.5, exp: 120, gold: 40, drop: 'hipotion', dropRate: 0.4, material: 'dark_crystal', materialRate: 0.5, sight: 0, respawn: 60 },
+  { ...base, id: 'gargoyle', name: 'ガーゴイル', shape: 'gargoyle', color: '#6b6878', dark: '#3a3846', size: 1, hp: 380, atk: 72, def: 34, interval: 1.7, speed: 1.6, exp: 230, gold: 100, drop: 'hipotion', dropRate: 0.4, material: 'gargoyle_wing', materialRate: 0.5, sight: 2, respawn: 10, attack: 'jump', dash: 2, charge: 0.4 }
 ];
 
 /**
@@ -117,11 +125,13 @@ setEnemies(DEFAULT_ENEMIES);
 // 形ごとの、クリックで選べる高さ・足元の印の大きさ(大きさ 1 のとき)
 const HIT_HEIGHT: Record<EnemyShape, number> = {
   slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 92, bat: 46, skeleton: 48, plant: 50, dragon: 68,
-  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62, rat: 26
+  mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62, rat: 26,
+  grimoire: 60, shade: 72, wardcrystal: 62, gargoyle: 72
 };
 const RING: Record<EnemyShape, number> = {
   slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1.2, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
-  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5, rat: 0.9
+  mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5, rat: 0.9,
+  grimoire: 0.9, shade: 1, wardcrystal: 1, gargoyle: 1.3
 };
 
 export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
@@ -154,7 +164,8 @@ const HIT_MATERIAL_IDS = HIT_MATERIALS.map(([id]) => id);
 // 体の形ごとの素材(金属の騎士・リビングアーマーは岩)
 const SHAPE_MATERIAL: Record<EnemyShape, HitMaterial> = {
   slime: 'soft', mushroom: 'flesh', wisp: 'flesh', raptor: 'flesh', golem: 'stone', ghost: 'flesh', knight: 'stone', lord: 'flesh',
-  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh', rat: 'flesh'
+  bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh', rat: 'flesh',
+  grimoire: 'soft', shade: 'soft', wardcrystal: 'stone', gargoyle: 'stone'
 };
 export const shapeMaterialOf = (shape: EnemyShape): HitMaterial => SHAPE_MATERIAL[shape];
 /** 叩いたときの音の素材。「敵」タブで選んでいればそれ、なければ体の形から */
@@ -162,9 +173,11 @@ export const hitMaterialOf = (def: Pick<EnemyDef, 'shape' | 'hitMaterial'>): Hit
   def.hitMaterial && (HIT_MATERIAL_IDS as string[]).includes(def.hitMaterial) ? (def.hitMaterial as HitMaterial) : SHAPE_MATERIAL[def.shape];
 
 // 根を張っていて、その場から動かない形(front#255)。歩く速さの設定は使わない
-export const isRooted = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'plant';
+export const isRooted = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'plant' || def.shape === 'wardcrystal';
+// 攻撃してこない形(闇の水晶 front#329)。叩かれても、その場で浮いているだけ
+export const isPassive = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'wardcrystal';
 // 置物にばける形(front#270)と、ばけている間(近づかれるまで)の名前。ばけている間は歩き回らず、置物と同じ絵になる
-const DISGUISES: Partial<Record<EnemyShape, string>> = { mimic: '宝箱', livingarmor: '甲冑' };
+const DISGUISES: Partial<Record<EnemyShape, string>> = { mimic: '宝箱', livingarmor: '甲冑', gargoyle: '石像' };
 export const disguiseOf = (def: Pick<EnemyDef, 'shape'>): string | null => DISGUISES[def.shape] ?? null;
 
 // ===== 攻撃の長さ(秒)と当たる時(攻撃を始めてからの秒) =====
@@ -280,6 +293,16 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
     case 'bee': top = drawBee(c, def, pose); break;
     case 'cerberus': top = drawCerberus(c, def, pose); break;
     case 'rat': top = drawRat(c, def, pose); break;
+    case 'grimoire': top = drawGrimoire(c, def, pose); break;
+    // 影の分身(front#329): 魔導士の地味な姿を、半透明にする(いつも目が光る)
+    case 'shade':
+      c.save();
+      c.globalAlpha *= 0.6;
+      top = drawLord(c, def, { ...pose, aggro: true }, true);
+      c.restore();
+      break;
+    case 'wardcrystal': top = drawWardCrystal(c, def, pose); break;
+    case 'gargoyle': top = drawGargoyle(c, def, pose); break;
   }
   if (def.glow) drawGlow(c, HIT_HEIGHT[def.shape], pose.time, true);
   c.restore();
@@ -497,14 +520,15 @@ function drawChibi(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
 }
 
 // 闇の魔導士(front#327)。宙に浮くローブ姿。明るい色=マントの裏地・ローブの模様・宝珠・オーラ、暗い色=ローブ・マント・フード。
-// 角・冠・肩当ての縁(金)は色を変えない。まわりを闇の玉が3つ回る。襲ってくると目・オーラ・宝珠が強く光り、詠唱(cast)中は杖を掲げる
-function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+// 角・冠・肩当ての縁(金)は色を変えない。まわりを闇の玉が3つ回る。襲ってくると目・オーラ・宝珠が強く光り、詠唱(cast)中は杖を掲げる。
+// plain: 影の分身(front#329)の地味な姿。冠・角・杖・闇の玉・とげの肩当てを外し、金の部分は紫にして、両腕の袖を下げる
+function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose, plain = false): number {
   const t = p.time + (p.seed ?? 0);
   const d = p.dir;
   const cast = p.cast ?? 0;
   const power = p.aggro ? 1 : 0.55;
   const hz = 9 + Math.sin(t * 2) * 3;
-  const gold = '#d4a72c';
+  const gold = plain ? '#6d28d9' : '#d4a72c';
   const white = (color: string) => (p.flash ? '#ffffff' : color);
   const rgba = (hex: string, a: number) => {
     const n = parseInt(hex.slice(1), 16);
@@ -531,7 +555,7 @@ function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): num
     c.fillStyle = g;
     c.beginPath(); c.arc(o.x, o.y, 6, 0, Math.PI * 2); c.fill();
   };
-  orbs.filter((o) => !o.front).forEach(orb);
+  if (!plain) orbs.filter((o) => !o.front).forEach(orb);
 
   c.save();
   c.translate(0, -hz);
@@ -562,12 +586,16 @@ function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): num
   // 帯(金)
   c.fillStyle = gold;
   c.fillRect(-10.5, -31, 21, 3);
-  c.fillStyle = '#8a6514';
+  c.fillStyle = plain ? '#4c1d95' : '#8a6514';
   c.fillRect(-10.5, -28.5, 21, 0.8);
   // 杖。詠唱中は高く掲げる。先は三日月の形で、闇の宝珠が脈打つ
   const raise = cast * 10;
   const [sx0, sy0, sx1, sy1] = [d * 15, -6 - raise, d * 17, -80 - raise];
   c.lineCap = 'round';
+  if (plain) {
+    // 影の分身: 両腕の袖をだらりと下げる(杖は持たない)
+    for (const sd of [-1, 1]) poly(c, [[sd * 7, -44], [sd * 13, -24], [sd * 10, -20], [sd * 6, -30]], white(mix(def.dark, def.color, 0.15)));
+  } else {
   c.strokeStyle = '#1c1022';
   c.lineWidth = 3.4;
   c.beginPath(); c.moveTo(sx0, sy0); c.lineTo(sx1, sy1); c.stroke();
@@ -598,8 +626,9 @@ function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): num
   poly(c, [[d * 6, -44], [d * 17, sy0 - 34 + raise * 0.4], [d * 18, sy0 - 22 + raise * 0.3], [d * 9, -30]], white(mix(def.dark, def.color, 0.15)));
   c.fillStyle = '#e5d6ff';
   c.beginPath(); c.arc(d * 16.5, -35 - raise * 0.6, 2.4, 0, Math.PI * 2); c.fill();
+  }
   // 肩当て(とげ・金の縁)
-  for (const sd of [-1, 1]) {
+  for (const sd of plain ? [] : [-1, 1]) {
     const bx = sd * 11;
     poly(c, [[bx - 6, -44], [bx + sd * 2, -52], [bx + sd * 6, -49], [bx + sd * 10, -55], [bx + sd * 9, -45], [bx + sd * 12, -46], [bx + sd * 7, -40], [bx - 5, -40]], white('#1a1324'));
     c.strokeStyle = gold;
@@ -618,7 +647,7 @@ function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): num
   for (const sd of [-1, 1]) poly(c, [[d * 1.5 + sd * 1.2, -53], [d * 1.5 + sd * 5, -54.5 - (p.aggro ? 1 : 0)], [d * 1.5 + sd * 4.2, -51.8]], eye);
   c.restore();
   // 角
-  for (const sd of [-1, 1]) {
+  for (const sd of plain ? [] : [-1, 1]) {
     const hg = c.createLinearGradient(sd * 6, -60, sd * 15, -80);
     hg.addColorStop(0, '#d6d3d1');
     hg.addColorStop(1, '#3f3a36');
@@ -626,16 +655,18 @@ function drawLord(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): num
     c.beginPath(); c.moveTo(sd * 5, -60); c.quadraticCurveTo(sd * 14, -64, sd * 15, -80); c.quadraticCurveTo(sd * 10, -68, sd * 8.5, -58); c.closePath(); c.fill();
   }
   // 冠(金の輪と、明るい色の宝石)
-  poly(c, [[-9, -60], [-6, -64], [-3, -61], [0, -67], [3, -61], [6, -64], [9, -60], [8, -58], [-8, -58]], gold);
-  c.save();
-  c.shadowColor = def.color;
-  c.shadowBlur = 8;
-  c.fillStyle = mix(def.color, '#ffffff', 0.25);
-  c.beginPath(); c.arc(0, -61.5, 1.8, 0, Math.PI * 2); c.fill();
+  if (!plain) {
+    poly(c, [[-9, -60], [-6, -64], [-3, -61], [0, -67], [3, -61], [6, -64], [9, -60], [8, -58], [-8, -58]], gold);
+    c.save();
+    c.shadowColor = def.color;
+    c.shadowBlur = 8;
+    c.fillStyle = mix(def.color, '#ffffff', 0.25);
+    c.beginPath(); c.arc(0, -61.5, 1.8, 0, Math.PI * 2); c.fill();
+    c.restore();
+  }
   c.restore();
-  c.restore();
-  orbs.filter((o) => o.front).forEach(orb);
-  return 86 + hz;
+  if (!plain) orbs.filter((o) => o.front).forEach(orb);
+  return (plain ? 66 : 86) + hz;
 }
 
 // コウモリ(front#255): 宙に浮いて羽ばたく。体=明るい色、羽=暗い色。襲ってくると羽ばたきが速くなる
@@ -1072,6 +1103,194 @@ function drawRat(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): numb
   }
   c.restore();
   return 22 + bob;
+}
+
+// 浮かぶ魔導書(front#329): 表紙=暗い色(明るい色を少し混ぜる)、紋章・粒=明るい色。宙に浮いて開いた厚い本。
+// ページがパラパラめくれ、開いたページの紋章が光る(襲ってくると強く光る)
+function drawGrimoire(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const fl = 30 + Math.sin(t * 2.2) * 4;
+  const white = (color: string) => (p.flash ? '#ffffff' : color);
+  shadow(c, 12, 4);
+  c.save();
+  c.translate(0, -fl);
+  c.rotate(Math.sin(t * 1.3) * 0.06 + (p.lunge ?? 0) * 0.15 * p.dir);
+  // 表紙の厚みと、開いた表紙(左右の板。少し V の字)
+  poly(c, [[0, 2], [-22, -4], [-22, 0], [0, 6]], white(mix(def.dark, '#000000', 0.2)));
+  poly(c, [[0, 2], [22, -4], [22, 0], [0, 6]], white(mix(def.dark, '#000000', 0.35)));
+  poly(c, [[0, 2], [-22, -4], [-22, -22], [0, -16]], white(mix(def.dark, def.color, 0.3)));
+  poly(c, [[0, 2], [22, -4], [22, -22], [0, -16]], white(mix(def.dark, def.color, 0.2)));
+  c.fillStyle = '#d4a72c';
+  for (const [x, y] of [[-21, -5], [-21, -21], [21, -5], [21, -21]]) c.fillRect(x - 1.5, y - 1.5, 3, 3);
+  // ページの束の厚み(手前と外側の小口の、紙の縞)と背表紙の溝
+  for (const sd of [-1, 1]) {
+    poly(c, [[0, -1], [sd * 19, -6], [sd * 19, -2], [0, 3]], white(sd < 0 ? '#d8c7a6' : '#cdbb98'));
+    poly(c, [[sd * 19, -6], [sd * 19, -21], [sd * 20.5, -20], [sd * 20.5, -5]], white('#c9b793'));
+    c.strokeStyle = 'rgba(120,95,60,0.45)';
+    c.lineWidth = 0.6;
+    for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(0, i - 1); c.lineTo(sd * 19, -6 + i); c.stroke(); }
+  }
+  c.fillStyle = white(mix(def.dark, '#000000', 0.3));
+  c.fillRect(-1.2, -16, 2.4, 20);
+  // ページ(束の厚みのぶん持ち上げる)と文字の線
+  c.translate(0, -4);
+  poly(c, [[0, 0], [-19, -5], [-19, -20], [0, -15]], white('#e9dcc3'));
+  poly(c, [[0, 0], [19, -5], [19, -20], [0, -15]], white('#f3e8d2'));
+  c.strokeStyle = 'rgba(80,60,40,0.35)';
+  c.lineWidth = 0.8;
+  for (let i = 0; i < 4; i++) {
+    c.beginPath(); c.moveTo(-16, -8 - i * 3 + 0.5); c.lineTo(-3, -5 - i * 3); c.stroke();
+    c.beginPath(); c.moveTo(3, -5 - i * 3); c.lineTo(16, -8 - i * 3 + 0.5); c.stroke();
+  }
+  // めくれるページ: 右から左へ、横幅を cos で縮めて裏返す
+  const ph = (t * 2.4) % 1;
+  const w = Math.cos(ph * Math.PI) * 19;
+  const lift = Math.sin(ph * Math.PI) * 6;
+  poly(c, [[0, 0], [w, -5 - lift], [w, -20 - lift], [0, -15]], white(w > 0 ? '#fbf3e2' : '#e2d3b6'));
+  // 紋章(左のページに光る円)
+  c.save();
+  c.shadowColor = def.color;
+  c.shadowBlur = 10 + (p.aggro ? 8 : 0);
+  c.strokeStyle = def.color;
+  c.lineWidth = 1.2;
+  c.beginPath(); c.ellipse(-10, -12.5, 5, 3.5, -0.25, 0, Math.PI * 2); c.stroke();
+  poly(c, [[-10, -16], [-7.5, -11], [-12.5, -11]], def.color);
+  c.restore();
+  c.restore();
+  // 闇の粒
+  c.save();
+  const base = c.globalAlpha;
+  c.fillStyle = def.color;
+  for (let i = 0; i < 6; i++) {
+    const life = (t * 0.9 + i / 6) % 1;
+    c.globalAlpha = base * 0.6 * (1 - life);
+    c.beginPath(); c.arc(Math.sin(i * 2.3 + t) * 16, -fl - 10 - life * 22, 1.6, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  return fl + 30;
+}
+
+// 闇の水晶(front#329): 明るい色=結晶の明るい面・芯・魔法陣、暗い色=結晶の暗い面。宙に浮いて回る八面体。
+// 芯が脈打ち、かけらが回る。足元に小さな魔法陣。動かず、攻撃もしない(isPassive)
+function drawWardCrystal(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const fl = 34 + Math.sin(t * 1.8) * 3;
+  const white = (color: string) => (p.flash ? '#ffffff' : color);
+  c.save();
+  c.scale(1, 0.5);
+  c.globalAlpha *= 0.5;
+  c.strokeStyle = def.color;
+  c.lineWidth = 1.5;
+  c.beginPath(); c.arc(0, 0, 20, 0, Math.PI * 2); c.stroke();
+  c.rotate(t);
+  c.globalAlpha *= 1.2;
+  c.fillStyle = def.color;
+  for (let i = 0; i < 6; i++) { c.rotate(Math.PI / 3); c.fillRect(16, -1, 5, 2); }
+  c.restore();
+  shadow(c, 10, 4, 0.2);
+  c.save();
+  c.translate(0, -fl);
+  // 回る(4つの面を、奥から順に描く。正面を向いた面ほど明るい)
+  const spin = t * 1.5;
+  const faces = [0, 1, 2, 3].map((i) => {
+    const a = spin + (i * Math.PI) / 2;
+    return { x0: Math.cos(a) * 12, x1: Math.cos(a + Math.PI / 2) * 12, z: Math.sin(a + Math.PI / 4) };
+  });
+  for (const f of faces.slice().sort((a, b) => a.z - b.z)) {
+    if (f.z < -0.2) continue;
+    const k = 0.35 + 0.5 * Math.max(0, f.z);
+    poly(c, [[0, -24], [f.x0, 0], [f.x1, 0]], white(mix(def.dark, def.color, k)));
+    poly(c, [[0, 24], [f.x0, 0], [f.x1, 0]], white(mix(def.dark, def.color, k * 0.7)));
+  }
+  // 芯
+  const pulse = 0.5 + Math.sin(t * 4) * 0.5;
+  c.save();
+  c.shadowColor = def.color;
+  c.shadowBlur = 14 + 10 * pulse;
+  const g = c.createRadialGradient(0, 0, 0, 0, 0, 7);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.4, def.color);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(0, 0, 6 + pulse * 1.5, 0, Math.PI * 2); c.fill();
+  c.restore();
+  // 回るかけら
+  for (let i = 0; i < 3; i++) {
+    const a = t * 2 + (i * Math.PI * 2) / 3;
+    const [x, y] = [Math.cos(a) * 19, Math.sin(a) * 6];
+    poly(c, [[x, y - 4], [x + 2, y], [x, y + 4], [x - 2, y]], white(mix(def.dark, def.color, 0.7)));
+  }
+  c.restore();
+  return fl + 26;
+}
+
+// ガーゴイル(front#329): 明るい色=体、暗い色=翼・爪・角。ふだんは台座の上でうずくまる灰色の石像(化ける)。
+// 近づくと翼を広げ、目が赤く光り、少し浮いて腕を前に構える
+function drawGargoyle(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const awake = !!p.aggro;
+  const stone = p.flash ? '#ffffff' : awake ? def.color : '#8b8b93';
+  const stoneDark = p.flash ? '#ffffff' : awake ? def.dark : '#5c5c66';
+  const hover = awake ? 6 + Math.sin(t * 6) * 3 : 0;
+  shadow(c, 16, 6, 0.22);
+  if (!awake) {
+    // 台座
+    poly(c, [[-16, 0], [0, 8], [16, 0], [0, -8]], '#6b6b75');
+    poly(c, [[-16, 0], [0, 8], [0, 2], [-16, -6]], '#55555e');
+    poly(c, [[16, 0], [0, 8], [0, 2], [16, -6]], '#4a4a52');
+    poly(c, [[-16, -6], [0, 2], [16, -6], [0, -14]], '#7a7a85');
+  }
+  c.save();
+  c.translate((p.lunge ?? 0) * 6 * p.dir, (awake ? 0 : -10) - hover);
+  c.scale(1.3, 1.3);
+  // 翼
+  const flap = awake ? Math.sin(t * 12) * 0.25 : 0;
+  for (const sd of [-1, 1]) {
+    c.save();
+    c.translate(sd * 6, -26);
+    c.rotate(sd * (awake ? -0.3 + flap : 0.5));
+    const span = awake ? 36 : 18;
+    poly(c, [[0, 0], [sd * span, -14], [sd * (span - 4), -4], [sd * (span - 9), 2], [sd * (span - 15), -1], [sd * (span - 20), 6], [0, 8]], stoneDark);
+    c.strokeStyle = 'rgba(0,0,0,0.25)';
+    c.lineWidth = 1;
+    for (const k of [0.45, 0.75]) { c.beginPath(); c.moveTo(0, 2); c.lineTo(sd * span * k, -10 * k); c.stroke(); }
+    c.restore();
+  }
+  // 胴・足
+  c.fillStyle = stone;
+  c.beginPath(); c.ellipse(0, -16, 10, 12, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = stoneDark;
+  for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * 6, -4, 4, 3, 0, 0, Math.PI * 2); c.fill(); }
+  // 腕と爪。石像のときはひざの上に置き、目覚めると前へ構える
+  c.lineCap = 'round';
+  for (const sd of [-1, 1]) {
+    const [ex, ey] = awake ? [sd * 13, -22] : [sd * 10, -16];
+    const [hx, hy] = awake ? [sd * 15, -12 + Math.sin(t * 6 + sd) * 1.5] : [sd * 6, -9];
+    c.strokeStyle = stone;
+    c.lineWidth = 4.5;
+    c.beginPath(); c.moveTo(sd * 7, -24); c.lineTo(ex, ey); c.lineTo(hx, hy); c.stroke();
+    c.strokeStyle = stoneDark;
+    c.lineWidth = 1.4;
+    for (const k of [-1.5, 0, 1.5]) { c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx + sd * 1.5 + k, hy + 3.5); c.stroke(); }
+  }
+  // 頭・角・口・目
+  c.fillStyle = stone;
+  c.beginPath(); c.ellipse(0, -32, 7.5, 6.5, 0, 0, Math.PI * 2); c.fill();
+  for (const sd of [-1, 1]) poly(c, [[sd * 4, -36], [sd * 9, -46], [sd * 6, -35]], stoneDark);
+  poly(c, [[-4, -29], [4, -29], [0, -26]], stoneDark);
+  c.save();
+  if (awake) { c.shadowColor = '#ef4444'; c.shadowBlur = 8; }
+  const eye = awake ? '#ff4d4d' : '#4a4a52';
+  for (const sd of [-1, 1]) poly(c, [[sd * 1.5, -33], [sd * 5, -34.5], [sd * 4.3, -31.5]], eye);
+  c.restore();
+  if (!awake) {
+    // 石のひび
+    c.strokeStyle = 'rgba(40,40,46,0.5)';
+    c.lineWidth = 0.8;
+    c.beginPath(); c.moveTo(-3, -24); c.lineTo(1, -18); c.lineTo(-1, -12); c.stroke();
+  }
+  c.restore();
+  return (awake ? 64 : 72) + hover;
 }
 
 // ミツバチン(front#284): 体=明るい色(黄色)、しま・頭・針=暗い色。宙に浮いて、すばやく羽ばたく
