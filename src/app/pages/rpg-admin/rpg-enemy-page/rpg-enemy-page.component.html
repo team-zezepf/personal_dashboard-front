@@ -42,7 +42,8 @@
                 <span class="dot" title="保存していない変更があります">●</span>
               }
             </span>
-            <span class="sub">HP {{ row.def.hp }}・攻撃 {{ row.def.atk }}・{{ usedCount(row.def.id) ? usedCount(row.def.id) + '体 配置中' : '未配置' }}</span>
+            <!-- パレット(front#323)と同じく経験値・HP・攻撃・防御。配置中かどうか(配置中の敵は消せない)は残す(front#325) -->
+            <span class="sub">経験値 {{ row.def.exp }}・HP {{ row.def.hp }}・攻撃 {{ row.def.atk }}・防御 {{ row.def.def }}・{{ usedCount(row.def.id) ? usedCount(row.def.id) + '体 配置中' : '未配置' }}</span>
           </span>
         </button>
       }
