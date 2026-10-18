@@ -1,8 +1,9 @@
 import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, selectsPlaced, toMapInput } from './rpg-editor';
+import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, paletteGroups, selectsPlaced, toMapInput } from './rpg-editor';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
-import { PALETTE } from './rpg-editor';
+import { PALETTE, PaletteItem } from './rpg-editor';
+import { StaticType } from './rpg-data';
 
 describe('RpgMapEditor', () => {
   let editor: RpgMapEditor;
@@ -401,5 +402,26 @@ describe('RpgMapEditor', () => {
       expect(selectsPlaced({ kind: 'erase' })).toBe(false);
       expect(SELECT_ITEM.tool.kind).toBe('select');
     });
+  });
+});
+
+describe('paletteGroups(front#323)', () => {
+  const tool = (type: StaticType): PaletteItem => ({ id: type, label: type, tool: { kind: 'object', type } });
+  const items = (['tree', 'rock', 'wall', 'bars', 'pot'] as const).map(tool);
+  const obj = (type: string, x: number): RpgMapObject => ({ type, x, y: 0, torch: false });
+  const withObjects = (id: string, types: string[]) => ({ ...blankMap(id, id, 'tower', 0, 0, 10, 10), objects: types.map((t, i) => obj(t, i)) });
+
+  it('このエリアで使用中(多い順)・このダンジョンのほかのエリアで使用中(合計の多い順、このエリアの物は除く)・その他(いつもの順)に分ける', () => {
+    const area = withObjects('a', ['rock', 'wall', 'wall']);
+    const others = [withObjects('b', ['rock', 'pot']), withObjects('c', ['pot', 'bars', 'pot'])];
+    const groups = paletteGroups(items, area, others);
+    expect(groups.area.map((i) => i.id)).toEqual(['wall', 'rock']);
+    expect(groups.dungeon.map((i) => i.id)).toEqual(['pot', 'bars']);
+    expect(groups.other.map((i) => i.id)).toEqual(['tree']);
+  });
+
+  it('ほかのエリアがなければ「このダンジョンで使用中」は空、どこでも使っていなければ全部「その他」', () => {
+    expect(paletteGroups(items, withObjects('a', ['bars']), []).dungeon).toEqual([]);
+    expect(paletteGroups(items, withObjects('a', []), [withObjects('b', [])])).toEqual({ area: [], dungeon: [], other: items });
   });
 });

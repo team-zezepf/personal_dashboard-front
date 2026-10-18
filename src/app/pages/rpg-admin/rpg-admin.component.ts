@@ -37,13 +37,14 @@ import {
   SELECT_ITEM,
   Selection,
   selectsPlaced,
+  paletteGroups,
   blankMap,
   blankQuest,
   cloneMap,
   toMapInput
 } from '../../rpg/rpg-editor';
 
-// パレットの上に「このマップで使用中」を出すタブ(front#290)
+// パレットの上に「このエリアで使用中」「このダンジョンで使用中」を出すタブ(front#290 / front#323)
 const USAGE_TABS = ['ground', 'object', 'enemy'];
 
 const NO_EVENTS: RpgGameEvents = {
@@ -198,20 +199,15 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.enemies();
     return PALETTE.find((t) => t.id === this.tab())?.items ?? [];
   });
-  // このマップで使っている物を、多い順に(地面・置物・敵のタブだけ。front#290)
-  readonly usedItems = computed(() => {
+  // パレットの段(地面・置物・敵のタブだけ。front#290 / front#323): このエリアで使用中・このダンジョンで使用中(ほかのエリア)・その他。
+  // ほかのタブは「その他」の段だけ(見出しは出さない)
+  readonly paletteGroups = computed(() => {
     this.version();
     const editor = this.editor;
-    if (!editor || !USAGE_TABS.includes(this.tab())) return [];
-    return this.tabItems()
-      .map((item) => ({ item, count: editor.countOf(item.tool) }))
-      .filter((u) => u.count > 0)
-      .sort((a, b) => b.count - a.count);
-  });
-  // 「その他」の段: このマップで使っていない物を、いつもの順番で(使用中の物がなければ全部。front#295)
-  readonly otherItems = computed(() => {
-    const used = new Set(this.usedItems().map((u) => u.item));
-    return this.tabItems().filter((item) => !used.has(item));
+    const items = this.tabItems();
+    if (!editor || !USAGE_TABS.includes(this.tab())) return { area: [], dungeon: [], other: items };
+    const others = this.maps().filter((m) => m.dungeonId === editor.map.dungeonId && m.id !== editor.map.id);
+    return paletteGroups(items, editor.map, others);
   });
   readonly selectsPlaced = computed(() => selectsPlaced(this.tool().tool));
   readonly isDirty = computed(() => this.dirtyIds().size > 0 || this.dirtyDungeonIds().size > 0);
