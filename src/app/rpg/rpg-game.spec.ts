@@ -788,6 +788,18 @@ describe('RpgGame', () => {
       expect(game.player.hp).toBe(hp);
     });
 
+    it('魔法陣(範囲1)は、攻撃を始めたマスのまわり1マスにいても当たり、2マス離れれば当たらない(front#327)', () => {
+      for (const [moveTo, hits] of [[8, true], [9, false]] as const) {
+        setup(test({ attack: 'circle', range: 5, radius: 1, interval: 5 }), [2, 7], [6, 7]);
+        const hp = game.player.hp;
+        // 攻撃が始まったら、当たる前に横へ動く
+        run(2.0, () => {
+          if (game.enemies[0].act && game.player.y === 7) game.player.y = moveTo;
+        });
+        expect(game.player.hp < hp).toBe(hits);
+      }
+    });
+
     it('体当たり(距離3)は、ためてから相手の手前まで突っ込んで当たる', () => {
       setup(test({ attack: 'tackle', dash: 3, charge: 0.3 }), [2, 7], [5, 7]);
       const hp = game.player.hp;

@@ -48,10 +48,10 @@ describe('SePlayer(front#278)', () => {
     player.setSounds(new Map([['hit_flesh', '/rpg-se/slash.wav'], ['attack_fire', '/rpg-se/fire.ogg']]));
   });
 
-  it('場面は、叩いたものの素材5つ(front#282)と、敵の攻撃10種類', () => {
+  it('場面は、叩いたものの素材5つ(front#282)と、敵の攻撃11種類(魔法陣 front#327)', () => {
     expect(SE_SLOTS.map((s) => s.slot)).toEqual([
       'hit_flesh', 'hit_soft', 'hit_stone', 'hit_wood', 'hit_grass', 'attack_tackle', 'attack_claw', 'attack_bite', 'attack_jump', 'attack_fire',
-      'attack_water', 'attack_wind', 'attack_thunder', 'attack_dark', 'attack_shockwave'
+      'attack_water', 'attack_wind', 'attack_thunder', 'attack_dark', 'attack_shockwave', 'attack_circle'
     ]);
     expect(SE_SLOTS[0].label).toBe('🐾 生き物を叩く');
     expect(SE_SLOTS[9].label).toContain('炎');
