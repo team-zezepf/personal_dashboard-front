@@ -1,15 +1,16 @@
 import { RpgEnemy } from '../models/rpg.models';
 import {
-  DEFAULT_ENEMIES, ENEMIES, ENEMY_ATTACKS, ENEMY_SHAPES, SPELLS, attackReach, attackTiming, castOf, disguiseOf, drawAttackEffect, drawEnemyBody, isRooted, movesToTarget, setEnemies
+  DEFAULT_ENEMIES, ENEMIES, ENEMY_ATTACKS, ENEMY_SHAPES, SPELLS, attackReach, attackTiming, castOf, disguiseOf, drawAttackEffect, drawEnemyBody, hitMaterialOf, isPassive, isRooted, movesToTarget, setEnemies
 } from './rpg-enemy';
 
 describe('rpg-enemy', () => {
   afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
-  it('最初は21種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
+  it('最初は25種類で、前からある9種類は今と同じ体当たり(距離1・ためる時間0)', () => {
     expect(Object.keys(ENEMIES)).toEqual([
       'slime', 'blue', 'kinokon', 'spirit', 'raptor', 'golem', 'ghost', 'knight', 'darklord', 'nightbat', 'skeleton', 'maneater', 'reddragon',
-      'mimic', 'livingarmor', 'hornrabbit', 'mitsubachin', 'hikarislime', 'rat', 'jailer', 'captiveghost'
+      'mimic', 'livingarmor', 'hornrabbit', 'mitsubachin', 'hikarislime', 'rat', 'jailer', 'captiveghost',
+      'grimoire', 'shadow', 'wardcrystal', 'gargoyle'
     ]);
     expect(Object.values(ENEMIES).slice(0, 9).every((e) => e.attack === 'tackle' && e.dash === 1 && e.charge === 0)).toBe(true);
     expect(Object.values(ENEMIES).slice(9, 13).map((e) => e.shape)).toEqual(['bat', 'skeleton', 'plant', 'dragon']);
@@ -24,13 +25,13 @@ describe('rpg-enemy', () => {
         expect(drawEnemyBody(c, def, { dir: -1, time: 1.3, ...pose })).toBeGreaterThan(0);
       }
     }
-    expect(Object.values(ENEMIES).filter(isRooted).map((e) => e.id)).toEqual(['maneater']);
+    expect(Object.values(ENEMIES).filter(isRooted).map((e) => e.id)).toEqual(['maneater', 'wardcrystal']);
   });
 
   it('ミミック・リビングアーマーは宝箱・甲冑にばける形で、ばけている間もばけていない間も描ける(front#270)', () => {
     expect(ENEMY_SHAPES.slice(12, 14)).toEqual([['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー']]);
-    expect(Object.values(ENEMIES).map((e) => [e.id, disguiseOf(e)]).filter(([, d]) => d)).toEqual([['mimic', '宝箱'], ['livingarmor', '甲冑']]);
-    expect(Object.values(ENEMIES).filter(isRooted).map((e) => e.id)).toEqual(['maneater']);
+    expect(Object.values(ENEMIES).map((e) => [e.id, disguiseOf(e)]).filter(([, d]) => d)).toEqual([['mimic', '宝箱'], ['livingarmor', '甲冑'], ['gargoyle', '石像']]);
+    expect(Object.values(ENEMIES).filter(isRooted).map((e) => e.id)).toEqual(['maneater', 'wardcrystal']);
     const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
     for (const def of [ENEMIES['mimic'], ENEMIES['livingarmor']]) {
       for (const pose of [{}, { flash: true }, { aggro: true, moving: true }, { aggro: true, lunge: 0.6 }, { aggro: true, flash: true }]) {
@@ -62,7 +63,7 @@ describe('rpg-enemy', () => {
   });
 
   it('ネズミの形を選べ、どの状態・どの向きでも描ける。牢獄の敵は、ネズミ・騎士・ゴーストの形で素材を落とす(front#321)', () => {
-    expect(ENEMY_SHAPES.slice(17)).toEqual([['rat', 'ネズミ']]);
+    expect(ENEMY_SHAPES.slice(17, 18)).toEqual([['rat', 'ネズミ']]);
     expect(['rat', 'jailer', 'captiveghost'].map((id) => [ENEMIES[id].shape, ENEMIES[id].material])).toEqual([
       ['rat', 'rat_tail'], ['knight', 'rusty_key'], ['ghost', 'iron_chain']
     ]);
@@ -100,6 +101,26 @@ describe('rpg-enemy', () => {
         expect(() => drawAttackEffect(c, { attack: 'circle', k, time: 1, ex: 0, ey: 0, tx: 100, ty: 50, dir: 1, s: 1, radiusPx: 40, radius, hitK: hitAt / duration })).not.toThrow();
       }
     }
+  });
+
+  it('魔導書・影・結晶・ガーゴイルの形を選べ、どの状態・向きでも描ける。結晶は動かず攻撃せず、ガーゴイルは石像にばける(front#329)', () => {
+    expect(ENEMY_SHAPES.slice(18)).toEqual([['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル']]);
+    expect(['grimoire', 'shadow', 'wardcrystal', 'gargoyle'].map((id) => [ENEMIES[id].shape, ENEMIES[id].material])).toEqual([
+      ['grimoire', 'cursed_page'], ['shade', 'shadow_shard'], ['wardcrystal', 'dark_crystal'], ['gargoyle', 'gargoyle_wing']
+    ]);
+    expect(Object.values(ENEMIES).filter(isPassive).map((e) => e.id)).toEqual(['wardcrystal']);
+    expect(disguiseOf(ENEMIES['gargoyle'])).toBe('石像');
+    expect(['grimoire', 'shadow', 'wardcrystal', 'gargoyle'].map((id) => hitMaterialOf(ENEMIES[id]))).toEqual(['soft', 'soft', 'stone', 'stone']);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const id of ['grimoire', 'shadow', 'wardcrystal', 'gargoyle']) {
+      for (const dir of [1, -1]) {
+        for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
+          expect(drawEnemyBody(c, ENEMIES[id], { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
+        }
+      }
+    }
+    // 影の分身は、魔導士より背が低い(冠・角・杖がない)
+    expect(drawEnemyBody(c, ENEMIES['shadow'], { dir: 1, time: 0 }) / ENEMIES['shadow'].size).toBeLessThan(drawEnemyBody(c, ENEMIES['darklord'], { dir: 1, time: 0 }) / ENEMIES['darklord'].size);
   });
 
   it('APIの敵で入れ替える。知らない形・攻撃は、スライム・体当たりとして扱う', () => {

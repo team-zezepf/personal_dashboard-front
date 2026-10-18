@@ -43,7 +43,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
-import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, hitMaterialOf, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -1128,6 +1128,8 @@ export class RpgGame {
       } else if (e.act) {
         e.atkCd -= dt;
         this.updateAct(e, def, dt);
+      } else if (isPassive(def)) {
+        // 攻撃してこない形(闇の水晶 front#329)は、叩かれても浮いているだけ
       } else if (dp <= attackReach(def, ATTACK_RANGE)) {
         // 攻撃が届く距離なら止まり、攻撃の間隔ごとに攻撃する(炎・水などは離れたまま)
         e.path = [];

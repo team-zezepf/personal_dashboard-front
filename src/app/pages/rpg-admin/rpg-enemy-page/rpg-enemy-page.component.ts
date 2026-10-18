@@ -22,6 +22,7 @@ import {
   drawAttackEffect,
   drawEnemyBody,
   drawEnemyThumb,
+  isPassive,
   isRooted,
   jumpHeight,
   movesToTarget,
@@ -559,7 +560,8 @@ export class RpgEnemyPageComponent implements OnDestroy {
         this.actT = null;
         this.idle = 0;
       }
-    } else if ((this.idle += dt) > 1) {
+    } else if ((this.idle += dt) > 1 && !isPassive(def)) {
+      // 攻撃しない形(闇の水晶 front#329)は、プレビューでも攻撃しない
       this.actT = 0;
     }
     const t = this.actT ?? 0;

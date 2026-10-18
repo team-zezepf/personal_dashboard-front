@@ -509,8 +509,8 @@ describe('RpgGame', () => {
   describe('素材と鍛冶屋の合成(front#277)', () => {
     afterEach(() => setEnemies(DEFAULT_ENEMIES));
 
-    it('素材は19種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
-      expect(MATERIAL_IDS).toHaveLength(19);
+    it('素材は23種類で、最初からいる敵はみな素材を落とす。レシピの装備・素材はすべてある', () => {
+      expect(MATERIAL_IDS).toHaveLength(23);
       // ヒカリスライム(front#284)は素材の代わりに上回復薬を落とす
       expect(DEFAULT_ENEMIES.filter((e) => e.id !== 'hikarislime').every((e) => e.material && ITEMS[e.material]?.type === 'material' && (e.materialRate ?? 0) > 0)).toBe(true);
       expect(RECIPES).toHaveLength(8);
@@ -798,6 +798,15 @@ describe('RpgGame', () => {
         });
         expect(game.player.hp < hp).toBe(hits);
       }
+    });
+
+    it('闇の水晶(攻撃しない形)は、となりで叩かれても動かず、攻撃してこない(front#329)', () => {
+      setup(test({ shape: 'wardcrystal', attack: 'tackle', sight: 8, interval: 0.5, speed: 3 }), [5, 7], [6, 7]);
+      const hp = game.player.hp;
+      game.enemies[0].aggro = true;
+      run(3);
+      expect([game.enemies[0].x, game.enemies[0].y, game.enemies[0].act]).toEqual([5, 7, null]);
+      expect(game.player.hp).toBe(hp);
     });
 
     it('体当たり(距離3)は、ためてから相手の手前まで突っ込んで当たる', () => {
