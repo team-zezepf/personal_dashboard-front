@@ -64,7 +64,7 @@ export const ENEMY_LIMITS = {
   sight: [0, 8], respawn: [3, 600], dash: [1, 5], charge: [0, 2], range: [1, 5], radius: [1, 2]
 } as const;
 
-const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false };
+const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false, guard: false };
 
 // まだ「敵」タブで保存していないときの25種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
@@ -96,7 +96,7 @@ export const DEFAULT_ENEMIES: EnemyDef[] = [
   // 闇の魔導士の取り巻き(浮かぶ魔導書・影の分身・闇の水晶)と、ガーゴイル(front#329)
   { ...base, id: 'grimoire', name: '浮かぶ魔導書', shape: 'grimoire', color: '#a855f7', dark: '#2e1065', size: 1, hp: 220, atk: 70, def: 20, interval: 1.8, speed: 1.6, exp: 150, gold: 60, drop: 'hipotion', dropRate: 0.4, material: 'cursed_page', materialRate: 0.5, sight: 3.5, respawn: 10, attack: 'dark' },
   { ...base, id: 'shadow', name: '影の分身', shape: 'shade', color: '#3b3355', dark: '#05030a', size: 1.2, hp: 300, atk: 80, def: 25, interval: 2, speed: 1.4, exp: 200, gold: 80, drop: 'hipotion', dropRate: 0.4, material: 'shadow_shard', materialRate: 0.5, sight: 3, respawn: 10, attack: 'dark' },
-  { ...base, id: 'wardcrystal', name: '闇の水晶', shape: 'wardcrystal', color: '#a855f7', dark: '#1e1b4b', size: 1, hp: 400, atk: 0, def: 40, interval: 2, speed: 0.5, exp: 120, gold: 40, drop: 'hipotion', dropRate: 0.4, material: 'dark_crystal', materialRate: 0.5, sight: 0, respawn: 60 },
+  { ...base, id: 'wardcrystal', name: '闇の水晶', shape: 'wardcrystal', color: '#a855f7', dark: '#1e1b4b', size: 1, hp: 400, atk: 0, def: 40, interval: 2, speed: 0.5, exp: 120, gold: 40, drop: 'hipotion', dropRate: 0.4, material: 'dark_crystal', materialRate: 0.5, sight: 0, respawn: 60, guard: true },
   { ...base, id: 'gargoyle', name: 'ガーゴイル', shape: 'gargoyle', color: '#6b6878', dark: '#3a3846', size: 1, hp: 380, atk: 72, def: 34, interval: 1.7, speed: 1.6, exp: 230, gold: 100, drop: 'hipotion', dropRate: 0.4, material: 'gargoyle_wing', materialRate: 0.5, sight: 2, respawn: 10, attack: 'jump', dash: 2, charge: 0.4 }
 ];
 
@@ -174,6 +174,8 @@ export const hitMaterialOf = (def: Pick<EnemyDef, 'shape' | 'hitMaterial'>): Hit
 
 // 根を張っていて、その場から動かない形(front#255)。歩く速さの設定は使わない
 export const isRooted = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'plant' || def.shape === 'wardcrystal';
+/** 守る敵(front#330)が n 体生きているときの、ボスに与えるダメージの割合。1体につき1/4ずつ減る(3体で1/4、4体以上で0) */
+export const guardRateOf = (n: number) => Math.max(0, 1 - 0.25 * n);
 // 攻撃してこない形(闇の水晶 front#329)。叩かれても、その場で浮いているだけ
 export const isPassive = (def: Pick<EnemyDef, 'shape'>) => def.shape === 'wardcrystal';
 // 置物にばける形(front#270)と、ばけている間(近づかれるまで)の名前。ばけている間は歩き回らず、置物と同じ絵になる

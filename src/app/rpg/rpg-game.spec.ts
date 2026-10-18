@@ -800,6 +800,42 @@ describe('RpgGame', () => {
       }
     });
 
+    it('守る敵(guard)が生きている間、ボスへのダメージは1体につき1/4ずつ減る。全部倒すと元に戻る(front#330)', () => {
+      const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      try {
+        const boss = test({ id: 'boss', boss: true, hp: 99999, def: 0, sight: 0, interval: 99 });
+        const guard = test({ id: 'guard', shape: 'wardcrystal', guard: true, sight: 0 });
+        setEnemies([...DEFAULT_ENEMIES, boss, guard]);
+        game.loadMap(map('throne', { enemies: [{ type: 'boss', x: 6, y: 5 }, { type: 'guard', x: 1, y: 1 }, { type: 'guard', x: 10, y: 1 }, { type: 'guard', x: 1, y: 10 }] }));
+        game.player.x = 6;
+        game.player.y = 6;
+        const target = game.enemies.find((e) => e.type === 'boss')!;
+        const guards = game.enemies.filter((e) => e.type === 'guard');
+        // 倒した扱いにする(すぐには復活しない)
+        const down = (e: (typeof guards)[number]) => Object.assign(e, { alive: false, respawn: 999 });
+        const hitOnce = (): number => {
+          const before = target.hp;
+          game.player.atkCd = 0;
+          game.player.target = target;
+          game.update(0.05);
+          return before - target.hp;
+        };
+        expect(game.bossGuards()).toBe(3);
+        const with3 = hitOnce();
+        down(guards[0]);
+        down(guards[1]);
+        expect(game.bossGuards()).toBe(1);
+        const with1 = hitOnce();
+        down(guards[2]);
+        expect(game.bossGuards()).toBe(0);
+        const full = hitOnce();
+        expect(full).toBeGreaterThanOrEqual(8);
+        expect([with3, with1]).toEqual([Math.round(full * 0.25), Math.round(full * 0.75)]);
+      } finally {
+        random.mockRestore();
+      }
+    });
+
     it('闇の水晶(攻撃しない形)は、となりで叩かれても動かず、攻撃してこない(front#329)', () => {
       setup(test({ shape: 'wardcrystal', attack: 'tackle', sight: 8, interval: 0.5, speed: 3 }), [5, 7], [6, 7]);
       const hp = game.player.hp;

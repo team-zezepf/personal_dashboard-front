@@ -1,6 +1,6 @@
 import { RpgEnemy } from '../models/rpg.models';
 import {
-  DEFAULT_ENEMIES, ENEMIES, ENEMY_ATTACKS, ENEMY_SHAPES, SPELLS, attackReach, attackTiming, castOf, disguiseOf, drawAttackEffect, drawEnemyBody, hitMaterialOf, isPassive, isRooted, movesToTarget, setEnemies
+  DEFAULT_ENEMIES, ENEMIES, ENEMY_ATTACKS, ENEMY_SHAPES, SPELLS, attackReach, attackTiming, castOf, disguiseOf, drawAttackEffect, drawEnemyBody, guardRateOf, hitMaterialOf, isPassive, isRooted, movesToTarget, setEnemies
 } from './rpg-enemy';
 
 describe('rpg-enemy', () => {
@@ -121,6 +121,11 @@ describe('rpg-enemy', () => {
     }
     // 影の分身は、魔導士より背が低い(冠・角・杖がない)
     expect(drawEnemyBody(c, ENEMIES['shadow'], { dir: 1, time: 0 }) / ENEMIES['shadow'].size).toBeLessThan(drawEnemyBody(c, ENEMIES['darklord'], { dir: 1, time: 0 }) / ENEMIES['darklord'].size);
+  });
+
+  it('守る敵の数ごとの、ボスに与えるダメージの割合。最初の敵では闇の水晶だけが守る(front#330)', () => {
+    expect([0, 1, 2, 3, 4, 5].map(guardRateOf)).toEqual([1, 0.75, 0.5, 0.25, 0, 0]);
+    expect(Object.values(ENEMIES).filter((e) => e.guard).map((e) => e.id)).toEqual(['wardcrystal']);
   });
 
   it('APIの敵で入れ替える。知らない形・攻撃は、スライム・体当たりとして扱う', () => {

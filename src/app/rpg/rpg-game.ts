@@ -43,7 +43,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
-import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 
 export interface Mover {
@@ -737,6 +737,9 @@ export class RpgGame {
     let dmg = Math.max(1, Math.round(this.atk() - def.def * 0.6 + randi(-2, 2)));
     const crit = Math.random() < critRateOf(p.stats);
     if (crit) dmg = Math.round(dmg * 1.6);
+    // 守る敵(front#330)が生きている間、ボスへのダメージは1体につき1/4ずつ減る
+    const guards = def.boss ? this.bossGuards() : 0;
+    if (guards) dmg = Math.round(dmg * guardRateOf(guards));
     e.hp -= dmg;
     e.flash = 0.12;
     this.events.sound?.(`hit_${hitMaterialOf(def)}`);
@@ -744,8 +747,14 @@ export class RpgGame {
       e.aggro = true;
       e.atkCd = 0.6;
     }
-    this.floatText(e.x, e.y, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffd54a' : '#ffffff', crit ? 22 : 17);
+    if (guards) this.floatText(e.x, e.y, `🛡${dmg}`, '#9ca3af', 17);
+    else this.floatText(e.x, e.y, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffd54a' : '#ffffff', crit ? 22 : 17);
     if (e.hp <= 0) this.killEnemy(e);
+  }
+
+  /** ボスを守っている敵(front#330)の数。このエリアで生きている「ボスを守る」敵 */
+  bossGuards(): number {
+    return this.enemies.filter((e) => e.alive && ENEMIES[e.type]?.guard).length;
   }
 
   // ===== 壊れる置物(front#264) =====

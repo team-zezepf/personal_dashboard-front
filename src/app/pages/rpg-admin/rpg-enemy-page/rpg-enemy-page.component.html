@@ -240,6 +240,8 @@
         <p class="hint">0 にすると、こちらから攻撃するまで襲ってきません。</p>
         <label class="check"><input type="checkbox" [ngModel]="sel.def.boss" (ngModelChange)="setBoss($event)" /> ボス（いつも名前とHPを出す）</label>
         <label class="check"><input type="checkbox" [ngModel]="sel.def.glow ?? false" (ngModelChange)="setGlow($event)" /> 光る（体のまわりがきらきら光る）</label>
+        <!-- 守護(front#330) -->
+        <label class="check"><input type="checkbox" [ngModel]="sel.def.guard ?? false" (ngModelChange)="setGuard($event)" /> 🛡 ボスを守る（同じエリアで生きている間、1体につきボスへのダメージが1/4ずつ減る）</label>
       </div>
 
       <div class="section">

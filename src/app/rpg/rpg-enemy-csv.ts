@@ -28,6 +28,7 @@ export const ENEMY_CSV_COLUMNS: EnemyColumn[] = [
   { key: 'gold', label: 'ゴールド', kind: 'int', limit: ENEMY_LIMITS.reward },
   { key: 'hitMaterial', label: '叩いたときの音', kind: 'hit' },
   { key: 'glow', label: '光る', kind: 'bool' },
+  { key: 'guard', label: 'ボスを守る', kind: 'bool' },
   { key: 'sight', label: '襲ってくる距離（マス）', kind: 'number', limit: ENEMY_LIMITS.sight },
   { key: 'respawn', label: '復活までの秒数', kind: 'int', limit: ENEMY_LIMITS.respawn },
   { key: 'boss', label: 'ボス', kind: 'bool' },
