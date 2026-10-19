@@ -212,9 +212,14 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
       shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
       wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null,
-      contents: isBreakable(o.type) && o.contents ? { kind: o.contents.kind, id: o.contents.id, count: o.contents.count, chance: o.contents.chance ?? 1 } : null,
-      // 看板の文章(front#314)。前後の空白・空の行は API が捨てる
-      lines: o.type === 'sign' ? (o.lines ?? []) : null
+      // 看板の文章(front#314)・クリック時に表示するメッセージ(front#333)。前後の空白・空の行は API が捨てる
+      lines: o.type === 'sign' || o.showMessage ? (o.lines ?? []) : null,
+      // 置いた置物1つずつの設定(front#333)。null は種類のデフォルトのまま
+      color: o.color ?? null, dark: o.dark ?? null,
+      items: o.items ? o.items.map((r) => ({ id: r.id, count: r.count, chance: r.chance })) : null,
+      enemies: o.enemies ? o.enemies.map((r) => ({ id: r.id, chance: r.chance })) : null,
+      mimics: o.mimics ? o.mimics.map((r) => ({ id: r.id, chance: r.chance })) : null,
+      hitMaterial: o.hitMaterial ?? null, showMessage: o.showMessage ? true : null, signDir: o.type === 'sign' ? (o.signDir ?? null) : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,

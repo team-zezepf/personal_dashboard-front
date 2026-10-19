@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgAreaMove, RpgCraft, RpgDungeon, RpgMap, RpgObjectContents } from '../models/rpg.models';
+import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgMap, RpgMapObject, RpgObjectDef } from '../models/rpg.models';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
@@ -225,16 +225,129 @@ export interface StaticObj {
   // 壁の色と窓なし(front#250)
   wall?: string;
   noWindow?: boolean;
-  // 壊れる置物の中身と、ゲームの中での状態(front#264)。hits: 受けた攻撃の回数、broken: 壊れている、
-  // respawnIn: 元に戻るまでの残りの秒数(中身の敵が生きている間は null)、shake: 叩かれてゆれる量、fade: 戻るときの濃さ(0〜1)
-  contents?: RpgObjectContents;
+  // 置いた置物1つずつの設定(front#333)。なければ置物の種類のデフォルト(objectSettingsOf でまとめて読む)
+  color?: string;
+  dark?: string;
+  items?: RpgChanceItem[];
+  enemies?: RpgChanceEnemy[];
+  mimics?: RpgChanceEnemy[];
+  hitMaterial?: string;
+  showMessage?: boolean;
+  signDir?: string;
+  // 擬態している敵がこの置物のふりをしている(front#333)。置物そのものは描かず、通れる(敵が置物の絵で立つ)
+  mimicked?: boolean;
+  // 壊れる置物のゲームの中での状態(front#264)。hits: 受けた攻撃の回数、broken: 壊れている、
+  // respawnIn: 元に戻るまでの残りの秒数(出てきた敵が生きている間は null)、shake: 叩かれてゆれる量、fade: 戻るときの濃さ(0〜1)
   hits?: number;
   broken?: boolean;
   respawnIn?: number | null;
   shake?: number;
   fade?: number;
-  // 看板の文章(front#314)
+  // 看板の文章(front#314)・クリック時に表示するメッセージ(front#333)
   lines?: string[];
+}
+
+// ===== 置物の設定(front#333) =====
+
+/** 置物の種類ごとのデフォルト。「置物」タブ・ゲームが API から読んで setObjectDefs で入れる。ない種類は何も決めていない */
+export const OBJECT_DEFS: Record<string, RpgObjectDef> = {};
+
+export function setObjectDefs(list: readonly RpgObjectDef[]): void {
+  for (const key of Object.keys(OBJECT_DEFS)) delete OBJECT_DEFS[key];
+  for (const d of list) OBJECT_DEFS[d.type] = d;
+}
+
+/** デフォルトを決められる置物(家・看板は置いたあとに一つずつ決めるので除く。API の RpgObjectService.TYPES と同じ) */
+export const OBJECT_DEF_TYPES: StaticType[] = STATIC_TYPES.filter((t) => t !== 'house' && t !== 'sign');
+
+/** テーマ(草原・森・谷・塔)で色が変わる置物。色を決めていなければ、テーマの色で描く */
+export const THEMED_OBJECTS: StaticType[] = ['tree', 'rock', 'wall'];
+
+/**
+ * 色を決めていない置物の、今の明るい色・暗い色(「置物」タブ・モーダルで最初に選んでおく色)。
+ * 素材が2つある置物は、明るい色 = おもな素材(たるの木・宝箱の木・甲冑の鎧)、暗い色 = もう1つ(鉄の輪・金具・羽飾り)
+ */
+export const DEFAULT_TINTS: Partial<Record<StaticType, { m: string; d: string }>> = {
+  cliff: { m: '#a47148', d: '#7d5232' }, fern: { m: '#76a84a', d: '#5f8f3a' }, crystal: { m: '#7ef9ff', d: '#3fd3e6' },
+  pillar: { m: '#6b6785', d: '#3a3650' }, volcano: { m: '#8a5a3c', d: '#5b3a29' }, grass: { m: '#6cb84f', d: '#4f9a3c' },
+  chest: { m: '#a8682f', d: '#f2c14e' }, armor: { m: '#94a3b8', d: '#dc2626' }, barrel: { m: '#9a6230', d: '#4b5563' },
+  pot: { m: '#c8693a', d: '#8f4322' }, bones: { m: '#efeadb', d: '#7c7363' }, bookshelf: { m: '#7a4b25', d: '#5e3a1c' },
+  candle: { m: '#71717a', d: '#3f3f46' }, grave: { m: '#9ca3af', d: '#6b7280' }, bars: { m: '#6b6880', d: '#1f1d2b' },
+  shackle: { m: '#6b6880', d: '#1f1d2b' }, bucket: { m: '#966131', d: '#3f3f46' }
+};
+
+/** 置物の設定(置いた1つずつの設定と、種類のデフォルトをまとめたもの) */
+export interface ObjectSettings {
+  // 色合い。なければ今の色(テーマで変わる置物はテーマの色)
+  color: string | null;
+  dark: string | null;
+  items: RpgChanceItem[];
+  enemies: RpgChanceEnemy[];
+  mimics: RpgChanceEnemy[];
+  hitMaterial: string;
+  showMessage: boolean;
+  lines: string[];
+}
+
+type ObjectLike = Pick<RpgMapObject, 'type' | 'color' | 'dark' | 'items' | 'enemies' | 'mimics' | 'hitMaterial' | 'showMessage' | 'lines'>;
+
+/**
+ * 置物の設定。置いた置物で決めていない項目は種類のデフォルトを使う。
+ * メッセージを表示する置物は壊せず擬態もしないので、出てくるアイテム・敵・擬態はなし。出てくるアイテム・敵は壊れる置物だけ
+ */
+export function objectSettingsOf(o: ObjectLike): ObjectSettings {
+  const def = OBJECT_DEFS[o.type];
+  const showMessage = o.type !== 'sign' && !!o.showMessage;
+  const breakable = isBreakable(o.type) && !showMessage;
+  return {
+    color: o.color ?? def?.color ?? null,
+    dark: o.dark ?? def?.dark ?? null,
+    items: breakable ? (o.items ?? def?.items ?? []) : [],
+    enemies: breakable ? (o.enemies ?? def?.enemies ?? []) : [],
+    mimics: showMessage ? [] : (o.mimics ?? def?.mimics ?? []),
+    hitMaterial: o.hitMaterial ?? def?.hitMaterial ?? OBJECT_HIT_MATERIAL[o.type as StaticType] ?? 'stone',
+    showMessage,
+    lines: showMessage ? (o.lines ?? []).map((l) => l.trim()).filter((l) => l) : []
+  };
+}
+
+/** 置物の色合い(描くときに使う)。明るい色・暗い色のどちらも決めていなければ null(今の色)。片方だけなら、もう片方は今の色 */
+export function objectTintOf(o: Pick<RpgMapObject, 'type' | 'color' | 'dark'>): { m: string; d: string } | null {
+  const def = OBJECT_DEFS[o.type];
+  const m = o.color ?? def?.color ?? null;
+  const d = o.dark ?? def?.dark ?? null;
+  if (!m && !d) return null;
+  const base = DEFAULT_TINTS[o.type as StaticType];
+  return { m: m ?? base?.m ?? d!, d: d ?? base?.d ?? m! };
+}
+
+/** 攻撃で壊れる置物か。メッセージを表示する置物は壊せない(front#333) */
+export const isBreakableObj = (o: Pick<RpgMapObject, 'type' | 'showMessage'>): boolean => isBreakable(o.type) && !(o.type !== 'sign' && o.showMessage);
+
+/** 擬態している敵を1体決める(front#333)。確率の合計は1まで、外れたら '' (ただの置物) */
+export function pickMimic(list: readonly RpgChanceEnemy[], r = Math.random()): string {
+  for (const m of list) {
+    if (r < m.chance) return m.id;
+    r -= m.chance;
+  }
+  return '';
+}
+
+/** 看板の矢印の向き(front#333)と、マップの向き(x・y)。右下・左下・左上・右上 */
+export const SIGN_DIRS: [string, string, Side][] = [['se', '右下', [1, 0]], ['sw', '左下', [0, 1]], ['nw', '左上', [-1, 0]], ['ne', '右上', [0, -1]]];
+
+/**
+ * 看板が指す向きと、その先の「ほかのダンジョンへの端」(front#274 / front#333)。
+ * 向きを決めていなければ自動(いちばん近いほかのダンジョンへの端)で、帯の色を付ける。決めていれば、その向きの端(ほかのダンジョンへの端なら案内に使う)
+ */
+export function signPointing(maps: readonly RpgMap[], area: RpgMap, o: Pick<RpgMapObject, 'x' | 'y' | 'signDir'>): { side: Side | null; exit: AreaExit | null; auto: boolean } {
+  const dir = SIGN_DIRS.find(([k]) => k === o.signDir);
+  if (dir) {
+    const exit = exitOf(maps, area, dir[2]);
+    return { side: dir[2], exit: exit?.link ? exit : null, auto: false };
+  }
+  const exit = signExit(maps, area, o.x, o.y);
+  return { side: exit?.side ?? null, exit, auto: true };
 }
 
 /**
@@ -525,8 +638,11 @@ export function buildAreaMap(map: RpgMap): AreaMap {
       kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
       shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined,
       wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined,
-      contents: isBreakable(o.type) ? (o.contents ?? undefined) : undefined,
-      lines: o.type === 'sign' ? (o.lines ?? undefined) : undefined
+      lines: o.type === 'sign' || o.showMessage ? (o.lines ?? undefined) : undefined,
+      // 置いた置物1つずつの設定(front#333)
+      color: o.color ?? undefined, dark: o.dark ?? undefined,
+      items: o.items ?? undefined, enemies: o.enemies ?? undefined, mimics: o.mimics ?? undefined,
+      hitMaterial: o.hitMaterial ?? undefined, showMessage: o.showMessage ?? undefined, signDir: o.signDir ?? undefined
     }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>

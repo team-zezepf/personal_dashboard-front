@@ -123,20 +123,51 @@ export interface RpgMapObject {
   // 家の壁の色(#rrggbb)と、窓を付けない(front#250)。なければクリーム色・窓あり
   wall?: string | null;
   noWindow?: boolean | null;
-  // 壊れる置物(草むら・シダ・水晶・岩・宝箱・甲冑)の中身(front#264)。なければ中身なし
-  contents?: RpgObjectContents | null;
-  // 看板の文章(front#314 / api#146)。1行が1ページ。看板でなければ空
+  // 看板の文章(front#314 / api#146)・クリック時に表示するメッセージ(front#333)。1行が1ページ
   lines?: string[] | null;
+  // ここから置いた置物1つずつの設定(front#333 / api#157)。null・undefined なら置物の種類のデフォルト(RpgObjectDef)
+  // 色合い(明るい色・暗い色。#rrggbb)
+  color?: string | null;
+  dark?: string | null;
+  // 出てくるアイテム・出てくる敵(壊れる置物だけ)・擬態している敵。空の一覧は「なし」に上書き
+  items?: RpgChanceItem[] | null;
+  enemies?: RpgChanceEnemy[] | null;
+  mimics?: RpgChanceEnemy[] | null;
+  // 叩いたときの音の素材(flesh・soft・stone・wood・grass)
+  hitMaterial?: string | null;
+  // クリック時にメッセージ(lines)を表示する。表示する置物は壊せず、擬態もしない
+  showMessage?: boolean | null;
+  // 看板の矢印の向き(se・sw・nw・ne)。なければ自動(いちばん近いほかのダンジョンへの端)
+  signDir?: string | null;
 }
 
-// 壊れる置物の中身(front#264)。item はアイテムの ID と個数、enemy は敵の ID(個数は1)
-export interface RpgObjectContents {
-  kind: 'item' | 'enemy';
+// 置物から出てくるアイテム(front#333)。chance は 0.001〜1
+export interface RpgChanceItem {
   id: string;
   count: number;
-  // 中の敵が出る確率(front#284。0.001〜1)。なければ1(かならず出る)
-  chance?: number;
+  chance: number;
 }
+
+// 置物から出てくる敵・擬態している敵(front#333)。chance は 0.001〜1(擬態は合計で1まで)
+export interface RpgChanceEnemy {
+  id: string;
+  chance: number;
+}
+
+// 置物の種類ごとのデフォルト(front#333 / api#157)。マップ作成画面の「置物」タブで決める。色・叩いたときの音がなければ今のまま
+export interface RpgObjectDef {
+  type: string;
+  color?: string | null;
+  dark?: string | null;
+  items: RpgChanceItem[];
+  enemies: RpgChanceEnemy[];
+  mimics: RpgChanceEnemy[];
+  hitMaterial?: string | null;
+  updatedAt?: string | null;
+}
+
+// 保存する置物のデフォルト。expectedUpdatedAt は読み込んだときの更新日時(まだ保存していなければ '')
+export type RpgObjectDefInput = Omit<RpgObjectDef, 'updatedAt'> & { expectedUpdatedAt?: string | null };
 
 // quest はクエスト依頼(front#239)
 // smith: 鍛冶屋(素材で装備を合成する。front#277)

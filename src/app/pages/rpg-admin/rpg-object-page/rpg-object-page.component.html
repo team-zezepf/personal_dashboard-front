@@ -1,0 +1,71 @@
+<div class="object-page">
+  <aside class="list" aria-label="置物の一覧">
+    <div class="list-body">
+      @for (type of types; track type) {
+        <button type="button" class="obj-row" [class.active]="type === selected()" [attr.aria-pressed]="type === selected()" (click)="select(type)">
+          <canvas #thumb width="88" height="88" [attr.data-type]="type"></canvas>
+          <span class="row-text">
+            <span class="name">
+              {{ name(type) }}
+              @if (dirtyTypes().has(type)) {
+                <span class="dot" title="保存していない変更があります">●</span>
+              }
+            </span>
+            <span class="sub">{{ summary(type) }}<br />{{ usedCount(type) ? usedCount(type) + '個 配置中' : '未配置' }}</span>
+          </span>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="preview">
+      <canvas #preview aria-label="置物の見本"></canvas>
+      <label class="theme-select">
+        テーマ
+        <select aria-label="見本のテーマ" [ngModel]="previewTheme()" (ngModelChange)="previewTheme.set($event)">
+          @for (t of themes; track t.id) {
+            <option [value]="t.id">{{ t.label }}</option>
+          }
+        </select>
+      </label>
+      @if (message()) {
+        <div class="toast" role="status">{{ message() }}</div>
+      }
+    </div>
+    <div class="try">
+      <button type="button" class="btn small" (click)="tryBreak()">⚔ 壊してみる</button>
+      <button type="button" class="btn small" (click)="tryMimic()">🔄 出直してみる（擬態）</button>
+      <span class="muted">{{ results() }}</span>
+    </div>
+    <div class="used">
+      @if (usedCount(selected())) {
+        📍 マップに{{ usedCount(selected()) }}個置いてあります。<br />
+        <span class="muted">ここで決めるのはデフォルトです。置いた置物で「デフォルトのまま」にしている項目は、すべてこの設定になります（置いた置物をクリックして1つずつ変えたものは、そちらが勝ちます）。</span>
+      } @else {
+        📍 まだどのエリアにも置いていません。マップタブの「置物」パレットから置けます。
+      }
+    </div>
+  </main>
+
+  <aside class="props">
+    <div class="props-head">
+      @if (dirtyTypes().size) {
+        <span class="dirty">● 保存していない変更があります</span>
+      }
+      <button type="button" class="btn primary" [disabled]="!dirtyTypes().size || saving() || !!problem()" (click)="save()">
+        {{ saving() ? '保存中…' : '置物を保存する' }}
+      </button>
+    </div>
+    @if (problem(); as p) {
+      <p class="error" role="alert">{{ p }}</p>
+    }
+    @if (errorMessage(); as e) {
+      <p class="error" role="alert">{{ e }}</p>
+    }
+    <div class="section">
+      <h2>{{ name(selected()) }}</h2>
+      <app-rpg-object-form [type]="selected()" [draft]="selectedDraft()" (changed)="onChanged()" />
+    </div>
+  </aside>
+</div>

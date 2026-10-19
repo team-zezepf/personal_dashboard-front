@@ -11,7 +11,6 @@ import {
   TH,
   TW,
   MAX_LUCK,
-  OBJECT_HIT_MATERIAL,
   RECIPES,
   Recipe,
   STATIC_NAMES,
@@ -36,8 +35,12 @@ import {
   maxHpOf,
   neighborOf,
   nextExpOf,
-  signExit,
+  isBreakableObj,
+  objectSettingsOf,
+  objectTintOf,
+  pickMimic,
   signLinesOf,
+  signPointing,
   themeOf,
   totalStatPointsOf,
   walkSpeedOf
@@ -98,6 +101,11 @@ export interface Enemy extends Mover {
   seed: number;
   // 壊れる置物から出てきた敵(front#264)。倒しても出直さず、置物が元に戻る
   fromObject?: StaticObj;
+  // ふりをしている置物(擬態している敵。front#333)。正体を現すまで、その置物の絵で動かずにいる。
+  // 倒すと、復活の秒数のあとに擬態する敵を決め直し(外れたらただの置物に戻る)
+  disguise?: StaticObj;
+  // ただの置物に戻って、もういない(擬態している敵。front#333)
+  gone?: boolean;
 }
 
 /** フィールドに落ちたアイテム(front#276)。クリックすると、そこまで歩いて拾う。from は飛び出した位置、t は落ちてからの秒 */
@@ -263,10 +271,17 @@ export class RpgGame {
   }
 
   /** エリアが入っているダンジョン(見つからなければ、エリアの名前で最初の見た目のダンジョンとして扱う) */
-  /** 看板をクリックしたときに出す文(front#314)。看板でない・読めない看板は null */
+  /**
+   * 看板(front#314)・メッセージを表示する置物(front#333)をクリックしたときに出す文。読めなければ null。
+   * 看板の文章がなければ、指している先(決めた向き、なければいちばん近い端)のダンジョンの案内
+   */
   signLines(o: StaticObj): string[] | null {
-    if (o.type !== 'sign') return null;
-    const exit = signExit(this.maps, this.area, o.x, o.y);
+    if (o.mimicked) return null;
+    if (o.type !== 'sign') {
+      const lines = objectSettingsOf(o).lines;
+      return lines.length ? lines : null;
+    }
+    const exit = signPointing(this.maps, this.area, o).exit;
     return signLinesOf(o.lines, exit ? this.dungeonOf(exit.to) : null);
   }
 
@@ -407,6 +422,12 @@ export class RpgGame {
           wander: Math.random() * 3, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6, act: null
         };
       });
+    // 擬態している敵(front#333)。置物ごとに1回判定して、どれか1体がふりをする(外れたらただの置物)
+    for (const o of this.map.statics) {
+      const id = pickMimic(objectSettingsOf(o).mimics);
+      if (id && ENEMIES[id]) this.enemies.push(this.placeMimic(o, id));
+    }
+    this.updateDisguises();
     this.floats.length = 0;
     this.particles.length = 0;
     this.drops = [];
@@ -589,7 +610,7 @@ export class RpgGame {
     }
     // 壊れる置物(壊れていないもの)・読める看板(front#314)もクリックで狙える(front#264)。人・敵と重なれば手前のもの
     for (const o of this.map.statics) {
-      if ((!BREAK_HITS[o.type] || o.broken) && !this.signLines(o)) continue;
+      if (o.mimicked || ((!isBreakableObj(o) || o.broken) && !this.signLines(o))) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
       const ht = o.type === 'armor' ? 52 : o.type === 'sign' ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' || o.type === 'bucket' ? 28 : 24;
@@ -766,7 +787,7 @@ export class RpgGame {
     p.lunge = 1;
     o.hits = (o.hits ?? 0) + 1;
     o.shake = 1;
-    this.events.sound?.(`hit_${OBJECT_HIT_MATERIAL[o.type] ?? 'stone'}`);
+    this.events.sound?.(`hit_${objectSettingsOf(o).hitMaterial}`);
     if (o.hits >= (BREAK_HITS[o.type] ?? 1)) this.breakObject(o);
   }
 
@@ -779,30 +800,67 @@ export class RpgGame {
     this.map.solid[o.y][o.x] = false;
     p.target = null;
     const color =
+      objectTintOf(o)?.m ??
       { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff', chest: '#f2c14e', armor: '#cbd5e1', barrel: '#9a6230', pot: '#c8693a', bones: '#e9e4d4', bucket: '#966131' }[o.type as string] ??
       this.theme.rock[1];
     for (let i = 0; i < 12; i++) {
       this.particles.push({ x: o.x, y: o.y, ox: 0, oy: -8, vx: randi(-70, 70), vy: randi(-150, -50), t: 0, color: i % 3 ? color : '#ffffff' });
     }
-    const c = o.contents;
-    if (c?.kind === 'item' && ITEMS[c.id]) {
-      // 中のアイテムはフィールドに落ちる(front#276)。置物は元に戻るので、置物のマスには落とさない
-      this.dropItem(c.id, c.count, o.x, o.y, true);
-      o.respawnIn = BREAK_RESPAWN_SEC;
-    } else if (c?.kind === 'enemy' && ENEMIES[c.id] && Math.random() < (c.chance ?? 1)) {
-      // 中の敵は出る確率(front#284)で出る。出なければ中身なしと同じ
+    const settings = objectSettingsOf(o);
+    // 出てくるアイテム(front#333)は1つずつそれぞれの確率で判定し、当たったものがフィールドに落ちる(front#276)。
+    // 置物は元に戻るので、置物のマスには落とさない
+    for (const item of settings.items) {
+      if (ITEMS[item.id] && Math.random() < item.chance) this.dropItem(item.id, item.count, o.x, o.y, true);
+    }
+    // 出てくる敵(front#333)も1つずつそれぞれの確率で判定し、当たった敵が現れる(置物のマスから順に、重ならないまわりのマスへ)
+    const spawned: Enemy[] = [];
+    for (const c of settings.enemies) {
+      if (!ENEMIES[c.id] || Math.random() >= c.chance) continue;
+      const [x, y] = this.spawnSpot(o.x, o.y, spawned);
       const e: Enemy = {
-        kind: 'enemy', type: c.id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
+        kind: 'enemy', type: c.id, x, y, z: this.map.heightAt(x, y), hx: x, hy: y, hp: ENEMIES[c.id].hp, alive: true, path: [], dir: -1,
         moving: false, wander: 0, repath: 0, atkCd: 0.8, flash: 0, lunge: 0, aggro: true, respawn: 0, seed: Math.random() * 6, act: null, fromObject: o
       };
       this.enemies.push(e);
+      spawned.push(e);
       this.events.log(`${STATIC_NAMES[o.type]}の中から${ENEMIES[c.id].name}が現れた！`);
-      // 出てきた敵をそのまま狙う。倒すまで置物は戻らない
-      p.target = e;
+    }
+    if (spawned.length) {
+      // 出てきた敵をそのまま狙う。全部倒すまで置物は戻らない
+      p.target = spawned[0];
       p.repath = 0;
       o.respawnIn = null;
     } else {
       o.respawnIn = BREAK_RESPAWN_SEC;
+    }
+  }
+
+  /** 置物から出てくる敵が立つマス(front#333)。(x, y) から順に、通れてほかの出てきた敵と重ならないマス */
+  private spawnSpot(x: number, y: number, taken: readonly Enemy[]): [number, number] {
+    const spots: [number, number][] = [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+    for (const [dx, dy] of spots) {
+      const [tx, ty] = [x + dx, y + dy];
+      if ((dx || dy) && !this.map.walkable(tx, ty)) continue;
+      if (!taken.some((e) => e.x === tx && e.y === ty)) return [tx, ty];
+    }
+    return [x, y];
+  }
+
+  /** 擬態している敵(front#333)を、置物のふりをさせて置く。置物は描かず、敵が置物の絵で立つ */
+  private placeMimic(o: StaticObj, id: string, e?: Enemy): Enemy {
+    const def = ENEMIES[id];
+    o.mimicked = true;
+    const enemy: Enemy = Object.assign(e ?? ({} as Enemy), {
+      kind: 'enemy', type: id, x: o.x, y: o.y, z: this.map.heightAt(o.x, o.y), hx: o.x, hy: o.y, hp: def.hp, alive: true, path: [], dir: -1,
+      moving: false, wander: 0, repath: 0, atkCd: 0, flash: 0, lunge: 0, aggro: false, respawn: 0, seed: Math.random() * 6, act: null, disguise: o
+    } satisfies Enemy);
+    return enemy;
+  }
+
+  /** 擬態している敵が正体を現すまでは、置物のマスを通れない。倒した・正体を現したあとは通れる */
+  private updateDisguises(): void {
+    for (const e of this.enemies) {
+      if (e.disguise && !e.gone) this.map.solid[e.disguise.y][e.disguise.x] = e.alive && !e.aggro;
     }
   }
 
@@ -876,8 +934,8 @@ export class RpgGame {
     e.act = null;
     e.aggro = false;
     e.path = [];
-    // 置物から出た敵を倒したら、その置物が元に戻るまでの時間を数え始める(front#264)
-    if (e.fromObject) e.fromObject.respawnIn = BREAK_RESPAWN_SEC;
+    // 置物から出た敵を全部倒したら、その置物が元に戻るまでの時間を数え始める(front#264 / front#333)
+    if (e.fromObject && !this.enemies.some((o) => o !== e && o.alive && o.fromObject === e.fromObject)) e.fromObject.respawnIn = BREAK_RESPAWN_SEC;
     for (let i = 0; i < 12; i++) {
       this.particles.push({ x: e.x, y: e.y, ox: 0, oy: -10, vx: randi(-70, 70), vy: randi(-160, -60), t: 0, color: i % 2 ? def.color : '#ffffff' });
     }
@@ -963,7 +1021,8 @@ export class RpgGame {
     this.updatePlayer(dt);
     if (!this.transitioning && !this.locked) this.enemies.forEach((e) => this.updateEnemy(e, dt));
     // 置物から出て倒された敵は、もう出てこないので消す(front#264)
-    if (this.enemies.some((e) => !e.alive && e.fromObject)) this.enemies = this.enemies.filter((e) => e.alive || !e.fromObject);
+    if (this.enemies.some((e) => !e.alive && (e.fromObject || e.gone))) this.enemies = this.enemies.filter((e) => e.alive || !(e.fromObject || e.gone));
+    this.updateDisguises();
     this.updateBreakables(dt);
     this.updateDrops(dt);
     for (const f of this.floats) f.t += dt;
@@ -1001,10 +1060,10 @@ export class RpgGame {
         const d = cheb(p.x, p.y, t.x, t.y);
         const signLines = t.kind === 'static' ? this.signLines(t) : null;
         if (signLines && d <= 1.5 && !p.path.length) {
-          // 看板のそばまで来たら読む(front#314)
+          // 看板・メッセージを表示する置物(front#333)のそばまで来たら読む(front#314)
           this.faceTo(p, t);
           p.target = null;
-          this.events.read?.('看板', signLines);
+          this.events.read?.(t.kind === 'static' && t.type !== 'sign' ? STATIC_NAMES[t.type] : '看板', signLines);
         } else if (signLines) {
           if (!p.path.length) this.pathNear(p, t.x, t.y);
         } else if (t.kind === 'static' && d <= ATTACK_RANGE) {
@@ -1113,16 +1172,30 @@ export class RpgGame {
     e.lunge = Math.max(0, e.lunge - dt * 5);
     if (!e.alive) {
       // 置物から出た敵は出直さない(置物が元に戻る)(front#264)
-      if (e.fromObject) return;
+      if (e.fromObject || e.gone) return;
       e.respawn -= dt;
-      if (e.respawn <= 0) {
+      if (e.respawn <= 0 && e.disguise) {
+        // 擬態している敵(front#333)は、擬態する敵を決め直す。外れたら、ただの置物に戻る(そのマスに誰かいる間は待つ)
+        const o = e.disguise;
+        if (this.tileInUse(o.x, o.y)) return;
+        const id = pickMimic(objectSettingsOf(o).mimics);
+        if (id && ENEMIES[id]) {
+          this.placeMimic(o, id, e);
+        } else {
+          o.mimicked = false;
+          this.map.solid[o.y][o.x] = true;
+          e.gone = true;
+        }
+      } else if (e.respawn <= 0) {
         Object.assign(e, { alive: true, hp: def.hp, x: e.hx, y: e.hy, path: [], aggro: false, act: null });
         this.snapZ(e);
       }
       return;
     }
     const dp = cheb(p.x, p.y, e.x, e.y);
-    if (!e.aggro && def.sight && dp <= def.sight && !p.dead) {
+    // 擬態している敵(front#333)は、視界がなくても隣まで来たら正体を現す
+    const sight = e.disguise ? Math.max(1, def.sight) : def.sight;
+    if (!e.aggro && sight && dp <= sight && !p.dead) {
       e.aggro = true;
       e.atkCd = 0.8;
     }
@@ -1158,7 +1231,7 @@ export class RpgGame {
           e.repath = 0.5;
         }
       }
-    } else if (!rooted && !disguiseOf(def)) {
+    } else if (!rooted && !disguiseOf(def) && !e.disguise) {
       // 化ける敵(front#270)は、宝箱・甲冑のふりをして、近づかれるまでその場にいる
       e.wander -= dt;
       if (e.wander <= 0 && !e.path.length) {
