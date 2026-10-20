@@ -518,41 +518,27 @@ export function exitAt(maps: readonly RpgMap[], area: RpgMap, x: number, y: numb
 }
 
 /**
- * 端のつながり(front#274)で、from の端のマス(x, y)から行き先(to)へ移ったときに立つマス。
- * 行き先の、from へ戻るつながりのある端の1マス内側のうち、端のマスも通れるマスで、
- * 出てきた位置と端の上で同じ割合の位置にいちばん近いマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ。
- * 戻る端がない・通れるマスがなければ、進んできた向きの反対側の端の真ん中(front#337。edgeMiddle)
+ * 端のつながり(front#274)で、from の fromSide の端から行き先(to)へ移ったときに立つマス。
+ * 行き先の、from へ戻るつながりのある端(なければ進んできた向きの反対側の端)の、着地できるマスの真ん中(front#339。edgeMiddle)
  */
-export function linkArrival(maps: readonly RpgMap[], from: RpgMap, fromSide: Side, x: number, y: number, to: RpgMap, toMap: AreaMap): [number, number] {
-  const fallback = () => edgeMiddle(toMap, [-fromSide[0], -fromSide[1]]);
+export function linkArrival(maps: readonly RpgMap[], from: RpgMap, fromSide: Side, to: RpgMap, toMap: AreaMap): [number, number] {
   const back = SIDES.find((s) => exitOf(maps, to, s)?.to.id === from.id && exitOf(maps, to, s)?.link);
-  if (!back) return fallback();
-  const [dx, dy] = back;
-  // 端に沿った位置の割合(0〜1)
-  const ratio = fromSide[0] !== 0 ? y / Math.max(1, from.height - 1) : x / Math.max(1, from.width - 1);
-  const want = Math.round(ratio * ((dx !== 0 ? to.height : to.width) - 1));
-  const along = ([ix, iy]: [number, number]) => Math.abs((dx !== 0 ? iy : ix) - want);
-  const best = edgeLandings(toMap, back).sort((a, b) => along(a) - along(b))[0];
-  return best ?? fallback();
+  return edgeMiddle(toMap, back ?? [-fromSide[0], -fromSide[1]]);
 }
 
 /**
  * map の side の端の「着地できるマス」(front#274 / front#337)。端のマスと1マス内側がどちらも通れるところの、1マス内側のマス。
- * 端に沿った順に並べる。端が道・橋のマス(道の出口)があれば、その中だけを返す
+ * 端に沿った順に並べる
  */
 export function edgeLandings(map: AreaMap, [dx, dy]: Side): [number, number][] {
   const len = dx !== 0 ? map.h : map.w;
-  const open: [number, number][] = [];
-  const road: [number, number][] = [];
+  const list: [number, number][] = [];
   for (let i = 0; i < len; i++) {
     const edge: [number, number] = dx !== 0 ? [dx === 1 ? map.w - 1 : 0, i] : [i, dy === 1 ? map.h - 1 : 0];
     const inner: [number, number] = [edge[0] - dx, edge[1] - dy];
-    if (!map.walkable(...edge) || !map.walkable(...inner)) continue;
-    open.push(inner);
-    const g = map.ground[edge[1]][edge[0]];
-    if (g === G.PATH || g === G.BRIDGE) road.push(inner);
+    if (map.walkable(...edge) && map.walkable(...inner)) list.push(inner);
   }
-  return road.length ? road : open;
+  return list;
 }
 
 /**
@@ -614,18 +600,6 @@ export function signExit(maps: readonly RpgMap[], area: RpgMap, x: number, y: nu
   const dist = ([dx, dy]: Side) => (dx === 1 ? area.width - 1 - x : dx === -1 ? x : dy === 1 ? area.height - 1 - y : y);
   const exits = SIDES.map((s) => exitOf(maps, area, s)).filter((e): e is AreaExit => !!e?.link);
   return exits.sort((a, b) => dist(a.side) - dist(b.side))[0] ?? null;
-}
-
-/**
- * 出口(from の (x, y))から隣のエリア(to)へ移ったときに立つマス。
- * 反対側の端の同じ位置の1マス内側(広さが違えば、はみ出さないところ)
- */
-export function arrivalOf(from: Side, to: RpgMap, x: number, y: number): [number, number] {
-  const clamp = (v: number, max: number) => Math.min(max - 1, Math.max(0, v));
-  const [dx, dy] = from;
-  const ax = dx === 1 ? Math.min(1, to.width - 1) : dx === -1 ? Math.max(0, to.width - 2) : clamp(x, to.width);
-  const ay = dy === 1 ? Math.min(1, to.height - 1) : dy === -1 ? Math.max(0, to.height - 2) : clamp(y, to.height);
-  return [ax, ay];
 }
 
 /** 1エリア分の地面・地面の高さ・通れないマス・置物。マップのデータから作る */

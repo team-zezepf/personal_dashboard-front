@@ -312,7 +312,7 @@ describe('RpgGame', () => {
       for (let i = 0; i < 40; i++) game.update(0.05);
     }
 
-    it('ほかのダンジョンへつながる端で止まると、暗くなって、行き先のこちらへ戻る端(1マス内側)に移る(front#274)', () => {
+    it('ほかのダンジョンへつながる端で止まると、暗くなって、行き先のこちらへ戻る端の、着地できるマスの真ん中(1マス内側)に移る(front#274 / front#339)', () => {
       clickTile(11, 7);
       walk();
       // 暗くなっている間は、まだ移らない(すべらない)
@@ -321,7 +321,8 @@ describe('RpgGame', () => {
       vi.advanceTimersByTime(500);
 
       expect(game.area.id).toBe('forest');
-      expect([game.player.x, game.player.y]).toEqual([1, 7]);
+      // 左上の端の12マスがどれも着地できるので、真ん中の2つ(y=5・6)のうち上側。出てきた位置(y=7)には寄せない
+      expect([game.player.x, game.player.y]).toEqual([1, 5]);
       expect(ev.entered).toEqual(['forest']);
       // エリアに入ったことも知らせる(エリアごとの曲に切り替えるため。front#304)
       expect(ev.areas).toEqual(['forest/forest']);
@@ -364,20 +365,18 @@ describe('RpgGame', () => {
       expect(exitOf(MAPS, MAPS[0], [1, 0])).toMatchObject({ to: { id: 'forest' }, link: true });
     });
 
-    it('戻る端の、道の出口(端も通れるマス)のうち、出てきた位置に近いマスに着く(front#274)', () => {
+    it('戻る端の着地できるマス(端も通れるマス)の真ん中に着く(front#339)', () => {
       const plain = MAPS[0];
-      // 森の左上の端は、y=2 と y=9 だけ通れる
-      const forest = { ...MAPS[1], objects: Array.from({ length: 12 }, (_, y) => y).filter((y) => y !== 2 && y !== 9).map((y) => ({ type: 'tree', x: 0, y, torch: false })) };
-      const maps = [plain, forest];
-      expect(linkArrival(maps, plain, [1, 0], 11, 3, forest, buildAreaMap(forest))).toEqual([1, 2]);
-      expect(linkArrival(maps, plain, [1, 0], 11, 8, forest, buildAreaMap(forest))).toEqual([1, 9]);
+      // 森の左上の端は、y=2・4・9 だけ通れる
+      const forest = { ...MAPS[1], objects: Array.from({ length: 12 }, (_, y) => y).filter((y) => y !== 2 && y !== 4 && y !== 9).map((y) => ({ type: 'tree', x: 0, y, torch: false })) };
+      expect(linkArrival([plain, forest], plain, [1, 0], forest, buildAreaMap(forest))).toEqual([1, 4]);
     });
 
-    it('戻る端に道の出口(端が道のマス)があれば、離れていても道の出口に着く(front#274)', () => {
+    it('戻る端に道の出口(端が道のマス)があっても、道に寄せず、着地できるマスの真ん中に着く(front#339)', () => {
       const plain = MAPS[0];
-      // 森の左上の端はどこも通れるが、道は y=9 だけ
+      // 森の左上の端はどこも通れ、道は y=9 だけ
       const forest = { ...MAPS[1], ground: MAPS[1].ground.map((row, y) => (y === 9 ? 'pp' + row.slice(2) : row)) };
-      expect(linkArrival([plain, forest], plain, [1, 0], 11, 1, forest, buildAreaMap(forest))).toEqual([1, 9]);
+      expect(linkArrival([plain, forest], plain, [1, 0], forest, buildAreaMap(forest))).toEqual([1, 5]);
     });
 
     it('看板は、いちばん近いほかのダンジョンへの端を指す。なければ何も指さない(front#274)', () => {
@@ -399,12 +398,12 @@ describe('RpgGame', () => {
       for (let i = 0; i < 60; i++) game.update(0.05);
     }
 
-    it('隣にエリアがある側の端で止まると、画面をスライドして隣のエリアの反対側の端(1マス内側)に移る', () => {
+    it('隣にエリアがある側の端で止まると、画面をスライドして隣のエリアの反対側の端の、着地できるマスの真ん中(1マス内側)に移る(front#339)', () => {
       clickTile(11, 6);
       for (let i = 0; i < 40 && game.area.id === 'cave1'; i++) game.update(0.05);
 
       expect(game.area.id).toBe('cave2');
-      expect([game.player.x, game.player.y]).toEqual([1, 6]);
+      expect([game.player.x, game.player.y]).toEqual([1, 5]);
       expect(game.slide?.side).toEqual([1, 0]);
       expect(ev.captured).toBe(1);
 
@@ -419,19 +418,19 @@ describe('RpgGame', () => {
       expect(game.theme).toBe(THEMES['tower']);
     });
 
-    it('戻る向きにも移れ、広さの違うエリアでは同じ位置に着く', () => {
+    it('戻る向きにも移れ、広さの違うエリアでも、着く端の真ん中に着く(front#339)', () => {
       clickTile(6, 11);
       walk();
       expect(game.area.id).toBe('cave3');
-      expect([game.player.x, game.player.y]).toEqual([6, 1]);
+      expect([game.player.x, game.player.y]).toEqual([7, 1]);
 
-      // 泉(16×16)から入口(12×12)へは、はみ出さない位置に着く
+      // 泉(16×16)の右上の端の16マスの真ん中(x=7)。泉から入口(12×12)へは、入口の左下の端の12マスの真ん中(x=5)
       game.player.x = 14;
       game.player.y = 1;
       clickTile(14, 0);
       walk();
       expect(game.area.id).toBe('cave1');
-      expect([game.player.x, game.player.y]).toEqual([11, 10]);
+      expect([game.player.x, game.player.y]).toEqual([5, 10]);
     });
 
     it('隣にエリアがない側の端では移らない', () => {
@@ -441,13 +440,22 @@ describe('RpgGame', () => {
       expect([game.player.x, game.player.y]).toEqual([0, 6]);
     });
 
-    it('着くマスが通れなければ、近くの通れるマスに着く', () => {
+    it('出てきた位置に関係なく、着く端の着地できるマスの真ん中に着き、端から離れたマスには着かない(front#339)', () => {
+      // 奥の左上の端のうち y=6 は1マス内側が水なので着地できない(残り11マスの真ん中は y=5)
       game.maps = MAPS.map((m) => (m.id === 'cave2' ? { ...m, ground: m.ground.map((row, y) => (y === 6 ? 'gw' + 'g'.repeat(10) : row)) } : m));
       clickTile(11, 6);
       walk();
       expect(game.area.id).toBe('cave2');
-      expect(game.map.walkable(game.player.x, game.player.y)).toBe(true);
-      expect(Math.abs(game.player.x - 1) + Math.abs(game.player.y - 6)).toBeLessThanOrEqual(2);
+      expect([game.player.x, game.player.y]).toEqual([1, 5]);
+
+      // 入口の端のほかの位置(y=2)から出ても同じマスに着く
+      walk();
+      game.loadMap(game.maps.find((m) => m.id === 'cave1')!);
+      Object.assign(game.player, { x: 10, y: 2, path: [], target: null });
+      clickTile(11, 2);
+      walk();
+      expect(game.area.id).toBe('cave2');
+      expect([game.player.x, game.player.y]).toEqual([1, 5]);
     });
 
     it('ダンジョンが見つからないエリアは、エリアの名前で最初の見た目のダンジョンとして扱う', () => {
