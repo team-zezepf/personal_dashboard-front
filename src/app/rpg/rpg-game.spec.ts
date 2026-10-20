@@ -3,7 +3,7 @@ import {
   BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
-import { RpgGame, RpgGameEvents } from './rpg-game';
+import { PLAYER_FX_SEC, RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
@@ -228,6 +228,44 @@ describe('RpgGame', () => {
       game.useItem('potion');
       expect(game.player.hp).toBe(45);
       expect(game.player.inv['potion']).toBe(1);
+    });
+
+    it('回復薬を使うと、回復のエフェクトを出し、回復の効果音を鳴らす知らせを出す。回復量の多い上回復薬は粒を増やす(front#335)', () => {
+      game.player.hp = 10;
+      game.useItem('potion');
+      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['heal', false]]);
+      expect(ev.sounds).toEqual(['heal']);
+      // 満タンで使えなかったときは出さない
+      game.update(PLAYER_FX_SEC.heal + 0.1);
+      expect(game.playerFx).toEqual([]);
+      game.player.hp = game.maxHp();
+      game.useItem('potion');
+      expect(game.playerFx).toEqual([]);
+      expect(ev.sounds).toEqual(['heal']);
+      game.player.hp = 10;
+      game.player.inv['hipotion'] = 1;
+      game.useItem('hipotion');
+      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['heal', true]]);
+    });
+
+    it('レベルが上がると、レベルアップのエフェクトを出し、効果音を鳴らす知らせを出す。一度に2つ上がっても1回だけ(front#335)', () => {
+      game.maps = [map('plain', { enemies: [{ type: 'slime', x: 8, y: 8 }, { type: 'slime', x: 9, y: 9 }] }), ...MAPS.slice(1)];
+      game.loadSave(save({ area: 'plain', x: 6, y: 7 }));
+      const kill = (e: unknown) => (game as unknown as { killEnemy(e: unknown): void }).killEnemy(e);
+      // 経験値が足りなければ出さない
+      kill(game.enemies[0]);
+      expect(game.playerFx).toEqual([]);
+      expect(ev.sounds).not.toContain('level_up');
+      // 2つ上がる分の経験値
+      const before = game.player.level;
+      game.player.exp = game.nextExp() * 3;
+      kill(game.enemies[1]);
+      expect(game.player.level).toBeGreaterThanOrEqual(before + 2);
+      expect(game.playerFx.map((f) => f.kind)).toEqual(['level']);
+      expect(ev.sounds.filter((s) => s === 'level_up')).toEqual(['level_up']);
+      expect(game.floats.some((f) => f.text === 'LEVEL UP!')).toBe(false);
+      game.update(PLAYER_FX_SEC.level + 0.1);
+      expect(game.playerFx).toEqual([]);
     });
 
     it('ショートカットキーの道具を使う。持っていなければログで知らせ、使う道具でなければ何もしない(front#272)', () => {

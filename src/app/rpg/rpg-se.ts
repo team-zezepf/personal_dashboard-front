@@ -8,15 +8,22 @@ import { ENEMY_ATTACKS, HIT_MATERIALS } from './rpg-enemy';
 export interface SeSlotDef {
   slot: string;
   label: string;
+  // 一覧で見出しを分ける、場面のまとまり(叩いたとき・敵の攻撃・プレイヤー)
+  group: 'hit' | 'attack' | 'player';
   // 敵の攻撃の場面なら、その攻撃の種類
   attack?: string;
 }
 
-/** 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。叩いたときは叩いたものの素材ごと(front#282)、敵の攻撃は種類ごと */
+/** 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。叩いたときは叩いたものの素材ごと(front#282)、敵の攻撃は種類ごと、プレイヤーのレベルアップ・回復(front#335) */
 export const SE_SLOTS: SeSlotDef[] = [
-  ...HIT_MATERIALS.map(([id, label, icon]) => ({ slot: `hit_${id}`, label: `${icon} ${label}を叩く` })),
-  ...ENEMY_ATTACKS.map((a) => ({ slot: `attack_${a.id}`, label: `${a.icon} ${a.label}`, attack: a.id }))
+  ...HIT_MATERIALS.map(([id, label, icon]) => ({ slot: `hit_${id}`, label: `${icon} ${label}を叩く`, group: 'hit' as const })),
+  ...ENEMY_ATTACKS.map((a) => ({ slot: `attack_${a.id}`, label: `${a.icon} ${a.label}`, attack: a.id, group: 'attack' as const })),
+  { slot: 'level_up', label: '⭐ レベルアップ', group: 'player' },
+  { slot: 'heal', label: '💚 回復する', group: 'player' }
 ];
+
+/** 一覧の見出し */
+export const SE_GROUP_LABELS: Record<SeSlotDef['group'], string> = { hit: '叩いたとき', attack: '敵の攻撃（攻撃の種類ごと）', player: 'プレイヤー' };
 
 export interface SeSettings {
   // 0〜1

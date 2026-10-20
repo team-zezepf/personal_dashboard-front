@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { RpgSe } from '../../../models/rpg.models';
 import { RPG_BGM_ACCEPT, RPG_SE_MAX_BYTES, RpgService } from '../../../services/rpg.service';
-import { SE_SLOTS } from '../../../rpg/rpg-se';
+import { SE_GROUP_LABELS, SE_SLOTS } from '../../../rpg/rpg-se';
 
 /**
  * マップ作成画面の「BGM・効果音」タブの効果音(front#278)。
@@ -22,6 +22,7 @@ export class RpgSeSectionComponent implements OnInit {
 
   readonly accept = RPG_BGM_ACCEPT;
   readonly slotDefs = SE_SLOTS;
+  readonly groupLabels = SE_GROUP_LABELS;
   readonly ses = signal<RpgSe[]>([]);
   // 場面 → 選んだ効果音のID
   readonly slots = signal<Map<string, string>>(new Map());

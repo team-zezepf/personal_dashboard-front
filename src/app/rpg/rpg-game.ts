@@ -159,6 +159,21 @@ export interface FloatText {
   t: number;
 }
 
+/**
+ * プレイヤーのまわりのエフェクト(front#335)。レベルアップは金色の光の輪・柱・星、回復は緑の光の輪・「＋」の粒。
+ * 粒の位置は seed から決める(描くたびに同じ位置になる)
+ */
+export interface PlayerFx {
+  kind: 'level' | 'heal';
+  t: number;
+  seed: number;
+  // 回復量が多い(上回復薬など)ときは粒を増やす
+  big?: boolean;
+}
+
+/** エフェクトの長さ(秒) */
+export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1 };
+
 export interface Particle {
   x: number;
   y: number;
@@ -234,6 +249,7 @@ export class RpgGame {
   time = 0;
   readonly floats: FloatText[] = [];
   readonly particles: Particle[] = [];
+  readonly playerFx: PlayerFx[] = [];
   clickMarker: { x: number; y: number; t: number } | null = null;
 
   // 画面の大きさとカメラ(プレイヤーが中央に来る位置)。zoom はマップ作成画面で拡大・縮小するときだけ変える
@@ -430,6 +446,7 @@ export class RpgGame {
     this.updateDisguises();
     this.floats.length = 0;
     this.particles.length = 0;
+    this.playerFx.length = 0;
     this.drops = [];
     this.clickMarker = null;
     this.hover = null;
@@ -676,6 +693,9 @@ export class RpgGame {
     const before = p.hp;
     p.hp = Math.min(this.maxHp(), p.hp + Math.round((item.heal ?? 0) * healRateOf(p.stats)));
     this.floatText(p.x, p.y, `+${p.hp - before}`, '#4ade80', 17);
+    // 回復のエフェクト・効果音(front#335)
+    this.addPlayerFx('heal', (item.heal ?? 0) >= 100);
+    this.events.sound?.('heal');
     this.events.log(`${item.name}を使った。HPが${p.hp - before}回復した`);
     this.events.statsChanged();
     this.events.inventoryChanged();
@@ -747,6 +767,13 @@ export class RpgGame {
 
   private floatText(x: number, y: number, text: string, color: string, size = 16, oy = 0): void {
     this.floats.push({ x, y, text, color, size, oy, t: 0 });
+  }
+
+  /** プレイヤーのまわりのエフェクト(front#335)を始める。同じ種類が出ていれば、始めからやり直す */
+  private addPlayerFx(kind: PlayerFx['kind'], big = false): void {
+    const i = this.playerFx.findIndex((f) => f.kind === kind);
+    if (i >= 0) this.playerFx.splice(i, 1);
+    this.playerFx.push({ kind, t: 0, seed: Math.random() * 1000, big });
   }
 
   private playerAttack(e: Enemy): void {
@@ -956,13 +983,18 @@ export class RpgGame {
       this.dropItem(def.material, 1, Math.round(e.x), Math.round(e.y));
     }
     // レベルが上がっても能力は自動では上がらず、ステータスのポイントをもらう(front#223)
+    const levelBefore = p.level;
     while (p.exp >= this.nextExp()) {
       p.exp -= this.nextExp();
       p.level++;
       p.statPoints += STAT_POINTS_PER_LEVEL;
       p.hp = this.maxHp();
-      this.floatText(p.x, p.y, 'LEVEL UP!', '#ffd54a', 22, -24);
       this.events.log(`レベル${p.level}になった！ ステータスのポイントを${STAT_POINTS_PER_LEVEL}もらった`);
+    }
+    // レベルアップのエフェクト(「LEVEL UP!」の文字も描く)・効果音(front#335)。一度に2つ上がっても1回だけ
+    if (p.level > levelBefore) {
+      this.addPlayerFx('level');
+      this.events.sound?.('level_up');
     }
     this.events.statsChanged();
     this.events.dirty();
@@ -1034,6 +1066,8 @@ export class RpgGame {
       p.oy += p.vy * dt;
     }
     while (this.particles.length && this.particles[0].t > 0.7) this.particles.shift();
+    for (const f of this.playerFx) f.t += dt;
+    for (let i = this.playerFx.length - 1; i >= 0; i--) if (this.playerFx[i].t > PLAYER_FX_SEC[this.playerFx[i].kind]) this.playerFx.splice(i, 1);
     if (this.clickMarker && (this.clickMarker.t += dt) > 0.6) this.clickMarker = null;
 
     const [px, py] = iso(this.player.x, this.player.y);
