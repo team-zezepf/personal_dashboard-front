@@ -25,7 +25,16 @@ export interface RpgSave {
   look: RpgLook;
   // 受けた・終わったクエストの進み具合(front#239)
   quests: RpgQuestProgress[];
+  // 復活地点(front#337)。セーブポイントを調べたときに立っていたエリアとマス。まだ調べていなければ null
+  respawn?: RpgRespawn | null;
   updatedAt?: string | null;
+}
+
+// RPGの復活地点(front#337)。たおれたときに戻るエリア(RpgMap の id)とマス
+export interface RpgRespawn {
+  area: string;
+  x: number;
+  y: number;
 }
 
 // クエストの進み具合(front#239)。active(受けている) / cleared(達成して報告待ち) / completed(報告済み)
@@ -221,8 +230,6 @@ export interface RpgMap {
   npcs: RpgMapNpc[];
   enemies: RpgMapEnemy[];
   links: RpgMapLink[];
-  startX: number;
-  startY: number;
   sortOrder: number;
   updatedAt?: string | null;
   // このエリアにいる間だけ流す曲(RpgBgm の id。front#304)。なければダンジョンの曲

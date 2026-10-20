@@ -12,10 +12,18 @@ describe('RpgMapEditor', () => {
     editor = new RpgMapEditor(blankMap('area5', '海辺の洞くつ', 'sea', 0, 0, 14, 12));
   });
 
-  it('新しいエリアは一面の草で、出発地点がまんなかにある', () => {
+  it('新しいエリアは一面の草で、何も置いていない', () => {
     expect(editor.map.ground).toHaveLength(12);
     expect(editor.map.ground.every((row) => row === 'g'.repeat(14))).toBe(true);
-    expect([editor.map.startX, editor.map.startY]).toEqual([7, 6]);
+    expect(editor.map.objects).toEqual([]);
+  });
+
+  it('セーブポイントを置ける。置いたマスは通れず、出発地点の道具はない(front#337)', () => {
+    editor.apply({ kind: 'object', type: 'save_point' }, 5, 5, true);
+    expect(editor.map.objects.map((o) => o.type)).toEqual(['save_point']);
+    expect(editor.occupied(5, 5)).toBe('object');
+    expect(PALETTE.flatMap((t) => t.items).some((i) => i.id === 'start')).toBe(false);
+    expect(toMapInput(editor.map)).not.toHaveProperty('startX');
   });
 
   it('地面を塗れる。3×3 の筆はまわりも塗り、水・なしで塗ったマスの置物は消える', () => {
@@ -290,6 +298,21 @@ describe('RpgMapEditor', () => {
         '左下の端に通れるマスがなく、「始まりの草原」へ出られません',
         'まだどのエリアからも来られません（隣にエリアを作るか、ほかのダンジョンのエリアの端をこのエリアとつないでください）'
       ]);
+    });
+
+    it('始まりの草原だけ、となりに通れるマスがあるセーブポイントがなければ知らせる(front#337)', () => {
+      const noPoint = '始まりの草原に、となりに通れるマスがあるセーブポイントがありません（はじめて遊ぶ人は中央付近から始まります）';
+      const home = new RpgMapEditor(plain());
+      expect(home.checks([home.map]).filter((c) => !c.ok).map((c) => c.text)).toEqual([noPoint]);
+
+      home.apply({ kind: 'object', type: 'save_point' }, 5, 5, true);
+      expect(home.checks([home.map]).every((c) => c.ok)).toBe(true);
+      // となりがすべてふさがっていれば、ないのと同じ
+      for (const [x, y] of [[5, 6], [6, 5], [4, 5], [5, 4]]) home.apply({ kind: 'object', type: 'rock' }, x, y, true);
+      expect(home.checks([home.map]).filter((c) => !c.ok).map((c) => c.text)).toEqual([noPoint]);
+
+      // ほかのエリアでは、セーブポイントがなくても知らせない
+      expect(editor.checks([editor.map]).map((c) => c.text).some((t) => t.includes('セーブポイント'))).toBe(false);
     });
 
     it('同じダンジョンの隣のエリアから来られ、隣へつながる端に通れるマスがなければ知らせる(front#234)', () => {

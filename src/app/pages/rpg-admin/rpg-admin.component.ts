@@ -1456,13 +1456,6 @@ export class RpgAdminPageComponent implements OnDestroy {
       }
     }
 
-    // 出発地点
-    diamond(map.startX, map.startY, 0.8);
-    ctx.fillStyle = 'rgba(34,181,115,0.45)';
-    ctx.fill();
-    const [fx, fy] = top(map.startX, map.startY);
-    this.label(ctx, '🚩 出発地点', fx - TW * 0.3, fy + TH * 0.3, 'rgba(34,181,115,0.92)');
-
     // 隣のエリアへつながる端に、隣のエリアの名前(端の真ん中の外側)
     for (const { side, area: next } of this.neighbors(map)) {
       const [dx, dy] = side;

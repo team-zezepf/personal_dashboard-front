@@ -15,7 +15,7 @@ const npc = (name: string, quests: RpgQuest[], role: RpgMapNpc['role'] = 'quest'
 const area = (id: string, npcs: RpgMapNpc[]): RpgMap => ({
   id, name: id, dungeonId: id, gridX: 0, gridY: 0, width: 12, height: 12,
   ground: Array.from({ length: 12 }, () => 'g'.repeat(12)), heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
-  objects: [], npcs, enemies: [], links: [], startX: 6, startY: 6, sortOrder: 1
+  objects: [], npcs, enemies: [], links: [], sortOrder: 1
 });
 
 describe('QuestLog(クエスト。front#239)', () => {

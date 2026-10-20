@@ -1,11 +1,11 @@
-import { ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign, relTint, tintOf } from './rpg-props';
+import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawSavePoint, drawShackle, drawSign, relTint, tintOf } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -107,13 +107,13 @@ export class RpgRenderer {
     // 看板(front#274)の上に、指している先のダンジョンの名前(front#333: 向きを決めた看板は、その向きの端)
     for (const o of game.map.statics) {
       const sign = o.type === 'sign';
-      if (!sign && !o.showMessage) continue;
+      if (!sign && !o.showMessage && o.type !== SAVE_POINT) continue;
       const [sx, sy] = this.at(o.x, o.y);
       if (!this.onScreen(sx, sy, 80)) continue;
       const exit = sign ? signPointing(game.maps, game.area, o).exit : null;
       if (exit) this.label(`▶ ${game.dungeonOf(exit.to).name}`, sx, sy - 52, 'rgba(124,58,237,0.88)');
-      // 読める看板・メッセージを表示する置物(front#333)にカーソルを乗せると「看板を読む」「調べる」(front#314)
-      if (game.hover === o && game.signLines(o)) this.label(sign ? '看板を読む' : '調べる', sx, sy - (exit ? 74 : 52));
+      // 読める看板・メッセージを表示する置物(front#333)・セーブポイント(front#337)にカーソルを乗せると「看板を読む」「調べる」(front#314)
+      if (game.hover === o && game.signLines(o)) this.label(sign ? '看板を読む' : o.type === SAVE_POINT ? 'セーブポイントを調べる' : '調べる', sx, sy - (exit ? 74 : 52));
     }
     this.drawEffects();
     ctx.restore();
@@ -539,6 +539,8 @@ export class RpgRenderer {
       case 'bars': return drawBars(this.ctx, sx, sy, barsAlong(this.game.map, o), t);
       case 'shackle': return drawShackle(this.ctx, sx, sy, t);
       case 'bucket': return drawBucket(this.ctx, sx, sy, t);
+      // セーブポイント(front#337)
+      case 'save_point': return drawSavePoint(this.ctx, sx, sy, this.time, t);
       case 'sign': {
         // 看板(front#274)は、決めた向き(front#333)か、いちばん近いほかのダンジョンへの端を指す。行き先のダンジョンの色の帯は自動のときだけ
         const ptr = signPointing(this.game.maps, this.game.area, o);
