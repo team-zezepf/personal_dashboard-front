@@ -548,7 +548,7 @@
 
   @if (npcModal() && selected(); as sel) {
     @if (sel.kind === 'npc') {
-      <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+      <div class="modal" (click)="onBackdropClick($event)">
         <div class="modal-card wide" role="dialog" aria-label="NPC">
           <h2>🧑 NPC <span class="muted small">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></h2>
           <div class="npc-modal-body">
@@ -724,7 +724,7 @@
   }
 
   @if (houseModal(); as house) {
-    <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+    <div class="modal" (click)="onBackdropClick($event)">
       <div class="modal-card house-card" role="dialog" aria-label="家">
         <h2>🏠 家</h2>
         <div class="house-modal-body">
@@ -839,7 +839,7 @@
 
   @if (objectModal(); as o) {
     @if (objectDraft(); as draft) {
-      <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+      <div class="modal" (click)="onBackdropClick($event)">
         <div class="modal-card house-card" role="dialog" [attr.aria-label]="staticName(o.type)">
           <h2>{{ staticName(o.type) }} <span class="muted small">（x {{ o.x }} ・ y {{ o.y }}）</span></h2>
           @if (o.type === 'sign') {

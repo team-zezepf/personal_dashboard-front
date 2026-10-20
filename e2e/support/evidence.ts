@@ -1,5 +1,5 @@
 import { Locator, Page, test } from '@playwright/test';
-import { E2E_ACCOUNT } from './env';
+import { E2E_ACCOUNT, E2E_ADMIN_ACCOUNT } from './env';
 
 export { expect, test } from '@playwright/test';
 
@@ -83,12 +83,14 @@ export function startSteps(page: Page): Step {
   return stepRunner(page);
 }
 
-/** E2E 専用のアカウントでログインし、ダッシュボードが出るまで待つ(手順として証跡に残す) */
-export async function loginAsE2E(page: Page, step: Step): Promise<void> {
-  await step('ログイン画面で、E2E 専用のアカウントのメールアドレスとパスワードを入力してログインする', 'ダッシュボードが表示される', async () => {
+/** E2E 専用のアカウント(admin なら管理者のアカウント。front#341)でログインし、ダッシュボードが出るまで待つ(手順として証跡に残す) */
+export async function loginAsE2E(page: Page, step: Step, admin = false): Promise<void> {
+  const account = admin ? E2E_ADMIN_ACCOUNT : E2E_ACCOUNT;
+  const who = admin ? 'E2E 専用の管理者のアカウント' : 'E2E 専用のアカウント';
+  await step(`ログイン画面で、${who}のメールアドレスとパスワードを入力してログインする`, 'ダッシュボードが表示される', async () => {
     await page.goto('/login');
-    await page.getByLabel('メールアドレス').fill(E2E_ACCOUNT.email);
-    await page.getByLabel('パスワード').fill(E2E_ACCOUNT.password);
+    await page.getByLabel('メールアドレス').fill(account.email);
+    await page.getByLabel('パスワード').fill(account.password);
     await page.getByRole('button', { name: 'ログイン', exact: true }).click();
     await page.waitForURL((url) => url.pathname === '/');
     await page.getByRole('heading', { name: 'カレンダー' }).waitFor();
