@@ -73,7 +73,7 @@ export class RpgPageComponent implements OnDestroy {
   private authService = inject(AuthService);
 
   // マップ作成画面の「この場所からテストプレイ」で開いたとき(/rpg?test=<エリアのID>)。
-  // そのエリアの出発地点から始め、セーブデータは保存しない
+  // そのエリアの中央付近から始め(front#337)、セーブデータは保存しない
   readonly testArea = inject(ActivatedRoute).snapshot.queryParamMap.get('test');
   readonly recLabel = recLabel;
 
@@ -387,11 +387,7 @@ export class RpgPageComponent implements OnDestroy {
         this.resize();
         game.loadSave(save);
         const test = this.testArea ? game.mapById(this.testArea) : undefined;
-        if (test) {
-          game.loadMap(test);
-          game.player.x = test.startX;
-          game.player.y = test.startY;
-        }
+        if (test) game.startTestPlay(test);
         // テストプレイでは保存しない
         this.loaded = !this.testArea;
         this.playAreaBgm(game.area, game.dungeon);

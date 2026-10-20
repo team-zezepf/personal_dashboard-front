@@ -191,9 +191,9 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor' | 'wall'
-  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket';
+  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket' | 'save_point';
 export const STATIC_TYPES: StaticType[] = [
-  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket'
+  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket', 'save_point'
 ];
 
 // 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)、木のおけ(front#321)。ほかの置物は壊れない
@@ -205,10 +205,12 @@ export const OBJECT_HIT_MATERIAL: Partial<Record<StaticType, 'stone' | 'wood' | 
 };
 // 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
 export const BREAK_RESPAWN_SEC = 10;
+// セーブポイント(front#337)。調べると、そのとき立っていたマスが、たおれたときに戻る復活地点になる
+export const SAVE_POINT = 'save_point';
 export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
   barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板',
-  bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ'
+  bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ', save_point: 'セーブポイント'
 };
 
 export interface StaticObj {
@@ -273,7 +275,9 @@ export const DEFAULT_TINTS: Partial<Record<StaticType, { m: string; d: string }>
   chest: { m: '#a8682f', d: '#f2c14e' }, armor: { m: '#94a3b8', d: '#dc2626' }, barrel: { m: '#9a6230', d: '#4b5563' },
   pot: { m: '#c8693a', d: '#8f4322' }, bones: { m: '#efeadb', d: '#7c7363' }, bookshelf: { m: '#7a4b25', d: '#5e3a1c' },
   candle: { m: '#71717a', d: '#3f3f46' }, grave: { m: '#9ca3af', d: '#6b7280' }, bars: { m: '#6b6880', d: '#1f1d2b' },
-  shackle: { m: '#6b6880', d: '#1f1d2b' }, bucket: { m: '#966131', d: '#3f3f46' }
+  shackle: { m: '#6b6880', d: '#1f1d2b' }, bucket: { m: '#966131', d: '#3f3f46' },
+  // セーブポイント(front#337)。明るい色 = 光る石、暗い色 = 台座
+  save_point: { m: '#8b5cf6', d: '#9ca3af' }
 };
 
 /** 置物の設定(置いた1つずつの設定と、種類のデフォルトをまとめたもの) */
@@ -297,14 +301,16 @@ type ObjectLike = Pick<RpgMapObject, 'type' | 'color' | 'dark' | 'items' | 'enem
  */
 export function objectSettingsOf(o: ObjectLike): ObjectSettings {
   const def = OBJECT_DEFS[o.type];
-  const showMessage = o.type !== 'sign' && !!o.showMessage;
+  // セーブポイント(front#337)は調べると復活地点になるので、メッセージを表示せず、擬態もしない
+  const savePoint = o.type === SAVE_POINT;
+  const showMessage = o.type !== 'sign' && !savePoint && !!o.showMessage;
   const breakable = isBreakable(o.type) && !showMessage;
   return {
     color: o.color ?? def?.color ?? null,
     dark: o.dark ?? def?.dark ?? null,
     items: breakable ? (o.items ?? def?.items ?? []) : [],
     enemies: breakable ? (o.enemies ?? def?.enemies ?? []) : [],
-    mimics: showMessage ? [] : (o.mimics ?? def?.mimics ?? []),
+    mimics: showMessage || savePoint ? [] : (o.mimics ?? def?.mimics ?? []),
     hitMaterial: o.hitMaterial ?? def?.hitMaterial ?? OBJECT_HIT_MATERIAL[o.type as StaticType] ?? 'stone',
     showMessage,
     lines: showMessage ? (o.lines ?? []).map((l) => l.trim()).filter((l) => l) : []
@@ -514,30 +520,83 @@ export function exitAt(maps: readonly RpgMap[], area: RpgMap, x: number, y: numb
 /**
  * 端のつながり(front#274)で、from の端のマス(x, y)から行き先(to)へ移ったときに立つマス。
  * 行き先の、from へ戻るつながりのある端の1マス内側のうち、端のマスも通れるマスで、
- * 出てきた位置と端の上で同じ割合の位置にいちばん近いマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ。戻る端がない・通れるマスがなければ、行き先の出発地点
+ * 出てきた位置と端の上で同じ割合の位置にいちばん近いマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ。
+ * 戻る端がない・通れるマスがなければ、進んできた向きの反対側の端の真ん中(front#337。edgeMiddle)
  */
 export function linkArrival(maps: readonly RpgMap[], from: RpgMap, fromSide: Side, x: number, y: number, to: RpgMap, toMap: AreaMap): [number, number] {
+  const fallback = () => edgeMiddle(toMap, [-fromSide[0], -fromSide[1]]);
   const back = SIDES.find((s) => exitOf(maps, to, s)?.to.id === from.id && exitOf(maps, to, s)?.link);
-  if (!back) return [to.startX, to.startY];
+  if (!back) return fallback();
   const [dx, dy] = back;
   // 端に沿った位置の割合(0〜1)
   const ratio = fromSide[0] !== 0 ? y / Math.max(1, from.height - 1) : x / Math.max(1, from.width - 1);
-  const len = dx !== 0 ? to.height : to.width;
-  const want = Math.round(ratio * (len - 1));
-  // 端のマスと1マス内側がどちらも通れるマス。端が道・橋のマス(道の出口)があれば、その中から選ぶ
+  const want = Math.round(ratio * ((dx !== 0 ? to.height : to.width) - 1));
+  const along = ([ix, iy]: [number, number]) => Math.abs((dx !== 0 ? iy : ix) - want);
+  const best = edgeLandings(toMap, back).sort((a, b) => along(a) - along(b))[0];
+  return best ?? fallback();
+}
+
+/**
+ * map の side の端の「着地できるマス」(front#274 / front#337)。端のマスと1マス内側がどちらも通れるところの、1マス内側のマス。
+ * 端に沿った順に並べる。端が道・橋のマス(道の出口)があれば、その中だけを返す
+ */
+export function edgeLandings(map: AreaMap, [dx, dy]: Side): [number, number][] {
+  const len = dx !== 0 ? map.h : map.w;
   const open: [number, number][] = [];
   const road: [number, number][] = [];
   for (let i = 0; i < len; i++) {
-    const edge: [number, number] = dx !== 0 ? [dx === 1 ? to.width - 1 : 0, i] : [i, dy === 1 ? to.height - 1 : 0];
+    const edge: [number, number] = dx !== 0 ? [dx === 1 ? map.w - 1 : 0, i] : [i, dy === 1 ? map.h - 1 : 0];
     const inner: [number, number] = [edge[0] - dx, edge[1] - dy];
-    if (!toMap.walkable(...edge) || !toMap.walkable(...inner)) continue;
+    if (!map.walkable(...edge) || !map.walkable(...inner)) continue;
     open.push(inner);
-    const g = toMap.ground[edge[1]][edge[0]];
+    const g = map.ground[edge[1]][edge[0]];
     if (g === G.PATH || g === G.BRIDGE) road.push(inner);
   }
-  const along = ([ix, iy]: [number, number]) => Math.abs((dx !== 0 ? iy : ix) - want);
-  const best = (road.length ? road : open).sort((a, b) => along(a) - along(b))[0];
-  return best ?? [to.startX, to.startY];
+  return road.length ? road : open;
+}
+
+/**
+ * side の端に着くときの、着地できるマスの真ん中(front#337)。偶数個なら真ん中の2つのうち左・上側。
+ * 着地できるマスがなければ、エリアの中央にいちばん近い通れるマス
+ */
+export function edgeMiddle(map: AreaMap, side: Side): [number, number] {
+  const list = edgeLandings(map, side);
+  return list.length ? list[Math.floor((list.length - 1) / 2)] : centerSpot(map);
+}
+
+/** エリアの中央にいちばん近い通れるマス(front#337)。テストプレイの始まりや、着く場所が見つからないときに立つ。通れるマスがなければ中央 */
+export function centerSpot(map: AreaMap): [number, number] {
+  const cx = (map.w - 1) / 2;
+  const cy = (map.h - 1) / 2;
+  let best: [number, number] = [Math.floor(cx), Math.floor(cy)];
+  let bestDist = Infinity;
+  for (let y = 0; y < map.h; y++) {
+    for (let x = 0; x < map.w; x++) {
+      const d = (x - cx) ** 2 + (y - cy) ** 2;
+      if (d < bestDist && map.walkable(x, y)) {
+        bestDist = d;
+        best = [x, y];
+      }
+    }
+  }
+  return best;
+}
+
+/** セーブポイントのとなりの通れるマス(front#337)。(x, y+1)・(x+1, y)・(x-1, y)・(x, y-1) の順に探す。なければ null */
+export function besideSavePoint(map: AreaMap, o: Pick<StaticObj, 'x' | 'y'>): [number, number] | null {
+  for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) {
+    if (map.walkable(o.x + dx, o.y + dy)) return [o.x + dx, o.y + dy];
+  }
+  return null;
+}
+
+/** はじめて遊ぶときに立つマス(front#337)。セーブポイントのとなり(いくつかあれば最初のもの)、なければエリアの中央付近 */
+export function firstSpot(map: AreaMap): [number, number] {
+  for (const o of map.statics) {
+    const spot = o.type === SAVE_POINT ? besideSavePoint(map, o) : null;
+    if (spot) return spot;
+  }
+  return centerSpot(map);
 }
 
 /**

@@ -4,7 +4,7 @@ import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence
 
 // 前回の実行の続きにならないよう、セーブデータを最初の状態(始まりの草原の村・30G・回復薬×3)に戻す。
 // level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
-// 見た目も最初の見た目(ショート・シャツ)に戻し、受けたクエストもなくす(front#239)。
+// 見た目も最初の見た目(ショート・シャツ)に戻し、受けたクエストもなくす(front#239)。ふっかつ地点も村に戻す(front#337)。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
 async function resetRpg(level = 1, extraItems: { itemId: string; count: number }[] = []): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
@@ -28,6 +28,8 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }, ...extraItems],
       area: 'plain', x: 6, y: 7,
       stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3, quests: [],
+      // ふっかつ地点(front#337)も村の (6, 7) に戻す(送らないと今のまま)
+      respawn: { area: 'plain', x: 6, y: 7 },
       look: {
         hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
         mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc'
@@ -38,6 +40,23 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
     amount: 10,
     reason: 'E2E RPGのポイント交換用'
   });
+}
+
+// 今のセーブデータの復活地点(front#337)。まだ覚えていなければ null
+async function savedRespawn(): Promise<{ area: string; x: number; y: number } | null> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ACCOUNT.email, password: E2E_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgSave { respawn { area x y } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgSave: { respawn: { area: string; x: number; y: number } | null } } };
+  return body.data.rpgSave.respawn;
 }
 
 // キャンバスの中の村人をクリックする(位置は画面が開発用のビルドのときだけ出す window.rpgTest から求める)
@@ -601,6 +620,48 @@ test(
       // 木のおけの胴(足元から少し上)をクリックする
       await page.mouse.click(box.x + x, box.y + y - 10);
       await expect(log.getByText('木のおけの中からドブネズミが現れた！')).toBeVisible();
+    });
+  }
+);
+
+test(
+  'E2E-18 RPGで、セーブポイントをクリックすると、歩いて調べ、立っていたマスがふっかつ地点として保存される',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(始まりの草原の村の (6, 7))で、ふっかつ地点も村の (6, 7)',
+      'E2E 用の RPG データで、村の (9, 5) にセーブポイントを置いてある(front#337)'
+    ],
+    expected: [
+      'セーブポイント(front#337 で足した置物)をクリックすると、そばまで歩いて調べ、「ここを ふっかつ地点にした。」と出る',
+      'ログに「ふっかつ地点を はじまりの村 にした」と出る',
+      '画面を離れると保存され、セーブデータのふっかつ地点が、村のセーブポイントのとなりのマスになる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    await step('RPG(/rpg)を開き、村の (9, 5) のセーブポイントをクリックする', '歩いて調べ、「ここを ふっかつ地点にした。」と、ログに「ふっかつ地点を はじまりの村 にした」と出る', async () => {
+      await page.goto('/rpg');
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      const [x, y] = (await page.evaluate(() => (window as any).rpgTest.tilePosition(9, 5))) as [number, number];
+      const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+      // 浮かんでいる石(足元から少し上)をクリックする
+      await page.mouse.click(box.x + x, box.y + y - 20);
+      await expect(page.getByText('ここを ふっかつ地点にした。', { exact: false })).toBeVisible();
+      await expect(log.getByText('ふっかつ地点を はじまりの村 にした')).toBeVisible();
+    });
+
+    await step('ダッシュボードへ移って保存させ、セーブデータを読む', 'ふっかつ地点が、村のセーブポイント (9, 5) のとなりのマスになっている', async () => {
+      await page.goto('/');
+      await expect.poll(async () => (await savedRespawn())?.x).not.toBe(6);
+      const respawn = (await savedRespawn())!;
+      expect(respawn.area).toBe('plain');
+      expect(Math.max(Math.abs(respawn.x - 9), Math.abs(respawn.y - 5))).toBe(1);
     });
   }
 );

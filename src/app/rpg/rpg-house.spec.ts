@@ -62,7 +62,7 @@ describe('rpg-house(家の形と向き。front#236)', () => {
       id: 'a', name: 'a', dungeonId: 'a', gridX: 0, gridY: 0, width: 12, height: 12,
       ground: Array.from({ length: 12 }, () => 'g'.repeat(12)), heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
       objects: [{ type: 'house', x: 3, y: 3, roof: null, torch: false, shape: 'L', rotation: 0 }],
-      npcs: [], enemies: [], links: [], startX: 6, startY: 6, sortOrder: 1
+      npcs: [], enemies: [], links: [], sortOrder: 1
     };
     const area = buildAreaMap(map);
     expect([area.walkable(3, 3), area.walkable(4, 3), area.walkable(3, 4)]).toEqual([false, false, false]);

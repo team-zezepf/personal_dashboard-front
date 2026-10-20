@@ -43,6 +43,7 @@ const SAVE_FIELDS = `
   statPoints updatedAt
   look { ${LOOK_FIELDS} }
   quests { id state count }
+  respawn { area x y }
 `;
 
 const MAP_FIELDS = `
@@ -60,7 +61,7 @@ const MAP_FIELDS = `
   }
   enemies { type x y }
   links { dx dy to }
-  startX startY sortOrder updatedAt bgmId
+  sortOrder updatedAt bgmId
 `;
 
 const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt`;

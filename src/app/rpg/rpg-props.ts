@@ -665,3 +665,37 @@ export function drawBucket(c: CanvasRenderingContext2D, cx: number, cy: number, 
   c.lineWidth = 1.6;
   c.beginPath(); c.moveTo(cx - rt, cy - h); c.quadraticCurveTo(cx - 4, cy - h - 13, cx + rt, cy - h); c.stroke();
 }
+
+/**
+ * セーブポイント(front#337)。石の台座の上に、紫に光る石が浮かんでゆっくり上下する。
+ * 色合い: 光る石 = 明るい色、台座 = 暗い色
+ */
+export function drawSavePoint(c: CanvasRenderingContext2D, cx: number, cy: number, time: number, tint?: Tint | null): void {
+  const gem = tint?.m ?? '#8b5cf6';
+  const base = (hex: string) => (tint ? relTint(tint.d, hex, '#9ca3af') : hex);
+  shadow(c, cx, cy + 1, 15, 6, 0.22);
+  // 台座(下の段・上の段)
+  for (const [z, r, h] of [[0, 14, 5], [5, 11, 4]] as const) {
+    c.fillStyle = base('#6b7280');
+    c.beginPath();
+    c.moveTo(cx - r, cy - z - h);
+    c.lineTo(cx - r, cy - z);
+    c.ellipse(cx, cy - z, r, r * 0.42, 0, Math.PI, 0, true);
+    c.lineTo(cx + r, cy - z - h);
+    c.closePath();
+    c.fill();
+    c.fillStyle = base('#d1d5db');
+    c.beginPath(); c.ellipse(cx, cy - z - h, r, r * 0.42, 0, 0, Math.PI * 2); c.fill();
+  }
+  // 浮かぶ光る石と、まわりの光
+  const bob = Math.sin(time * 2) * 2;
+  const gy = cy - 26 + bob;
+  const glow = c.createRadialGradient(cx, gy, 1, cx, gy, 22);
+  glow.addColorStop(0, `rgba(196, 181, 253, ${0.55 + Math.sin(time * 3) * 0.15})`);
+  glow.addColorStop(1, 'rgba(196, 181, 253, 0)');
+  c.fillStyle = glow;
+  c.beginPath(); c.arc(cx, gy, 22, 0, Math.PI * 2); c.fill();
+  poly(c, [[cx, gy - 12], [cx + 7, gy], [cx, gy + 10], [cx - 7, gy]], gem);
+  poly(c, [[cx, gy - 12], [cx + 7, gy], [cx, gy + 10]], shade(gem, 0.75));
+  poly(c, [[cx, gy - 12], [cx - 3, gy - 1], [cx, gy + 5]], 'rgba(255, 255, 255, 0.55)');
+}

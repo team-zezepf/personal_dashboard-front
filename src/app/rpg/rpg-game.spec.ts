@@ -1,6 +1,7 @@
 import { RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
 import {
-  BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf,
+  BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, besideSavePoint, buildAreaMap, centerSpot, edgeMiddle,
+  exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
 import { PLAYER_FX_SEC, RpgGame, RpgGameEvents } from './rpg-game';
@@ -45,7 +46,7 @@ function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
     id, name: id, dungeonId: id, gridX: 0, gridY: 0, width: 12, height: 12,
     ground: Array.from({ length: 12 }, () => 'g'.repeat(12)),
     heights: Array.from({ length: 12 }, () => '0'.repeat(12)),
-    objects: [], npcs: [], enemies: [], links: [], startX: 6, startY: 7, sortOrder: 1,
+    objects: [], npcs: [], enemies: [], links: [], sortOrder: 1,
     ...partial
   };
 }
@@ -53,7 +54,7 @@ function map(id: string, partial: Partial<RpgMap> = {}): RpgMap {
 const MAPS: RpgMap[] = [
   // 始まりの草原の右下の端 ⇄ 精霊の森の左上の端(front#274)
   map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }] }),
-  map('forest', { startX: 2, startY: 3, sortOrder: 2, links: [{ dx: -1, dy: 0, to: 'plain' }] }),
+  map('forest', { sortOrder: 2, links: [{ dx: -1, dy: 0, to: 'plain' }] }),
   // 洞くつのダンジョン(front#234): 入口の右下に奥、左下に泉(泉は広い)
   map('cave1', { dungeonId: 'cave', name: '入口', sortOrder: 3 }),
   map('cave2', { dungeonId: 'cave', name: '奥', gridX: 1, sortOrder: 4 }),
@@ -75,6 +76,8 @@ function save(partial: Partial<RpgSave> = {}): RpgSave {
     stats: { ...ZERO_STATS }, statPoints: 6,
     look: LOOK,
     quests: [],
+    // 一度でも保存したセーブデータ(まだ保存していなければ updatedAt がない)
+    updatedAt: '2026-10-20T12:00:00',
     ...partial
   };
 }
@@ -113,15 +116,16 @@ describe('RpgGame', () => {
         area: 'forest', x: 4, y: 5,
         stats: { ...ZERO_STATS }, statPoints: 6,
         look: LOOK,
-        quests: []
+        quests: [],
+        respawn: null
       });
     });
 
-    it('知らないエリア・アイテムや通れない位置は使わず、始まりの草原の出発地点から始める', () => {
+    it('知らないエリア・アイテムは使わず、始まりの草原(セーブポイントがなければ中央付近)から始める(front#337)', () => {
       game.loadSave(save({ area: 'moon', x: 30, y: 30, items: [{ itemId: 'unknown', count: 1 }] }));
 
       expect(game.area.id).toBe('plain');
-      expect([game.player.x, game.player.y]).toEqual([6, 7]);
+      expect([game.player.x, game.player.y]).toEqual([5, 5]);
       expect(game.player.inv['unknown']).toBeUndefined();
       // 装備中のものは持ち物から消えない
       expect(game.player.inv['copper_sword']).toBe(1);
@@ -326,7 +330,7 @@ describe('RpgGame', () => {
       expect(ev.messages).toContain('精霊の森にやってきた');
     });
 
-    it('行き先にこちらへ戻るつながりがなければ、行き先の出発地点に着く', () => {
+    it('行き先にこちらへ戻るつながりがなければ、進んできた向きの反対側の端(左上の端)の真ん中に着く(front#337)', () => {
       game.dispose();
       game = new RpgGame(ev, MAPS.map((m) => (m.id === 'forest' ? { ...m, links: [] } : m)), DUNGEONS);
       game.viewW = 800;
@@ -337,7 +341,8 @@ describe('RpgGame', () => {
       vi.advanceTimersByTime(500);
 
       expect(game.area.id).toBe('forest');
-      expect([game.player.x, game.player.y]).toEqual([2, 3]);
+      // 左上の端の12マスがどれも着地できるので、真ん中の2つ(y=5・6)のうち上側
+      expect([game.player.x, game.player.y]).toEqual([1, 5]);
     });
 
     it('つながりのない端では移らない', () => {
@@ -669,6 +674,113 @@ describe('RpgGame', () => {
       game.loadMap(map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }], objects: [sign(9, 5)] }));
       const o = game.map.statics.find((s) => s.type === 'sign')!;
       expect(game.signLines(o)).toEqual(['この先 精霊の森（推奨 Lv4〜）']);
+    });
+  });
+
+  describe('立つ場所・セーブポイント(front#337)', () => {
+    const point = (x: number, y: number) => ({ type: 'save_point', x, y, roof: null, torch: false });
+    // 始まりの草原の(3, 4)と、森の(8, 8)にセーブポイントがある
+    const maps = MAPS.map((m) =>
+      m.id === 'plain' ? { ...m, objects: [point(3, 4)] } : m.id === 'forest' ? { ...m, objects: [point(8, 8)] } : m
+    );
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    beforeEach(() => {
+      game.dispose();
+      game = new RpgGame(ev, maps, DUNGEONS);
+      game.viewW = 800;
+      game.viewH = 600;
+    });
+
+    it('まだ一度も保存していなければ、始まりの草原のセーブポイントのとなり((x, y+1))から始める', () => {
+      game.loadSave(save({ area: 'plain', x: 6, y: 7, updatedAt: null }));
+      expect(game.area.id).toBe('plain');
+      expect([game.player.x, game.player.y]).toEqual([3, 5]);
+    });
+
+    it('セーブポイントのとなりがふさがっていれば、右・左・奥の順にとなりを探す', () => {
+      const area = buildAreaMap({ ...maps[0], objects: [point(3, 4), { type: 'tree', x: 3, y: 5, torch: false }] });
+      expect(besideSavePoint(area, { x: 3, y: 4 })).toEqual([4, 4]);
+      expect(firstSpot(area)).toEqual([4, 4]);
+    });
+
+    it('一度保存していれば、保存した位置から始める。通れなければ近くの通れるマス', () => {
+      game.loadSave(save({ area: 'forest', x: 4, y: 5 }));
+      expect([game.area.id, game.player.x, game.player.y]).toEqual(['forest', 4, 5]);
+      // セーブポイントのマスは通れないので、近くのマスに立つ
+      game.loadSave(save({ area: 'forest', x: 8, y: 8 }));
+      expect(game.area.id).toBe('forest');
+      expect(game.map.walkable(game.player.x, game.player.y)).toBe(true);
+      expect(Math.max(Math.abs(game.player.x - 8), Math.abs(game.player.y - 8))).toBe(1);
+    });
+
+    it('セーブポイントを調べると、立っていたマスを復活地点として覚え、保存用の形にも入る。同じセーブポイントを調べ直しても覚え直さない', () => {
+      game.loadSave(save({ area: 'forest', x: 4, y: 5 }));
+      clickTile(8, 8);
+      run(4);
+      expect(ev.reads).toEqual([['セーブポイント', ['ここを ふっかつ地点にした。たおれたら、ここに戻ってくる。']]]);
+      const respawn = game.respawn!;
+      expect(respawn).toEqual({ area: 'forest', x: Math.round(game.player.x), y: Math.round(game.player.y) });
+      expect(Math.max(Math.abs(respawn.x - 8), Math.abs(respawn.y - 8))).toBe(1);
+      expect(ev.messages).toContain('ふっかつ地点を forest にした');
+      expect(game.toSaveInput().respawn).toEqual(respawn);
+      // セーブポイントは叩いても壊れない
+      expect(game.map.statics.find((o) => o.type === 'save_point')?.hits ?? 0).toBe(0);
+
+      const logs = ev.messages.length;
+      clickTile(8, 8);
+      run(2);
+      expect(ev.reads[1]).toEqual(['セーブポイント', ['ここが ふっかつ地点だ。']]);
+      expect(game.respawn).toEqual(respawn);
+      expect(ev.messages.length).toBe(logs);
+    });
+
+    it('たおれると、覚えた復活地点に戻る。まだ覚えていなければ始まりの草原のセーブポイントのとなり', () => {
+      vi.useFakeTimers();
+      const knockOut = () => {
+        game.player.hp = 1;
+        (game as unknown as { knockOut(): void }).knockOut();
+        vi.advanceTimersByTime(3000);
+      };
+      game.loadSave(save({ area: 'cave1', x: 4, y: 5 }));
+      knockOut();
+      expect([game.area.id, game.player.x, game.player.y]).toEqual(['plain', 3, 5]);
+      expect(ev.messages).toContain('村にもどってきた。HPが全回復した');
+
+      game.loadSave(save({ area: 'cave1', x: 4, y: 5, respawn: { area: 'forest', x: 8, y: 9 } }));
+      knockOut();
+      expect([game.area.id, game.player.x, game.player.y]).toEqual(['forest', 8, 9]);
+      expect(game.player.hp).toBe(game.maxHp());
+      expect(ev.messages).toContain('ふっかつ地点にもどってきた。HPが全回復した');
+    });
+
+    it('覚えた復活地点が通れなくなっていたら(エリアを作り直したときなど)、始まりの草原のセーブポイントのとなりに戻る', () => {
+      game.loadSave(save({ area: 'cave1', x: 4, y: 5, respawn: { area: 'forest', x: 8, y: 8 } }));
+      expect(game.respawnSpot()).toMatchObject({ area: { id: 'plain' }, x: 3, y: 5 });
+      game.loadSave(save({ respawn: { area: 'moon', x: 1, y: 1 } }));
+      expect(game.respawnSpot()).toMatchObject({ area: { id: 'plain' }, x: 3, y: 5 });
+    });
+
+    it('テストプレイでは、そのエリアの中央付近から始める', () => {
+      const lake = map('lake', { ground: Array.from({ length: 12 }, (_, y) => (y >= 4 && y <= 7 ? 'gggwwwwwwggg' : 'g'.repeat(12))) });
+      game.startTestPlay(lake);
+      expect(game.area.id).toBe('lake');
+      // 中央(5.5, 5.5)のまわりは水なので、いちばん近い通れるマス
+      expect([game.player.x, game.player.y]).toEqual([5, 3]);
+    });
+
+    it('着く端の着地できるマスの真ん中。偶数個なら左・上側、なければエリアの中央付近', () => {
+      // 左上の端(x=0)は、y=2・3・4・9 だけ着地できる
+      const blocked = map('edge', { objects: [0, 1, 5, 6, 7, 8, 10, 11].map((y) => ({ type: 'tree', x: 0, y, torch: false })) });
+      expect(edgeMiddle(buildAreaMap(blocked), [-1, 0])).toEqual([1, 3]);
+      // 右上の端(y=0)は、x=4〜6 の3つ
+      const top = map('top', { ground: Array.from({ length: 12 }, (_, y) => (y === 0 ? 'wwwwgggwwwww' : 'g'.repeat(12))) });
+      expect(edgeMiddle(buildAreaMap(top), [0, -1])).toEqual([5, 1]);
+      // 端がすべて水なら中央付近
+      const sea = map('sea', { ground: Array.from({ length: 12 }, (_, y) => (y === 11 ? 'w'.repeat(12) : 'g'.repeat(12))) });
+      expect(edgeMiddle(buildAreaMap(sea), [0, 1])).toEqual(centerSpot(buildAreaMap(sea)));
     });
   });
 

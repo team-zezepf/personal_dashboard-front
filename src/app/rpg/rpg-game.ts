@@ -1,4 +1,4 @@
-import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgRespawn, RpgSave, RpgSaveInput } from '../models/rpg.models';
 import { QuestEntry, QuestLog, QuestMark, allQuests } from './rpg-quest';
 import {
   AreaExit,
@@ -13,6 +13,7 @@ import {
   MAX_LUCK,
   RECIPES,
   Recipe,
+  SAVE_POINT,
   STATIC_NAMES,
   STAT_POINTS_PER_LEVEL,
   Side,
@@ -26,10 +27,13 @@ import {
   baseAtkOf,
   baseDefOf,
   buildAreaMap,
+  centerSpot,
   critRateOf,
   dropRateOf,
+  edgeMiddle,
   evadeRateOf,
   exitAt,
+  firstSpot,
   healRateOf,
   linkArrival,
   maxHpOf,
@@ -221,6 +225,13 @@ const HOME_AREA = 'plain';
 const randi = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) / 2, ((x + y) * TH) / 2];
 
+/** 立つ場所(エリアとマス) */
+export interface Spot {
+  area: RpgMap;
+  x: number;
+  y: number;
+}
+
 /** 隣のエリアへのスライド(front#234)。t は 0→1 で進み、image は前のエリアの画面 */
 export interface AreaSlide {
   side: Side;
@@ -271,15 +282,15 @@ export class RpgGame {
   slide: AreaSlide | null = null;
   // 受けた・終わったクエストの進み具合(front#239)
   readonly questLog = new QuestLog();
+  // 復活地点(front#337)。セーブポイントを調べたときに立っていたエリアとマス。まだ調べていなければ null
+  respawn: RpgRespawn | null = null;
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   /** maps は全エリアのマップのデータ(並び順)。1つ以上あること。dungeons は全ダンジョン */
   constructor(private events: RpgGameEvents, public maps: RpgMap[], public dungeons: RpgDungeon[] = []) {
-    const home = this.homeArea();
-    this.loadMap(home);
-    this.player.x = home.startX;
-    this.player.y = home.startY;
-    this.snapZ(this.player);
+    const spot = this.firstSpot();
+    this.loadMap(spot.area);
+    this.placePlayer(spot.x, spot.y);
   }
 
   mapById(id: string | null): RpgMap | undefined {
@@ -293,6 +304,8 @@ export class RpgGame {
    */
   signLines(o: StaticObj): string[] | null {
     if (o.mimicked) return null;
+    // セーブポイント(front#337)はいつも調べられる。出す文は調べたときに決める(touchSavePoint)
+    if (o.type === SAVE_POINT) return ['ふっかつ地点にする'];
     if (o.type !== 'sign') {
       const lines = objectSettingsOf(o).lines;
       return lines.length ? lines : null;
@@ -307,6 +320,53 @@ export class RpgGame {
 
   private homeArea(): RpgMap {
     return this.mapById(HOME_AREA) ?? this.maps[0];
+  }
+
+  // ===== 立つ場所(front#337) =====
+
+  /** はじめて遊ぶときに立つ場所。始まりの草原のセーブポイントのとなり、なければ草原の中央付近 */
+  private firstSpot(): Spot {
+    const area = this.homeArea();
+    const [x, y] = firstSpot(buildAreaMap(area));
+    return { area, x, y };
+  }
+
+  /** たおれたときに戻る場所。最後に覚えた復活地点。まだ覚えていない・そのマスが通れなくなっていたら、はじめて遊ぶときと同じ場所 */
+  respawnSpot(): Spot {
+    const r = this.respawn;
+    const area = r ? this.mapById(r.area) : undefined;
+    if (r && area && buildAreaMap(area).walkable(r.x, r.y)) return { area, x: r.x, y: r.y };
+    return this.firstSpot();
+  }
+
+  /** プレイヤーを今のエリアのマス(x, y)に立たせる */
+  private placePlayer(x: number, y: number): void {
+    const p = this.player;
+    p.x = x;
+    p.y = y;
+    this.snapZ(p);
+    p.path = [];
+    p.target = null;
+  }
+
+  /** テストプレイ(マップ作成画面から開く)で、そのエリアの中央付近から始める */
+  startTestPlay(area: RpgMap): void {
+    this.loadMap(area);
+    const [x, y] = centerSpot(this.map);
+    this.placePlayer(x, y);
+  }
+
+  /**
+   * セーブポイントを調べる(front#337)。立っているマスを復活地点として覚える。
+   * 戻り値は出す文。すでにこのセーブポイントのとなりを覚えていれば、覚え直さない
+   */
+  private touchSavePoint(o: StaticObj): string[] {
+    const r = this.respawn;
+    if (r && r.area === this.area.id && cheb(r.x, r.y, o.x, o.y) <= 1.5) return ['ここが ふっかつ地点だ。'];
+    this.respawn = { area: this.area.id, x: Math.round(this.player.x), y: Math.round(this.player.y) };
+    this.events.log(`ふっかつ地点を ${this.area.name} にした`);
+    this.events.dirty();
+    return ['ここを ふっかつ地点にした。たおれたら、ここに戻ってくる。'];
   }
 
   dispose(): void {
@@ -347,15 +407,27 @@ export class RpgGame {
     this.questLog.load(save.quests);
     // たおれたまま保存されていたら、村で全回復した状態から始める
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
-    this.loadMap(this.mapById(save.area) ?? this.homeArea());
-    const [x, y] = this.map.walkable(save.x, save.y) ? [save.x, save.y] : [this.area.startX, this.area.startY];
-    p.x = x;
-    p.y = y;
-    this.snapZ(p);
-    p.path = [];
-    p.target = null;
+    this.respawn = save.respawn ? { area: save.respawn.area, x: save.respawn.x, y: save.respawn.y } : null;
+    this.placeFromSave(save);
     this.events.statsChanged();
     this.events.inventoryChanged();
+  }
+
+  /**
+   * セーブデータの位置に立たせる(front#337)。まだ一度も保存していなければ、はじめて遊ぶときの場所。
+   * 保存した位置が通れなければ近くの通れるマス、それもなければ(エリアがなくなったときも)たおれたときに戻る場所
+   */
+  private placeFromSave(save: RpgSave): void {
+    const area = this.mapById(save.area);
+    let spot: Spot | null = save.updatedAt ? null : this.firstSpot();
+    if (!spot && area) {
+      this.loadMap(area);
+      const [x, y] = this.map.nearestWalkable(save.x, save.y);
+      if (this.map.walkable(x, y)) spot = { area, x, y };
+    }
+    spot ??= this.respawnSpot();
+    if (this.area !== spot.area) this.loadMap(spot.area);
+    this.placePlayer(spot.x, spot.y);
   }
 
   toSaveInput(): RpgSaveInput {
@@ -376,7 +448,8 @@ export class RpgGame {
       stats: { ...p.stats },
       statPoints: p.statPoints,
       look: { ...p.look },
-      quests: this.questLog.toList()
+      quests: this.questLog.toList(),
+      respawn: this.respawn ? { ...this.respawn } : null
     };
   }
 
@@ -462,11 +535,9 @@ export class RpgGame {
     const before = this.dungeon.id;
     this.later(FADE_MS, () => {
       this.loadMap(dest);
-      // 着く位置が通れなければ(マップを作り直したときなど)、出発地点に立つ
-      const [tx, ty] = this.map.walkable(x, y) ? [x, y] : [dest.startX, dest.startY];
-      this.player.x = tx;
-      this.player.y = ty;
-      this.snapZ(this.player);
+      // 着く位置が通れなければ(マップを作り直したときなど)、エリアの中央付近に立つ(front#337)
+      const [tx, ty] = this.map.walkable(x, y) ? [x, y] : centerSpot(this.map);
+      this.placePlayer(tx, ty);
       after?.();
       this.transitioning = false;
       this.events.fade(false);
@@ -501,12 +572,10 @@ export class RpgGame {
     this.player.target = null;
     this.loadMap(dest);
     const [ax, ay] = arrivalOf(side, dest, x, y);
-    // 着くマスが通れなければ近くの通れるマス、それもなければ出発地点に立つ
+    // 着くマスが通れなければ近くの通れるマス、それもなければ着く端の着地できるマスの真ん中に立つ(front#337)
     const [nx, ny] = this.map.nearestWalkable(ax, ay);
-    const [tx, ty] = this.map.walkable(nx, ny) ? [nx, ny] : [dest.startX, dest.startY];
-    this.player.x = tx;
-    this.player.y = ty;
-    this.snapZ(this.player);
+    const [tx, ty] = this.map.walkable(nx, ny) ? [nx, ny] : edgeMiddle(this.map, [-side[0], -side[1]]);
+    this.placePlayer(tx, ty);
     this.slide = { side, t: 0, image };
     this.transitioning = true;
     this.events.areaEntered?.(dest, this.dungeon);
@@ -630,7 +699,7 @@ export class RpgGame {
       if (o.mimicked || ((!isBreakableObj(o) || o.broken) && !this.signLines(o))) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
-      const ht = o.type === 'armor' ? 52 : o.type === 'sign' ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' || o.type === 'bucket' ? 28 : 24;
+      const ht = o.type === 'armor' ? 52 : o.type === 'sign' || o.type === SAVE_POINT ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' || o.type === 'bucket' ? 28 : 24;
       if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
         bestDepth = o.x + o.y;
         best = o;
@@ -1019,7 +1088,7 @@ export class RpgGame {
     this.events.statsChanged();
   }
 
-  // たおれたら、ゴールドを1割落として始まりの草原の村に戻り、HPが全回復する
+  // たおれたら、ゴールドを1割落として復活地点(front#337。まだなければ始まりの草原の村)に戻り、HPが全回復する
   private knockOut(): void {
     const p = this.player;
     p.hp = 0;
@@ -1032,11 +1101,12 @@ export class RpgGame {
     this.events.knockedOut(true);
     this.later(KNOCKOUT_MS, () => {
       this.events.knockedOut(false);
-      const home = this.homeArea();
-      this.goArea(home.id, home.startX, home.startY, () => {
+      const spot = this.respawnSpot();
+      const back = this.respawn && spot.area.id === this.respawn.area ? 'ふっかつ地点' : '村';
+      this.goArea(spot.area.id, spot.x, spot.y, () => {
         p.hp = this.maxHp();
         p.dead = false;
-        this.events.log('村にもどってきた。HPが全回復した');
+        this.events.log(`${back}にもどってきた。HPが全回復した`);
         this.events.statsChanged();
       });
     });
@@ -1094,10 +1164,11 @@ export class RpgGame {
         const d = cheb(p.x, p.y, t.x, t.y);
         const signLines = t.kind === 'static' ? this.signLines(t) : null;
         if (signLines && d <= 1.5 && !p.path.length) {
-          // 看板・メッセージを表示する置物(front#333)のそばまで来たら読む(front#314)
+          // 看板・メッセージを表示する置物(front#333)のそばまで来たら読む(front#314)。セーブポイントは調べる(front#337)
           this.faceTo(p, t);
           p.target = null;
-          this.events.read?.(t.kind === 'static' && t.type !== 'sign' ? STATIC_NAMES[t.type] : '看板', signLines);
+          const lines = t.kind === 'static' && t.type === SAVE_POINT ? this.touchSavePoint(t) : signLines;
+          this.events.read?.(t.kind === 'static' && t.type !== 'sign' ? STATIC_NAMES[t.type] : '看板', lines);
         } else if (signLines) {
           if (!p.path.length) this.pathNear(p, t.x, t.y);
         } else if (t.kind === 'static' && d <= ATTACK_RANGE) {

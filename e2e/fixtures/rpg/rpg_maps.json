@@ -9,6 +9,11 @@
   "ground" : [ "ggggggggggggggggggfgggggfggggggg", "gggggfgggfgggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "ggggggggggggggggggggggggggfgggfg", "ggggggggggggggggggggggggfggggggg", "gggggggggggggggggggggggggggggggg", "gggfggggggggggpggggggggggggggggg", "ggggggggggggggpfgggppppppggggggg", "ggggggggggggggpggggpgggggggggggg", "ggggggggggggggpgfgfpgggggggggggg", "ggggggggggggggpggggpgggfgggggggg", "gggggggfggggpppppppppgfgfggfgggg", "ggggggggggggpppppppppggfggfggggg", "ggggggggggggpppppppppfgggggggggg", "gggggggppppppppfsfpppppppppppppp", "ggggggggfggfpppswspppppppppppppp", "gggggggfggggpppfsfpppppppppppppp", "gggfggggggggpppppppppggggggggggg", "fgggggggpppppppppppppppppggggggg", "ggggggfgpgggpppppppppgggpggggggg", "fgggggggpgfggggpppggggggpgggfggg", "ggggggggpgfggggpppggggggpggggggg", "ggggggggpffggggpppggggfggsssgggg", "gggggggggggggggpppggggggswwwsggg", "gggggggggggfgggpppgggggswwwwwsgg", "ggggggggggfggggpppgggggswwwwwsgg", "gggggggggggggggpppgggggswwwwwsgg", "gggggggggggggggpppggggfgswwwsggg", "ggggfggggggfgggpppgggggggsssgggg", "gggggggggggggggpppggggggggggfggg", "gggggggggggggggpppgggggggggggggg" ],
   "heights" : null,
   "objects" : [ {
+    "type" : "save_point",
+    "x" : 9,
+    "y" : 5,
+    "torch" : false
+  }, {
     "type" : "bucket",
     "x" : 4,
     "y" : 7,
@@ -1525,8 +1530,6 @@
     "y" : 17
   } ],
   "links" : [ ],
-  "start_x" : 16,
-  "start_y" : 14,
   "sort_order" : 1,
   "updated_at" : null
 } ]

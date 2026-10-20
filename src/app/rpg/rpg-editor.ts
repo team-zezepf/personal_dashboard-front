@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, MAX_HEIGHT, SIDES, StaticType, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, SAVE_POINT, SIDES, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -13,7 +13,6 @@ export type EditorTool =
   | { kind: 'enemy'; type: string }
   | { kind: 'npc' }
   | { kind: 'select' }
-  | { kind: 'start' }
   | { kind: 'erase' };
 
 export interface PaletteItem {
@@ -87,6 +86,8 @@ export const PALETTE: PaletteTab[] = [
       { id: 'bucket', label: '木のおけ', icon: '🧺', tool: { kind: 'object', type: 'bucket' } },
       // 看板(front#274)。いちばん近い「ほかのダンジョンへの端」を指し、行き先のダンジョンの名前を出す
       { id: 'sign', label: '看板', icon: '➡️', tool: { kind: 'object', type: 'sign' } },
+      // セーブポイント(front#337)。調べると、たおれたときに戻る復活地点になる。始まりの草原のものは、はじめて遊ぶ人の始まりの場所
+      { id: 'save_point', label: 'セーブポイント', icon: '🔮', tool: { kind: 'object', type: 'save_point' } },
       { id: 'pillar', label: '柱', icon: '🏛️', tool: { kind: 'object', type: 'pillar' } },
       { id: 'torch', label: 'たいまつ柱', icon: '🔥', tool: { kind: 'object', type: 'pillar', torch: true } },
       { id: 'volcano', label: '火山', icon: '🌋', tool: { kind: 'object', type: 'volcano' } }
@@ -107,7 +108,6 @@ export const PALETTE: PaletteTab[] = [
     id: 'other', label: 'その他', hint: '「選ぶ・動かす」では何も置かず、置いてある物を選んで動かします。ほかの道具を選んでいるときに、その道具をもう一度押しても「選ぶ・動かす」に戻ります。',
     items: [
       { id: 'select', label: '選ぶ・動かす', icon: '👆', tool: { kind: 'select' } },
-      { id: 'start', label: '出発地点', icon: '🚩', tool: { kind: 'start' } },
       { id: 'erase', label: '消しゴム', icon: '🧽', tool: { kind: 'erase' } }
     ]
   }
@@ -192,8 +192,7 @@ export function blankMap(id: string, name: string, dungeonId: string, gridX: num
     id, name, dungeonId, gridX, gridY, width, height,
     ground: Array.from({ length: height }, () => 'g'.repeat(width)),
     heights: flatHeights(width, height),
-    objects: [], npcs: [], enemies: [], links: [],
-    startX: Math.floor(width / 2), startY: Math.floor(height / 2), sortOrder: 0
+    objects: [], npcs: [], enemies: [], links: [], sortOrder: 0
   };
 }
 
@@ -229,7 +228,6 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     })),
     enemies: map.enemies.map((e) => ({ ...e })),
     links: (map.links ?? []).map((l) => ({ dx: l.dx, dy: l.dy, to: l.to })),
-    startX: map.startX, startY: map.startY,
     bgmId: map.bgmId ?? null
   };
 }
@@ -301,7 +299,7 @@ export class RpgMapEditor {
     this.map.ground[y] = row.slice(0, x) + ground + row.slice(x + 1);
   }
 
-  // 水・なしでない地面(人・敵・出発地点を置ける)
+  // 水・なしでない地面(人・敵を置ける)
   walkableGround(x: number, y: number): boolean {
     return this.inMap(x, y) && !BLOCKED_GROUND.includes(this.groundAt(x, y));
   }
@@ -452,12 +450,6 @@ export class RpgMapEditor {
         this.map.npcs.push(npc);
         return { kind: 'npc', ref: npc };
       }
-      case 'start':
-        if (canPlace) {
-          this.map.startX = x;
-          this.map.startY = y;
-        }
-        return null;
       case 'erase':
         this.removeAt(x, y);
         return null;
@@ -500,18 +492,23 @@ export class RpgMapEditor {
     this.map.objects = this.map.objects.filter((o) => objectTiles(o).every(([tx, ty]) => tx < w && ty < h));
     this.map.npcs = this.map.npcs.filter(inside);
     this.map.enemies = this.map.enemies.filter(inside);
-    if (!this.inMap(this.map.startX, this.map.startY)) {
-      this.map.startX = Math.floor(w / 2);
-      this.map.startY = Math.floor(h / 2);
-    }
   }
 
   /** 保存する前の確認。問題があっても保存はできるが、ゲームで困るものを知らせる */
   checks(maps: RpgMap[]): MapCheck[] {
     const m = this.map;
     const checks: MapCheck[] = [];
-    const startOk = this.walkableGround(m.startX, m.startY) && !this.occupied(m.startX, m.startY);
-    checks.push({ ok: startOk, text: startOk ? '出発地点が通れるマスにある' : '出発地点が通れないマスにあります' });
+    // はじめて遊ぶ人は、始まりの草原のセーブポイントのとなりから始まる(front#337)
+    if (m.id === 'plain') {
+      const area = buildAreaMap(m);
+      const ok = area.statics.some((o) => o.type === SAVE_POINT && besideSavePoint(area, o));
+      checks.push({
+        ok,
+        text: ok
+          ? 'セーブポイントがある（はじめて遊ぶ人は、となりから始まります）'
+          : '始まりの草原に、となりに通れるマスがあるセーブポイントがありません（はじめて遊ぶ人は中央付近から始まります）'
+      });
+    }
 
     // 端のつながり(front#274)の行き先のエリアがなくなった・同じダンジョンの隣のエリアができて使えなくなった
     const lost = (m.links ?? []).filter((l) => exitOf(maps, m, [l.dx, l.dy])?.to.id !== l.to);
