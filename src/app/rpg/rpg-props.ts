@@ -36,6 +36,62 @@ function shadow(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number,
   c.fill();
 }
 
+/** 置物の色合い(front#333)。m: 明るい色、d: 暗い色(#rrggbb) */
+export interface Tint {
+  m: string;
+  d: string;
+}
+
+// #rrggbb の明るさ(0〜255)
+function lum(hex: string): number {
+  const n = parseInt(hex.slice(1), 16);
+  return ((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114;
+}
+
+// 2つの #rrggbb を混ぜた #rrggbb(t = 0 なら a、1 なら b)
+function mixHex(a: string, b: string, t: number): string {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (sh: number) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+  return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0');
+}
+
+// 毎フレーム同じ計算をしないよう、置きかえた色を覚えておく
+const tintCache = new Map<string, string>();
+function cached(key: string, make: () => string): string {
+  let v = tintCache.get(key);
+  if (v === undefined) {
+    if (tintCache.size > 5000) tintCache.clear();
+    v = make();
+    tintCache.set(key, v);
+  }
+  return v;
+}
+
+/**
+ * 素材が1つの置物の色を置きかえる関数(front#333)。もとの絵の明るい色 m0・暗い色 d0 の間の濃さを保ったまま、
+ * m0 → m、d0 → d に置きかえる(m0 より明るい色は m を明るく、d0 より暗い色は d を暗くする)。tint がなければそのまま
+ */
+export function tintOf(tint: Tint | null | undefined, m0: string, d0: string): (hex: string) => string {
+  if (!tint) return (hex) => hex;
+  const [lm, ld] = [lum(m0), lum(d0)];
+  return (hex) =>
+    cached(`${tint.m}${tint.d}${m0}${d0}${hex}`, () => {
+      const l = lum(hex);
+      if (l >= lm) return mixHex(tint.m, '#ffffff', lm >= 255 ? 0 : Math.min(1, (l - lm) / (255 - lm)));
+      if (l <= ld) return mixHex(tint.d, '#000000', ld <= 0 ? 0 : Math.min(1, (ld - l) / ld));
+      return mixHex(tint.m, tint.d, (lm - l) / Math.max(1, lm - ld));
+    });
+}
+
+/** 素材が2つある置物の、片方の素材の色(front#333)。もとの色 hex と、その素材のもとの色 ref の明るさの差を、target に付ける */
+export function relTint(target: string, hex: string, ref: string): string {
+  return cached(`r${target}${hex}${ref}`, () => {
+    const [l, lr] = [lum(hex), lum(ref)];
+    return l >= lr ? mixHex(target, '#ffffff', lr >= 255 ? 0 : (l - lr) / (255 - lr)) : mixHex(target, '#000000', lr <= 0 ? 0 : (lr - l) / lr);
+  });
+}
+
 // マスの上の点(u は x の向き(右下)、v は y の向き(左下)に 0〜1、z は高さ)
 function boxPoint(cx: number, cy: number, u: number, v: number, z: number): Pt {
   return [cx + ((u - v) * TW) / 2, cy - TH / 2 + ((u + v) * TH) / 2 - z];
@@ -48,8 +104,8 @@ function rnd(n: number): number {
 }
 
 // 宝箱(front#266)。y の向きに長い箱で、正面(錠前)は右下の面。ふたはかまぼこ形で、金の帯を巻く。
-// wood は箱の正面の色(ほかの面・ふたは、この色を明るく・暗くした色)
-export function drawChest(c: CanvasRenderingContext2D, cx: number, cy: number, hits: number, wood = '#a8682f'): void {
+// wood は箱の正面の色(ほかの面・ふたは、この色を明るく・暗くした色)、band は金の帯・錠前の色(front#333)
+export function drawChest(c: CanvasRenderingContext2D, cx: number, cy: number, hits: number, wood = '#a8682f', band = '#f2c14e'): void {
   shadow(c, cx, cy + 2, 18, 7, 0.18);
   const [a, b, p, q] = [0.34, 0.66, 0.24, 0.76];
   const H = 11;
@@ -73,7 +129,7 @@ export function drawChest(c: CanvasRenderingContext2D, cx: number, cy: number, h
   // 金の帯。ふたの奥側は見えない裏側に回り込んでいるので、表面が手前を向いているところ
   // (視線の向き (1, 1, 32) との内積が正)だけに描く
   const facing = (s: number) => -K * Math.PI * Math.cos(Math.PI * s) + (b - a) * 32 > 0;
-  c.strokeStyle = '#f2c14e';
+  c.strokeStyle = band;
   c.lineWidth = 2;
   c.lineJoin = 'round';
   for (const v of [p + 0.1, q - 0.1]) {
@@ -84,7 +140,7 @@ export function drawChest(c: CanvasRenderingContext2D, cx: number, cy: number, h
     c.stroke();
   }
   const [lx, ly] = P(b, 0.5, H - 1);
-  c.fillStyle = '#f2c14e';
+  c.fillStyle = band;
   c.beginPath(); c.roundRect(lx - 3, ly - 1, 6, 7, 1.5); c.fill();
   c.fillStyle = '#5b3a12';
   c.beginPath(); c.arc(lx, ly + 2, 1.1, 0, Math.PI * 2); c.fill();
@@ -175,15 +231,18 @@ export function drawArmor(
 }
 
 // たる(front#270)。木の板を縦に並べた、ふくらんだ筒。鉄の輪を2本巻き、上はふた
-export function drawBarrel(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawBarrel(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  // 色合い(front#333): 木 = 明るい色、鉄の輪 = 暗い色
+  const w = (hex: string) => (tint ? relTint(tint.m, hex, '#9a6230') : hex);
+  const i = (hex: string) => (tint ? relTint(tint.d, hex, '#4b5563') : hex);
   shadow(c, cx, cy + 1, 14, 6, 0.18);
   const r = 11;
   const h = 24;
   const ry = 5.5;
   const g = c.createLinearGradient(cx - r, 0, cx + r, 0);
-  g.addColorStop(0, '#b77a3e');
-  g.addColorStop(0.45, '#9a6230');
-  g.addColorStop(1, '#6e4220');
+  g.addColorStop(0, w('#b77a3e'));
+  g.addColorStop(0.45, w('#9a6230'));
+  g.addColorStop(1, w('#6e4220'));
   c.fillStyle = g;
   c.beginPath();
   c.moveTo(cx - r, cy - h);
@@ -203,29 +262,30 @@ export function drawBarrel(c: CanvasRenderingContext2D, cx: number, cy: number):
     c.stroke();
   }
   // 鉄の輪(手前の半分だけ見える)
-  c.strokeStyle = '#4b5563';
+  c.strokeStyle = i('#4b5563');
   c.lineWidth = 2;
   for (const z of [5, h - 5]) {
     c.beginPath(); c.ellipse(cx, cy - z, r + 2.2, ry, 0, 0, Math.PI); c.stroke();
   }
   // ふた
-  c.fillStyle = '#c99158';
+  c.fillStyle = w('#c99158');
   c.beginPath(); c.ellipse(cx, cy - h, r, ry, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#8a5a2e';
+  c.strokeStyle = w('#8a5a2e');
   c.lineWidth = 1;
   c.beginPath(); c.ellipse(cx, cy - h, r - 2.5, ry - 1.3, 0, 0, Math.PI * 2); c.stroke();
   c.beginPath(); c.moveTo(cx - 6, cy - h - 2); c.lineTo(cx + 6, cy - h + 2); c.stroke();
 }
 
 // つぼ(front#270)。素焼きで、ふくらんだ胴・くびれた首・開いた口。胴にジグザグの模様
-export function drawPot(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawPot(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#c8693a', '#8f4322');
   shadow(c, cx, cy + 1, 12, 5, 0.18);
   // 高さごとの半径
   const prof: Pt[] = [[0, 6], [3, 9.5], [9, 11.5], [15, 9], [19, 5], [21, 5.2], [23, 7]];
   const g = c.createLinearGradient(cx - 12, 0, cx + 12, 0);
-  g.addColorStop(0, '#e08a52');
-  g.addColorStop(0.4, '#c8693a');
-  g.addColorStop(1, '#8f4322');
+  g.addColorStop(0, k('#e08a52'));
+  g.addColorStop(0.4, k('#c8693a'));
+  g.addColorStop(1, k('#8f4322'));
   c.fillStyle = g;
   c.beginPath();
   prof.forEach(([z, r], i) => (i ? c.lineTo(cx - r, cy - z) : c.moveTo(cx - r, cy - z)));
@@ -234,7 +294,7 @@ export function drawPot(c: CanvasRenderingContext2D, cx: number, cy: number): vo
   c.fill();
   // 底の丸み
   c.beginPath(); c.ellipse(cx, cy, 6, 2.6, 0, 0, Math.PI); c.fill();
-  c.strokeStyle = '#f6d3a8';
+  c.strokeStyle = k('#f6d3a8');
   c.lineWidth = 1.2;
   c.beginPath();
   for (let i = 0; i <= 8; i++) {
@@ -246,22 +306,22 @@ export function drawPot(c: CanvasRenderingContext2D, cx: number, cy: number): vo
   c.stroke();
   c.fillStyle = 'rgba(255,240,220,0.35)';
   c.beginPath(); c.ellipse(cx - 5, cy - 11, 2, 4.5, 0.2, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#d27846';
+  c.fillStyle = k('#d27846');
   c.beginPath(); c.ellipse(cx, cy - 23, 7, 2.8, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#3f1d0c';
+  c.fillStyle = k('#3f1d0c');
   c.beginPath(); c.ellipse(cx, cy - 23, 5, 1.8, 0, 0, Math.PI * 2); c.fill();
 }
 
 // 骨1本(両はしに丸いふくらみ)
-function bone(c: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number): void {
-  c.strokeStyle = '#e9e4d4';
+function bone(c: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, col = '#e9e4d4'): void {
+  c.strokeStyle = col;
   c.lineWidth = 2.6;
   c.lineCap = 'round';
   c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
   const a = Math.atan2(y2 - y1, x2 - x1);
   const nx = -Math.sin(a) * 1.6;
   const ny = Math.cos(a) * 1.6;
-  c.fillStyle = '#e9e4d4';
+  c.fillStyle = col;
   for (const [x, y] of [[x1, y1], [x2, y2]]) {
     c.beginPath(); c.arc(x + nx, y + ny, 1.9, 0, Math.PI * 2); c.arc(x - nx, y - ny, 1.9, 0, Math.PI * 2); c.fill();
   }
@@ -271,41 +331,43 @@ function bone(c: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y
 }
 
 // 骨の山(front#270)。骨を何本か重ね、てっぺんに頭の骨をのせる
-export function drawBones(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawBones(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#efeadb', '#7c7363');
   shadow(c, cx, cy + 1, 15, 6, 0.18);
-  c.fillStyle = '#7c7363';
+  c.fillStyle = k('#7c7363');
   c.beginPath(); c.ellipse(cx, cy - 1, 13, 5, 0, 0, Math.PI * 2); c.fill();
-  bone(c, cx - 12, cy - 1, cx + 6, cy - 5);
-  bone(c, cx - 4, cy + 2, cx + 12, cy - 3);
-  bone(c, cx - 10, cy - 7, cx + 2, cy + 1);
-  bone(c, cx + 2, cy - 9, cx + 11, cy - 4);
+  bone(c, cx - 12, cy - 1, cx + 6, cy - 5, k('#e9e4d4'));
+  bone(c, cx - 4, cy + 2, cx + 12, cy - 3, k('#e9e4d4'));
+  bone(c, cx - 10, cy - 7, cx + 2, cy + 1, k('#e9e4d4'));
+  bone(c, cx + 2, cy - 9, cx + 11, cy - 4, k('#e9e4d4'));
   const hx = cx - 1;
   const hy = cy - 12;
-  c.fillStyle = '#efeadb';
+  c.fillStyle = k('#efeadb');
   c.beginPath(); c.arc(hx, hy, 6.5, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.roundRect(hx - 3.5, hy + 3, 7, 4.5, 1.5); c.fill();
   c.strokeStyle = 'rgba(0,0,0,0.18)';
   c.lineWidth = 1;
   c.beginPath(); c.arc(hx, hy, 6.5, 0, Math.PI * 2); c.stroke();
-  c.fillStyle = '#2a2420';
+  c.fillStyle = k('#2a2420');
   c.beginPath(); c.ellipse(hx - 2.6, hy + 0.5, 1.8, 2.1, 0, 0, Math.PI * 2); c.ellipse(hx + 2.6, hy + 0.5, 1.8, 2.1, 0, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.moveTo(hx, hy + 2.5); c.lineTo(hx - 0.8, hy + 4); c.lineTo(hx + 0.8, hy + 4); c.fill();
 }
 
 // 本棚(front#270)。背の高い木の棚で、4段に色とりどりの本を並べる。
 // face が 'x' なら右下、'y' なら左下を向く(向きは置いた場所から決める: shelfFace)。seed で本の並びを変える
-export function drawBookshelf(c: CanvasRenderingContext2D, cx: number, cy: number, face: 'x' | 'y', seed: number): void {
+export function drawBookshelf(c: CanvasRenderingContext2D, cx: number, cy: number, face: 'x' | 'y', seed: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#7a4b25', '#5e3a1c');
   // 左下を向くときは u と v を入れかえる
   const Q = (u: number, v: number, z: number) => (face === 'x' ? boxPoint(cx, cy, u, v, z) : boxPoint(cx, cy, v, u, z));
   const [a, b, p, q] = [0.22, 0.62, 0.06, 0.94];
   const H = 58;
   shadow(c, cx, cy + 2, 22, 9, 0.2);
-  const wood = '#7a4b25';
+  const wood = k('#7a4b25');
   // 右下の面は暗く、左下の面は明るい(ほかの置物と同じ光の向き)
-  const [frontCol, sideCol] = face === 'x' ? [shade(wood, 0.9), '#5e3a1c'] : [wood, shade('#5e3a1c', 0.85)];
+  const [frontCol, sideCol] = face === 'x' ? [shade(wood, 0.9), k('#5e3a1c')] : [wood, shade(k('#5e3a1c'), 0.85)];
   poly(c, [Q(a, q, 0), Q(b, q, 0), Q(b, q, H), Q(a, q, H)], sideCol);
   poly(c, [Q(b, p, 0), Q(b, q, 0), Q(b, q, H), Q(b, p, H)], frontCol);
-  poly(c, [Q(a, p, H), Q(b, p, H), Q(b, q, H), Q(a, q, H)], '#94603a');
+  poly(c, [Q(a, p, H), Q(b, p, H), Q(b, q, H), Q(a, q, H)], k('#94603a'));
   const rows = 4;
   const fr = 3;
   const inner = (H - fr * 2) / rows;
@@ -316,7 +378,7 @@ export function drawBookshelf(c: CanvasRenderingContext2D, cx: number, cy: numbe
     const z1 = z0 + inner - 3;
     const v0 = p + 0.05;
     const v1 = q - 0.05;
-    poly(c, [Q(b, v0, z0), Q(b, v1, z0), Q(b, v1, z1), Q(b, v0, z1)], '#2b190c');
+    poly(c, [Q(b, v0, z0), Q(b, v1, z0), Q(b, v1, z1), Q(b, v0, z1)], k('#2b190c'));
     let v = v0 + 0.01;
     while (v < v1 - 0.04) {
       const w = 0.045 + rnd(n++) * 0.04;
@@ -343,9 +405,10 @@ export function drawBookshelf(c: CanvasRenderingContext2D, cx: number, cy: numbe
 }
 
 // 燭台(front#270)。3本足の鉄の台に、ろうそくを3本立てる。火はゆれて、まわりを少し明るくする
-export function drawCandle(c: CanvasRenderingContext2D, cx: number, cy: number, time: number): void {
+export function drawCandle(c: CanvasRenderingContext2D, cx: number, cy: number, time: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#71717a', '#3f3f46');
   shadow(c, cx, cy + 1, 11, 4.5, 0.22);
-  const iron = '#3f3f46';
+  const iron = k('#3f3f46');
   c.strokeStyle = iron;
   c.lineWidth = 2;
   c.lineCap = 'round';
@@ -356,7 +419,7 @@ export function drawCandle(c: CanvasRenderingContext2D, cx: number, cy: number, 
   c.stroke();
   c.lineWidth = 2.6;
   c.beginPath(); c.moveTo(cx, cy - 8); c.lineTo(cx, cy - 44); c.stroke();
-  c.strokeStyle = '#71717a';
+  c.strokeStyle = k('#71717a');
   c.lineWidth = 1;
   c.beginPath(); c.moveTo(cx - 0.6, cy - 10); c.lineTo(cx - 0.6, cy - 42); c.stroke();
   // 腕(左右に曲がって上がる)
@@ -393,7 +456,8 @@ export function drawCandle(c: CanvasRenderingContext2D, cx: number, cy: number, 
 }
 
 // 墓石(front#270)。上が丸い石の板で、右下を向き、正面に十字を彫る。足元に土を盛る
-export function drawGrave(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawGrave(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#9ca3af', '#6b7280');
   const [a, b, p, q] = [0.36, 0.54, 0.2, 0.8];
   const H = 20;
   const K = 9;
@@ -410,20 +474,20 @@ export function drawGrave(c: CanvasRenderingContext2D, cx: number, cy: number): 
   const archAt = (u: number, s: number) => Q(u, p + (q - p) * s, H + Math.sin(Math.PI * s) * K);
   const arch = (u: number, n = 12) => Array.from({ length: n + 1 }, (_, i) => archAt(u, i / n));
   // 左下の横の面
-  poly(c, [Q(a, q, 0), Q(b, q, 0), Q(b, q, H), Q(a, q, H)], '#6b7280');
+  poly(c, [Q(a, q, 0), Q(b, q, 0), Q(b, q, H), Q(a, q, H)], k('#6b7280'));
   // 上の丸い面(細い帯に分けて、奥から塗る)
   const fr = arch(b);
   const bk = arch(a);
   for (let i = 0; i < fr.length - 1; i++) {
-    const col = shade('#b4bcc8', 0.8 + 0.2 * Math.sin(Math.PI * (i / (fr.length - 1) + 0.15)));
+    const col = shade(k('#b4bcc8'), 0.8 + 0.2 * Math.sin(Math.PI * (i / (fr.length - 1) + 0.15)));
     poly(c, [fr[i], fr[i + 1], bk[i + 1], bk[i]], col);
     c.strokeStyle = col;
     c.lineWidth = 0.7;
     c.stroke();
   }
   // 正面
-  poly(c, [Q(b, p, 0), Q(b, q, 0), ...arch(b).reverse()], '#9ca3af');
-  c.strokeStyle = '#5b6370';
+  poly(c, [Q(b, p, 0), Q(b, q, 0), ...arch(b).reverse()], k('#9ca3af'));
+  c.strokeStyle = k('#5b6370');
   c.lineWidth = 1.8;
   c.lineCap = 'round';
   c.beginPath();
@@ -481,7 +545,8 @@ export const BARS_HEIGHT = 72;
 // 鉄格子(front#321)。マスのまんなかの線に沿って鉄の棒を8本立て、下・まんなか・上に横木を通す。
 // along が 'x' なら x の向き(右下へ)、'y' なら y の向き(左下へ)に並ぶ(向きは置いた場所から決める: barsAlong)。
 // 棒のすき間から向こうが見えるよう、面は塗らない
-export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, along: 'x' | 'y'): void {
+export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, along: 'x' | 'y', tint?: Tint | null): void {
+  const k = tintOf(tint, '#6b6880', '#1f1d2b');
   const at = (t: number, z: number) => (along === 'x' ? boxPoint(cx, cy, t, 0.5, z) : boxPoint(cx, cy, 0.5, t, z));
   const line = (a: Pt, b: Pt, color: string, width: number) => {
     c.strokeStyle = color;
@@ -491,9 +556,9 @@ export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, al
   // 床の影
   line([at(0, 0)[0], at(0, 0)[1] + 2], [at(1, 0)[0], at(1, 0)[1] + 2], 'rgba(0,0,0,0.3)', 5);
   const rail = (z: number, w: number) => {
-    line(at(0, z), at(1, z), '#1f1d2b', w + 1.5);
+    line(at(0, z), at(1, z), k('#1f1d2b'), w + 1.5);
     const [a, b] = [at(0, z), at(1, z)];
-    line([a[0], a[1] - 0.6], [b[0], b[1] - 0.6], '#6b6880', w - 1);
+    line([a[0], a[1] - 0.6], [b[0], b[1] - 0.6], k('#6b6880'), w - 1);
   };
   c.lineCap = 'butt';
   rail(2, 4);
@@ -501,20 +566,20 @@ export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, al
     const t = 0.0625 + i * 0.125;
     const [x0, y0] = at(t, 0);
     const [x1, y1] = at(t, BARS_HEIGHT - 2);
-    line([x0, y0], [x1, y1], '#1f1d2b', 3.4);
-    line([x0 - 0.6, y0], [x1 - 0.6, y1], '#8a879c', 1.2);
+    line([x0, y0], [x1, y1], k('#1f1d2b'), 3.4);
+    line([x0 - 0.6, y0], [x1 - 0.6, y1], k('#8a879c'), 1.2);
     // 棒の先のとがり
-    poly(c, [[x1 - 2.2, y1], [x1, y1 - 6], [x1 + 2.2, y1]], '#3a374d');
+    poly(c, [[x1 - 2.2, y1], [x1, y1 - 6], [x1 + 2.2, y1]], k('#3a374d'));
   }
   rail(BARS_HEIGHT * 0.55, 3.5);
   rail(BARS_HEIGHT - 6, 4);
 }
 
 // 鎖の輪を、縦・横を交互にして並べる
-function chainLinks(c: CanvasRenderingContext2D, pts: Pt[]): void {
+function chainLinks(c: CanvasRenderingContext2D, pts: Pt[], k: (hex: string) => string = (hex) => hex): void {
   pts.forEach(([x, y], i) => {
     const [rx, ry] = i % 2 ? [2, 3] : [3.6, 1.8];
-    for (const [color, w] of [['#1f1d2b', 2.6], ['#9ca3af', 1]] as const) {
+    for (const [color, w] of [[k('#1f1d2b'), 2.6], [k('#9ca3af'), 1]] as const) {
       c.strokeStyle = color;
       c.lineWidth = w;
       c.beginPath(); c.ellipse(x, y, rx, ry, 0.4, 0, Math.PI * 2); c.stroke();
@@ -531,27 +596,28 @@ function curvePoints(a: Pt, ctrl: Pt, b: Pt, n: number): Pt[] {
 }
 
 // 鎖の杭(front#321)。床に打った鉄の杭(上に輪)から、鎖が2本床をはって、半分開いた手かせにつながる
-export function drawShackle(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawShackle(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  const k = tintOf(tint, '#6b6880', '#1f1d2b');
   shadow(c, cx, cy + 2, 16, 6, 0.2);
-  chainLinks(c, curvePoints([cx - 2, cy - 10], [cx - 12, cy - 2], [cx - 19, cy + 5], 7));
-  chainLinks(c, curvePoints([cx + 2, cy - 10], [cx + 10, cy + 2], [cx + 17, cy + 3], 7));
+  chainLinks(c, curvePoints([cx - 2, cy - 10], [cx - 12, cy - 2], [cx - 19, cy + 5], 7), k);
+  chainLinks(c, curvePoints([cx + 2, cy - 10], [cx + 10, cy + 2], [cx + 17, cy + 3], 7), k);
   for (const [x, y] of [[cx - 22, cy + 7], [cx + 20, cy + 4]]) {
-    for (const [color, w] of [['#1f1d2b', 4], ['#6b7280', 2]] as const) {
+    for (const [color, w] of [[k('#1f1d2b'), 4], [k('#6b7280'), 2]] as const) {
       c.strokeStyle = color;
       c.lineWidth = w;
       c.beginPath(); c.ellipse(x, y, 6, 3, 0, 0.3, Math.PI * 1.7); c.stroke();
     }
   }
   const g = c.createLinearGradient(cx - 4, 0, cx + 4, 0);
-  g.addColorStop(0, '#6b6880');
-  g.addColorStop(1, '#25222f');
+  g.addColorStop(0, k('#6b6880'));
+  g.addColorStop(1, k('#25222f'));
   c.fillStyle = g;
   c.fillRect(cx - 3.5, cy - 20, 7, 20);
-  c.fillStyle = '#3a374d';
+  c.fillStyle = k('#3a374d');
   c.beginPath(); c.ellipse(cx, cy, 5.5, 2.5, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#8a879c';
+  c.fillStyle = k('#8a879c');
   c.beginPath(); c.ellipse(cx, cy - 20, 4.5, 2, 0, 0, Math.PI * 2); c.fill();
-  for (const [color, w] of [['#1f1d2b', 3], ['#9ca3af', 1.2]] as const) {
+  for (const [color, w] of [[k('#1f1d2b'), 3], [k('#9ca3af'), 1.2]] as const) {
     c.strokeStyle = color;
     c.lineWidth = w;
     c.beginPath(); c.arc(cx, cy - 25, 5, 0, Math.PI * 2); c.stroke();
@@ -559,13 +625,16 @@ export function drawShackle(c: CanvasRenderingContext2D, cx: number, cy: number)
 }
 
 // 木のおけ(front#321)。下が少しすぼまった木のおけに、鉄のたが2本と取っ手。中は暗い水
-export function drawBucket(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+export function drawBucket(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  // 色合い(front#333): 木 = 明るい色、たが・取っ手 = 暗い色
+  const w = (hex: string) => (tint ? relTint(tint.m, hex, '#966131') : hex);
+  const i = (hex: string) => (tint ? relTint(tint.d, hex, '#3f3f46') : hex);
   shadow(c, cx, cy + 1, 12, 5, 0.18);
   const [rt, rb, h, ry] = [10, 8, 16, 4.5];
   const g = c.createLinearGradient(cx - rt, 0, cx + rt, 0);
-  g.addColorStop(0, '#b47d45');
-  g.addColorStop(0.45, '#966131');
-  g.addColorStop(1, '#6a4120');
+  g.addColorStop(0, w('#b47d45'));
+  g.addColorStop(0.45, w('#966131'));
+  g.addColorStop(1, w('#6a4120'));
   c.fillStyle = g;
   c.beginPath();
   c.moveTo(cx - rt, cy - h);
@@ -581,18 +650,18 @@ export function drawBucket(c: CanvasRenderingContext2D, cx: number, cy: number):
     c.beginPath(); c.moveTo(cx + k * rt, cy - h + ry * 0.8); c.lineTo(cx + k * rb, cy + ry * 0.7); c.stroke();
   }
   // たが(手前の半分だけ見える)
-  c.strokeStyle = '#3f3f46';
+  c.strokeStyle = i('#3f3f46');
   c.lineWidth = 1.8;
   for (const [z, r] of [[3, rb + 0.6], [h - 3, rt - 0.2]]) {
     c.beginPath(); c.ellipse(cx, cy - z, r, ry * 0.85, 0, 0, Math.PI); c.stroke();
   }
-  c.fillStyle = '#c99158';
+  c.fillStyle = w('#c99158');
   c.beginPath(); c.ellipse(cx, cy - h, rt, ry, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#1e293b';
   c.beginPath(); c.ellipse(cx, cy - h + 0.6, rt - 2, ry - 1.4, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = 'rgba(148,163,184,0.5)';
   c.beginPath(); c.ellipse(cx - 2, cy - h, 3, 1, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#3f3f46';
+  c.strokeStyle = i('#3f3f46');
   c.lineWidth = 1.6;
   c.beginPath(); c.moveTo(cx - rt, cy - h); c.quadraticCurveTo(cx - 4, cy - h - 13, cx + rt, cy - h); c.stroke();
 }

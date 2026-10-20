@@ -1,0 +1,142 @@
+<div class="obj-form">
+  <p class="info">{{ info() }}</p>
+
+  <!-- 表示されるメッセージ(置いた置物だけ。front#333) -->
+  @if (placement()) {
+    <section class="sec">
+      <h3>💬 表示されるメッセージ</h3>
+      <label class="check"><input type="checkbox" [ngModel]="draft().showMessage" (ngModelChange)="setShowMessage($event)" /> クリック時にメッセージを表示する</label>
+      @if (draft().showMessage) {
+        <textarea rows="3" maxlength="4200" placeholder="1行が1ページ" aria-label="メッセージ" [ngModel]="draft().lines" (ngModelChange)="setLines($event)"></textarea>
+        <p class="hint">クリックすると会話の窓に出します（1行が1ページ・20行まで）。この置物は壊せなくなり、擬態もしません。</p>
+      }
+    </section>
+  }
+
+  <!-- 色合い -->
+  <section class="sec">
+    <h3>
+      🎨 色合い
+      @if (placement()) {
+        <label class="keep"><input type="checkbox" [ngModel]="kept('color')" (ngModelChange)="setKept('color', $event)" /> デフォルトのまま</label>
+      }
+    </h3>
+    <div [class.dis]="placement() && kept('color')">
+      @for (which of ['color', 'dark']; track which) {
+        <div class="field-label">{{ which === 'color' ? '明るい色' : '暗い色（影・ふち）' }}</div>
+        <div class="colors" role="group" [attr.aria-label]="which === 'color' ? '明るい色' : '暗い色'">
+          @for (c of swatches($any(which)); track c) {
+            <button
+              type="button"
+              class="sw"
+              [class.active]="selectedColor($any(which)) === c"
+              [attr.aria-pressed]="selectedColor($any(which)) === c"
+              [attr.aria-label]="c === 'theme' ? 'テーマの色' : c"
+              [title]="c === 'theme' ? 'テーマの色' : c"
+              [style.background]="swatchStyle(c)"
+              (click)="pickColor($any(which), c)"
+            ></button>
+          }
+        </div>
+      }
+      @if (themed() && !placement()) {
+        <p class="hint">左はしの「テーマの色」は、草原・森・谷・塔のテーマで変わる今の色です。</p>
+      }
+    </div>
+  </section>
+
+  @if (!reading()) {
+    <!-- 出てくるアイテム・出てくる敵(壊れる置物だけ) -->
+    @for (key of ['items', 'enemies']; track key) {
+      <section class="sec" [class.dis]="!breakable()">
+        <h3>
+          {{ key === 'items' ? '🎁 出てくるアイテム' : '👾 出てくる敵' }}
+          @if (placement() && breakable()) {
+            <label class="keep"><input type="checkbox" [ngModel]="kept($any(key))" (ngModelChange)="setKept($any(key), $event)" /> デフォルトのまま</label>
+          }
+        </h3>
+        @if (breakable()) {
+          <div [class.dis]="placement() && kept($any(key))">
+            @for (row of list($any(key)); track $index; let i = $index) {
+              <div class="row" [class.with-count]="key === 'items'">
+                <select [attr.aria-label]="key === 'items' ? 'アイテム' : '敵'" [ngModel]="row.id" (ngModelChange)="setRowId($any(key), i, $event)">
+                  @if (key === 'items') {
+                    @for (o of itemOptions; track o.id) {
+                      <option [value]="o.id">{{ o.label }}</option>
+                    }
+                  } @else {
+                    @for (o of enemyOptions(); track o.id) {
+                      <option [value]="o.id">{{ o.name }}</option>
+                    }
+                  }
+                </select>
+                @if (key === 'items') {
+                  <label class="mini">×<input type="number" [min]="limits.count[0]" [max]="limits.count[1]" aria-label="個数" [ngModel]="countOf(row)" (ngModelChange)="setCount(i, $event)" /></label>
+                }
+                <label class="mini"><input type="number" min="0.1" max="100" step="0.1" aria-label="確率（%）" [ngModel]="percent(row.chance)" (ngModelChange)="setChance($any(key), i, $event)" />%</label>
+                <button type="button" class="btn small" aria-label="この行を消す" (click)="removeRow($any(key), i)">×</button>
+              </div>
+            } @empty {
+              <p class="hint">（なし）</p>
+            }
+            <button type="button" class="btn small" [disabled]="list($any(key)).length >= limits.rows" (click)="addRow($any(key))">＋ 追加</button>
+          </div>
+          <p class="hint">
+            {{ key === 'items' ? '壊したとき、1つずつそれぞれの確率で判定し、当たったものが全部落ちます。' : '壊したとき、1つずつそれぞれの確率で判定し、当たった敵が全部現れます（まわりのマスに出ます）。アイテムとも別々に判定します。' }}
+          </p>
+        } @else {
+          <p class="hint">壊れない置物には設定できません。</p>
+        }
+      </section>
+    }
+
+    <!-- 擬態している敵 -->
+    <section class="sec">
+      <h3>
+        🎭 擬態している敵
+        @if (placement()) {
+          <label class="keep"><input type="checkbox" [ngModel]="kept('mimics')" (ngModelChange)="setKept('mimics', $event)" /> デフォルトのまま</label>
+        }
+      </h3>
+      <div [class.dis]="placement() && kept('mimics')">
+        @for (row of list('mimics'); track $index; let i = $index) {
+          <div class="row">
+            <select aria-label="擬態している敵" [ngModel]="row.id" (ngModelChange)="setRowId('mimics', i, $event)">
+              @for (o of enemyOptions(); track o.id) {
+                <option [value]="o.id">{{ o.name }}</option>
+              }
+            </select>
+            <label class="mini"><input type="number" min="0.1" max="100" step="0.1" aria-label="確率（%）" [ngModel]="percent(row.chance)" (ngModelChange)="setChance('mimics', i, $event)" />%</label>
+            <button type="button" class="btn small" aria-label="この行を消す" (click)="removeRow('mimics', i)">×</button>
+          </div>
+        } @empty {
+          <p class="hint">（なし）</p>
+        }
+        <button type="button" class="btn small" [disabled]="list('mimics').length >= limits.rows" (click)="addRow('mimics')">＋ 追加</button>
+      </div>
+      @if (mimicTotal() > 100) {
+        <p class="hint ng" role="alert">確率の合計が100%をこえています（{{ mimicTotal() }}%）。100%までにしてください。</p>
+      }
+      <p class="hint">
+        置物が出るとき（エリアに入ったとき・元に戻ったとき）に1回判定し、どれか1体がこの置物のふりをします。確率の合計は100%まで、残り（いまは{{ mimicRest() }}%）はただの置物です。近づくと正体を現します。擬態しているときは、出てくるアイテム・敵は使いません。
+      </p>
+    </section>
+
+    <!-- 叩いたときの音(壊れる置物だけ) -->
+    @if (breakable()) {
+      <section class="sec">
+        <h3>
+          🔊 叩いたときの音
+          @if (placement()) {
+            <label class="keep"><input type="checkbox" [ngModel]="kept('hitMaterial')" (ngModelChange)="setKept('hitMaterial', $event)" /> デフォルトのまま</label>
+          }
+        </h3>
+        <select aria-label="叩いたときの音" [class.dis]="placement() && kept('hitMaterial')" [ngModel]="selectedSound()" (ngModelChange)="pickSound($event)">
+          @for (s of sounds; track s[0]) {
+            <option [value]="s[0]">{{ s[2] }} {{ s[1] }}</option>
+          }
+        </select>
+      </section>
+    }
+  }
+</div>

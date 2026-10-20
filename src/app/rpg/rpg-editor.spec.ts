@@ -74,14 +74,20 @@ describe('RpgMapEditor', () => {
     expect(editor.entityAt(2, 2)?.kind).toBe('breakable');
     expect(editor.apply({ kind: 'object', type: 'tree' }, 3, 2, true)).toBeNull();
 
-    editor.map.objects[0].contents = { kind: 'item', id: 'potion', count: 2 };
-    editor.map.objects[1].contents = { kind: 'enemy', id: 'slime', count: 1 };
+    // 置いた置物1つずつの設定(front#333)。決めていない項目は null(種類のデフォルトのまま)
+    Object.assign(editor.map.objects[0], {
+      color: '#ff0000', dark: '#330000', items: [{ id: 'potion', count: 2, chance: 1 }, { id: 'ether', count: 1, chance: 0.5 }],
+      enemies: [{ id: 'hikarislime', chance: 0.001 }], mimics: [{ id: 'slime', chance: 0.2 }], hitMaterial: 'wood'
+    });
     const saved = toMapInput(editor.map).objects;
-    expect(saved[0].contents).toEqual({ kind: 'item', id: 'potion', count: 2, chance: 1 });
-    expect(saved[1].contents).toBeNull();
-    // 中の敵の出る確率(front#284)
-    editor.map.objects[0].contents = { kind: 'enemy', id: 'hikarislime', count: 1, chance: 0.001 };
-    expect(toMapInput(editor.map).objects[0].contents).toEqual({ kind: 'enemy', id: 'hikarislime', count: 1, chance: 0.001 });
+    expect(saved[0]).toMatchObject({
+      color: '#ff0000', dark: '#330000', items: [{ id: 'potion', count: 2, chance: 1 }, { id: 'ether', count: 1, chance: 0.5 }],
+      enemies: [{ id: 'hikarislime', chance: 0.001 }], mimics: [{ id: 'slime', chance: 0.2 }], hitMaterial: 'wood', showMessage: null, lines: null
+    });
+    expect(saved[1]).toMatchObject({ color: null, items: null, enemies: null, mimics: null, hitMaterial: null });
+    // クリック時にメッセージを表示する置物は、文章も送る
+    Object.assign(editor.map.objects[1], { showMessage: true, lines: ['古い木だ。'] });
+    expect(toMapInput(editor.map).objects[1]).toMatchObject({ showMessage: true, lines: ['古い木だ。'] });
   });
 
   it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {
@@ -171,9 +177,9 @@ describe('RpgMapEditor', () => {
       const sign = editor.apply({ kind: 'object', type: 'sign' }, 10, 2, true)!.ref as RpgMapObject;
       sign.lines = ['この先 霧の沼。', ''];
       expect(toMapInput(editor.map).objects).toEqual([
-        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null, lines: null },
-        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, contents: null, lines: null },
-        { type: 'sign', x: 10, y: 2, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, contents: null, lines: ['この先 霧の沼。', ''] }
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null },
+        { type: 'sign', x: 10, y: 2, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: ['この先 霧の沼。', ''], color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null }
       ]);
     });
 

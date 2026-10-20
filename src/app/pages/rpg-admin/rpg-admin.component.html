@@ -18,8 +18,9 @@
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
       </div>
-      @if (page() !== 'enemy' && page() !== 'craft') {
+      @if (page() !== 'enemy' && page() !== 'craft' && page() !== 'object') {
       <span class="sep"></span>
       <label class="toolbar-label">
         ダンジョン
@@ -78,6 +79,15 @@
       [enemies]="enemies()"
       (saved)="crafts.set($event)"
       (dirtyChange)="craftDirty.set($event)"
+    />
+
+    <!-- 置物タブ(front#333)。種類ごとのデフォルトを決める。ほかのタブに移っても編集中の内容を残す -->
+    <app-rpg-object-page
+      [style.display]="page() === 'object' ? null : 'none'"
+      [defs]="objectDefs()"
+      [maps]="maps()"
+      (saved)="onObjectDefsSaved($event)"
+      (dirtyChange)="objectDirty.set($event)"
     />
 
     @if (page() === 'bgm') {
@@ -455,69 +465,17 @@
                       <button type="button" class="btn small" (click)="deleteSelected()">この敵を消す</button>
                     }
                     @case ('object') {
-                      <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                      <!-- 看板の文章(front#314) -->
-                      @if (sel.ref.type === 'sign') {
-                        <label class="field">
-                          <span>看板の文章（1行が1ページ・20行まで）</span>
-                          <textarea rows="4" maxlength="4200" [ngModel]="signText(sel.ref)" (focus)="beginEdit()" (ngModelChange)="setSignText(sel.ref, $event)"></textarea>
-                        </label>
-                        <p class="muted small">{{ signPreview(sel.ref) }}</p>
-                      }
-                      <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                      <ng-container *ngTemplateOutlet="objectPanel; context: { $implicit: sel.ref }" />
                     }
                     @case ('breakable') {
-                      <div class="selected-title">{{ staticName(sel.ref.type) }} <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
-                      <div class="field">
-                        <span>中身</span>
-                        <div class="seg" role="group" aria-label="置物の中身">
-                          <button type="button" class="btn small" [class.active]="!sel.ref.contents" [attr.aria-pressed]="!sel.ref.contents" (click)="setContentsKind(sel.ref, null)">なし</button>
-                          <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'item'" [attr.aria-pressed]="sel.ref.contents?.kind === 'item'" (click)="setContentsKind(sel.ref, 'item')">アイテム</button>
-                          <button type="button" class="btn small" [class.active]="sel.ref.contents?.kind === 'enemy'" [attr.aria-pressed]="sel.ref.contents?.kind === 'enemy'" (click)="setContentsKind(sel.ref, 'enemy')">敵</button>
-                        </div>
-                      </div>
-                      @if (sel.ref.contents; as c) {
-                        @if (c.kind === 'item') {
-                          <div class="row2">
-                            <label class="field">
-                              <span>アイテム</span>
-                              <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
-                                @for (item of itemOptions; track item.id) {
-                                  <option [value]="item.id">{{ item.name }}</option>
-                                }
-                              </select>
-                            </label>
-                            <label class="field">
-                              <span>個数</span>
-                              <input type="number" min="1" max="9" [ngModel]="c.count" (focus)="beginEdit()" (ngModelChange)="c.count = clampCount($event); edited()" />
-                            </label>
-                          </div>
-                        } @else {
-                          <div class="row2">
-                            <label class="field">
-                              <span>敵</span>
-                              <select [ngModel]="c.id" (focus)="beginEdit()" (ngModelChange)="c.id = $event; edited()">
-                                @for (e of enemyTypes(); track e.id) {
-                                  <option [value]="e.id">{{ e.name }}</option>
-                                }
-                              </select>
-                            </label>
-                            <label class="field">
-                              <span>出る確率（%）</span>
-                              <input type="number" min="0.1" max="100" step="0.1" [ngModel]="chancePercent(c)" (focus)="beginEdit()" (ngModelChange)="c.chance = clampChance($event); edited()" />
-                            </label>
-                          </div>
-                          <p class="muted small">壊したとき、この確率で敵が出ます（0.1〜100%）。出なければ中身なしと同じです。</p>
-                        }
-                      }
-                      <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>
-                      <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+                      <ng-container *ngTemplateOutlet="objectPanel; context: { $implicit: sel.ref }" />
+                      <p class="muted small">攻撃で壊れる置物です（{{ breakHits(sel.ref.type) }}回で壊れる）。壊すと中身が出て、中身（出てきた敵）が消えてから{{ breakRespawnSec }}秒後に元に戻ります。</p>
                     }
                   }
                   <p class="muted small">Delete・Backspace キーでも消せます。ドラッグで動かせます。</p>
                 } @else {
                   <p class="muted small">
-                    置いてある物をクリックすると選べます。敵・壊れる置物は、ここで中身を変えられます。NPC・家はクリックするとモーダルが開きます。
+                    置いてある物をクリックすると選べます。敵は、ここで種類を変えられます。NPC・家・置物・看板はクリックするとモーダルが開きます。
                   </p>
                 }
               </div>
@@ -869,6 +827,60 @@
         </div>
       </div>
     </div>
+  }
+
+  <!-- 右の欄の、選んだ置物・看板(front#333) -->
+  <ng-template #objectPanel let-o>
+    <div class="selected-title">{{ staticName(o.type) }} <span class="muted">（x {{ o.x }} ・ y {{ o.y }}）</span></div>
+    <p class="muted small">{{ objectSummary(o) }}</p>
+    <button type="button" class="btn small" (click)="openModal(selection()!)">{{ o.type === 'sign' ? '看板の向き・文章を変える' : '置物の設定を変える' }}</button>
+    <button type="button" class="btn small" (click)="deleteSelected()">この置物を消す</button>
+  </ng-template>
+
+  @if (objectModal(); as o) {
+    @if (objectDraft(); as draft) {
+      <div class="modal" (click)="$event.target === $event.currentTarget && closeModal()">
+        <div class="modal-card house-card" role="dialog" [attr.aria-label]="staticName(o.type)">
+          <h2>{{ staticName(o.type) }} <span class="muted small">（x {{ o.x }} ・ y {{ o.y }}）</span></h2>
+          @if (o.type === 'sign') {
+            <div class="house-modal-body">
+              <div>
+                <div class="field row">
+                  <span>向き</span>
+                  <div class="rotate-row">
+                    <button type="button" class="btn small" (click)="rotateSign()">↻ 回す</button>
+                    <span class="muted small" data-testid="sign-dir">{{ signDirLabel() }}</span>
+                  </div>
+                </div>
+                <p class="muted small">自動のときは、近くのほかのダンジョンへの端を指し、行き先のダンジョンの色の帯が付きます。向きを決めると帯は付きません。</p>
+                <label class="field">
+                  <span>看板の文章（1行が1ページ・20行まで）</span>
+                  <textarea rows="5" maxlength="4200" aria-label="看板の文章" [ngModel]="draft.lines" (ngModelChange)="setSignLines($event)"></textarea>
+                </label>
+                <p class="muted small">{{ signDraftPreview() }}</p>
+              </div>
+              <div>
+                <div class="house-preview">
+                  <canvas #signCanvas class="sign-canvas" width="300" height="220" aria-label="看板の見本"></canvas>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <app-rpg-object-form [type]="o.type" [draft]="draft" [placement]="true" (changed)="onObjectDraftChanged()" />
+          }
+          @if (objectProblem(); as p) {
+            <p class="house-problem" role="alert">{{ p }}</p>
+          }
+          <div class="modal-actions spread">
+            <button type="button" class="btn danger" (click)="deleteSelected()">この置物を消す</button>
+            <span>
+              <button type="button" class="btn" (click)="closeModal()">やめる</button>
+              <button type="button" class="btn primary" [disabled]="!!objectProblem()" (click)="applyObject()">決める</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   @if (toastMessage()) {

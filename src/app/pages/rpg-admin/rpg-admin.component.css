@@ -1064,3 +1064,11 @@ textarea {
 .reward-row input[type='number'] {
   width: 90px;
 }
+
+/* 看板のモーダルの見本(front#333) */
+.sign-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}

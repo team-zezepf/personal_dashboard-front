@@ -1,10 +1,10 @@
-import { BREAK_HITS, ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, shelfFace, signExit, staticDepth, swordColorOf } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { SIGN_BANDS, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign } from './rpg-props';
+import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign, relTint, tintOf } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -103,15 +103,16 @@ export class RpgRenderer {
     this.drawAttacks();
     if (game.map.hasHeights) this.drawCursorTile();
     if (pal.fireflies) this.drawFireflies();
-    // 看板(front#274)の上に、行き先のダンジョンの名前
+    // 看板(front#274)の上に、指している先のダンジョンの名前(front#333: 向きを決めた看板は、その向きの端)
     for (const o of game.map.statics) {
-      if (o.type !== 'sign') continue;
-      const exit = signExit(game.maps, game.area, o.x, o.y);
+      const sign = o.type === 'sign';
+      if (!sign && !o.showMessage) continue;
       const [sx, sy] = this.at(o.x, o.y);
       if (!this.onScreen(sx, sy, 80)) continue;
+      const exit = sign ? signPointing(game.maps, game.area, o).exit : null;
       if (exit) this.label(`▶ ${game.dungeonOf(exit.to).name}`, sx, sy - 52, 'rgba(124,58,237,0.88)');
-      // 読める看板にカーソルを乗せると「看板を読む」(front#314)
-      if (game.hover === o && game.signLines(o)) this.label('看板を読む', sx, sy - (exit ? 74 : 52));
+      // 読める看板・メッセージを表示する置物(front#333)にカーソルを乗せると「看板を読む」「調べる」(front#314)
+      if (game.hover === o && game.signLines(o)) this.label(sign ? '看板を読む' : '調べる', sx, sy - (exit ? 74 : 52));
     }
     this.drawEffects();
     ctx.restore();
@@ -486,6 +487,8 @@ export class RpgRenderer {
 
   // 壊れる置物は、叩かれるとゆれ・ひびが入り、元に戻るときはだんだん濃くなる。狙っている・マウスの下なら名前を出す(front#264)
   private drawStaticState(o: StaticObj, sx: number, sy: number): void {
+    // 擬態している敵がふりをしている置物(front#333)は、敵のほうで置物の絵を描く
+    if (o.mimicked) return;
     const ctx = this.ctx;
     const game = this.game;
     const dx = o.shake ? Math.sin(this.time * 60) * 3 * o.shake : 0;
@@ -494,7 +497,7 @@ export class RpgRenderer {
     this.drawStatic(o, sx + dx, sy);
     if (o.hits && (o.type === 'rock' || o.type === 'crystal')) this.drawCracks(o, sx + dx, sy);
     ctx.restore();
-    if (BREAK_HITS[o.type] && (game.hover === o || game.player.target === o)) {
+    if (isBreakableObj(o) && (game.hover === o || game.player.target === o)) {
       const labelY = o.type === 'armor' ? 62 : o.type === 'crystal' ? 44 : 32;
       this.label(STATIC_NAMES[o.type], sx, sy - labelY, game.player.target === o ? 'rgba(220,38,38,0.85)' : undefined);
     }
@@ -517,36 +520,45 @@ export class RpgRenderer {
     ctx.stroke();
   }
 
+  // 置物の色合い(front#333)は、置いた置物1つずつの設定 → 種類のデフォルト → 今の色 の順に決まる(objectTintOf)
   private drawStatic(o: StaticObj, sx: number, sy: number): void {
+    const t = objectTintOf(o);
     switch (o.type) {
-      case 'grass': return this.drawGrass(sx, sy);
-      case 'chest': return drawChest(this.ctx, sx, sy, o.hits ?? 0);
-      case 'wall': return this.drawWall(sx, sy, o);
-      case 'armor': return drawArmor(this.ctx, sx, sy, o.hits ?? 0, this.time);
-      case 'barrel': return drawBarrel(this.ctx, sx, sy);
-      case 'pot': return drawPot(this.ctx, sx, sy);
-      case 'bones': return drawBones(this.ctx, sx, sy);
-      case 'bookshelf': return drawBookshelf(this.ctx, sx, sy, shelfFace(this.game.map, o), o.x * 7 + o.y * 13);
-      case 'candle': return drawCandle(this.ctx, sx, sy, this.time);
-      case 'grave': return drawGrave(this.ctx, sx, sy);
+      case 'grass': return this.drawGrass(sx, sy, t);
+      case 'chest': return drawChest(this.ctx, sx, sy, o.hits ?? 0, t?.m ?? '#a8682f', t?.d ?? '#f2c14e');
+      case 'wall': return this.drawWall(sx, sy, o, t);
+      case 'armor': return drawArmor(this.ctx, sx, sy, o.hits ?? 0, this.time, t?.m ?? '#94a3b8', t?.d ?? '#dc2626');
+      case 'barrel': return drawBarrel(this.ctx, sx, sy, t);
+      case 'pot': return drawPot(this.ctx, sx, sy, t);
+      case 'bones': return drawBones(this.ctx, sx, sy, t);
+      case 'bookshelf': return drawBookshelf(this.ctx, sx, sy, shelfFace(this.game.map, o), o.x * 7 + o.y * 13, t);
+      case 'candle': return drawCandle(this.ctx, sx, sy, this.time, t);
+      case 'grave': return drawGrave(this.ctx, sx, sy, t);
       // 牢獄の置物(front#321)
-      case 'bars': return drawBars(this.ctx, sx, sy, barsAlong(this.game.map, o));
-      case 'shackle': return drawShackle(this.ctx, sx, sy);
-      case 'bucket': return drawBucket(this.ctx, sx, sy);
+      case 'bars': return drawBars(this.ctx, sx, sy, barsAlong(this.game.map, o), t);
+      case 'shackle': return drawShackle(this.ctx, sx, sy, t);
+      case 'bucket': return drawBucket(this.ctx, sx, sy, t);
       case 'sign': {
-        // 看板(front#274)は、いちばん近いほかのダンジョンへの端を指し、行き先のダンジョンの色の帯を入れる
-        const exit = signExit(this.game.maps, this.game.area, o.x, o.y);
-        return drawSign(this.ctx, sx, sy, exit?.side ?? null, exit ? SIGN_BANDS[this.game.dungeonOf(exit.to).theme] ?? null : null);
+        // 看板(front#274)は、決めた向き(front#333)か、いちばん近いほかのダンジョンへの端を指す。行き先のダンジョンの色の帯は自動のときだけ
+        const ptr = signPointing(this.game.maps, this.game.area, o);
+        const band = ptr.auto && ptr.exit ? SIGN_BANDS[this.game.dungeonOf(ptr.exit.to).theme] ?? null : null;
+        return drawSign(this.ctx, sx, sy, ptr.side, band);
       }
-      case 'tree': return this.drawTree(sx, sy);
-      case 'rock': return this.drawRock(sx, sy);
+      case 'tree': return this.drawTree(sx, sy, t);
+      case 'rock': return this.drawRock(sx, sy, t);
       case 'house': return this.drawHouse(o, sx, sy);
-      case 'cliff': return this.drawCliff(sx, sy, o);
-      case 'fern': return this.drawFern(sx, sy);
-      case 'crystal': return this.drawCrystal(sx, sy);
-      case 'pillar': return this.drawPillar(sx, sy, o);
-      case 'volcano': return this.drawVolcano(sx, sy);
+      case 'cliff': return this.drawCliff(sx, sy, o, t);
+      case 'fern': return this.drawFern(sx, sy, t);
+      case 'crystal': return this.drawCrystal(sx, sy, t);
+      case 'pillar': return this.drawPillar(sx, sy, o, t);
+      case 'volcano': return this.drawVolcano(sx, sy, t);
     }
+  }
+
+  /** 「置物」タブの一覧の見本など、ゲームの画面の外で置物を1つ描く(front#333)。sx, sy は足元 */
+  drawObjectPreview(game: RpgGame, o: StaticObj, sx: number, sy: number): void {
+    this.game = game;
+    this.drawStatic(o, sx, sy);
   }
 
   private drawNotice(x: number, y: number, mark: '!' | '?'): void {
@@ -573,9 +585,11 @@ export class RpgRenderer {
     ctx.fill();
   }
 
-  private drawTree(cx: number, cy: number): void {
+  private drawTree(cx: number, cy: number, t: Tint | null = null): void {
     const ctx = this.ctx;
-    const p = this.game.theme.tree;
+    const theme = this.game.theme.tree;
+    // 色合い(front#333): 葉 = 明るい色、幹 = 暗い色
+    const p = t ? { ...theme, trunk: t.d, leaves: theme.leaves.map((l) => relTint(t.m, l, theme.leaves[1])) } : theme;
     const s = p.scale;
     this.shadow(cx, cy, 18 * s, 7 * s);
     ctx.fillStyle = p.trunk;
@@ -589,31 +603,33 @@ export class RpgRenderer {
     }
   }
 
-  private drawRock(cx: number, cy: number): void {
-    const [dark, light] = this.game.theme.rock;
+  private drawRock(cx: number, cy: number, t: Tint | null = null): void {
+    const [dark, light] = t ? [t.d, t.m] : this.game.theme.rock;
     this.shadow(cx, cy, 15, 6, 0.15);
     this.poly([[cx - 14, cy], [cx - 10, cy - 14], [cx + 2, cy - 18], [cx + 13, cy - 9], [cx + 14, cy]], dark);
     this.poly([[cx - 10, cy - 14], [cx + 2, cy - 18], [cx + 13, cy - 9], [cx, cy - 8]], light);
   }
 
-  private drawCliff(cx: number, cy: number, o: StaticObj): void {
+  private drawCliff(cx: number, cy: number, o: StaticObj, t: Tint | null = null): void {
+    const k = tintOf(t, '#a47148', '#7d5232');
     const h = 36 + ((o.x * 5 + o.y * 3) % 4) * 6;
     const L: Pt = [cx - 30, cy];
     const B: Pt = [cx, cy + 15];
     const R: Pt = [cx + 30, cy];
-    this.poly([L, B, [cx, cy + 15 - h], [cx - 26, cy - h + 8]], '#a47148');
-    this.poly([B, R, [cx + 26, cy - h + 10], [cx, cy + 15 - h]], '#7d5232');
-    this.poly([[cx - 26, cy - h + 8], [cx, cy + 15 - h], [cx + 26, cy - h + 10], [cx + 4, cy - h - 4]], '#c08a5a');
+    this.poly([L, B, [cx, cy + 15 - h], [cx - 26, cy - h + 8]], k('#a47148'));
+    this.poly([B, R, [cx + 26, cy - h + 10], [cx, cy + 15 - h]], k('#7d5232'));
+    this.poly([[cx - 26, cy - h + 8], [cx, cy + 15 - h], [cx + 26, cy - h + 10], [cx + 4, cy - h - 4]], k('#c08a5a'));
   }
 
   // 草むら(front#264)。細い葉を束ねて、風で少しゆらす
-  private drawGrass(cx: number, cy: number): void {
+  private drawGrass(cx: number, cy: number, t: Tint | null = null): void {
     const ctx = this.ctx;
+    const k = tintOf(t, '#6cb84f', '#4f9a3c');
     this.shadow(cx, cy, 14, 5, 0.15);
     ctx.lineCap = 'round';
     for (let i = -4; i <= 4; i++) {
       const sway = Math.sin(this.time * 2 + cx * 0.1 + i) * 1.5;
-      ctx.strokeStyle = i % 2 ? '#4f9a3c' : '#6cb84f';
+      ctx.strokeStyle = i % 2 ? k('#4f9a3c') : k('#6cb84f');
       ctx.lineWidth = 2.4;
       ctx.beginPath();
       ctx.moveTo(cx + i * 2.6, cy);
@@ -624,9 +640,12 @@ export class RpgRenderer {
 
   // 壁(front#268)。マスいっぱいの石積みのブロックで、色はテーマのタイルの石と同じ。
   // 上の面は少し明るく、手前の2つの面にはレンガの目地を描く(段ごとに縦の目地を半分ずらす)。となりに並べるとひと続きに見える
-  private drawWall(cx: number, cy: number, o: StaticObj): void {
+  private drawWall(cx: number, cy: number, o: StaticObj, t: Tint | null = null): void {
     const ctx = this.ctx;
-    const { stone, grout } = this.game.theme.tile;
+    const tile = this.game.theme.tile;
+    // 色合い(front#333): 石 = 明るい色、目地 = 暗い色
+    const stone = t ? tile.stone.map((c) => relTint(t.m, c, tile.stone[0])) : tile.stone;
+    const grout = t ? t.d : tile.grout;
     const h = WALL_HEIGHT;
     const top: Pt[] = [[cx, cy - TH / 2 - h], [cx + TW / 2, cy - h], [cx, cy + TH / 2 - h], [cx - TW / 2, cy - h]];
     this.poly([[cx - TW / 2, cy - h], [cx, cy + TH / 2 - h], [cx, cy + TH / 2], [cx - TW / 2, cy]], shade(stone[(o.x + o.y) % 3], 0.78));
@@ -666,15 +685,16 @@ export class RpgRenderer {
     ctx.stroke();
   }
 
-  private drawFern(cx: number, cy: number): void {
+  private drawFern(cx: number, cy: number, t: Tint | null = null): void {
     const ctx = this.ctx;
+    const k = tintOf(t, '#76a84a', '#5f8f3a');
     this.shadow(cx, cy, 14, 5, 0.15);
     for (let i = 0; i < 7; i++) {
       const a = -Math.PI + 0.35 + i * 0.4 + Math.sin(this.time * 1.5 + cx) * 0.04;
       ctx.save();
       ctx.translate(cx, cy - 2);
       ctx.rotate(a);
-      ctx.fillStyle = i % 2 ? '#5f8f3a' : '#76a84a';
+      ctx.fillStyle = i % 2 ? k('#5f8f3a') : k('#76a84a');
       ctx.beginPath();
       ctx.ellipse(13, 0, 13, 3.5, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -682,27 +702,29 @@ export class RpgRenderer {
     }
   }
 
-  private drawCrystal(cx: number, cy: number): void {
+  private drawCrystal(cx: number, cy: number, t: Tint | null = null): void {
     const ctx = this.ctx;
+    const k = tintOf(t, '#7ef9ff', '#3fd3e6');
     this.shadow(cx, cy, 12, 5, 0.15);
     ctx.save();
-    ctx.shadowColor = '#7ef9ff';
+    ctx.shadowColor = k('#7ef9ff');
     ctx.shadowBlur = 10 + Math.sin(this.time * 2 + cx) * 6;
-    this.poly([[cx - 6, cy], [cx - 9, cy - 18], [cx - 2, cy - 30], [cx + 3, cy - 18], [cx + 1, cy]], '#7ef9ff');
-    this.poly([[cx + 1, cy], [cx + 3, cy - 18], [cx + 10, cy - 22], [cx + 9, cy - 4]], '#3fd3e6');
-    this.poly([[cx - 2, cy - 30], [cx + 3, cy - 18], [cx - 4, cy - 16]], '#d8fdff');
+    this.poly([[cx - 6, cy], [cx - 9, cy - 18], [cx - 2, cy - 30], [cx + 3, cy - 18], [cx + 1, cy]], k('#7ef9ff'));
+    this.poly([[cx + 1, cy], [cx + 3, cy - 18], [cx + 10, cy - 22], [cx + 9, cy - 4]], k('#3fd3e6'));
+    this.poly([[cx - 2, cy - 30], [cx + 3, cy - 18], [cx - 4, cy - 16]], k('#d8fdff'));
     ctx.restore();
   }
 
-  private drawPillar(cx: number, cy: number, o: StaticObj): void {
+  private drawPillar(cx: number, cy: number, o: StaticObj, t: Tint | null = null): void {
     const ctx = this.ctx;
+    const k = tintOf(t, '#6b6785', '#3a3650');
     this.shadow(cx, cy, 16, 7, 0.3);
-    this.poly([[cx - 14, cy - 2], [cx, cy + 5], [cx + 14, cy - 2], [cx + 14, cy - 8], [cx - 14, cy - 8]], '#3a3650');
-    ctx.fillStyle = '#6b6785';
+    this.poly([[cx - 14, cy - 2], [cx, cy + 5], [cx + 14, cy - 2], [cx + 14, cy - 8], [cx - 14, cy - 8]], k('#3a3650'));
+    ctx.fillStyle = k('#6b6785');
     ctx.fillRect(cx - 10, cy - 64, 10, 58);
-    ctx.fillStyle = '#57536e';
+    ctx.fillStyle = k('#57536e');
     ctx.fillRect(cx, cy - 64, 10, 58);
-    this.poly([[cx - 14, cy - 64], [cx, cy - 70], [cx + 14, cy - 64], [cx, cy - 58]], '#7e7a99');
+    this.poly([[cx - 14, cy - 64], [cx, cy - 70], [cx + 14, cy - 64], [cx, cy - 58]], k('#7e7a99'));
     if (o.torch) {
       const fy = cy - 76;
       const fl = Math.sin(this.time * 14 + cx) * 2;
@@ -718,11 +740,12 @@ export class RpgRenderer {
     }
   }
 
-  private drawVolcano(cx: number, cy: number): void {
+  private drawVolcano(cx: number, cy: number, t: Tint | null = null): void {
     const ctx = this.ctx;
+    const k = tintOf(t, '#8a5a3c', '#5b3a29');
     const g = ctx.createLinearGradient(0, cy - 100, 0, cy + 20);
-    g.addColorStop(0, '#5b3a29');
-    g.addColorStop(1, '#8a5a3c');
+    g.addColorStop(0, k('#5b3a29'));
+    g.addColorStop(1, k('#8a5a3c'));
     this.poly([[cx - 90, cy + 20], [cx - 18, cy - 96], [cx + 18, cy - 96], [cx + 90, cy + 20]], g);
     this.poly([[cx, cy - 96], [cx + 18, cy - 96], [cx + 90, cy + 20], [cx + 20, cy + 36]], 'rgba(0,0,0,0.15)');
     ctx.fillStyle = '#ff6a1a';
@@ -828,18 +851,25 @@ export class RpgRenderer {
     const elapsed = e.act?.t ?? 0;
     const x = sx + e.lunge * 5 * e.dir + (e.act ? chargeShake(def, elapsed, this.time) : 0);
     const y = sy - (e.act ? jumpHeight(def, elapsed) : 0);
-    ctx.save();
-    ctx.translate(x, y);
-    const top = drawEnemyBody(ctx, def, {
-      dir: e.dir, time: this.time, moving: e.moving, flash: e.flash > 0, aggro: e.aggro, lunge: e.lunge, seed: e.seed,
-      cast: e.act ? castOf(def, elapsed) : 0
-    });
-    ctx.restore();
+    let top: number;
+    if (e.disguise && !e.aggro) {
+      // 置物に擬態している敵(front#333)は、正体を現すまで、その置物の絵で描く
+      this.drawStatic(e.disguise, x, y);
+      top = 36;
+    } else {
+      ctx.save();
+      ctx.translate(x, y);
+      top = drawEnemyBody(ctx, def, {
+        dir: e.dir, time: this.time, moving: e.moving, flash: e.flash > 0, aggro: e.aggro, lunge: e.lunge, seed: e.seed,
+        cast: e.act ? castOf(def, elapsed) : 0
+      });
+      ctx.restore();
+    }
     if (def.boss) this.drawGuardBarrier(e, x, y, top);
     const hovered = game.hover === e;
     const barY = y - top;
-    // ふりをしている化ける敵(front#270)は、置物と同じように名前だけを出す
-    const disguise = e.aggro ? null : disguiseOf(def);
+    // ふりをしている化ける敵(front#270)・置物に擬態している敵(front#333)は、置物と同じように名前だけを出す
+    const disguise = e.aggro ? null : e.disguise ? STATIC_NAMES[e.disguise.type] : disguiseOf(def);
     if (disguise) {
       if (targeted || hovered) this.label(disguise, sx, barY - 10, targeted ? 'rgba(220,38,38,0.85)' : undefined);
     } else if (targeted || hovered || e.hp < def.hp || def.boss) {

@@ -5,7 +5,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
+import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgObjectDef, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer, areaBgmId, browserStorage } from '../../rpg/rpg-bgm';
 import { SePlayer } from '../../rpg/rpg-se';
@@ -18,6 +18,7 @@ import {
   POINT_SHOP_ICONS,
   RECIPES,
   setCrafts,
+  setObjectDefs,
   SHOP_ITEMS,
   STAT_DEFS,
   StatKey,
@@ -360,18 +361,22 @@ export class RpgPageComponent implements OnDestroy {
     const enemies$ = this.rpgService.getEnemies().pipe(catchError(() => of(DEFAULT_ENEMIES as unknown as RpgEnemy[])));
     // 合成の装備(front#288)が読めなければ、最初の8つで遊べるようにする。セーブデータを読む前に入れておく(知らない装備は捨てるため)
     const crafts$ = this.rpgService.getCrafts().pipe(catchError(() => of(DEFAULT_CRAFTS as RpgCraft[])));
+    // 置物の種類ごとのデフォルト(front#333)が読めなければ、何も決めていない置物で遊べるようにする
+    const objectDefs$ = this.rpgService.getObjectDefs().pipe(catchError(() => of([] as RpgObjectDef[])));
     forkJoin({
       maps: this.rpgService.getMaps(),
       dungeons: this.rpgService.getDungeons(),
       save: this.rpgService.getSave(),
       bgms: bgms$,
       enemies: enemies$,
-      crafts: crafts$
+      crafts: crafts$,
+      objectDefs: objectDefs$
     }).subscribe({
-      next: ({ maps, dungeons, save, bgms, enemies, crafts }) => {
+      next: ({ maps, dungeons, save, bgms, enemies, crafts, objectDefs }) => {
         this.bgms = bgms;
         setEnemies(enemies);
         setCrafts(crafts);
+        setObjectDefs(objectDefs);
         if (maps.length === 0) {
           this.loadError.set('エリアがまだ1つもありません');
           this.isLoading.set(false);

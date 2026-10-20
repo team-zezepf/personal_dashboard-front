@@ -5,7 +5,7 @@ import { concat, forkJoin, toArray } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RPG_BGM_ACCEPT, RPG_BGM_MAX_BYTES, RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgAreaMove, RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectContents, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
+import { RpgAreaMove, RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectDef, RpgQuest, RpgQuestKind } from '../../models/rpg.models';
 import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import {
   DEFAULT_ROOF, DEFAULT_WALL, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
@@ -14,9 +14,10 @@ import {
 import { isRoleAllowed } from '../../config/tool-access';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
-  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, sideLabel, signExit,
-  signLinesOf,
+  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, SIGN_DIRS, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, objectSettingsOf,
+  sideLabel, signExit, signLinesOf, signPointing,
   setCrafts,
+  setObjectDefs,
   themeOf
 } from '../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../rpg/rpg-game';
@@ -25,6 +26,10 @@ import { lookFromColors } from '../../rpg/rpg-look';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgEnemyPageComponent } from './rpg-enemy-page/rpg-enemy-page.component';
 import { RpgCraftPageComponent } from './rpg-craft-page/rpg-craft-page.component';
+import { RpgObjectPageComponent } from './rpg-object-page/rpg-object-page.component';
+import { RpgObjectFormComponent } from './rpg-object-form/rpg-object-form.component';
+import { ObjectDraft, applyDraft, draftOfObject, draftProblem } from '../../rpg/rpg-object';
+import { SIGN_BANDS, drawSign } from '../../rpg/rpg-props';
 import { RpgSeSectionComponent } from './rpg-se-section/rpg-se-section.component';
 import { EnemyDef, drawEnemyThumb, setEnemies } from '../../rpg/rpg-enemy';
 import {
@@ -78,7 +83,7 @@ export interface LayoutCell {
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, NgTemplateOutlet,RpgLookEditorComponent, RpgEnemyPageComponent, RpgCraftPageComponent, RpgSeSectionComponent],
+  imports: [HeaderComponent, FormsModule, NgTemplateOutlet, RpgLookEditorComponent, RpgEnemyPageComponent, RpgCraftPageComponent, RpgSeSectionComponent, RpgObjectPageComponent, RpgObjectFormComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -101,6 +106,9 @@ export class RpgAdminPageComponent implements OnDestroy {
   // 合成の装備とレシピ(front#288)
   readonly crafts = signal<RpgCraft[]>([]);
   readonly craftDirty = signal(false);
+  // 置物の種類ごとのデフォルト(「置物」タブで保存すると変わる。front#333)
+  readonly objectDefs = signal<RpgObjectDef[]>([]);
+  readonly objectDirty = signal(false);
   readonly enemyTypes = computed(() => {
     this.enemies();
     return Object.entries(ENEMIES).map(([id, e]) => ({ id, name: e.name }));
@@ -146,6 +154,16 @@ export class RpgAdminPageComponent implements OnDestroy {
     shape: '1x1', rotation: 0, roof: DEFAULT_ROOF, lowRoof: false, wall: DEFAULT_WALL, noWindow: false
   });
   readonly houseShapes = HOUSE_SHAPES;
+  // 置いた置物・看板の設定のモーダル(front#333)。決めるまでは下書き(objectDraft)を変える
+  readonly objectModal = signal<RpgMapObject | null>(null);
+  readonly objectDraft = signal<ObjectDraft | null>(null);
+  readonly objectDraftVersion = signal(0);
+  readonly objectProblem = computed(() => {
+    this.objectDraftVersion();
+    const d = this.objectDraft();
+    return d ? draftProblem(d) : null;
+  });
+  private readonly signCanvas = viewChild<ElementRef<HTMLCanvasElement>>('signCanvas');
   // クエスト(front#239)。NPCのモーダルで、いま編集しているクエストの番号
   readonly questIndex = signal(0);
   readonly questKinds = Object.entries(QUEST_KIND_LABELS) as [RpgQuestKind, string][];
@@ -232,7 +250,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
-  readonly page = signal<'map' | 'bgm' | 'enemy' | 'craft'>('map');
+  readonly page = signal<'map' | 'bgm' | 'enemy' | 'craft' | 'object'>('map');
   // 「BGM・効果音」の中のタブ(front#318)
   readonly soundTab = signal<'bgm' | 'se'>('bgm');
   readonly bgms = signal<RpgBgm[]>([]);
@@ -275,7 +293,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   private placedToOpen: Selection | null = null;
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (this.isDirty() || this.enemyDirty() || this.craftDirty()) e.preventDefault();
+    if (this.isDirty() || this.enemyDirty() || this.craftDirty() || this.objectDirty()) e.preventDefault();
   };
 
   constructor() {
@@ -287,6 +305,12 @@ export class RpgAdminPageComponent implements OnDestroy {
         if (def) drawEnemyThumb(ref.nativeElement, def);
       }
     });
+    // 看板のモーダルの見本(front#333)。向きを回したら描き直す
+    afterRenderEffect(() => {
+      this.objectDraftVersion();
+      this.objectModal();
+      this.drawSignPreview();
+    });
     afterNextRender(() => {
       if (!this.allowed) return;
       forkJoin({
@@ -294,11 +318,15 @@ export class RpgAdminPageComponent implements OnDestroy {
         dungeons: this.rpgService.getDungeons(),
         bgms: this.rpgService.getBgms(),
         enemies: this.rpgService.getEnemies(),
-        crafts: this.rpgService.getCrafts()
+        crafts: this.rpgService.getCrafts(),
+        objectDefs: this.rpgService.getObjectDefs()
       }).subscribe({
-        next: ({ maps, dungeons, bgms, enemies, crafts }) => {
+        next: ({ maps, dungeons, bgms, enemies, crafts, objectDefs }) => {
           setEnemies(enemies);
           this.enemies.set(enemies);
+          // 置物の種類ごとのデフォルト(front#333)。マップの置物の色・見本に使う
+          setObjectDefs(objectDefs);
+          this.objectDefs.set(objectDefs);
           // 置物の中身・クエストの報酬で選べるよう、合成の装備も ITEMS に入れておく
           setCrafts(crafts);
           this.crafts.set(crafts);
@@ -329,7 +357,13 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   /** 保存していない変更があるとき、ほかの画面へ移る前に確かめる(ルートの canDeactivate から呼ぶ) */
   confirmLeave(): boolean {
-    return (!this.isDirty() && !this.enemyDirty() && !this.craftDirty()) || confirm('保存していない変更があります。保存せずに移動しますか？');
+    return (!this.isDirty() && !this.enemyDirty() && !this.craftDirty() && !this.objectDirty()) || confirm('保存していない変更があります。保存せずに移動しますか？');
+  }
+
+  // 「置物」タブで保存したら、マップの置物を描き直す(front#333)
+  onObjectDefsSaved(defs: RpgObjectDef[]): void {
+    this.objectDefs.set(defs);
+    this.refresh();
   }
 
   // 「敵」タブで保存・削除したら、パレット・マップの敵を描き直す(front#229)
@@ -465,29 +499,6 @@ export class RpgAdminPageComponent implements OnDestroy {
     return item.tool.kind === 'ground' && item.tool.ground === 'w' ? this.currentTheme().liquidName : item.label;
   }
 
-  // ===== 看板の文章(front#314) =====
-
-  signText(o: RpgMapObject): string {
-    return (o.lines ?? []).join('\n');
-  }
-
-  // 打っている途中の空の行も残す(前後の空白・空の行は API が捨てる)
-  setSignText(o: RpgMapObject, text: string): void {
-    o.lines = text.split('\n');
-    this.edited();
-  }
-
-  // 欄の下に出す、ゲームでの見え方
-  signPreview(o: RpgMapObject): string {
-    const own = (o.lines ?? []).filter((l) => l.trim()).length;
-    if (own) return `${own}ページ。クリックすると、この順に出ます。`;
-    const map = this.current();
-    const exit = map ? signExit(this.maps(), map, o.x, o.y) : null;
-    const to = exit ? this.dungeons().find((d) => d.id === exit.to.dungeonId) : null;
-    const auto = signLinesOf([], to ?? null);
-    return auto ? `空なので、ゲームでは「${auto[0]}」と出ます。` : '空なので、ゲームではクリックしても何も出ません。';
-  }
-
   // パレットの敵の項目の、敵の情報(front#310)。敵でなければ null
   enemyOf(item: PaletteItem): EnemyDef | null {
     return item.tool.kind === 'enemy' ? (ENEMIES[item.tool.type] ?? null) : null;
@@ -611,7 +622,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     } else if (event.ctrlKey && event.key === 'y') {
       event.preventDefault();
       this.redo();
-    } else if ((event.key === 'Delete' || event.key === 'Backspace') && this.selection() && !this.npcModal() && !this.houseModal()) {
+    } else if ((event.key === 'Delete' || event.key === 'Backspace') && this.selection() && !this.npcModal() && !this.houseModal() && !this.objectModal()) {
       // 選んでいる物を消す(Backspace も。front#290)
       event.preventDefault();
       this.deleteSelected();
@@ -756,6 +767,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.selection.set(null);
     this.npcModal.set(null);
     this.houseModal.set(null);
+    this.objectModal.set(null);
     this.markDirty();
   }
 
@@ -769,28 +781,22 @@ export class RpgAdminPageComponent implements OnDestroy {
     return BREAK_HITS[type as StaticType] ?? 0;
   }
 
-  /** 中身の種類を変える。アイテムは回復薬1個、敵はいちばん上の敵から始める */
-  setContentsKind(obj: RpgMapObject, kind: 'item' | 'enemy' | null): void {
-    if ((obj.contents?.kind ?? null) === kind) return;
-    this.beginEdit();
-    obj.contents = kind === 'item' ? { kind, id: 'potion', count: 1 } : kind === 'enemy' ? { kind, id: this.enemyTypes()[0]?.id ?? 'slime', count: 1 } : null;
-    this.edited();
-    this.version.update((v) => v + 1);
-  }
-
-  clampCount(value: number): number {
-    return Math.min(9, Math.max(1, Math.round(Number(value) || 1)));
-  }
-
-  // 中の敵が出る確率(front#284)。画面では%(0.1きざみ)で、データでは0.001〜1
-  chancePercent(c: RpgObjectContents): number {
-    return Math.round((c.chance ?? 1) * 1000) / 10;
-  }
-
-  clampChance(percent: number | string): number {
-    const n = Number(percent);
-    if (!Number.isFinite(n)) return 1;
-    return Math.min(1000, Math.max(1, Math.round(n * 10))) / 1000;
+  /** 右の欄に出す、置いた置物の設定のまとめ(front#333) */
+  objectSummary(o: RpgMapObject): string {
+    if (o.type === 'sign') {
+      const dir = SIGN_DIRS.find(([k]) => k === o.signDir);
+      const pages = (o.lines ?? []).filter((l) => l.trim()).length;
+      return `向き: ${dir ? dir[1] : '自動'}・文章: ${pages ? pages + 'ページ' : 'なし（矢印の先の案内）'}`;
+    }
+    const s = objectSettingsOf(o);
+    if (s.showMessage) return `💬 クリックするとメッセージ（${s.lines.length}ページ）を表示する（壊せない）`;
+    const own = (['color', 'items', 'enemies', 'mimics', 'hitMaterial'] as const).filter((k) => o[k] !== undefined && o[k] !== null).length;
+    const parts = [
+      s.items.length ? `🎁${s.items.map((r) => ITEMS[r.id]?.icon ?? '').join('')}` : '',
+      s.enemies.length ? `👾${s.enemies.map((r) => ENEMIES[r.id]?.name ?? r.id).join('・')}` : '',
+      s.mimics.length ? `🎭${s.mimics.map((r) => ENEMIES[r.id]?.name ?? r.id).join('・')}` : ''
+    ].filter((p) => p);
+    return `${parts.join(' ') || '出てくるもの・擬態なし'}${own ? '（この置物だけ変えた項目あり）' : '（すべてデフォルト）'}`;
   }
 
   // ===== クエスト(front#239) =====
@@ -909,6 +915,10 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (sel.kind === 'npc') {
       this.questIndex.set(0);
       this.npcModal.set(sel.ref);
+    } else if (sel.kind === 'object' || sel.kind === 'breakable') {
+      // 置いた置物・看板の設定(front#333)
+      this.objectDraft.set(draftOfObject(sel.ref));
+      this.objectModal.set(sel.ref);
     } else if (sel.kind === 'house') {
       const h = sel.ref;
       this.houseDraft.set({
@@ -922,6 +932,85 @@ export class RpgAdminPageComponent implements OnDestroy {
   closeModal(): void {
     this.npcModal.set(null);
     this.houseModal.set(null);
+    this.objectModal.set(null);
+  }
+
+  // ===== 置いた置物・看板のモーダル(front#333) =====
+
+  onObjectDraftChanged(): void {
+    this.objectDraftVersion.update((v) => v + 1);
+  }
+
+  /** 看板の向きを回す(家の向きと同じ)。自動 → 右下 → 左下 → 左上 → 右上 → 自動 … */
+  rotateSign(): void {
+    const d = this.objectDraft();
+    if (!d) return;
+    const order = [null, ...SIGN_DIRS.map(([k]) => k)];
+    d.signDir = order[(order.indexOf(d.signDir) + 1) % order.length];
+    this.onObjectDraftChanged();
+  }
+
+  signDirLabel(): string {
+    const o = this.objectModal();
+    const d = this.objectDraft();
+    const map = this.current();
+    if (!o || !d || !map) return '';
+    const dir = SIGN_DIRS.find(([k]) => k === d.signDir);
+    const ptr = signPointing(this.maps(), map, { x: o.x, y: o.y, signDir: d.signDir });
+    const to = ptr.exit ? this.dungeons().find((x) => x.id === ptr.exit!.to.dungeonId) : null;
+    const where = to ? `「${to.name}」への端` : 'ほかのダンジョンへの端がない';
+    return dir ? `${dir[1]}を指す（${ptr.exit ? where : 'その向きに' + where}）` : `自動（${ptr.exit ? where + ' = ' + (SIGN_DIRS.find(([, , s]) => s === ptr.side)?.[1] ?? '') + 'を指す' : where}）`;
+  }
+
+  setSignLines(text: string): void {
+    const d = this.objectDraft();
+    if (!d) return;
+    d.lines = text;
+    this.onObjectDraftChanged();
+  }
+
+  // 欄の下に出す、ゲームでの見え方
+  signDraftPreview(): string {
+    const o = this.objectModal();
+    const d = this.objectDraft();
+    const map = this.current();
+    if (!o || !d || !map) return '';
+    const own = d.lines.split('\n').filter((l) => l.trim()).length;
+    if (own) return `${own}ページ。クリックすると、この順に出ます。`;
+    const ptr = signPointing(this.maps(), map, { x: o.x, y: o.y, signDir: d.signDir });
+    const to = ptr.exit ? this.dungeons().find((x) => x.id === ptr.exit!.to.dungeonId) : null;
+    const auto = signLinesOf([], to ?? null);
+    return auto ? `空なので、ゲームでは「${auto[0]}」と出ます。` : '空なので、ゲームではクリックしても何も出ません。';
+  }
+
+  /** 看板の見本(モーダルの右)。矢印の向きと、自動のときは行き先のダンジョンの色の帯 */
+  private drawSignPreview(): void {
+    const cv = this.signCanvas()?.nativeElement;
+    const o = this.objectModal();
+    const d = this.objectDraft();
+    const map = this.current();
+    const ctx = cv?.getContext('2d');
+    if (!cv || !ctx || !o || !d || !map) return;
+    const ptr = signPointing(this.maps(), map, { x: o.x, y: o.y, signDir: d.signDir });
+    const to = ptr.auto && ptr.exit ? this.dungeons().find((x) => x.id === ptr.exit!.to.dungeonId) : null;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#cfeec0';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.translate(cv.width / 2, cv.height * 0.82);
+    ctx.scale(2.4, 2.4);
+    drawSign(ctx, 0, 0, ptr.side, to ? (SIGN_BANDS[to.theme] ?? null) : null);
+  }
+
+  /** モーダルの下書きを、置いた置物・看板に書き戻す */
+  applyObject(): void {
+    const o = this.objectModal();
+    const d = this.objectDraft();
+    if (!o || !d || !this.editor || this.objectProblem()) return;
+    this.editor.checkpoint();
+    applyDraft(o, d);
+    this.objectModal.set(null);
+    this.markDirty();
   }
 
   setHouseShape(shape: string): void {

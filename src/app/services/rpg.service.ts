@@ -8,6 +8,8 @@ import {
   RpgAreaMove,
   RpgBgm,
   RpgCraft,
+  RpgObjectDef,
+  RpgObjectDefInput,
   RpgCraftInput,
   RpgDungeon,
   RpgDungeonInput,
@@ -45,7 +47,10 @@ const SAVE_FIELDS = `
 
 const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
-  objects { type x y roof torch shape rotation lowRoof wall noWindow contents { kind id count chance } lines }
+  objects {
+    type x y roof torch shape rotation lowRoof wall noWindow lines
+    color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial showMessage signDir
+  }
   npcs {
     name x y hair body role notice lines look { ${LOOK_FIELDS} }
     quests {
@@ -65,6 +70,8 @@ const BGM_FIELDS = `id name filename size createdAt`;
 const SE_FIELDS = `id name filename size createdAt`;
 
 const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt`;
+
+const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 
 const ENEMY_FIELDS = `
   id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow guard sight respawn boss
@@ -175,6 +182,19 @@ export class RpgService {
       }),
       catchError(() => of(new Map<string, string>()))
     );
+  }
+
+  // ===== 置物の種類ごとのデフォルト(front#333) =====
+
+  getObjectDefs(): Observable<RpgObjectDef[]> {
+    const query = `query GetRpgObjectDefs { rpgObjectDefs { ${OBJECT_DEF_FIELDS} } }`;
+    return this.graphql.query<{ rpgObjectDefs: RpgObjectDef[] }>(query).pipe(map((res) => res.rpgObjectDefs));
+  }
+
+  // 管理者・開発者だけが保存できる(api#157)
+  saveObjectDef(input: RpgObjectDefInput): Observable<RpgObjectDef> {
+    const mutation = `mutation SaveRpgObjectDef($input: RpgObjectDefInput!) { saveRpgObjectDef(input: $input) { ${OBJECT_DEF_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgObjectDef: RpgObjectDef }>(mutation, { input }).pipe(map((res) => res.saveRpgObjectDef));
   }
 
   // ===== 敵(front#229) =====

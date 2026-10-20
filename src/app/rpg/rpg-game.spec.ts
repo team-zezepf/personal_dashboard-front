@@ -1,5 +1,8 @@
 import { RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
-import { BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf, setCrafts, shelfFace, signExit, walkSpeedOf } from './rpg-data';
+import {
+  BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, buildAreaMap, exitOf, isCraftItem, linkArrival, maxHpOf,
+  objectSettingsOf, objectTintOf, pickMimic, setCrafts, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
+} from './rpg-data';
 import { RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
@@ -970,7 +973,7 @@ describe('RpgGame', () => {
 
     it('たる・つぼ・骨の山は1回で壊れ、本棚・燭台・墓石は通れず、狙えず、壊れない(front#270)', () => {
       setup([
-        { type: 'barrel', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'skeleton', count: 1 } },
+        { type: 'barrel', x: 6, y: 5, torch: false, enemies: [{ id: 'skeleton', chance: 1 }] },
         { type: 'bookshelf', x: 5, y: 6, torch: false }, { type: 'candle', x: 4, y: 5, torch: false }, { type: 'grave', x: 5, y: 4, torch: false }
       ]);
       for (const [x, y] of [[5, 6], [4, 5], [5, 4]]) {
@@ -995,7 +998,7 @@ describe('RpgGame', () => {
 
     it('木のおけは1回で壊れ、鉄格子・鎖の杭は通れず、狙えず、壊れない(front#321)', () => {
       setup([
-        { type: 'bucket', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'rat', count: 1 } },
+        { type: 'bucket', x: 6, y: 5, torch: false, enemies: [{ id: 'rat', chance: 1 }] },
         { type: 'bars', x: 5, y: 6, torch: false }, { type: 'shackle', x: 4, y: 5, torch: false }
       ]);
       for (const [x, y] of [[5, 6], [4, 5]]) {
@@ -1039,7 +1042,7 @@ describe('RpgGame', () => {
     });
 
     it('中身のアイテムは置物のマスの隣に落ち(front#276)、置物は10秒後に元に戻る(エリアに入り直しても戻る)', () => {
-      setup([{ type: 'grass', x: 6, y: 5, torch: false, contents: { kind: 'item', id: 'potion', count: 2 } }]);
+      setup([{ type: 'grass', x: 6, y: 5, torch: false, items: [{ id: 'potion', count: 2, chance: 1 }] }]);
       const before = game.player.inv['potion'] ?? 0;
       const grass = staticAt(6, 5);
       game.player.target = grass;
@@ -1057,7 +1060,7 @@ describe('RpgGame', () => {
     });
 
     it('中身の敵はそのマスに現れて襲ってくる。倒すまで置物は戻らず、倒しても敵は出直さない', () => {
-      setup([{ type: 'fern', x: 6, y: 5, torch: false, contents: { kind: 'enemy', id: 'slime', count: 1 } }]);
+      setup([{ type: 'fern', x: 6, y: 5, torch: false, enemies: [{ id: 'slime', chance: 1 }] }]);
       const fern = staticAt(6, 5);
       game.player.target = fern;
       game.update(0.05);
@@ -1082,10 +1085,10 @@ describe('RpgGame', () => {
     it('中の敵は出る確率で出る。出なければ中身なしと同じで、時間がたつと元に戻る(front#284)', () => {
       const random = vi.spyOn(Math, 'random');
       try {
-        const contents = { kind: 'enemy' as const, id: 'hikarislime', count: 1, chance: 0.001 };
+        const enemies = [{ id: 'hikarislime', chance: 0.001 }];
         // 確率より大きい → 出ない
         random.mockReturnValue(0.5);
-        setup([{ type: 'grass', x: 6, y: 5, torch: false, contents }]);
+        setup([{ type: 'grass', x: 6, y: 5, torch: false, enemies }]);
         const grass = staticAt(6, 5);
         game.player.target = grass;
         game.update(0.05);
@@ -1094,7 +1097,7 @@ describe('RpgGame', () => {
         expect(grass.respawnIn).toBeGreaterThan(BREAK_RESPAWN_SEC - 1);
         // 確率より小さい → 出る
         random.mockReturnValue(0.0005);
-        setup([{ type: 'grass', x: 6, y: 5, torch: false, contents }]);
+        setup([{ type: 'grass', x: 6, y: 5, torch: false, enemies }]);
         const grass2 = staticAt(6, 5);
         game.player.atkCd = 0;
         game.player.target = grass2;
@@ -1103,6 +1106,132 @@ describe('RpgGame', () => {
       } finally {
         random.mockRestore();
       }
+    });
+  });
+
+  describe('置物の設定(front#333)', () => {
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    function setup(objects: RpgMap['objects'], at: [number, number] = [5, 5]): void {
+      game.loadMap(map('field', { objects }));
+      Object.assign(game.player, { x: at[0], y: at[1], path: [], target: null });
+      game.update(0);
+    }
+
+    const staticAt = (x: number, y: number) => game.map.statics.find((o) => o.x === x && o.y === y)!;
+    const kill = (e: unknown) => (game as unknown as { killEnemy(e: unknown): void }).killEnemy(e);
+
+    afterEach(() => {
+      setObjectDefs([]);
+      vi.restoreAllMocks();
+    });
+
+    it('設定は 置いた置物 → 種類のデフォルト → 今の動き の順に決まる', () => {
+      setObjectDefs([{ type: 'barrel', color: '#112233', dark: null, items: [{ id: 'potion', count: 1, chance: 1 }], enemies: [], mimics: [], hitMaterial: 'metal', updatedAt: '' }]);
+      expect(objectSettingsOf({ type: 'barrel' })).toMatchObject({ color: '#112233', items: [{ id: 'potion', count: 1, chance: 1 }], hitMaterial: 'metal' });
+      expect(objectSettingsOf({ type: 'barrel', items: [], hitMaterial: 'wood' })).toMatchObject({ items: [], hitMaterial: 'wood' });
+      // デフォルトがなければ今の音
+      expect(objectSettingsOf({ type: 'grass' }).hitMaterial).toBe('grass');
+      // 色は片方だけ決めても、もう片方は今の色で補う
+      expect(objectTintOf({ type: 'barrel' })?.m).toBe('#112233');
+      expect(objectTintOf({ type: 'barrel' })?.d).toBeTruthy();
+      expect(objectTintOf({ type: 'pot' })).toBeNull();
+      // 壊れない置物は、アイテム・敵を持たない
+      expect(objectSettingsOf({ type: 'tree', items: [{ id: 'potion', count: 1, chance: 1 }] }).items).toEqual([]);
+    });
+
+    it('メッセージを表示する置物は、壊れず・擬態せず、クリックすると読む', () => {
+      setup([{ type: 'barrel', x: 8, y: 5, torch: false, showMessage: true, lines: ['古いたるだ。', ' '], items: [{ id: 'potion', count: 1, chance: 1 }], mimics: [{ id: 'slime', chance: 1 }] }]);
+      expect(objectSettingsOf(staticAt(8, 5))).toMatchObject({ items: [], enemies: [], mimics: [], lines: ['古いたるだ。'] });
+      expect(game.enemies.some((e) => e.disguise)).toBe(false);
+      clickTile(8, 5);
+      run(3);
+      expect(ev.reads).toEqual([['たる', ['古いたるだ。']]]);
+      expect(staticAt(8, 5).hits ?? 0).toBe(0);
+      expect(staticAt(8, 5).broken).toBeFalsy();
+    });
+
+    it('出てくるアイテム・敵は1行ずつそれぞれの確率で出る。両方出ることもあり、出た敵を全部倒すまで戻らない', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.3);
+      setup([{
+        type: 'barrel', x: 6, y: 5, torch: false,
+        items: [{ id: 'potion', count: 2, chance: 0.5 }, { id: 'ether', count: 1, chance: 0.2 }],
+        enemies: [{ id: 'slime', chance: 1 }, { id: 'rat', chance: 0.5 }, { id: 'skeleton', chance: 0.1 }]
+      }]);
+      const barrel = staticAt(6, 5);
+      game.player.target = barrel;
+      game.update(0.05);
+      vi.restoreAllMocks();
+
+      expect(barrel.broken).toBe(true);
+      expect(game.drops.map((d) => d.id)).toEqual(['potion']);
+      const out = game.enemies.filter((e) => e.fromObject === barrel);
+      expect(out.map((e) => e.type)).toEqual(['slime', 'rat']);
+      // 同じマスに重ならない
+      expect(new Set(out.map((e) => `${e.x},${e.y}`)).size).toBe(2);
+
+      game.player.target = null;
+      game.locked = true;
+      kill(out[0]);
+      run(BREAK_RESPAWN_SEC + 2);
+      expect(barrel.broken).toBe(true);
+      kill(out[1]);
+      run(BREAK_RESPAWN_SEC + 2);
+      expect(barrel.broken).toBe(false);
+    });
+
+    it('擬態している敵を確率で決める。合計に届かなければただの置物', () => {
+      const list = [{ id: 'slime', chance: 0.2 }, { id: 'rat', chance: 0.3 }];
+      expect([0, 0.19, 0.2, 0.49, 0.5, 0.99].map((r) => pickMimic(list, r))).toEqual(['slime', 'slime', 'rat', 'rat', '', '']);
+      expect(pickMimic([], 0)).toBe('');
+    });
+
+    it('擬態している敵は置物のふりをし、近づくと正体を現す。倒すと出直す時間のあとに選び直し、外れたら置物に戻る', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      setup([{ type: 'pot', x: 10, y: 10, torch: false, mimics: [{ id: 'skeleton', chance: 0.5 }] }], [1, 1]);
+      const mimic = game.enemies.find((e) => e.disguise)!;
+      expect(mimic.type).toBe('skeleton');
+      expect(staticAt(10, 10).mimicked).toBe(true);
+      // 遠いうちは置物のまま(通れず、動かない)
+      run(1);
+      expect([mimic.x, mimic.y, mimic.aggro]).toEqual([10, 10, false]);
+      expect(game.map.walkable(10, 10)).toBe(false);
+      // 視界(ガイコツ兵は3マス)に入ると正体を現す
+      Object.assign(game.player, { x: 7, y: 10, path: [] });
+      run(0.5);
+      expect(mimic.aggro).toBe(true);
+      vi.restoreAllMocks();
+
+      // 倒したあと、出直すときに選び直す。外れたらただの置物に戻る
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      Object.assign(game.player, { x: 1, y: 1, path: [], target: null });
+      kill(mimic);
+      run(ENEMIES['skeleton'].respawn + 2);
+      expect(game.enemies.includes(mimic)).toBe(false);
+      expect(staticAt(10, 10).mimicked).toBeFalsy();
+      expect(game.map.walkable(10, 10)).toBe(false);
+    });
+
+    it('視界のない敵が擬態していても、隣まで来たら正体を現す', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      setup([{ type: 'pot', x: 10, y: 10, torch: false, mimics: [{ id: 'slime', chance: 1 }] }], [7, 10]);
+      const mimic = game.enemies.find((e) => e.disguise)!;
+      run(0.5);
+      expect(mimic.aggro).toBe(false);
+      Object.assign(game.player, { x: 9, y: 10, path: [] });
+      run(0.5);
+      expect(mimic.aggro).toBe(true);
+    });
+
+    it('看板の向きを決めると、その向きの端の行き先を案内し、自動のときだけ帯を付ける', () => {
+      const area = map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }] });
+      expect(signPointing(MAPS, area, { x: 2, y: 2 })).toMatchObject({ side: [1, 0], auto: true });
+      expect(signPointing(MAPS, area, { x: 2, y: 2, signDir: 'nw' })).toEqual({ side: [-1, 0], exit: null, auto: false });
+      expect(signPointing(MAPS, area, { x: 2, y: 2, signDir: 'se' })).toMatchObject({ side: [1, 0], auto: false });
+      game.loadMap(map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }], objects: [{ type: 'sign', x: 2, y: 2, torch: false, signDir: 'nw' }] }));
+      expect(game.signLines(game.map.statics.find((s) => s.type === 'sign')!)).toBeNull();
     });
   });
 
