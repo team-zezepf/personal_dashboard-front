@@ -22,7 +22,6 @@ import {
   Stats,
   ThemeDef,
   ZERO_STATS,
-  arrivalOf,
   attackIntervalOf,
   baseAtkOf,
   baseDefOf,
@@ -552,29 +551,26 @@ export class RpgGame {
   }
 
   /**
-   * 端のつながり(front#274)の出口(x, y)から、ほかのダンジョンのエリアへ移る。
-   * 今までのポータルと同じく画面が暗くなって移り、ダンジョンの名前が出る。着くのは、行き先のこちらへ戻る端
+   * 端のつながり(front#274)の出口から、ほかのダンジョンのエリアへ移る。
+   * 今までのポータルと同じく画面が暗くなって移り、ダンジョンの名前が出る。着くのは、行き先のこちらへ戻る端の真ん中(front#339)
    */
-  goLink(exit: AreaExit, x: number, y: number): void {
-    const [ax, ay] = linkArrival(this.maps, this.area, exit.side, x, y, exit.to, buildAreaMap(exit.to));
+  goLink(exit: AreaExit): void {
+    const [ax, ay] = linkArrival(this.maps, this.area, exit.side, exit.to, buildAreaMap(exit.to));
     this.goArea(exit.to.id, ax, ay);
   }
 
   /**
-   * 端の出口(x, y)から、side の向きに隣り合うエリアへ移る(front#234)。
+   * 端の出口から、side の向きに隣り合うエリアへ移る(front#234)。着くのは、反対側の端の着地できるマスの真ん中(front#339)
    * 画面は進む向きにスライドし、ダンジョン名は出さない(BGMも変えない)
    */
-  goNeighbor(side: Side, x: number, y: number): void {
+  goNeighbor(side: Side): void {
     const dest = neighborOf(this.maps, this.area, side);
     if (this.transitioning || !dest) return;
     const image = this.events.captureScreen();
     this.player.path = [];
     this.player.target = null;
     this.loadMap(dest);
-    const [ax, ay] = arrivalOf(side, dest, x, y);
-    // 着くマスが通れなければ近くの通れるマス、それもなければ着く端の着地できるマスの真ん中に立つ(front#337)
-    const [nx, ny] = this.map.nearestWalkable(ax, ay);
-    const [tx, ty] = this.map.walkable(nx, ny) ? [nx, ny] : edgeMiddle(this.map, [-side[0], -side[1]]);
+    const [tx, ty] = edgeMiddle(this.map, [-side[0], -side[1]]);
     this.placePlayer(tx, ty);
     this.slide = { side, t: 0, image };
     this.transitioning = true;
@@ -1203,8 +1199,8 @@ export class RpgGame {
       const [ex, ey] = [Math.round(p.x), Math.round(p.y)];
       const exit = p.target ? null : exitAt(this.maps, this.area, ex, ey);
       if (exit) {
-        if (exit.link) this.goLink(exit, ex, ey);
-        else this.goNeighbor(exit.side, ex, ey);
+        if (exit.link) this.goLink(exit);
+        else this.goNeighbor(exit.side);
         return;
       }
     }
