@@ -2,6 +2,7 @@ import { ENEMIES, G, HZ, ITEMS, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exit
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
+import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
 import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawShackle, drawSign, relTint, tintOf } from './rpg-props';
@@ -822,6 +823,9 @@ export class RpgRenderer {
   private drawPlayer(sx: number, sy: number): void {
     const p = this.game.player;
     const ctx = this.ctx;
+    // レベルアップ・回復のエフェクト(front#335)。足元の輪・光の柱は体の後ろに描く
+    const fx = this.game.playerFx;
+    if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (p.dead) ctx.globalAlpha = 0.45;
     this.drawLook(sx + p.lunge * 7 * p.dir, sy, p.look, {
       dir: p.dir,
@@ -833,6 +837,7 @@ export class RpgRenderer {
       slash: p.lunge
     });
     ctx.globalAlpha = 1;
+    if (fx.length) drawPlayerFxFront(ctx, fx, sx, sy);
   }
 
   private drawEnemy(e: Enemy, sx: number, sy: number): void {
@@ -1013,5 +1018,11 @@ export class RpgRenderer {
       ctx.fillText(f.text, sx, y);
     }
     ctx.globalAlpha = 1;
+    // 「LEVEL UP!」の文字(front#335)
+    const p = this.game.player;
+    if (this.game.playerFx.length && !this.game.hidePlayer) {
+      const [px, py] = this.at(p.x, p.y);
+      drawPlayerFxText(ctx, this.game.playerFx, px, py);
+    }
   }
 }

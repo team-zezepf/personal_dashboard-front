@@ -60,9 +60,9 @@
   <table class="slot-table">
     <tbody>
       @for (def of slotDefs; track def.slot; let i = $index) {
-        @if (i === 0 || (def.attack && !slotDefs[i - 1].attack)) {
+        @if (i === 0 || def.group !== slotDefs[i - 1].group) {
           <tr class="group">
-            <th colspan="3">{{ def.attack ? '敵の攻撃（攻撃の種類ごと）' : '叩いたとき' }}</th>
+            <th colspan="3">{{ groupLabels[def.group] }}</th>
           </tr>
         }
         <tr>
