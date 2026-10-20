@@ -12,6 +12,7 @@ import {
   wallColors, wallOpenings
 } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
+import { environment } from '../../../environments/environment';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
   BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, SIGN_DIRS, STATIC_NAMES, Side, StaticType, TH, THEMES, TW, areaDropMoves, exitOf, neighborOf, objectSettingsOf,
@@ -353,6 +354,16 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.game?.dispose();
     this.stopPreview();
+    if (!environment.production) delete (window as unknown as Record<string, unknown>)['rpgAdminTest'];
+  }
+
+  // E2Eテストで、マップのマスをクリックする位置を求められるようにする(本番のビルドでは出さない。front#341)
+  private exposeForTest(): void {
+    if (environment.production) return;
+    (window as unknown as Record<string, unknown>)['rpgAdminTest'] = {
+      // マスの上の面の中心の、キャンバスの中の位置
+      tilePosition: (x: number, y: number): [number, number] | null => (this.game ? this.game.screenPositionOf({ x, y }) : null)
+    };
   }
 
   /** 保存していない変更があるとき、ほかの画面へ移る前に確かめる(ルートの canDeactivate から呼ぶ) */
@@ -381,6 +392,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.renderer = new RpgRenderer(ctx);
     this.game = new RpgGame(NO_EVENTS, this.maps(), this.dungeons());
     this.game.hidePlayer = true;
+    this.exposeForTest();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(stage);
     this.resize();
@@ -933,6 +945,14 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.npcModal.set(null);
     this.houseModal.set(null);
     this.objectModal.set(null);
+  }
+
+  /**
+   * モーダルの外側(背景)をクリックしたら閉じる。
+   * 何も返さないこと(テンプレートの式が false を返すと Angular が preventDefault し、中のチェックボックスが切り替わらない。front#341)
+   */
+  onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeModal();
   }
 
   // ===== 置いた置物・看板のモーダル(front#333) =====
