@@ -12,16 +12,14 @@
     </div>
     <div class="list-body">
       @for (row of rows(); track row.def.id) {
-        <!-- ドラッグで並び替え(front#299) -->
-        <button
-          type="button"
+        <!-- ドラッグで並び替え(front#299)。数値の欄(front#350)の上では、文字を選べるようにドラッグしない -->
+        <div
           class="enemy-row"
-          draggable="true"
+          [attr.draggable]="noDragId() !== row.def.id"
           [class.active]="row.def.id === selectedId()"
           [class.dragging]="row.def.id === dragId()"
           [class.drop-before]="dropAt()?.id === row.def.id && !dropAt()?.after"
           [class.drop-after]="dropAt()?.id === row.def.id && dropAt()?.after"
-          [attr.aria-pressed]="row.def.id === selectedId()"
           (click)="select(row.def.id)"
           (dragstart)="onDragStart(row.def.id, $event)"
           (dragover)="onDragOver(row.def.id, $event)"
@@ -31,8 +29,8 @@
           <span class="grip" title="ドラッグで並び替え" aria-hidden="true">⠿</span>
           <canvas #thumb width="88" height="88" [attr.data-id]="row.def.id"></canvas>
           <span class="row-text">
-            <span class="name">
-              {{ row.def.name || '（名前なし）' }}
+            <span class="name-line">
+              <button type="button" class="name" [attr.aria-pressed]="row.def.id === selectedId()">{{ row.def.name || '（名前なし）' }}</button>
               @if (row.def.boss) {
                 <span class="badge">ボス</span>
               }
@@ -41,11 +39,29 @@
               } @else if (dirtyIds().has(row.def.id)) {
                 <span class="dot" title="保存していない変更があります">●</span>
               }
+              <!-- 配置中かどうか(配置中の敵は消せない)は残す(front#325) -->
+              <span class="used-text">{{ usedCount(row.def.id) ? usedCount(row.def.id) + '体 配置中' : '未配置' }}</span>
             </span>
-            <!-- パレット(front#323)と同じく経験値・HP・攻撃・防御。配置中かどうか(配置中の敵は消せない)は残す(front#325) -->
-            <span class="sub">経験値 {{ row.def.exp }}・HP {{ row.def.hp }}・攻撃 {{ row.def.atk }}・防御 {{ row.def.def }}・{{ usedCount(row.def.id) ? usedCount(row.def.id) + '体 配置中' : '未配置' }}</span>
+            <!-- パレット(front#323)と同じく経験値・HP・攻撃・防御。一覧でそのまま書き換えられる(front#350) -->
+            <span class="stats" (pointerenter)="noDragId.set(row.def.id)" (pointerleave)="noDragId.set(null)">
+              @for (stat of listStats; track stat[0]) {
+                <label class="stat">
+                  <span>{{ stat[1] }}</span>
+                  <input
+                    type="number"
+                    [min]="limitOf(stat[0])[0]"
+                    [max]="limitOf(stat[0])[1]"
+                    [attr.aria-label]="(row.def.name || '（名前なし）') + 'の' + stat[1]"
+                    [ngModel]="row.def[stat[0]]"
+                    (focus)="selectIfOther(row.def.id)"
+                    (ngModelChange)="setNumber(stat[0], $event, row.def.id)"
+                    (blur)="$any($event.target).value = row.def[stat[0]]"
+                  />
+                </label>
+              }
+            </span>
           </span>
-        </button>
+        </div>
       }
     </div>
   </aside>

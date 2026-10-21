@@ -136,7 +136,7 @@ test(
       async () => {
         await tab.getByRole('button', { name: '＋ 新しいアイテム' }).click();
         const props = tab.getByRole('complementary', { name: 'アイテム', exact: true });
-        await props.getByLabel('名前').fill(name);
+        await props.getByLabel('名前', { exact: true }).fill(name);
         await props.getByLabel('回復量').fill('60');
         await props.getByLabel(/説明/).fill('HPを60回復');
         await props.getByLabel('道具屋で売る').check();
@@ -279,5 +279,100 @@ test(
       await expect(itemTab.locator('.item-row', { hasText: '上回復薬' })).toContainText('⚗️');
       expect((await page.request.get(imageSrc)).status()).toBe(404);
     });
+  }
+);
+
+test(
+  'E2E-22 RPGマップ作成の「敵」タブで、一覧の経験値・HP・攻撃・防御をそのまま書き換えて保存でき、並び替えのドラッグも今までどおりできる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
+      'E2E 用の RPG データで、敵の一覧の先頭はスライム(HP 22)、2番目はブルースライム(経験値 16・HP 50・攻撃 14・防御 5)、3番目はキノコン'
+    ],
+    expected: [
+      '「👾 敵」タブを開くと、一覧の各行に経験値・HP・攻撃・防御の欄が出て、今の値が入っている(front#350)',
+      '一覧でブルースライムの HP を書き換えると、ブルースライムが選ばれ、右の編集欄の HP も同じ値になり、行に「●」が付く',
+      '右の編集欄で攻撃を書き換えると、一覧の攻撃の欄も同じ値になる',
+      '一覧の欄に範囲より大きい値(HP 100000)を入れて欄から離れると、範囲内(99999)に直る',
+      '「敵を保存する」で保存すると「敵を保存しました」と出て「●」が消え、読み込み直しても書き換えた値のまま',
+      '数値の欄の上ではその行をドラッグできず(文字を選べる)、⠿ のあたりをつかむと今までどおり並び替えられる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-enemy-page');
+    const list = tab.getByRole('complementary', { name: '敵の一覧' });
+    const props = tab.locator('aside.props');
+    const row = (name: string) => list.locator('.enemy-row', { has: page.getByRole('button', { name, exact: true }) });
+    const openEnemyTab = async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '👾 敵' }).click();
+      await expect(list.getByLabel('スライムのHP', { exact: true })).toHaveValue('22');
+    };
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「👾 敵」タブを押す', '一覧の各行に経験値・HP・攻撃・防御の欄が出て、ブルースライムは 16・50・14・5', async () => {
+      await openEnemyTab();
+      await expect(list.getByLabel('ブルースライムの経験値', { exact: true })).toHaveValue('16');
+      await expect(list.getByLabel('ブルースライムのHP', { exact: true })).toHaveValue('50');
+      await expect(list.getByLabel('ブルースライムの攻撃', { exact: true })).toHaveValue('14');
+      await expect(list.getByLabel('ブルースライムの防御', { exact: true })).toHaveValue('5');
+    });
+
+    await step('一覧のブルースライムの HP の欄に 60 を入れる', 'ブルースライムが選ばれ、右の編集欄の HP も 60 になり、行に「●」が付く', async () => {
+      await list.getByLabel('ブルースライムのHP', { exact: true }).fill('60');
+      await expect(list.getByRole('button', { name: 'ブルースライム', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(props.getByLabel('名前', { exact: true })).toHaveValue('ブルースライム');
+      await expect(props.getByRole('spinbutton', { name: 'HP', exact: true })).toHaveValue('60');
+      await expect(row('ブルースライム').getByTitle('保存していない変更があります')).toBeVisible();
+      await expect(tab.getByText('● 保存していない変更があります')).toBeVisible();
+    });
+
+    await step('右の編集欄の攻撃に 18 を入れる', '一覧のブルースライムの攻撃の欄も 18 になる', async () => {
+      await props.getByRole('spinbutton', { name: '攻撃', exact: true }).fill('18');
+      await expect(list.getByLabel('ブルースライムの攻撃', { exact: true })).toHaveValue('18');
+    });
+
+    await step('一覧のスライムの HP の欄に 100000 を入れて、欄から離れる(Tab)', 'スライムが選ばれ、HP が範囲内の 99999 に直る。もう一度 22 に戻しておく', async () => {
+      const hp = list.getByLabel('スライムのHP', { exact: true });
+      await hp.fill('100000');
+      await hp.press('Tab');
+      await expect(hp).toHaveValue('99999');
+      await expect(props.getByLabel('名前', { exact: true })).toHaveValue('スライム');
+      await expect(props.getByRole('spinbutton', { name: 'HP', exact: true })).toHaveValue('99999');
+      await hp.fill('22');
+      await expect(props.getByRole('spinbutton', { name: 'HP', exact: true })).toHaveValue('22');
+    });
+
+    await step('「敵を保存する」を押し、ページを読み込み直して「👾 敵」タブを開く', '「敵を保存しました」と出て「●」が消え、読み込み直してもブルースライムは HP 60・攻撃 18', async () => {
+      await tab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('敵を保存しました');
+      await expect(tab.getByText('● 保存していない変更があります')).toBeHidden();
+      await openEnemyTab();
+      await expect(list.getByLabel('ブルースライムのHP', { exact: true })).toHaveValue('60');
+      await expect(list.getByLabel('ブルースライムの攻撃', { exact: true })).toHaveValue('18');
+    });
+
+    await step('(後片付け)一覧でブルースライムを HP 50・攻撃 14 に戻して保存する', '「敵を保存しました」と出る', async () => {
+      await list.getByLabel('ブルースライムのHP', { exact: true }).fill('50');
+      await list.getByLabel('ブルースライムの攻撃', { exact: true }).fill('14');
+      await tab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('敵を保存しました');
+    });
+
+    await step(
+      'キノコンの数値の欄にポインターを乗せ、そのあと キノコンの ⠿ をつかんで、スライムの行の上半分へドラッグする(保存はしない)',
+      '数値の欄の上ではキノコンの行がドラッグできない(draggable=false)。⠿ からはドラッグでき、キノコンが一覧の先頭に来て「●」が付く',
+      async () => {
+        await list.getByLabel('キノコンのHP', { exact: true }).hover();
+        await expect(row('キノコン')).toHaveAttribute('draggable', 'false');
+        await row('キノコン').locator('.grip').hover();
+        await expect(row('キノコン')).toHaveAttribute('draggable', 'true');
+        await row('キノコン').locator('.grip').dragTo(row('スライム'), { targetPosition: { x: 40, y: 4 } });
+        await expect(list.locator('.enemy-row').first()).toContainText('キノコン');
+        await expect(row('キノコン').getByTitle('保存していない変更があります')).toBeVisible();
+      }
+    );
   }
 );
