@@ -423,13 +423,13 @@ function drawRaptor(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): n
 }
 
 // ゴーレム(front#348): 体=明るい色、手足=暗い色。角ばった岩を積み上げた体に、光る目と胸のコア。
-// 歩くときは腕を振り、攻撃のときは両腕を前へ振り上げる
+// 右向き(斜め前向き)で描き、左を向くときは左右を反転する。顔とコアは向いている側に寄り、反対側に頭・胴の側面が見える。
+// 歩くときは腕を前後に振り、攻撃のときは手前の腕で向いている方へ殴る(奥の腕は引く)
 function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
   const t = p.time + (p.seed ?? 0);
-  const d = p.dir;
   const lunge = p.lunge ?? 0;
   const walk = p.moving ? Math.sin(p.time * 6) : 0;
-  const bob = -Math.abs(walk) * 2 - lunge * 2;
+  const bob = -Math.abs(walk) * 2;
   const flash = !!p.flash;
   const col = flash ? '#ffffff' : def.color;
   const dk = flash ? '#ffffff' : def.dark;
@@ -438,6 +438,8 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
   const glow = flash ? '#ffffff' : p.aggro ? '#ff5a1f' : '#ffd54a';
   const pulse = 0.75 + Math.sin(t * (p.aggro ? 8 : 3)) * 0.25;
   shadow(c, 26, 9, 0.22);
+  c.save();
+  c.scale(p.dir < 0 ? -1 : 1, 1);
 
   const outline = (pts: [number, number][]) => {
     c.beginPath();
@@ -454,33 +456,44 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
     outline(pts);
     c.stroke();
   };
+  // 見えている側面を暗くする
+  const side = (pts: [number, number][]) => {
+    if (flash) return;
+    c.save();
+    c.globalAlpha *= 0.5;
+    poly(c, pts, deep);
+    c.restore();
+  };
 
-  // 足(歩くときは交互に上げる)
+  // 足(腕と反対側の足を交互に上げる)
   for (const sd of [-1, 1]) {
-    const lift = Math.max(0, walk * sd) * 3;
-    const x = sd * 10;
+    const lift = Math.max(0, -walk * sd) * 3;
+    const x = sd * 10 + 1;
     rock([[x - 7, -lift], [x + 7, -lift], [x + 8, -12 - lift], [x - 8, -13 - lift]],
       [[x - 8, -13 - lift], [x + 8, -12 - lift], [x + 7, -9 - lift], [x - 7, -10 - lift]], dk, col);
   }
 
+  // 攻撃のときは、上半身を少し前へ傾ける
   c.save();
-  c.translate(d * lunge * 4, bob);
+  c.translate(lunge * 3, bob - 12);
+  c.rotate(lunge * 0.12);
+  c.translate(0, 12);
 
-  // 腕。肩から垂らし、歩くときは前後に振り、攻撃のときは前へ振り上げる
-  const arm = (sd: number) => {
+  // 腕。肩から垂らす。角度は負にするほど前(向いている側)へ振る
+  const arm = (x: number, angle: number, front: boolean) => {
     c.save();
-    c.translate(sd * 21, -38);
-    c.rotate(-d * lunge * 1.3 + walk * sd * 0.18);
-    rock([[-6, -2], [6, -3], [7, 12], [-6, 13]], [[-6, -2], [6, -3], [6, 1], [-6, 2]], dk, col);
+    c.translate(x, -38);
+    c.rotate(angle);
+    rock([[-6, -2], [6, -3], [7, 12], [-6, 13]], [[-6, -2], [6, -3], [6, 1], [-6, 2]], front ? dk : deep, front ? col : dk);
     // こぶし
-    rock([[-8, 12], [8, 11], [9, 24], [3, 27], [-6, 26], [-9, 20]], [[-8, 12], [8, 11], [8, 15], [-8, 16]], col, lit);
+    rock([[-8, 12], [8, 11], [9, 24], [3, 27], [-6, 26], [-9, 20]], [[-8, 12], [8, 11], [8, 15], [-8, 16]], front ? col : dk, front ? lit : col);
     c.strokeStyle = deep;
     c.lineWidth = 1;
     c.beginPath(); c.moveTo(-2, 16); c.lineTo(-2, 23); c.moveTo(3, 15.5); c.lineTo(3, 23); c.stroke();
     c.restore();
   };
-  // 向いている側と反対の腕は、胴の後ろに描く
-  arm(-d);
+  // 奥の腕は、胴の後ろに描く(攻撃のときは、胴に隠れるくらいに少し引く)
+  arm(-17 + lunge * 3, walk * 0.25 + lunge * 0.15, false);
 
   // 胴(上が明るく、下が暗い岩)
   const body: [number, number][] = [[-19, -10], [-22, -30], [-15, -45], [14, -46], [22, -31], [18, -10], [6, -7], [-8, -7]];
@@ -495,12 +508,14 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
   }
   outline(body);
   c.fill();
+  side([[-19, -10], [-22, -30], [-15, -45], [-9, -44], [-13, -30], [-11, -9], [-8, -7]]);
+  outline(body);
   c.strokeStyle = deep;
   c.lineWidth = 1.4;
   c.lineJoin = 'round';
   c.stroke();
   // 肩の段差
-  poly(c, [[-15, -45], [14, -46], [17, -40], [-17, -39]], lit);
+  poly(c, [[-9, -44], [14, -46], [17, -40], [-12, -39]], lit);
 
   if (!flash) {
     // ひび
@@ -508,53 +523,63 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
     c.lineWidth = 1;
     c.lineCap = 'round';
     c.beginPath();
-    c.moveTo(-14, -36); c.lineTo(-10, -30); c.lineTo(-13, -23);
-    c.moveTo(12, -20); c.lineTo(8, -15); c.lineTo(10, -10);
-    c.moveTo(-4, -12); c.lineTo(-1, -9);
+    c.moveTo(-6, -38); c.lineTo(-3, -32); c.lineTo(-6, -25);
+    c.moveTo(15, -21); c.lineTo(11, -16); c.lineTo(13, -11);
+    c.moveTo(2, -13); c.lineTo(5, -9);
     c.stroke();
     // 肩の苔
     c.fillStyle = 'rgba(101, 163, 13, 0.75)';
-    c.beginPath(); c.ellipse(-12, -44, 5, 2.2, -0.1, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(-11, -44, 5, 2.2, -0.1, 0, Math.PI * 2); c.fill();
     c.beginPath(); c.ellipse(15, -42, 3.5, 1.8, 0.2, 0, Math.PI * 2); c.fill();
     c.fillStyle = 'rgba(132, 204, 22, 0.8)';
-    c.beginPath(); c.ellipse(-10, -45, 2.5, 1.2, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(-9, -45, 2.5, 1.2, 0, 0, Math.PI * 2); c.fill();
   }
 
   // 胸のコア(ひし形のルーン。ゆっくり脈打ち、怒ると速くなる)
-  const cx = d * 2;
+  const cx = 5;
   const cy = -27;
   c.save();
   c.shadowColor = glow;
   c.shadowBlur = flash ? 0 : 10 * pulse;
-  poly(c, [[cx, cy - 6], [cx + 5, cy], [cx, cy + 6], [cx - 5, cy]], deep);
+  poly(c, [[cx, cy - 6], [cx + 5, cy], [cx, cy + 6], [cx - 4, cy]], deep);
   c.globalAlpha *= flash ? 1 : 0.6 + pulse * 0.4;
-  poly(c, [[cx, cy - 4], [cx + 3, cy], [cx, cy + 4], [cx - 3, cy]], glow);
+  poly(c, [[cx, cy - 4], [cx + 3, cy], [cx, cy + 4], [cx - 2.5, cy]], glow);
   c.restore();
 
-  // 頭(肩の間に少し埋まっている)
-  const hx = d * 3;
-  rock([[hx - 11, -44], [hx - 12, -56], [hx - 6, -61], [hx + 7, -61], [hx + 12, -55], [hx + 11, -44]],
-    [[hx - 12, -56], [hx - 6, -61], [hx + 7, -61], [hx + 12, -55], [hx + 7, -56], [hx - 7, -57]], col, lit);
+  // 頭(肩の間に少し埋まっている)。顔は向いている側に寄り、反対側に側面が見える
+  rock([[-9, -44], [-11, -56], [-6, -61], [8, -61], [13, -55], [12, -44]],
+    [[-11, -56], [-6, -61], [8, -61], [13, -55], [8, -56.5], [-5, -57]], col, lit);
+  side([[-9, -44], [-11, -56], [-5, -57], [-3, -45]]);
   // 張り出したまゆの岩
-  poly(c, [[hx - 11, -54], [hx + 11, -54], [hx + 9, -50.5], [hx - 9, -50.5]], dk);
-  // 目(光る細いすき間。怒るとつり上がり、赤く強く光る)
+  poly(c, [[-3, -54], [13, -54], [11, -50.5], [-2, -50.5]], dk);
+  // 目(光る細いすき間。奥の目は細く見える。怒るとつり上がり、赤く強く光る)
   c.save();
   c.shadowColor = glow;
   c.shadowBlur = flash ? 0 : p.aggro ? 9 : 5;
   const tilt = p.aggro ? 1.5 : 0;
-  for (const sd of [-1, 1]) {
-    const x = hx + d * 1.5 + sd * 5;
-    // 内側(鼻側)の上を下げて、つり目にする
-    poly(c, [[x + sd * 3, -50 - tilt * 0.3], [x - sd * 3, -50 + tilt], [x - sd * 2.5, -47.3], [x + sd * 2.5, -47.3]], glow);
+  // [目の中心, 半分の幅, 鼻側の向き]。鼻側の上を下げて、つり目にする
+  const eyeList: [number, number, number][] = [[1.5, 2, 1], [8, 3, -1]];
+  for (const [ex, w, inner] of eyeList) {
+    poly(c, [[ex - inner * w, -50 - tilt * 0.3], [ex + inner * w, -50 + tilt], [ex + inner * (w - 0.5), -47.3], [ex - inner * (w - 0.5), -47.3]], glow);
   }
   c.restore();
   // 口のすき間
   c.strokeStyle = deep;
   c.lineWidth = 1.2;
-  c.beginPath(); c.moveTo(hx - 4, -45.5); c.lineTo(hx + 4, -45.5); c.stroke();
+  c.beginPath(); c.moveTo(1, -45.5); c.lineTo(10, -45.5); c.stroke();
 
-  // 向いている側の腕は、胴の前に描く
-  arm(d);
+  // 手前の腕は、胴の前に描く(攻撃のときは、向いている方へまっすぐ突き出す)
+  arm(21, -walk * 0.25 - lunge * 1.45, true);
+  if (lunge > 0.2 && !flash) {
+    // 殴った勢いの線
+    c.strokeStyle = `rgba(255,255,255,${lunge * 0.8})`;
+    c.lineWidth = 2;
+    c.lineCap = 'round';
+    c.beginPath();
+    for (const dy of [-8, 0, 8]) { c.moveTo(52, -34 + dy); c.lineTo(58 + lunge * 6, -34 + dy); }
+    c.stroke();
+  }
+  c.restore();
   c.restore();
   return 63;
 }
