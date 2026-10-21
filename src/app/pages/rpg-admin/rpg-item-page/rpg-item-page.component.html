@@ -1,0 +1,249 @@
+<div class="item-page">
+  <div class="subbar">
+    <span class="lead">回復の道具・武器・防具・素材を作る・直す。道具屋で売るか・値段・並び順もここで決めます。</span>
+    <span class="spacer"></span>
+    @if (message()) {
+      <span class="message" role="status">{{ message() }}</span>
+    }
+    @if (isDirty()) {
+      <span class="dirty">● 保存していない変更があります</span>
+    }
+    <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
+      {{ saving() ? '保存中…' : 'アイテムを保存する' }}
+    </button>
+  </div>
+
+  <div class="workspace">
+    <!-- 左: アイテムの一覧 -->
+    <aside class="list" aria-label="アイテムの一覧">
+      <div class="list-head">
+        <div class="list-btns">
+          <button type="button" class="btn small" (click)="add()">＋ 新しいアイテム</button>
+          <button type="button" class="btn small" [disabled]="!selected()" (click)="copy()">⧉ 複製</button>
+        </div>
+        <input type="search" class="filter" placeholder="名前で絞り込み" aria-label="名前で絞り込み" [ngModel]="filter()" (ngModelChange)="filter.set($event)" />
+      </div>
+      <div class="list-body">
+        @for (group of groups(); track group.type) {
+          <div class="group">{{ typeLabels[group.type] }}（{{ group.rows.length + group.crafts.length }}）</div>
+          @for (row of group.rows; track row.item.id) {
+            <button type="button" class="item-row" [class.active]="row.item.id === selectedId()" [attr.aria-pressed]="row.item.id === selectedId()" (click)="select(row.item.id)">
+              <span class="ic">{{ row.item.icon }}</span>
+              <span class="row-text">
+                <span class="name">
+                  {{ row.item.name || '（名前なし）' }}
+                  @if (row.isNew) {
+                    <span class="badge new">新しい</span>
+                  } @else if (dirtyIds().has(row.item.id)) {
+                    <span class="dot" title="保存していない変更があります">●</span>
+                  }
+                  @if (hasNg(row.item.id)) {
+                    <span class="badge ng">保存できない</span>
+                  } @else if (problemsOfRow(row.item.id).length) {
+                    <span class="badge warn">注意</span>
+                  }
+                </span>
+                <span class="sub">{{ subText(row.item) }}</span>
+              </span>
+            </button>
+          }
+          @for (c of group.crafts; track c.id) {
+            <button type="button" class="item-row readonly" [class.active]="c.id === selectedId()" [attr.aria-pressed]="c.id === selectedId()" (click)="select(c.id)">
+              <span class="ic">{{ c.icon }}</span>
+              <span class="row-text">
+                <span class="name">{{ c.name }} <span class="badge gray">合成</span></span>
+                <span class="sub">{{ craftStat(c) }}・鍛冶屋 {{ c.gold }}G</span>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- まんなか: 道具屋での見え方・使われている場所・強さの並び -->
+    <main class="stage">
+      <section class="card" aria-label="道具屋での見え方">
+        <h3>道具屋での見え方 <span class="sub">「道具屋で売る」にしたアイテムが、この順番で並びます（▲▼で並べ替え）</span></h3>
+        <div class="shop">
+          <div class="shop-title">🏪 道具屋</div>
+          @for (row of shopRows(); track row.item.id; let first = $first; let last = $last) {
+            <div class="shop-row" [class.me]="row.item.id === selectedId()">
+              <span class="shop-icon">{{ row.item.icon }}</span>
+              <button type="button" class="shop-text" (click)="select(row.item.id)">
+                <span class="nm">{{ row.item.name || '（名前なし）' }}</span>
+                <span class="st">{{ row.item.type === 'use' ? (row.item.desc || statText(row.item)) : statText(row.item) }}</span>
+              </button>
+              <span class="gold">{{ row.item.price ?? 0 }} G</span>
+              <span class="move">
+                <button type="button" title="道具屋で上へ" [attr.aria-label]="row.item.name + 'を上へ'" [disabled]="first" (click)="moveInShop(row.item.id, -1)">▲</button>
+                <button type="button" title="道具屋で下へ" [attr.aria-label]="row.item.name + 'を下へ'" [disabled]="last" (click)="moveInShop(row.item.id, 1)">▼</button>
+              </span>
+            </div>
+          } @empty {
+            <div class="shop-empty">売っているアイテムがありません</div>
+          }
+        </div>
+      </section>
+
+      @if (selected(); as sel) {
+        <section class="card" aria-label="使われている場所">
+          <h3>使われている場所 <span class="sub">ここで使われているアイテムは消せません</span></h3>
+          @if (usagesOfRow(sel.item.id).length) {
+            <table class="table">
+              <thead>
+                <tr><th class="where-col">種類</th><th>どこで</th><th>どう使う</th></tr>
+              </thead>
+              <tbody>
+                @for (u of usagesOfRow(sel.item.id); track $index) {
+                  <tr>
+                    <td><span class="where" [class]="'where ' + u.where">{{ whereLabels[u.where] }}</span></td>
+                    <td>{{ u.name }}</td>
+                    <td class="muted">{{ u.how }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="hint">どこでも使われていません。</p>
+          }
+          @if (!sel.isNew) {
+            <p class="hint owners">いま <b>{{ ownersOf(sel.item.id) }}人</b> が持っています。</p>
+          }
+        </section>
+
+        @if (sel.item.type === 'weapon' || sel.item.type === 'armor') {
+          <section class="card" aria-label="強さの並び">
+            <h3>
+              {{ typeLabels[sel.item.type] }}の強さの並び
+              <span class="legend">
+                <span><span class="src shop">店</span>道具屋</span>
+                <span><span class="src point">交換</span>ポイント交換</span>
+                <span><span class="src craft">合成</span>鍛冶屋</span>
+                <span><span class="src other">他</span>そのほか</span>
+              </span>
+            </h3>
+            <div class="ladder">
+              @for (r of ladder(sel.item.type); track r.id) {
+                <div class="rung" [class.me]="r.id === sel.item.id">
+                  <span class="ic">{{ r.icon }}</span>
+                  <span class="rung-name"><span [class]="'src ' + r.source">{{ sourceLabels[r.source] }}</span>{{ r.name }}</span>
+                  <span class="bar-wrap">
+                    <span class="val">+{{ r.power }}</span>
+                    <span [class]="'bar ' + r.source" [style.width.%]="(r.power / ladderMax(sel.item.type)) * 100"></span>
+                  </span>
+                  <span class="cost">{{ r.cost }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+      }
+    </main>
+
+    <!-- 右: アイテムの編集欄 -->
+    <aside class="props" aria-label="アイテム">
+      @if (selected(); as sel) {
+        <div class="section">
+          <h2>アイテム @if (!sel.isNew) {<span class="id">ID: {{ sel.item.id }}</span>}</h2>
+          <div class="field" role="group" aria-label="種類">
+            <span>種類</span>
+            <div class="chips">
+              @for (t of types; track t) {
+                <button type="button" class="chip" [class.active]="sel.item.type === t" [attr.aria-pressed]="sel.item.type === t" [disabled]="!sel.isNew" (click)="setType(t)">
+                  {{ typeIcons[t] }} {{ typeLabels[t] }}
+                </button>
+              }
+            </div>
+            @if (!sel.isNew) {
+              <p class="hint">保存したアイテムの種類は変えられません（持っている人の装備・持ち物が壊れるため）。</p>
+            }
+          </div>
+          <div class="grid2">
+            <label class="field"><span>名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.item.name" (ngModelChange)="setName($event)" /></label>
+            @if (sel.item.type !== 'material') {
+              <label class="field">
+                <span>{{ statLabels[sel.item.type] }}</span>
+                <input
+                  type="number"
+                  [min]="limits.power[0]"
+                  [max]="limits.power[1]"
+                  [ngModel]="sel.item.type === 'use' ? sel.item.heal : sel.item.type === 'weapon' ? sel.item.atk : sel.item.def"
+                  (ngModelChange)="setStat($event)"
+                />
+              </label>
+            }
+          </div>
+          <div class="field" role="group" aria-label="アイコン">
+            <span>アイコン（絵文字）</span>
+            <div class="icons">
+              @for (icon of iconsOf(sel.item.type); track icon) {
+                <button type="button" [class.active]="sel.item.icon === icon" [attr.aria-pressed]="sel.item.icon === icon" [attr.aria-label]="'アイコン ' + icon" (click)="setIcon(icon)">{{ icon }}</button>
+              }
+            </div>
+            <label class="other-icon">ほかの絵文字 <input type="text" maxlength="8" [ngModel]="sel.item.icon" (change)="setIcon($any($event.target).value)" /></label>
+          </div>
+          <label class="field">
+            <span>説明（持ち物・道具屋に出ます）</span>
+            <textarea rows="2" [maxlength]="limits.desc" [ngModel]="sel.item.desc ?? ''" (ngModelChange)="setDesc($event)"></textarea>
+          </label>
+        </div>
+
+        @if (sel.item.type !== 'material') {
+          <div class="section">
+            <h2>道具屋</h2>
+            <label class="toggle"><input type="checkbox" [ngModel]="sel.item.inShop" (ngModelChange)="setInShop($event)" /> 道具屋で売る</label>
+            <label class="field">
+              <span>値段（ゴールド）</span>
+              <input type="number" [min]="limits.price[0]" [max]="limits.price[1]" step="5" [disabled]="!sel.item.inShop" [ngModel]="sel.item.price" (ngModelChange)="setPrice($event)" />
+            </label>
+            @if (pointOf(sel.item.id) !== null) {
+              <p class="hint">ポイント交換所でも <b>{{ pointOf(sel.item.id) }}pt</b> で交換できます（交換ポイントはここでは変えません）。</p>
+            }
+            <p class="hint">売るアイテムの並び順は、まんなかの「道具屋での見え方」の ▲▼ で変えます。</p>
+          </div>
+        } @else {
+          <div class="section">
+            <h2>手に入れ方</h2>
+            <p class="hint">素材は道具屋では売りません。「👾 敵」タブの落とし物（素材）や、置物の中身・クエストの報酬で手に入るようにします。</p>
+          </div>
+        }
+
+        <div class="section" aria-label="チェック">
+          <h2>チェック</h2>
+          <div class="checks">
+            @for (p of problemsOfRow(sel.item.id); track p.text) {
+              <div class="check" [class.ng]="p.ng">{{ p.ng ? '⛔' : '⚠️' }} {{ p.text }}</div>
+            } @empty {
+              <div class="check ok">✅ 問題はありません</div>
+            }
+          </div>
+          <p class="hint">⛔ があると保存できません。⚠️ は保存できます。</p>
+        </div>
+
+        <div class="section">
+          <button type="button" class="btn danger" [disabled]="!sel.isNew && !!deleteBlocker(sel.item.id)" (click)="delete()">🗑 このアイテムを消す</button>
+          <p class="hint">
+            @if (sel.isNew) {
+              まだ保存していないアイテムです。
+            } @else if (deleteBlocker(sel.item.id); as reason) {
+              {{ reason }}
+            } @else if (ownersOf(sel.item.id)) {
+              いま <b>{{ ownersOf(sel.item.id) }}人</b> が持っています。消すと、持っている人の持ち物からもなくなります（装備していたら初期装備に戻ります）。
+            } @else {
+              持っている人はいません。
+            }
+          </p>
+        </div>
+      } @else if (selectedCraft(); as c) {
+        <div class="readonly-box">
+          <div class="big-icon">{{ c.icon }}</div>
+          <b>{{ c.name }}</b>（鍛冶屋で合成する装備）<br />
+          合成の装備は、レシピと一緒に「⚒️ 合成」タブで編集します。
+          <div><button type="button" class="btn small" (click)="openCraft.emit()">⚒️ 合成タブで編集する</button></div>
+        </div>
+      } @else {
+        <p class="hint">左の一覧からアイテムを選んでください。</p>
+      }
+    </aside>
+  </div>
+</div>

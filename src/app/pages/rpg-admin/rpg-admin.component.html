@@ -17,10 +17,11 @@
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
       </div>
-      @if (page() !== 'enemy' && page() !== 'craft' && page() !== 'object') {
+      @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object') {
       <span class="sep"></span>
       <label class="toolbar-label">
         ダンジョン
@@ -70,6 +71,19 @@
       [maps]="maps()"
       (saved)="onEnemiesSaved($event)"
       (dirtyChange)="enemyDirty.set($event)"
+    />
+
+    <!-- アイテムタブ(front#343)も、ほかのタブに移っても編集中の内容を残すため、隠すだけにする -->
+    <app-rpg-item-page
+      [style.display]="page() === 'item' ? null : 'none'"
+      [items]="items()"
+      [crafts]="crafts()"
+      [enemies]="enemies()"
+      [maps]="maps()"
+      [objectDefs]="objectDefs()"
+      (saved)="items.set($event)"
+      (dirtyChange)="itemDirty.set($event)"
+      (openCraft)="page.set('craft')"
     />
 
     <!-- 合成タブ(front#288)も、ほかのタブに移っても編集中の内容を残すため、隠すだけにする -->
@@ -635,7 +649,7 @@
                           <label class="field">
                             <span>集めるアイテム（報告するときに渡す）</span>
                             <select [ngModel]="q.target" (focus)="beginEdit()" (ngModelChange)="q.target = $event; edited()">
-                              @for (i of itemOptions; track i.id) {
+                              @for (i of itemOptions(); track i.id) {
                                 <option [value]="i.id">{{ i.name }}</option>
                               }
                             </select>
@@ -698,7 +712,7 @@
                       @for (r of q.rewardItems; track $index) {
                         <div class="reward-row">
                           <select [attr.aria-label]="'報酬のアイテム' + ($index + 1)" [ngModel]="r.itemId" (focus)="beginEdit()" (ngModelChange)="r.itemId = $event; edited()">
-                            @for (i of itemOptions; track i.id) {
+                            @for (i of itemOptions(); track i.id) {
                               <option [value]="i.id">{{ i.name }}</option>
                             }
                           </select>

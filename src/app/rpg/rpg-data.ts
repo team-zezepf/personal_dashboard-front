@@ -1,10 +1,11 @@
-// RPG(front#215)の定義データ。アイテム・敵の中身と、マップの見た目はフロントが持つ。
+// RPG(front#215)の定義データ。マップの見た目はフロントが持つ。アイテム(api#163)・敵・合成の装備は、APIから読んで入れ替える。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgMap, RpgMapObject, RpgObjectDef } from '../models/rpg.models';
+import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgMap, RpgMapObject, RpgObjectDef } from '../models/rpg.models';
+import { signal } from '@angular/core';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
-export type ItemType = 'use' | 'weapon' | 'armor' | 'material';
+export type ItemType = RpgItemType;
 
 export interface ItemDef {
   name: string;
@@ -18,49 +19,51 @@ export interface ItemDef {
   desc?: string;
 }
 
-export const ITEMS: Record<string, ItemDef> = {
-  potion: { name: '回復薬', icon: '🧪', type: 'use', heal: 35, price: 10, desc: 'HPを35回復' },
-  hipotion: { name: '上回復薬', icon: '⚗️', type: 'use', heal: 120, price: 35, desc: 'HPを120回復' },
-  wood_sword: { name: '木の剣', icon: '🗡️', type: 'weapon', atk: 2, price: 0 },
-  copper_sword: { name: '銅の剣', icon: '🗡️', type: 'weapon', atk: 6, price: 45 },
-  iron_sword: { name: '鉄の剣', icon: '⚔️', type: 'weapon', atk: 12, price: 140 },
-  steel_sword: { name: '鋼の剣', icon: '⚔️', type: 'weapon', atk: 22, price: 420 },
-  mithril_sword: { name: 'ミスリルの剣', icon: '🔱', type: 'weapon', atk: 34, price: 1200 },
-  star_sword: { name: '星の剣', icon: '🌟', type: 'weapon', atk: 26, desc: 'ポイント交換限定' },
-  cloth: { name: '布の服', icon: '👕', type: 'armor', def: 1, price: 0 },
-  leather: { name: '革の鎧', icon: '🦺', type: 'armor', def: 5, price: 60 },
-  chain_mail: { name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, price: 260 },
-  magic_armor: { name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, price: 800 },
-  star_robe: { name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定' },
-  // 鍛冶屋で合成してだけ手に入る装備(front#277)は、管理画面の「合成」タブで作る(front#288)。setCrafts で足す
-  // 素材(front#277)。最初からいる敵ごとに1つ(どの敵が落とすかは「敵」タブで決める)
-  slime_jelly: { name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす' },
-  mushroom_spore: { name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす' },
-  spirit_light: { name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす' },
-  raptor_fang: { name: '恐竜の牙', icon: '🦷', type: 'material', desc: 'ラプトルが落とす' },
-  golem_stone: { name: '岩のかけら', icon: '🧱', type: 'material', desc: 'いわゴーレムが落とす' },
-  ghost_cloth: { name: '霊の布', icon: '🧣', type: 'material', desc: 'ゴーストが落とす' },
-  black_iron: { name: '黒鉄のかけら', icon: '🔩', type: 'material', desc: 'ダークナイトが落とす' },
-  dark_gem: { name: '闇の魔石', icon: '🔮', type: 'material', desc: '闇の魔導士が落とす' },
-  bat_wing: { name: 'コウモリの翼', icon: '🦇', type: 'material', desc: 'ナイトバットが落とす' },
-  old_bone: { name: '古い骨', icon: '🦴', type: 'material', desc: 'ガイコツ兵が落とす' },
-  poison_petal: { name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす' },
-  dragon_scale: { name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす' },
-  mimic_tongue: { name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす' },
-  magic_scrap: { name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす' },
-  // 草原の敵(front#284)
-  rabbit_horn: { name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす' },
-  honey: { name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす' },
-  // 牢獄の敵(front#321)
-  rat_tail: { name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす' },
-  rusty_key: { name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす' },
-  iron_chain: { name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす' },
-  // 闇の魔導士の取り巻きとガーゴイル(front#329)
-  cursed_page: { name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす' },
-  shadow_shard: { name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす' },
-  dark_crystal: { name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす' },
-  gargoyle_wing: { name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす' }
-};
+/**
+ * 最初のアイテム(api#163 の default_items.json と同じ)。APIから読めないとき・まだ読んでいないときに使う。
+ * アイテムはマップ作成画面の「アイテム」タブで作る・直す(front#343)。setItems で入れ替える
+ */
+export const DEFAULT_ITEMS: RpgItem[] = [
+  { id: 'potion', name: '回復薬', icon: '🧪', type: 'use', heal: 35, desc: 'HPを35回復', inShop: true, price: 10, sortOrder: 1 },
+  { id: 'hipotion', name: '上回復薬', icon: '⚗️', type: 'use', heal: 120, desc: 'HPを120回復', inShop: true, price: 35, sortOrder: 2 },
+  { id: 'wood_sword', name: '木の剣', icon: '🗡️', type: 'weapon', atk: 2, inShop: false, sortOrder: 3 },
+  { id: 'copper_sword', name: '銅の剣', icon: '🗡️', type: 'weapon', atk: 6, inShop: true, price: 45, sortOrder: 4 },
+  { id: 'iron_sword', name: '鉄の剣', icon: '⚔️', type: 'weapon', atk: 12, inShop: true, price: 140, sortOrder: 5 },
+  { id: 'steel_sword', name: '鋼の剣', icon: '⚔️', type: 'weapon', atk: 22, inShop: true, price: 420, sortOrder: 6 },
+  { id: 'mithril_sword', name: 'ミスリルの剣', icon: '🔱', type: 'weapon', atk: 34, inShop: true, price: 1200, sortOrder: 7 },
+  { id: 'star_sword', name: '星の剣', icon: '🌟', type: 'weapon', atk: 26, desc: 'ポイント交換限定', inShop: false, sortOrder: 8 },
+  { id: 'cloth', name: '布の服', icon: '👕', type: 'armor', def: 1, inShop: false, sortOrder: 9 },
+  { id: 'leather', name: '革の鎧', icon: '🦺', type: 'armor', def: 5, inShop: true, price: 60, sortOrder: 10 },
+  { id: 'chain_mail', name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, inShop: true, price: 260, sortOrder: 11 },
+  { id: 'magic_armor', name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, inShop: true, price: 800, sortOrder: 12 },
+  { id: 'star_robe', name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定', inShop: false, sortOrder: 13 },
+  { id: 'slime_jelly', name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす', inShop: false, sortOrder: 14 },
+  { id: 'mushroom_spore', name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす', inShop: false, sortOrder: 15 },
+  { id: 'spirit_light', name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす', inShop: false, sortOrder: 16 },
+  { id: 'raptor_fang', name: '恐竜の牙', icon: '🦷', type: 'material', desc: 'ラプトルが落とす', inShop: false, sortOrder: 17 },
+  { id: 'golem_stone', name: '岩のかけら', icon: '🧱', type: 'material', desc: 'いわゴーレムが落とす', inShop: false, sortOrder: 18 },
+  { id: 'ghost_cloth', name: '霊の布', icon: '🧣', type: 'material', desc: 'ゴーストが落とす', inShop: false, sortOrder: 19 },
+  { id: 'black_iron', name: '黒鉄のかけら', icon: '🔩', type: 'material', desc: 'ダークナイトが落とす', inShop: false, sortOrder: 20 },
+  { id: 'dark_gem', name: '闇の魔石', icon: '🔮', type: 'material', desc: '闇の魔導士が落とす', inShop: false, sortOrder: 21 },
+  { id: 'bat_wing', name: 'コウモリの翼', icon: '🦇', type: 'material', desc: 'ナイトバットが落とす', inShop: false, sortOrder: 22 },
+  { id: 'old_bone', name: '古い骨', icon: '🦴', type: 'material', desc: 'ガイコツ兵が落とす', inShop: false, sortOrder: 23 },
+  { id: 'poison_petal', name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす', inShop: false, sortOrder: 24 },
+  { id: 'dragon_scale', name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす', inShop: false, sortOrder: 25 },
+  { id: 'mimic_tongue', name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす', inShop: false, sortOrder: 26 },
+  { id: 'magic_scrap', name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす', inShop: false, sortOrder: 27 },
+  { id: 'rabbit_horn', name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす', inShop: false, sortOrder: 28 },
+  { id: 'honey', name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす', inShop: false, sortOrder: 29 },
+  { id: 'rat_tail', name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす', inShop: false, sortOrder: 30 },
+  { id: 'rusty_key', name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす', inShop: false, sortOrder: 31 },
+  { id: 'iron_chain', name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす', inShop: false, sortOrder: 32 },
+  { id: 'cursed_page', name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす', inShop: false, sortOrder: 33 },
+  { id: 'shadow_shard', name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす', inShop: false, sortOrder: 34 },
+  { id: 'dark_crystal', name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす', inShop: false, sortOrder: 35 },
+  { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sortOrder: 36 }
+];
+
+/** アイテム(合成の装備も含む)。setItems・setCrafts で中身を入れ替える(使っている所はそのまま新しい中身を使える) */
+export const ITEMS: Record<string, ItemDef> = {};
 
 /** 鍛冶屋の合成のレシピ(front#277)。素材とゴールドを払って、装備(result)を1つ作る */
 export interface Recipe {
@@ -89,35 +92,74 @@ export const DEFAULT_CRAFTS: RpgCraft[] = [
   craft('dragon_mail', '竜鱗の鎧', '🛡️', 'armor', 26, 1600, [['dragon_scale', 4], ['dark_gem', 2], ['mimic_tongue', 1]], 8)
 ];
 
-// setCrafts で ITEMS に足した装備のID(入れ替えるときに消す)
+/** 素材のID(持ち物・「敵」タブ・クエストで使う)。setItems で中身を入れ替える */
+export const MATERIAL_IDS: string[] = [];
+
+/** 道具屋に並ぶアイテムのID(並ぶ順)。setItems で中身を入れ替える */
+export const SHOP_ITEMS: string[] = [];
+
+// 合成の装備のID(ITEMS のうち setCrafts で足したもの)
 const craftItemIds = new Set<string>();
 
 /** 合成の装備のIDか(管理画面で、お店・ポイント交換の装備と分けるのに使う) */
 export const isCraftItem = (id: string) => craftItemIds.has(id);
 
+// 今のアイテムと合成の装備(どちらかを入れ替えたら、両方から ITEMS を作り直す)
+let currentItems: RpgItem[] = DEFAULT_ITEMS;
+let currentCrafts: RpgCraft[] = DEFAULT_CRAFTS;
+
+/** APIのアイテムを、ゲームで使う形にする。種類に関係ない値と、売らないアイテムの値段は持たない */
+export function toItemDef(item: RpgItem): ItemDef {
+  return {
+    name: item.name,
+    icon: item.icon,
+    type: item.type,
+    ...(item.type === 'use' ? { heal: item.heal ?? 0 } : {}),
+    ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
+    ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
+    ...(item.inShop ? { price: item.price ?? 0 } : {}),
+    ...(item.desc ? { desc: item.desc } : {})
+  };
+}
+
 /**
- * 合成の装備とレシピを入れ替える(front#288)。ゲーム・管理画面がAPIから読んだもので呼ぶ。
- * ITEMS・RECIPES の中身を入れ替えるだけなので、使っている所(持ち物・鍛冶屋・描画)はそのまま新しい装備を使える
+ * ITEMS・RECIPES・MATERIAL_IDS・SHOP_ITEMS を、今のアイテムと合成の装備から作り直す。
+ * 中身を入れ替えるだけなので、使っている所(持ち物・お店・鍛冶屋・描画)はそのまま新しい中身を使える
  */
-export function setCrafts(list: RpgCraft[]): void {
-  for (const id of craftItemIds) delete ITEMS[id];
+/** ITEMS を作り直すたびに増える。管理画面のアイテムの選択欄は、これを見て作り直す */
+export const itemsVersion = signal(0);
+
+function rebuild(): void {
+  for (const id of Object.keys(ITEMS)) delete ITEMS[id];
   craftItemIds.clear();
   RECIPES.length = 0;
-  for (const c of [...list].sort((a, b) => a.sortOrder - b.sortOrder)) {
-    // 回復薬など、もとからあるアイテムと同じIDは使わない
+  const items = [...currentItems].sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const item of items) ITEMS[item.id] = toItemDef(item);
+  for (const c of [...currentCrafts].sort((a, b) => a.sortOrder - b.sortOrder)) {
+    // 回復薬など、アイテムと同じIDは使わない
     if (ITEMS[c.id]) continue;
     ITEMS[c.id] = { name: c.name, icon: c.icon, type: c.type, ...(c.type === 'weapon' ? { atk: c.power } : { def: c.power }), desc: '鍛冶屋で合成' };
     craftItemIds.add(c.id);
     RECIPES.push({ result: c.id, materials: c.materials.map((m) => ({ id: m.itemId, count: m.count })), gold: c.gold });
   }
+  MATERIAL_IDS.splice(0, MATERIAL_IDS.length, ...items.filter((i) => i.type === 'material').map((i) => i.id));
+  SHOP_ITEMS.splice(0, SHOP_ITEMS.length, ...items.filter((i) => i.inShop && i.type !== 'material').map((i) => i.id));
+  itemsVersion.update((v) => v + 1);
 }
 
-setCrafts(DEFAULT_CRAFTS);
+/** アイテムを入れ替える(front#343)。ゲーム・管理画面がAPIから読んだもので呼ぶ。合成の装備より先に呼ぶ */
+export function setItems(list: RpgItem[]): void {
+  currentItems = list;
+  rebuild();
+}
 
-/** 素材のID(持ち物・「敵」タブ・クエストで使う) */
-export const MATERIAL_IDS = Object.keys(ITEMS).filter((id) => ITEMS[id].type === 'material');
+/** 合成の装備とレシピを入れ替える(front#288)。ゲーム・管理画面がAPIから読んだもので呼ぶ */
+export function setCrafts(list: RpgCraft[]): void {
+  currentCrafts = list;
+  rebuild();
+}
 
-export const SHOP_ITEMS = ['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor'];
+rebuild();
 
 // ポイント交換所の品物のアイコン(名前・値段はAPIから受け取る)
 export const POINT_SHOP_ICONS: Record<string, string> = { star_sword: '🌟', star_robe: '✨', gold_100: '💰' };

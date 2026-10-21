@@ -13,11 +13,13 @@ import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutInd
 import { environment } from '../../../environments/environment';
 import {
   DEFAULT_CRAFTS,
+  DEFAULT_ITEMS,
   ITEMS,
   MAX_LUCK,
   POINT_SHOP_ICONS,
   RECIPES,
   setCrafts,
+  setItems,
   setObjectDefs,
   SHOP_ITEMS,
   STAT_DEFS,
@@ -359,6 +361,8 @@ export class RpgPageComponent implements OnDestroy {
     const bgms$ = this.rpgService.getBgms().pipe(catchError(() => of([] as RpgBgm[])));
     // 敵の種類(front#229)が読めなければ、最初の9種類で遊べるようにする
     const enemies$ = this.rpgService.getEnemies().pipe(catchError(() => of(DEFAULT_ENEMIES as unknown as RpgEnemy[])));
+    // アイテム(front#343)が読めなければ、最初のアイテムで遊べるようにする。セーブデータを読む前に入れておく(知らないアイテムは捨てるため)
+    const items$ = this.rpgService.getItems().pipe(catchError(() => of(DEFAULT_ITEMS)));
     // 合成の装備(front#288)が読めなければ、最初の8つで遊べるようにする。セーブデータを読む前に入れておく(知らない装備は捨てるため)
     const crafts$ = this.rpgService.getCrafts().pipe(catchError(() => of(DEFAULT_CRAFTS as RpgCraft[])));
     // 置物の種類ごとのデフォルト(front#333)が読めなければ、何も決めていない置物で遊べるようにする
@@ -369,12 +373,14 @@ export class RpgPageComponent implements OnDestroy {
       save: this.rpgService.getSave(),
       bgms: bgms$,
       enemies: enemies$,
+      items: items$,
       crafts: crafts$,
       objectDefs: objectDefs$
     }).subscribe({
-      next: ({ maps, dungeons, save, bgms, enemies, crafts, objectDefs }) => {
+      next: ({ maps, dungeons, save, bgms, enemies, items, crafts, objectDefs }) => {
         this.bgms = bgms;
         setEnemies(enemies);
+        setItems(items);
         setCrafts(crafts);
         setObjectDefs(objectDefs);
         if (maps.length === 0) {

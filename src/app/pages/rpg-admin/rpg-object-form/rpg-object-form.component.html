@@ -61,7 +61,7 @@
               <div class="row" [class.with-count]="key === 'items'">
                 <select [attr.aria-label]="key === 'items' ? 'アイテム' : '敵'" [ngModel]="row.id" (ngModelChange)="setRowId($any(key), i, $event)">
                   @if (key === 'items') {
-                    @for (o of itemOptions; track o.id) {
+                    @for (o of itemOptions(); track o.id) {
                       <option [value]="o.id">{{ o.label }}</option>
                     }
                   } @else {

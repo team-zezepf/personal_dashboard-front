@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RpgChanceEnemy, RpgChanceItem } from '../../../models/rpg.models';
-import { ITEMS, STATIC_NAMES, StaticType, THEMED_OBJECTS, isBreakable } from '../../../rpg/rpg-data';
+import { ITEMS, STATIC_NAMES, itemsVersion, StaticType, THEMED_OBJECTS, isBreakable } from '../../../rpg/rpg-data';
 import { ENEMIES, ENEMY_COLORS, ENEMY_DARKS, HIT_MATERIALS } from '../../../rpg/rpg-enemy';
 import { OBJECT_LIMITS, ObjectDraft, baseOf, currentHitMaterialOf, currentTintOf } from '../../../rpg/rpg-object';
 
@@ -31,7 +31,10 @@ export class RpgObjectFormComponent {
 
   readonly limits = OBJECT_LIMITS;
   readonly sounds = HIT_MATERIALS;
-  readonly itemOptions = Object.entries(ITEMS).map(([id, item]) => ({ id, label: `${item.icon} ${item.name}` }));
+  readonly itemOptions = computed(() => {
+    itemsVersion();
+    return Object.entries(ITEMS).map(([id, item]) => ({ id, label: `${item.icon} ${item.name}` }));
+  });
 
   readonly name = computed(() => STATIC_NAMES[this.type() as StaticType] ?? this.type());
   readonly breakable = computed(() => isBreakable(this.type()));
