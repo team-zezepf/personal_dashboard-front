@@ -1,5 +1,41 @@
 import { Page } from '@playwright/test';
+import { API_URL, E2E_ADMIN_ACCOUNT } from './support/env';
 import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence';
+
+// 管理者のアカウントのRPGのセーブデータを、最初の状態(始まりの草原の村・30G・回復薬×3)に戻す
+async function resetAdminRpgSave(): Promise<void> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: 'mutation($input: RpgSaveInput!) { saveRpg(input: $input) { level } }',
+      variables: {
+        input: {
+          level: 1, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
+          items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }],
+          area: 'plain', x: 6, y: 7, stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: 0, quests: [],
+          respawn: { area: 'plain', x: 6, y: 7 }
+        }
+      }
+    })
+  });
+  const body = (await res.json()) as { errors?: unknown };
+  if (body.errors) throw new Error(`GraphQL のエラー: ${JSON.stringify(body.errors)}`);
+}
+
+// キャンバスの中の村人をクリックする(位置は開発用のビルドだけで出す window.rpgTest から求める)
+async function clickNpc(page: Page, name: string): Promise<void> {
+  await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+  const position = await page.evaluate((n) => (window as any).rpgTest.npcPosition(n) as [number, number], name);
+  const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+  await page.mouse.click(box.x + position[0], box.y + position[1] - 25);
+}
 
 // マップのマス(x, y)の上の面の中心をクリックする(位置は開発用のビルドだけで出す window.rpgAdminTest から求める)
 async function clickTile(page: Page, x: number, y: number): Promise<void> {
@@ -57,6 +93,100 @@ test(
     await step('モーダルの外側(画面の左上のあたり)をクリックする', 'モーダルが閉じる', async () => {
       await page.mouse.click(10, 10);
       await expect(dialog).toBeHidden();
+    });
+  }
+);
+
+test(
+  'E2E-20 RPGマップ作成の「アイテム」タブで回復の道具を作って道具屋で売ると、ゲームの道具屋で買え、消すと持ち物からもなくなる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
+      'E2E 用の RPG データで、アイテムは最初のアイテムのまま(道具屋で売るのは回復薬〜魔法の鎧の9つ)',
+      '管理者のアカウントの RPG のセーブデータを、最初の状態(30G・回復薬×3)に戻してある'
+    ],
+    expected: [
+      '「🎒 アイテム」タブを開くと、回復の道具・武器・防具・素材に分かれた一覧と、道具屋での見え方が出る',
+      '「＋ 新しいアイテム」で作り、名前・回復量・道具屋で売る・値段を入れると、チェックが ✅ になり、道具屋での見え方のいちばん下に並ぶ',
+      '保存すると「アイテムを保存しました」と出て、APIが決めたID(item1)になる',
+      'ゲーム(/rpg)の道具屋 ミナに、作ったアイテムが 15G で並び、買うと 15G になって持ち物に入る',
+      '「アイテム」タブで作ったアイテムを消すと、一覧から消え、ゲームの持ち物からもなくなる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-item-page');
+    const shop = tab.getByRole('region', { name: '道具屋での見え方' });
+    const name = '[E2E]特製回復薬';
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材の一覧と、道具屋での見え方(回復薬〜魔法の鎧の9つ)が出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+      for (const group of ['回復の道具（2）', '武器（', '防具（', '素材（23）']) await expect(tab.getByText(group).first()).toBeVisible();
+      await expect(shop.locator('.shop-row')).toHaveCount(9);
+      await expect(shop.locator('.shop-row').first()).toContainText('回復薬');
+    });
+
+    await step(
+      `「＋ 新しいアイテム」を押し、名前に「${name}」、回復量に 60、説明に「HPを60回復」を入れ、「道具屋で売る」にチェックして値段を 15 にする`,
+      'チェックが「✅ 問題はありません」になり、道具屋での見え方のいちばん下に 15 G で並ぶ',
+      async () => {
+        await tab.getByRole('button', { name: '＋ 新しいアイテム' }).click();
+        const props = tab.getByRole('complementary', { name: 'アイテム', exact: true });
+        await props.getByLabel('名前').fill(name);
+        await props.getByLabel('回復量').fill('60');
+        await props.getByLabel(/説明/).fill('HPを60回復');
+        await props.getByLabel('道具屋で売る').check();
+        await props.getByLabel(/値段/).fill('15');
+        await expect(props.getByText('✅ 問題はありません')).toBeVisible();
+        await expect(shop.locator('.shop-row')).toHaveCount(10);
+        await expect(shop.locator('.shop-row').last()).toContainText(name);
+        await expect(shop.locator('.shop-row').last()).toContainText('15 G');
+      }
+    );
+
+    await step('「アイテムを保存する」を押す', '「アイテムを保存しました」と出て、IDが item1 になる', async () => {
+      await tab.getByRole('button', { name: 'アイテムを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('アイテムを保存しました');
+      await expect(tab.getByText('ID: item1')).toBeVisible();
+      await expect(tab.getByText('● 保存していない変更があります')).toBeHidden();
+    });
+
+    await step('RPG(/rpg)を開き、「道具屋 ミナ」に話しかけて、作ったアイテムを買う', `道具屋に「${name}」が 15 G で並び、買うと 15G になって持ち物に入る`, async () => {
+      await page.goto('/rpg');
+      const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+      await expect(status.getByText('30G')).toBeVisible();
+      await clickNpc(page, '道具屋 ミナ');
+      const dialog = page.getByRole('dialog', { name: '道具屋 ミナとの会話' });
+      await dialog.click();
+      await dialog.click();
+      await page.getByRole('button', { name: `${name}を買う` }).click();
+      await expect(status.getByText('15G')).toBeVisible();
+      await page.getByRole('button', { name: '閉じる' }).click();
+      await expect(page.getByRole('region', { name: '持ち物' }).getByText(name)).toBeVisible();
+    });
+
+    await step('RPGマップ作成の「🎒 アイテム」タブで作ったアイテムを選び、「🗑 このアイテムを消す」を押して確認で OK を押す', '1人が持っていると確認が出て、消すと一覧から消える', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+      await tab.locator('.item-row', { hasText: name }).click();
+      await expect(tab.getByText('いま 1人 が持っています。').first()).toBeVisible();
+      let confirmText = '';
+      // 確認は startSteps が OK にする。ここでは文言だけ読む
+      page.once('dialog', (d) => (confirmText = d.message()));
+      await tab.getByRole('button', { name: '🗑 このアイテムを消す' }).click();
+      await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
+      expect(confirmText).toContain('1人が持っています');
+      await expect(shop.locator('.shop-row')).toHaveCount(9);
+    });
+
+    await step('RPG(/rpg)を開き直す', `持ち物に「${name}」がない`, async () => {
+      await page.goto('/rpg');
+      await expect(page.getByRole('region', { name: 'プレイヤーの状態' }).getByText('15G')).toBeVisible();
+      await expect(page.getByRole('region', { name: '持ち物' }).getByText(name)).toHaveCount(0);
     });
   }
 );

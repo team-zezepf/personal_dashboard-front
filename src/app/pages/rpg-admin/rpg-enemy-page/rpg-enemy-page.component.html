@@ -200,7 +200,7 @@
           <label class="field">
             <span>落とすアイテム</span>
             <select [ngModel]="sel.def.drop ?? ''" (ngModelChange)="setDrop($event)">
-              @for (item of items; track item[0]) {
+              @for (item of items(); track item[0]) {
                 <option [value]="item[0]">{{ item[1] }}</option>
               }
             </select>
@@ -211,7 +211,7 @@
           <label class="field">
             <span>落とす素材</span>
             <select [ngModel]="sel.def.material ?? ''" (ngModelChange)="setMaterial($event)">
-              @for (m of materials; track m[0]) {
+              @for (m of materials(); track m[0]) {
                 <option [value]="m[0]">{{ m[1] }}</option>
               }
             </select>

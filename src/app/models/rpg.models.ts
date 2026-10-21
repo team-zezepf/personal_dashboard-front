@@ -311,6 +311,32 @@ export interface RpgCraft {
 // id が null なら新しい装備として追加する。sortOrder が null なら今の順番のまま(新しければ最後)
 export type RpgCraftInput = Omit<RpgCraft, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder: number | null };
 
+// RPGのアイテム(front#343 / api#163)。回復の道具・武器・防具・素材。マップ作成画面の「アイテム」タブで作る(合成の装備は含まない)
+export type RpgItemType = 'use' | 'weapon' | 'armor' | 'material';
+
+export interface RpgItem {
+  // アイテムのID(持ち物・装備のIDと同じ)
+  id: string;
+  name: string;
+  // アイコン(絵文字)
+  icon: string;
+  type: RpgItemType;
+  // 回復量(use)・攻撃力(weapon)・防御力(armor)。種類に関係ないものは null
+  heal?: number | null;
+  atk?: number | null;
+  def?: number | null;
+  desc?: string | null;
+  // 道具屋で売るか。売るときだけ値段(ゴールド)がある
+  inShop: boolean;
+  price?: number | null;
+  // 道具屋に並ぶ順番(一覧もこの順)
+  sortOrder: number;
+  updatedAt?: string | null;
+}
+
+// id が null なら新しいアイテムとして追加する。sortOrder が null なら今の順番のまま(新しければ最後)。保存したアイテムの種類は変えられない
+export type RpgItemInput = Omit<RpgItem, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder: number | null };
+
 // RPGの効果音(front#278 / api#127)。音のファイルは /rpg-se/{filename} で配られる
 export interface RpgSe {
   id: string;

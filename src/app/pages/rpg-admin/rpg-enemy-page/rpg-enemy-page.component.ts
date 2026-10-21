@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgEnemy, RpgEnemyInput, RpgMap } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { ITEMS } from '../../../rpg/rpg-data';
+import { ITEMS, itemsVersion } from '../../../rpg/rpg-data';
 import {
   ENEMY_ATTACKS,
   ENEMY_COLORS,
@@ -100,8 +100,15 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly limits = ENEMY_LIMITS;
   readonly Math = Math;
   // 落とすアイテム(素材はのぞく)と、落とす素材(front#277)
-  readonly items = [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type !== 'material').map(([id, item]) => [id, item.name])] as [string, string][];
-  readonly materials = [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type === 'material').map(([id, item]) => [id, `${item.icon} ${item.name}`])] as [string, string][];
+  // 「アイテム」タブで保存したら作り直す(front#343)
+  readonly items = computed(() => {
+    itemsVersion();
+    return [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type !== 'material').map(([id, item]) => [id, item.name])] as [string, string][];
+  });
+  readonly materials = computed(() => {
+    itemsVersion();
+    return [['', 'なし'], ...Object.entries(ITEMS).filter(([, item]) => item.type === 'material').map(([id, item]) => [id, `${item.icon} ${item.name}`])] as [string, string][];
+  });
 
   readonly rows = signal<EnemyRow[]>([]);
   readonly selectedId = signal<string | null>(null);

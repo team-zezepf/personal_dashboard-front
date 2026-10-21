@@ -471,6 +471,11 @@
   background: var(--indigo);
 }
 
+.src.other,
+.bar.other {
+  background: #94a3b8;
+}
+
 /* ===== 右: 編集欄 ===== */
 .props {
   width: 380px;

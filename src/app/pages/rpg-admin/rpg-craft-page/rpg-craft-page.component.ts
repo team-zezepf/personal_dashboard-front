@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgCraft, RpgCraftInput, RpgEnemy } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { ITEMS, MATERIAL_IDS, isCraftItem, setCrafts } from '../../../rpg/rpg-data';
+import { ITEMS, MATERIAL_IDS, POINT_SHOP_ICONS, isCraftItem, itemsVersion, setCrafts } from '../../../rpg/rpg-data';
 
 type CraftType = RpgCraft['type'];
-type Source = 'shop' | 'point' | 'craft';
+type Source = 'shop' | 'point' | 'craft' | 'other';
 
 // 一覧に出す装備(保存した装備と、まだ保存していない新しい装備)
 interface CraftRow {
@@ -42,7 +42,7 @@ interface DropSource {
 export const CRAFT_LIMITS = { name: 20, materials: 4, power: [1, 999], gold: [0, 99_999], count: [1, 99] } as const;
 
 const ICONS = ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️', '🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨'];
-const SOURCE_LABELS: Record<Source, string> = { shop: '店', point: '交換', craft: '合成' };
+const SOURCE_LABELS: Record<Source, string> = { shop: '店', point: '交換', craft: '合成', other: '他' };
 
 const typeLabel = (t: CraftType) => (t === 'weapon' ? '攻撃' : '防御');
 const clamp = (v: number, [min, max]: readonly [number, number]) => Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
@@ -123,9 +123,10 @@ export class RpgCraftPageComponent {
   readonly weapons = computed(() => this.rows().filter((r) => r.craft.type === 'weapon'));
   readonly armors = computed(() => this.rows().filter((r) => r.craft.type === 'armor'));
 
-  // お店・ポイント交換の装備(この画面では変えない。強さの比較に使う)
+  // お店・ポイント交換などの装備(「アイテム」タブで作る。強さの比較に使う)。アイテムを保存したら作り直す(front#343)
   private readonly otherGear = computed(() => {
     this.rows();
+    itemsVersion();
     return Object.entries(ITEMS)
       .filter(([id, item]) => !isCraftItem(id) && (item.type === 'weapon' || item.type === 'armor'))
       .map(([id, item]) => ({
@@ -168,6 +169,7 @@ export class RpgCraftPageComponent {
 
   // 素材×レシピの表(使われていない素材は後ろ)
   readonly matrix = computed(() => {
+    itemsVersion();
     const rows = this.rows();
     const enemies = this.enemies();
     return MATERIAL_IDS.map((id) => {
@@ -223,7 +225,11 @@ export class RpgCraftPageComponent {
   ladder(type: CraftType): Rung[] {
     const gear: Rung[] = this.otherGear()
       .filter((g) => g.type === type)
-      .map((g) => ({ id: g.id, name: g.name, icon: g.icon, power: g.power, source: g.gold === null ? 'point' : 'shop', cost: g.gold === null ? 'ポイント交換' : `${g.gold}G` }));
+      .map((g) => {
+        // 道具屋で売っていない装備は、ポイント交換の品物か、それ以外(初期装備など)
+        const source: Source = g.gold !== null ? 'shop' : g.id in POINT_SHOP_ICONS ? 'point' : 'other';
+        return { id: g.id, name: g.name, icon: g.icon, power: g.power, source, cost: source === 'shop' ? `${g.gold}G` : source === 'point' ? 'ポイント交換' : '—' };
+      });
     const crafts: Rung[] = this.rows()
       .filter((r) => r.craft.type === type)
       .map((r) => ({

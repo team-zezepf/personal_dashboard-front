@@ -11,6 +11,8 @@ import {
   RpgObjectDef,
   RpgObjectDefInput,
   RpgCraftInput,
+  RpgItem,
+  RpgItemInput,
   RpgDungeon,
   RpgDungeonInput,
   RpgEnemy,
@@ -71,6 +73,8 @@ const BGM_FIELDS = `id name filename size createdAt`;
 const SE_FIELDS = `id name filename size createdAt`;
 
 const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt`;
+
+const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sortOrder updatedAt`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 
@@ -239,6 +243,31 @@ export class RpgService {
   deleteCraft(id: string): Observable<boolean> {
     const mutation = `mutation DeleteRpgCraft($id: ID!) { deleteRpgCraft(id: $id) }`;
     return this.graphql.mutation<{ deleteRpgCraft: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgCraft));
+  }
+
+  // ===== アイテム(front#343 / api#163) =====
+
+  getItems(): Observable<RpgItem[]> {
+    const query = `query GetRpgItems { rpgItems { ${ITEM_FIELDS} } }`;
+    return this.graphql.query<{ rpgItems: RpgItem[] }>(query).pipe(map((res) => res.rpgItems));
+  }
+
+  // アイテムごとの、持っている人の数(管理者・開発者だけ)
+  getItemOwners(): Observable<RpgItemCount[]> {
+    const query = `query GetRpgItemOwners { rpgItemOwners { itemId count } }`;
+    return this.graphql.query<{ rpgItemOwners: RpgItemCount[] }>(query).pipe(map((res) => res.rpgItemOwners));
+  }
+
+  // 管理者・開発者だけが保存・削除できる
+  saveItem(input: RpgItemInput): Observable<RpgItem> {
+    const mutation = `mutation SaveRpgItem($input: RpgItemInput!) { saveRpgItem(input: $input) { ${ITEM_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgItem: RpgItem }>(mutation, { input }).pipe(map((res) => res.saveRpgItem));
+  }
+
+  // 初期装備・ポイント交換の品物と、マップ・敵・置物・合成のレシピで使っているアイテムは消せない
+  deleteItem(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgItem($id: ID!) { deleteRpgItem(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgItem: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgItem));
   }
 
   getSave(): Observable<RpgSave> {

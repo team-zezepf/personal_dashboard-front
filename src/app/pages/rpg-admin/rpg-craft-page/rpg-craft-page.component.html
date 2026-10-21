@@ -117,7 +117,7 @@
           <section class="card" aria-label="強さの並び">
             <h3>
               {{ sel.craft.type === 'weapon' ? '武器' : '防具' }}の強さの並び
-              <span class="legend"><span><span class="src shop">店</span>お店</span><span><span class="src point">交換</span>ポイント交換</span><span><span class="src craft">合成</span>鍛冶屋</span></span>
+              <span class="legend"><span><span class="src shop">店</span>お店</span><span><span class="src point">交換</span>ポイント交換</span><span><span class="src craft">合成</span>鍛冶屋</span><span><span class="src other">他</span>そのほか</span></span>
             </h3>
             <ng-container *ngTemplateOutlet="ladderTpl; context: { type: sel.craft.type, me: sel.craft.id }" />
           </section>
