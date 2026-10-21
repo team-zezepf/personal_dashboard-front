@@ -424,7 +424,8 @@ function drawRaptor(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): n
 
 // ゴーレム(front#348): 体=明るい色、手足=暗い色。角ばった岩を積み上げた体に、光る目と胸のコア。
 // 右向き(斜め前向き)で描き、左を向くときは左右を反転する。顔とコアは向いている側に寄り、反対側に頭・胴の側面が見える。
-// 歩くときは腕を前後に振り、攻撃のときは手前の腕で向いている方へ殴る(奥の腕は引く)
+// 斜め前を向いているので、向いている側の腕が奥(胴の後ろ)、側面が見えている側の腕が手前(胴の前)になる。
+// 歩くときは腕を前後に振り、攻撃のときは奥の腕を胴の後ろから向いている方へ突き出す
 function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
   const t = p.time + (p.seed ?? 0);
   const lunge = p.lunge ?? 0;
@@ -492,8 +493,8 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
     c.beginPath(); c.moveTo(-2, 16); c.lineTo(-2, 23); c.moveTo(3, 15.5); c.lineTo(3, 23); c.stroke();
     c.restore();
   };
-  // 奥の腕は、胴の後ろに描く(攻撃のときは、胴に隠れるくらいに少し引く)
-  arm(-17 + lunge * 3, walk * 0.25 + lunge * 0.15, false);
+  // 奥の腕(向いている側)は、胴の後ろに描く。攻撃のときは、向いている方へまっすぐ突き出す
+  arm(18, -walk * 0.25 - lunge * 1.45, false);
 
   // 胴(上が明るく、下が暗い岩)
   const body: [number, number][] = [[-19, -10], [-22, -30], [-15, -45], [14, -46], [22, -31], [18, -10], [6, -7], [-8, -7]];
@@ -568,15 +569,15 @@ function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): nu
   c.lineWidth = 1.2;
   c.beginPath(); c.moveTo(1, -45.5); c.lineTo(10, -45.5); c.stroke();
 
-  // 手前の腕は、胴の前に描く(攻撃のときは、向いている方へまっすぐ突き出す)
-  arm(21, -walk * 0.25 - lunge * 1.45, true);
+  // 手前の腕(側面が見えている側)は、胴の前に描く。攻撃のときは少し後ろへ引く
+  arm(-19, walk * 0.25 + lunge * 0.2, true);
   if (lunge > 0.2 && !flash) {
-    // 殴った勢いの線
+    // 殴った勢いの線(奥の腕のこぶしの先)
     c.strokeStyle = `rgba(255,255,255,${lunge * 0.8})`;
     c.lineWidth = 2;
     c.lineCap = 'round';
     c.beginPath();
-    for (const dy of [-8, 0, 8]) { c.moveTo(52, -34 + dy); c.lineTo(58 + lunge * 6, -34 + dy); }
+    for (const dy of [-8, 0, 8]) { c.moveTo(49, -34 + dy); c.lineTo(55 + lunge * 6, -34 + dy); }
     c.stroke();
   }
   c.restore();
