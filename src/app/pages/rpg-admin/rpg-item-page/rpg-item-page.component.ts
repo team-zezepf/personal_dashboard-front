@@ -52,9 +52,9 @@ const STAT_KEYS = { use: 'heal', weapon: 'atk', armor: 'def' } as const;
 
 const ICONS: Record<RpgItemType, string[]> = {
   use: ['🧪', '⚗️', '🍵', '🍎', '🍖', '💊', '🌿', '🍄'],
-  weapon: ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '🪄'],
+  weapon: ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️'],
   armor: ['🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨'],
-  material: ['💎', '🪨', '🦴', '🪶', '🍯', '🗝️', '🔩', '🌿']
+  material: ['💎', '🧱', '🦴', '🔮', '🍯', '🗝️', '🔩', '🍃']
 };
 
 export const WHERE_LABELS: Record<Where, string> = {
