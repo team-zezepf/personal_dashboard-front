@@ -52,6 +52,16 @@ describe('アイテムタブ(front#343)', () => {
       expect(ITEMS['iron_sword']).toBeUndefined();
     });
 
+    it('画像(front#345)があれば、アイテム・合成の装備とも画像のURLを持つ。なければ持たない', () => {
+      setItems([...DEFAULT_ITEMS, potion({ image: 'abc.png' })]);
+      setCrafts(DEFAULT_CRAFTS.map((c) => (c.id === 'fang_sword' ? { ...c, image: 'fang.webp' } : c)));
+
+      expect(ITEMS['item1'].image).toMatch(/\/rpg-item-images\/abc\.png$/);
+      expect(ITEMS['fang_sword'].image).toMatch(/\/rpg-item-images\/fang\.webp$/);
+      expect('image' in ITEMS['potion']).toBe(false);
+      expect('image' in ITEMS['jelly_robe']).toBe(false);
+    });
+
     it('種類に関係ない値は持たない', () => {
       setItems([...DEFAULT_ITEMS, sword({ heal: 10, def: 5 })]);
       expect(ITEMS['item2']).toEqual({ name: '雷の剣', icon: '⚡', type: 'weapon', atk: 30, price: 600 });
@@ -126,8 +136,10 @@ describe('アイテムタブ(front#343)', () => {
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
       expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, atk: null, def: null, desc: null, inShop: true, price: 25, sortOrder: 37
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, atk: null, def: null, desc: null, inShop: true, price: 25, sortOrder: 37, image: null
       });
+      // 画像(front#345)はファイル名のまま送る
+      expect(toInput({ item: potion({ image: 'a.png' }), isNew: false }).image).toBe('a.png');
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
       // 素材は売れない
       expect(toInput({ item: stone({ inShop: true, price: 10 }), isNew: false })).toMatchObject({ inShop: false, price: null });

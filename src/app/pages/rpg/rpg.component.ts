@@ -2,6 +2,7 @@ import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, comput
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
+import { RpgItemIconComponent } from '../../components/rpg-item-icon/rpg-item-icon.component';
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
@@ -54,19 +55,21 @@ const CONTROL_SELECTOR = 'button:not(:disabled), input:not(:disabled), select:no
 interface ShopRow {
   id: string;
   icon: string;
+  // 画像のURL(front#345)。なければ絵文字
+  image?: string;
   name: string;
   desc: string;
   price: string;
   buttonLabel: string;
   disabled: boolean;
   // 鍛冶屋(front#277)の合成に使う素材と、持っている数・いる数
-  materials?: { icon: string; name: string; have: number; need: number }[];
+  materials?: { icon: string; image?: string; name: string; have: number; need: number }[];
 }
 
 @Component({
   selector: 'app-rpg-page',
   standalone: true,
-  imports: [HeaderComponent, RpgLookEditorComponent],
+  imports: [HeaderComponent, RpgLookEditorComponent, RpgItemIconComponent],
   templateUrl: './rpg.component.html',
   styleUrl: './rpg.component.css'
 })
@@ -176,8 +179,8 @@ export class RpgPageComponent implements OnDestroy {
       def: game.def(),
       gold: p.gold,
       statPoints: p.statPoints,
-      weapon: { icon: weapon.icon, name: weapon.name, plus: `攻撃 +${weapon.atk ?? 0}` },
-      armor: { icon: armor.icon, name: armor.name, plus: `防御 +${armor.def ?? 0}` }
+      weapon: { icon: weapon.icon, image: weapon.image, name: weapon.name, plus: `攻撃 +${weapon.atk ?? 0}` },
+      armor: { icon: armor.icon, image: armor.image, name: armor.name, plus: `防御 +${armor.def ?? 0}` }
     };
   });
 
@@ -253,6 +256,7 @@ export class RpgPageComponent implements OnDestroy {
         return {
           id,
           icon: item.icon,
+          image: item.image,
           name: item.name,
           usable: item.type === 'use',
           // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
@@ -275,12 +279,13 @@ export class RpgPageComponent implements OnDestroy {
         return {
           id: r.result,
           icon: item.icon,
+          image: item.image,
           name: item.name,
           desc: itemStatLabel(item),
           price: `${r.gold} G`,
           buttonLabel: has ? '持っている' : '作る',
           disabled: has || !game.canCraft(r),
-          materials: r.materials.map((m) => ({ icon: ITEMS[m.id]?.icon ?? '', name: ITEMS[m.id]?.name ?? m.id, have: game.player.inv[m.id] ?? 0, need: m.count }))
+          materials: r.materials.map((m) => ({ icon: ITEMS[m.id]?.icon ?? '', image: ITEMS[m.id]?.image, name: ITEMS[m.id]?.name ?? m.id, have: game.player.inv[m.id] ?? 0, need: m.count }))
         };
       });
     }
@@ -292,6 +297,7 @@ export class RpgPageComponent implements OnDestroy {
         return {
           id,
           icon: item.icon,
+          image: item.image,
           name: item.name,
           desc: item.type === 'use' ? `${item.desc}（${game.player.inv[id] ?? 0}個持っている）` : itemStatLabel(item),
           price: `${price} G`,
@@ -304,7 +310,9 @@ export class RpgPageComponent implements OnDestroy {
       const has = !!ITEMS[shopItem.id] && game.owned(shopItem.id);
       return {
         id: shopItem.id,
-        icon: POINT_SHOP_ICONS[shopItem.id] ?? '🎁',
+        // 装備はアイテムの画像・絵文字を使う。ゴールドなどアイテムでない品物は交換所のアイコン
+        icon: ITEMS[shopItem.id]?.icon ?? POINT_SHOP_ICONS[shopItem.id] ?? '🎁',
+        image: ITEMS[shopItem.id]?.image,
         name: shopItem.name,
         desc: shopItem.description,
         price: `${shopItem.point} pt`,

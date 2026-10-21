@@ -131,14 +131,14 @@
           }
           @for (row of shopRows(); track row.id) {
             <div class="shop-row">
-              <span class="shop-icon">{{ row.icon }}</span>
+              <span class="shop-icon"><app-rpg-item-icon [icon]="row.icon" [image]="row.image" /></span>
               <div class="shop-info">
                 <div class="shop-name">{{ row.name }}</div>
                 <div class="shop-desc">{{ row.desc }}</div>
                 @if (row.materials) {
                   <div class="shop-materials">
                     @for (m of row.materials; track m.name) {
-                      <span class="material-chip" [class.short]="m.have < m.need">{{ m.icon }} {{ m.name }} {{ m.have }}/{{ m.need }}</span>
+                      <span class="material-chip" [class.short]="m.have < m.need"><app-rpg-item-icon [icon]="m.icon" [image]="m.image" /> {{ m.name }} {{ m.have }}/{{ m.need }}</span>
                     }
                   </div>
                 }
@@ -279,8 +279,8 @@
     @if (stats(); as s) {
       <section class="card" aria-label="装備">
         <h2>装備</h2>
-        <div class="slot"><span class="k">武器</span><span class="icon">{{ s.weapon.icon }}</span>{{ s.weapon.name }}<span class="plus">{{ s.weapon.plus }}</span></div>
-        <div class="slot"><span class="k">防具</span><span class="icon">{{ s.armor.icon }}</span>{{ s.armor.name }}<span class="plus">{{ s.armor.plus }}</span></div>
+        <div class="slot"><span class="k">武器</span><span class="icon"><app-rpg-item-icon [icon]="s.weapon.icon" [image]="s.weapon.image" /></span>{{ s.weapon.name }}<span class="plus">{{ s.weapon.plus }}</span></div>
+        <div class="slot"><span class="k">防具</span><span class="icon"><app-rpg-item-icon [icon]="s.armor.icon" [image]="s.armor.image" /></span>{{ s.armor.name }}<span class="plus">{{ s.armor.plus }}</span></div>
         <button type="button" class="btn ghost look-button" (click)="openLook()">🧑 見た目を変える</button>
       </section>
 
@@ -288,7 +288,7 @@
         <h2>持ち物</h2>
         @for (item of inventory(); track item.id) {
           <div class="inv-row">
-            <span class="icon">{{ item.icon }}</span>
+            <span class="icon"><app-rpg-item-icon [icon]="item.icon" [image]="item.image" /></span>
             <span class="name">{{ item.name }}</span>
             @if (item.material) {
               <span class="count">×{{ item.count }}</span>

@@ -1,10 +1,13 @@
-import { Component, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { concat, toArray } from 'rxjs';
+import { Observable, concat, switchMap, toArray } from 'rxjs';
 import { RpgCraft, RpgCraftInput, RpgEnemy } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { ITEMS, MATERIAL_IDS, POINT_SHOP_ICONS, isCraftItem, itemsVersion, setCrafts } from '../../../rpg/rpg-data';
+import { ITEMS, MATERIAL_IDS, POINT_SHOP_ICONS, isCraftItem, itemsVersion, rpgItemImageUrl, setCrafts } from '../../../rpg/rpg-data';
+import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
+import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
+import { IMAGE_MAX_BYTES } from '../rpg-item-page/rpg-item-page.component';
 
 type CraftType = RpgCraft['type'];
 type Source = 'shop' | 'point' | 'craft' | 'other';
@@ -27,6 +30,8 @@ interface Rung {
   id: string;
   name: string;
   icon: string;
+  // 画像のURL(front#345)
+  image?: string | null;
   power: number;
   source: Source;
   cost: string;
@@ -81,7 +86,7 @@ export function problemsOf(c: RpgCraft, others: { name: string; power: number; g
 @Component({
   selector: 'app-rpg-craft-page',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet],
+  imports: [FormsModule, NgTemplateOutlet, RpgItemIconComponent],
   templateUrl: './rpg-craft-page.component.html',
   styleUrls: ['./rpg-craft-page.component.css']
 })
@@ -110,6 +115,8 @@ export class RpgCraftPageComponent {
   // 並び順を変えたか(変えたら、すべての装備を今の順番で保存する)
   readonly orderChanged = signal(false);
   readonly saving = signal(false);
+  // 選んだけれど、まだアップロードしていない画像(保存するときにアップロードする。front#347)
+  readonly pendingImages = new PendingImages();
   readonly message = signal('');
   // 装備ごとの、持っている人の数(読めなければ空)
   readonly owners = signal<Map<string, number>>(new Map());
@@ -133,6 +140,7 @@ export class RpgCraftPageComponent {
         id,
         name: item.name,
         icon: item.icon,
+        image: item.image ?? null,
         type: item.type as CraftType,
         power: (item.type === 'weapon' ? item.atk : item.def) ?? 0,
         gold: item.price ?? null
@@ -179,6 +187,7 @@ export class RpgCraftPageComponent {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.pendingImages.clear());
     afterNextRender(() => {
       this.stored = this.crafts().map(cloneCraft);
       this.rows.set(this.stored.map((c) => ({ craft: cloneCraft(c), isNew: false })));
@@ -209,6 +218,16 @@ export class RpgCraftPageComponent {
     return ITEMS[id]?.icon ?? '❔';
   }
 
+  // 素材などアイテムの画像のURL(front#345)
+  itemImage(id: string): string | null {
+    return ITEMS[id]?.image ?? null;
+  }
+
+  // 合成の装備の画像のファイル名から、表示に使うURL
+  imageUrl(image: string | null | undefined): string | null {
+    return image ? rpgItemImageUrl(image) : null;
+  }
+
   dropsText(id: string): string {
     return dropsOf(id, this.enemies()).map((d) => `${d.name}（${Math.round(d.rate * 100)}%）`).join('・');
   }
@@ -228,7 +247,7 @@ export class RpgCraftPageComponent {
       .map((g) => {
         // 道具屋で売っていない装備は、ポイント交換の品物か、それ以外(初期装備など)
         const source: Source = g.gold !== null ? 'shop' : g.id in POINT_SHOP_ICONS ? 'point' : 'other';
-        return { id: g.id, name: g.name, icon: g.icon, power: g.power, source, cost: source === 'shop' ? `${g.gold}G` : source === 'point' ? 'ポイント交換' : '—' };
+        return { id: g.id, name: g.name, icon: g.icon, image: g.image, power: g.power, source, cost: source === 'shop' ? `${g.gold}G` : source === 'point' ? 'ポイント交換' : '—' };
       });
     const crafts: Rung[] = this.rows()
       .filter((r) => r.craft.type === type)
@@ -236,6 +255,7 @@ export class RpgCraftPageComponent {
         id: r.craft.id,
         name: r.craft.name || '（名前なし）',
         icon: r.craft.icon,
+        image: this.imageOf(r.craft),
         power: r.craft.power,
         source: 'craft',
         cost: `${r.craft.gold}G＋素材${this.materialCount(r.craft)}個`
@@ -297,6 +317,39 @@ export class RpgCraftPageComponent {
     this.update((c) => (c.icon = icon.trim() || '❔'));
   }
 
+  /** 装備の画像の表示に使うURL。選んだばかり(保存前)の画像があればそのプレビュー(front#347) */
+  imageOf(craft: RpgCraft): string | null {
+    return this.pendingImages.url(craft.id) ?? this.imageUrl(craft.image);
+  }
+
+  hasImage(craft: RpgCraft): boolean {
+    return !!craft.image || !!this.pendingImages.url(craft.id);
+  }
+
+  /**
+   * 画像を選んだら、ブラウザの中だけでプレビューを出す(front#345 / front#347)。
+   * アップロードは保存するときに行うので、保存しなければ API には何も残らない
+   */
+  pickImage(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    const sel = this.selected();
+    if (!file || !sel) return;
+    if (file.size > IMAGE_MAX_BYTES) {
+      this.flash('画像は1MBまでにしてください');
+      return;
+    }
+    this.pendingImages.set(sel.craft.id, file);
+    this.markDirty(sel.craft.id);
+  }
+
+  /** 画像を外す(選んだばかりの画像も捨てる) */
+  clearImage(): void {
+    const sel = this.selected();
+    if (sel) this.pendingImages.remove(sel.craft.id);
+    this.update((c) => (c.image = null));
+  }
+
   setPower(v: number): void {
     this.update((c) => (c.power = clamp(v, CRAFT_LIMITS.power)));
   }
@@ -344,6 +397,9 @@ export class RpgCraftPageComponent {
     const at = base ? rows.findIndex((r) => r.craft.id === base.id) + 1 : rows.length;
     rows.splice(at, 0, { craft, isNew: true });
     this.rows.set(rows);
+    // 複製元に選んだばかりの画像があれば、それも持っていく
+    const pending = base && this.pendingImages.file(base.id);
+    if (pending) this.pendingImages.set(id, pending);
     if (base) this.orderChanged.set(true);
     this.markDirty(id);
     this.select(id);
@@ -379,6 +435,7 @@ export class RpgCraftPageComponent {
   }
 
   private removeRow(id: string): void {
+    this.pendingImages.remove(id);
     const index = this.rows().findIndex((r) => r.craft.id === id);
     this.rows.update((rows) => rows.filter((r) => r.craft.id !== id));
     const dirty = new Set(this.dirtyIds());
@@ -401,8 +458,9 @@ export class RpgCraftPageComponent {
     this.saving.set(true);
     // 並び順を変えていなければ、今の順番のまま(新しい装備は最後)にする
     const order = (r: CraftRow) => (this.orderChanged() ? rows.indexOf(r) + 1 : null);
-    concat(...targets.map((r) => this.rpgService.saveCraft(toInput(r, order(r))))).pipe(toArray()).subscribe({
+    concat(...targets.map((r) => this.saveRow(r, order(r)))).pipe(toArray()).subscribe({
       next: (savedList) => {
+        for (const r of targets) this.pendingImages.remove(r.craft.id);
         // 新しい装備は、APIが決めたIDに置き換える
         const selected = this.selectedId();
         let nextSelected = selected;
@@ -432,6 +490,13 @@ export class RpgCraftPageComponent {
   }
 
   // 保存してある装備(新しい装備・保存していない変更は含めない)を、ゲームの装備とレシピにする
+  /** 1つの装備を保存する。選んだばかりの画像があれば、先にアップロードしてそのファイル名で保存する(front#347) */
+  private saveRow(row: CraftRow, sortOrder: number | null): Observable<RpgCraft> {
+    const file = this.pendingImages.file(row.craft.id);
+    if (!file) return this.rpgService.saveCraft(toInput(row, sortOrder));
+    return this.rpgService.uploadItemImage(file).pipe(switchMap((image) => this.rpgService.saveCraft({ ...toInput(row, sortOrder), image })));
+  }
+
   private publish(): void {
     const list = this.stored.map(cloneCraft);
     setCrafts(list);
@@ -461,6 +526,7 @@ function toInput(row: CraftRow, sortOrder: number | null): RpgCraftInput {
     power: c.power,
     gold: c.gold,
     materials: c.materials.map((m) => ({ itemId: m.itemId, count: m.count })),
-    sortOrder
+    sortOrder,
+    image: c.image ?? null
   };
 }
