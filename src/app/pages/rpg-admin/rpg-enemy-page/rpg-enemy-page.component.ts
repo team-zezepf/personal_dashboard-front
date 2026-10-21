@@ -124,6 +124,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
   // ドラッグで並び替え(front#299)。つかんでいる敵と、落とす位置(その敵の前か後ろ)
   readonly dragId = signal<string | null>(null);
   readonly dropAt = signal<{ id: string; after: boolean } | null>(null);
+  // 一覧でそのまま書き換えられる数値(front#350)と、数値の欄の上にポインターがある敵(その行はドラッグしない)
+  readonly listStats: ['exp' | 'hp' | 'atk' | 'def', string][] = [['exp', '経験値'], ['hp', 'HP'], ['atk', '攻撃'], ['def', '防御']];
+  readonly noDragId = signal<string | null>(null);
 
   readonly selected = computed(() => this.rows().find((r) => r.def.id === this.selectedId()) ?? null);
   readonly isDirty = computed(() => this.dirtyIds().size > 0);
@@ -192,17 +195,26 @@ export class RpgEnemyPageComponent implements OnDestroy {
     this.restartAttack();
   }
 
+  /** 一覧の数値の欄(front#350)を触ったら、その敵を選ぶ(選んでいる敵なら、攻撃のプレビューはそのまま) */
+  selectIfOther(id: string): void {
+    if (this.selectedId() !== id) this.select(id);
+  }
+
+  limitOf(key: NumberKey): readonly [number, number] {
+    return LIMIT_OF[key];
+  }
+
   turn(): void {
     this.dir.update((d) => -d);
   }
 
   // ===== 変更 =====
 
-  private change(patch: Partial<EnemyDef>): void {
-    const sel = this.selected();
-    if (!sel) return;
-    this.rows.update((rows) => rows.map((r) => (r === sel ? { ...r, def: { ...r.def, ...patch } } : r)));
-    this.markDirty(sel.def.id);
+  /** 敵 id(省くと選んでいる敵)を変える */
+  private change(patch: Partial<EnemyDef>, id = this.selectedId()): void {
+    if (!id || !this.rows().some((r) => r.def.id === id)) return;
+    this.rows.update((rows) => rows.map((r) => (r.def.id === id ? { ...r, def: { ...r.def, ...patch } } : r)));
+    this.markDirty(id);
   }
 
   private markDirty(id: string): void {
@@ -229,13 +241,14 @@ export class RpgEnemyPageComponent implements OnDestroy {
     this.restartAttack();
   }
 
-  setNumber(key: NumberKey, value: number | string): void {
+  /** 数値を範囲内に直して変える。id は一覧の欄(front#350)から変える敵(省くと選んでいる敵) */
+  setNumber(key: NumberKey, value: number | string, id?: string): void {
     const [min, max] = LIMIT_OF[key];
     const n = Number(value);
     if (!Number.isFinite(n)) return;
     const clamped = Math.min(max, Math.max(min, n));
     const intKeys: NumberKey[] = ['hp', 'atk', 'def', 'exp', 'gold', 'respawn', 'dash', 'range', 'radius'];
-    this.change({ [key]: intKeys.includes(key) ? Math.round(clamped) : clamped });
+    this.change({ [key]: intKeys.includes(key) ? Math.round(clamped) : clamped }, id);
     if (key === 'charge' || key === 'dash' || key === 'range' || key === 'radius') this.restartAttack();
   }
 
