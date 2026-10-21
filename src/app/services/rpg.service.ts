@@ -72,9 +72,9 @@ const BGM_FIELDS = `id name filename size createdAt`;
 
 const SE_FIELDS = `id name filename size createdAt`;
 
-const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt`;
+const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt image`;
 
-const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sortOrder updatedAt`;
+const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sortOrder updatedAt image`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 
@@ -246,6 +246,18 @@ export class RpgService {
   }
 
   // ===== アイテム(front#343 / api#163) =====
+
+  // アイテム・合成の装備の画像(front#345 / api#166)。REST(multipart)でアップロードし、返ったファイル名をアイテム・装備の image に入れて保存する
+  uploadItemImage(file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<{ filename: string }>(`${environment.apiBaseUrl}/api/rpg-item-images`, formData).pipe(
+      map((res) => res.filename),
+      catchError((err: HttpErrorResponse) =>
+        throwError(() => new Error(err.error?.message ?? (err.status === 413 ? '画像は1MBまでにしてください' : '画像のアップロードに失敗しました')))
+      )
+    );
+  }
 
   getItems(): Observable<RpgItem[]> {
     const query = `query GetRpgItems { rpgItems { ${ITEM_FIELDS} } }`;

@@ -2,6 +2,7 @@
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
 import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgMap, RpgMapObject, RpgObjectDef } from '../models/rpg.models';
 import { signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { objectTiles } from './rpg-house';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
@@ -17,6 +18,13 @@ export interface ItemDef {
   // 道具屋での値段(ゴールド)。ポイント交換限定の品物は持たない
   price?: number;
   desc?: string;
+  // 画像のURL(front#345)。なければ絵文字(icon)で出す
+  image?: string;
+}
+
+/** アイテム・合成の装備の画像のURL(front#345 / api#166) */
+export function rpgItemImageUrl(filename: string): string {
+  return `${environment.apiBaseUrl}/rpg-item-images/${filename}`;
 }
 
 /**
@@ -118,7 +126,8 @@ export function toItemDef(item: RpgItem): ItemDef {
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
-    ...(item.desc ? { desc: item.desc } : {})
+    ...(item.desc ? { desc: item.desc } : {}),
+    ...(item.image ? { image: rpgItemImageUrl(item.image) } : {})
   };
 }
 
@@ -138,7 +147,14 @@ function rebuild(): void {
   for (const c of [...currentCrafts].sort((a, b) => a.sortOrder - b.sortOrder)) {
     // 回復薬など、アイテムと同じIDは使わない
     if (ITEMS[c.id]) continue;
-    ITEMS[c.id] = { name: c.name, icon: c.icon, type: c.type, ...(c.type === 'weapon' ? { atk: c.power } : { def: c.power }), desc: '鍛冶屋で合成' };
+    ITEMS[c.id] = {
+      name: c.name,
+      icon: c.icon,
+      type: c.type,
+      ...(c.type === 'weapon' ? { atk: c.power } : { def: c.power }),
+      desc: '鍛冶屋で合成',
+      ...(c.image ? { image: rpgItemImageUrl(c.image) } : {})
+    };
     craftItemIds.add(c.id);
     RECIPES.push({ result: c.id, materials: c.materials.map((m) => ({ id: m.itemId, count: m.count })), gold: c.gold });
   }

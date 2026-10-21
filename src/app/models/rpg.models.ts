@@ -306,6 +306,8 @@ export interface RpgCraft {
   // 鍛冶屋に並ぶ順番
   sortOrder: number;
   updatedAt?: string | null;
+  // 画像のファイル名(front#345 / api#166。/rpg-item-images/{image})。なければ絵文字(icon)で出す
+  image?: string | null;
 }
 
 // id が null なら新しい装備として追加する。sortOrder が null なら今の順番のまま(新しければ最後)
@@ -332,6 +334,8 @@ export interface RpgItem {
   // 道具屋に並ぶ順番(一覧もこの順)
   sortOrder: number;
   updatedAt?: string | null;
+  // 画像のファイル名(front#345 / api#166。/rpg-item-images/{image})。なければ絵文字(icon)で出す
+  image?: string | null;
 }
 
 // id が null なら新しいアイテムとして追加する。sortOrder が null なら今の順番のまま(新しければ最後)。保存したアイテムの種類は変えられない

@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgCraft, RpgEnemy, RpgItem, RpgItemInput, RpgItemType, RpgMap, RpgObjectDef, RpgPointShopItem } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { STATIC_NAMES, StaticType, setItems } from '../../../rpg/rpg-data';
+import { STATIC_NAMES, StaticType, rpgItemImageUrl, setItems } from '../../../rpg/rpg-data';
+import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 
 type Source = 'shop' | 'point' | 'craft' | 'other';
 type Where = 'drop' | 'material' | 'object' | 'quest' | 'craft' | 'point' | 'locked';
@@ -33,6 +34,8 @@ interface Rung {
   id: string;
   name: string;
   icon: string;
+  // 画像のファイル名(front#345)
+  image?: string | null;
   power: number;
   source: Source;
   cost: string;
@@ -40,6 +43,9 @@ interface Rung {
 
 // APIの値の範囲(api#163 の RpgItemService と合わせる)
 export const ITEM_LIMITS = { name: 20, desc: 40, power: [1, 999], price: [1, 99_999] } as const;
+
+// アップロードできる画像の大きさ(api#166 の RpgItemImageStorageService と同じ)
+export const IMAGE_MAX_BYTES = 1024 * 1024;
 
 // 消せないアイテム(api#163 の RpgItemService.LOCKED と同じ)
 export const LOCKED_ITEMS: Record<string, string> = { wood_sword: '初期装備', cloth: '初期装備', potion: '初めの持ち物' };
@@ -166,7 +172,7 @@ export function problemsOf(item: RpgItem, others: { name: string }[], shopGear: 
 @Component({
   selector: 'app-rpg-item-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RpgItemIconComponent],
   templateUrl: './rpg-item-page.component.html',
   styleUrls: ['./rpg-item-page.component.css']
 })
@@ -200,6 +206,8 @@ export class RpgItemPageComponent {
   readonly dirtyIds = signal<Set<string>>(new Set());
   readonly filter = signal('');
   readonly saving = signal(false);
+  // 画像をアップロードしている途中(front#345)
+  readonly uploading = signal(false);
   readonly message = signal('');
   // アイテムごとの、持っている人の数(読めなければ空)
   readonly owners = signal<Map<string, number>>(new Map());
@@ -277,6 +285,11 @@ export class RpgItemPageComponent {
     return this.pointShop().find((p) => p.id === id)?.point ?? null;
   }
 
+  /** 画像のファイル名から、表示に使うURL(なければ null) */
+  imageUrl(image: string | null | undefined): string | null {
+    return image ? rpgItemImageUrl(image) : null;
+  }
+
   iconsOf(type: RpgItemType): string[] {
     return ICONS[type];
   }
@@ -308,11 +321,11 @@ export class RpgItemPageComponent {
         const point = this.pointOf(r.item.id);
         const source: Source = r.item.inShop ? 'shop' : point !== null ? 'point' : 'other';
         const cost = source === 'shop' ? `${r.item.price ?? 0}G` : source === 'point' ? `${point}pt` : (LOCKED_ITEMS[r.item.id] ?? '—');
-        return { id: r.item.id, name: r.item.name || '（名前なし）', icon: r.item.icon, power: statOf(r.item) ?? 0, source, cost };
+        return { id: r.item.id, name: r.item.name || '（名前なし）', icon: r.item.icon, image: r.item.image, power: statOf(r.item) ?? 0, source, cost };
       });
     const crafts: Rung[] = this.crafts()
       .filter((c) => c.type === type)
-      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, power: c.power, source: 'craft', cost: `${c.gold}G＋素材` }));
+      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, image: c.image, power: c.power, source: 'craft', cost: `${c.gold}G＋素材` }));
     return [...items, ...crafts].sort((a, b) => a.power - b.power);
   }
 
@@ -386,6 +399,38 @@ export class RpgItemPageComponent {
       if (i.type === 'material') return;
       i[STAT_KEYS[i.type]] = clamp(v, ITEM_LIMITS.power);
     });
+  }
+
+  /**
+   * 画像を選んだら、すぐアップロードして画像のファイル名を入れる(保存ボタンで確定。front#345)。
+   * 古い画像は、保存したときにAPIが(ほかで使っていなければ)消す
+   */
+  pickImage(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    const sel = this.selected();
+    if (!file || !sel) return;
+    if (file.size > IMAGE_MAX_BYTES) {
+      this.flash('画像は1MBまでにしてください');
+      return;
+    }
+    this.uploading.set(true);
+    this.rpgService.uploadItemImage(file).subscribe({
+      next: (filename) => {
+        this.uploading.set(false);
+        // アップロード中にほかのアイテムを選んでも、選んだときのアイテムに入れる
+        this.rows.update((rows) => rows.map((r) => (r.item.id === sel.item.id ? { ...r, item: { ...r.item, image: filename } } : r)));
+        this.markDirty(sel.item.id);
+      },
+      error: (err: Error) => {
+        this.uploading.set(false);
+        this.flash(err.message || '画像のアップロードに失敗しました');
+      }
+    });
+  }
+
+  clearImage(): void {
+    this.update((i) => (i.image = null));
   }
 
   setDesc(desc: string): void {
@@ -547,6 +592,7 @@ export function toInput(row: ItemRow): RpgItemInput {
     desc: i.desc?.trim() || null,
     inShop,
     price: inShop ? (i.price ?? null) : null,
-    sortOrder: i.sortOrder
+    sortOrder: i.sortOrder,
+    image: i.image ?? null
   };
 }

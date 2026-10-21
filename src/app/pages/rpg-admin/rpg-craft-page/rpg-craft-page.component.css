@@ -742,3 +742,31 @@
 .matrix th.num {
   white-space: nowrap;
 }
+
+/* 画像(front#345) */
+.image-box {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.image-preview {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  /* 透明な部分が分かるよう、市松模様にする */
+  background: repeating-conic-gradient(var(--surface-2) 0% 25%, var(--card) 0% 50%) 50% / 12px 12px;
+}
+
+.image-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}

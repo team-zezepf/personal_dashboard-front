@@ -476,14 +476,34 @@ export class RpgRenderer {
     ctx.ellipse(cx, cy, 16, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     const bob = k < 1 ? 0 : Math.sin(this.time * 3 + d.x) * 2;
-    ctx.font = '15px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#000';
-    ctx.fillText(ITEMS[d.id]?.icon ?? '❔', cx, cy - 4 + bob);
+    // 画像があれば画像(front#345)。読み込み中・読めないときは絵文字
+    const img = this.itemImage(ITEMS[d.id]?.image);
+    if (img) {
+      ctx.drawImage(img, cx - 9, cy - 22 + bob, 18, 18);
+    } else {
+      ctx.font = '15px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#000';
+      ctx.fillText(ITEMS[d.id]?.icon ?? '❔', cx, cy - 4 + bob);
+    }
     if (game.hover === d || game.player.target === d) {
       this.label(`${ITEMS[d.id]?.name ?? ''}${d.count > 1 ? `×${d.count}` : ''}`, cx, cy - 30);
     }
+  }
+
+  // アイテムの画像(front#345)。初めて使うときに読み始め、読み終わるまでは null(絵文字で描く)
+  private readonly itemImages = new Map<string, HTMLImageElement>();
+
+  private itemImage(url: string | undefined): HTMLImageElement | null {
+    if (!url) return null;
+    let img = this.itemImages.get(url);
+    if (!img) {
+      img = new Image();
+      img.src = url;
+      this.itemImages.set(url, img);
+    }
+    return img.complete && img.naturalWidth > 0 ? img : null;
   }
 
   // 壊れる置物は、叩かれるとゆれ・ひびが入り、元に戻るときはだんだん濃くなる。狙っている・マウスの下なら名前を出す(front#264)

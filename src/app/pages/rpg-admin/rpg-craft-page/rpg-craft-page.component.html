@@ -30,7 +30,7 @@
             @for (row of group.rows; track row.craft.id) {
               <div class="row-wrap" [class.active]="row.craft.id === selectedId()">
               <button type="button" class="craft-row" [attr.aria-pressed]="row.craft.id === selectedId()" (click)="select(row.craft.id)">
-                <span class="ic">{{ row.craft.icon }}</span>
+                <span class="ic"><app-rpg-item-icon [icon]="row.craft.icon" [image]="imageUrl(row.craft.image)" /></span>
                 <span class="row-text">
                   <span class="name">
                     {{ row.craft.name || '（名前なし）' }}
@@ -68,12 +68,12 @@
             <div class="smith-title">⚒️ 鍛冶屋「素材とゴールドで装備を作るよ」</div>
             @for (row of rows(); track row.craft.id) {
               <div class="smith-row" [class.me]="row.craft.id === selectedId()">
-                <span class="smith-icon">{{ row.craft.icon }}</span>
+                <span class="smith-icon"><app-rpg-item-icon [icon]="row.craft.icon" [image]="imageUrl(row.craft.image)" /></span>
                 <div>
                   <div class="nm">{{ row.craft.name || '（名前なし）' }} <span class="st">{{ typeLabel(row.craft.type) }} +{{ row.craft.power }}</span></div>
                   <div class="mats">
                     @for (m of row.craft.materials; track $index) {
-                      <span class="material-chip">{{ itemIcon(m.itemId) }} {{ itemName(m.itemId) }} 0/{{ m.count }}</span>
+                      <span class="material-chip"><app-rpg-item-icon [icon]="itemIcon(m.itemId)" [image]="itemImage(m.itemId)" /> {{ itemName(m.itemId) }} 0/{{ m.count }}</span>
                     }
                   </div>
                 </div>
@@ -149,6 +149,19 @@
               </div>
               <label class="other-icon">ほかの絵文字 <input type="text" maxlength="8" [ngModel]="sel.craft.icon" (change)="setIcon($any($event.target).value)" /></label>
             </div>
+            <!-- 画像(front#345)。設定すると、絵文字の代わりに画像で出す -->
+            <div class="field" role="group" aria-label="画像">
+              <span>画像（任意）</span>
+              <div class="image-box">
+                <div class="image-preview"><app-rpg-item-icon [icon]="sel.craft.icon" [image]="imageUrl(sel.craft.image)" /></div>
+                <div class="image-btns">
+                  <button type="button" class="btn small" [disabled]="uploading()" (click)="imageInput.click()">{{ uploading() ? 'アップロード中…' : '🖼 画像を選ぶ' }}</button>
+                  <button type="button" class="btn small danger" [disabled]="!sel.craft.image || uploading()" (click)="clearImage()">画像を外す（絵文字に戻す）</button>
+                  <input #imageInput type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" aria-label="画像のファイル" (change)="pickImage(imageInput)" />
+                </div>
+              </div>
+              <p class="hint">画像を設定すると、絵文字の代わりに画像で表示します。png / jpeg / webp / gif、1MBまで。正方形・背景が透明な画像（64×64 くらい）がおすすめです。</p>
+            </div>
             <p class="hint">説明は「鍛冶屋で合成」と自動で付きます。</p>
           </div>
 
@@ -221,7 +234,7 @@
                 @for (row of rows(); track row.craft.id) {
                   <th>
                     <button type="button" class="col-head" (click)="openEdit(row.craft.id)">
-                      <span class="ic">{{ row.craft.icon }}</span>{{ row.craft.name || '（名前なし）' }}
+                      <span class="ic"><app-rpg-item-icon [icon]="row.craft.icon" [image]="imageUrl(row.craft.image)" /></span>{{ row.craft.name || '（名前なし）' }}
                     </button>
                   </th>
                 }
@@ -286,7 +299,7 @@
   <div class="ladder">
     @for (r of ladder(type); track r.id) {
       <div class="rung" [class.me]="r.id === me">
-        <span class="ic">{{ r.icon }}</span>
+        <span class="ic"><app-rpg-item-icon [icon]="r.icon" [image]="r.image" /></span>
         <span class="rung-name"><span class="src" [class]="'src ' + r.source">{{ sourceLabels[r.source] }}</span>{{ r.name }}</span>
         <span class="bar-wrap">
           <span class="val">+{{ r.power }}</span>
