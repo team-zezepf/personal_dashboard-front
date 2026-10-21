@@ -195,7 +195,7 @@ test(
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
 test(
-  'E2E-21 RPGマップ作成でアイテムに画像を設定すると、ゲームの道具屋・持ち物に画像で出て、外すと絵文字に戻る(合成の装備は編集欄の見え方まで)',
+  'E2E-21 RPGマップ作成でアイテムに画像を設定すると、保存したときにアップロードされ、ゲームの道具屋・持ち物に画像で出て、外すと絵文字に戻る(合成の装備は保存しなければアップロードされない)',
   caseOf({
     precondition: [
       'sandbox が起動している',
@@ -204,8 +204,9 @@ test(
       '管理者のアカウントの RPG のセーブデータを、最初の状態に上回復薬×1 を足した状態にしてある'
     ],
     expected: [
-      '「🎒 アイテム」タブで上回復薬に画像を選ぶと、プレビュー・一覧・道具屋での見え方が画像になり、保存できる',
-      '「⚒️ 合成」タブでゼリーの服に画像を選ぶと、編集欄のプレビューと鍛冶屋での見え方が画像になる(E2E 用のデータは敵が素材を落とさず、合成の装備は ⛔ で保存できないため、保存はしない)',
+      '「🎒 アイテム」タブで上回復薬に画像を選ぶと、プレビュー・一覧・道具屋での見え方が画像になる。この時点ではまだアップロードしない(front#347)',
+      '「アイテムを保存する」を押すと、画像を1回アップロードしてから保存し、表示が API の画像(/rpg-item-images/…)になる',
+      '「⚒️ 合成」タブでゼリーの服に画像を選ぶと、編集欄のプレビューと鍛冶屋での見え方が画像になる。保存せずにほかの画面へ移ると、アップロードされない(E2E 用のデータは合成の装備が ⛔ で保存できないため、保存しない場合だけ確かめる)',
       'ゲーム(/rpg)の道具屋・持ち物の上回復薬が画像で出る(絵文字ではない)',
       '「画像を外す」で保存すると、上回復薬は絵文字に戻り、使われなくなった画像ファイルは配られなくなる(API が消す)'
     ]
@@ -217,31 +218,47 @@ test(
     const itemTab = page.locator('app-rpg-item-page');
     const craftTab = page.locator('app-rpg-craft-page');
     let imageSrc = '';
+    // 画像のアップロード(POST /api/rpg-item-images)の回数
+    let uploads = 0;
+    page.on('request', (req) => {
+      if (req.method() === 'POST' && req.url().includes('/api/rpg-item-images')) uploads++;
+    });
 
-    await step('RPGマップ作成の「🎒 アイテム」タブで「上回復薬」を選び、「画像を選ぶ」で PNG を選んで「アイテムを保存する」を押す', 'プレビュー・一覧・道具屋での見え方が画像になり、「アイテムを保存しました」と出る', async () => {
+    await step('RPGマップ作成の「🎒 アイテム」タブで「上回復薬」を選び、「画像を選ぶ」で PNG を選ぶ', 'プレビュー・一覧・道具屋での見え方が、選んだ画像(ブラウザの中のプレビュー)になる。まだアップロードしない', async () => {
       await page.goto('/rpg/admin');
       await page.getByRole('tab', { name: '🎒 アイテム' }).click();
       await itemTab.locator('.item-row', { hasText: '上回復薬' }).click();
       await itemTab.getByLabel('画像のファイル').setInputFiles({ name: 'potion.png', mimeType: 'image/png', buffer: PNG });
       const preview = itemTab.locator('.image-preview img');
+      await expect(preview).toHaveAttribute('src', /^blob:/);
+      const blobSrc = (await preview.getAttribute('src'))!;
+      await expect(itemTab.locator('.item-row', { hasText: '上回復薬' }).locator('img')).toHaveAttribute('src', blobSrc);
+      await expect(itemTab.locator('.shop-row', { hasText: '上回復薬' }).locator('img')).toHaveAttribute('src', blobSrc);
+      expect(uploads).toBe(0);
+    });
+
+    await step('「アイテムを保存する」を押す', '画像を1回アップロードして保存し、「アイテムを保存しました」と出て、表示が API の画像(/rpg-item-images/…)になる', async () => {
+      await itemTab.getByRole('button', { name: 'アイテムを保存する' }).click();
+      await expect(itemTab.getByRole('status')).toHaveText('アイテムを保存しました');
+      const preview = itemTab.locator('.image-preview img');
       await expect(preview).toHaveAttribute('src', /\/rpg-item-images\/[0-9a-f-]+\.png$/);
       imageSrc = (await preview.getAttribute('src'))!;
       await expect(itemTab.locator('.item-row', { hasText: '上回復薬' }).locator('img')).toHaveAttribute('src', imageSrc);
-      await expect(itemTab.locator('.shop-row', { hasText: '上回復薬' }).locator('img')).toHaveAttribute('src', imageSrc);
-      await itemTab.getByRole('button', { name: 'アイテムを保存する' }).click();
-      await expect(itemTab.getByRole('status')).toHaveText('アイテムを保存しました');
+      expect(uploads).toBe(1);
     });
 
-    await step('「⚒️ 合成」タブで「ゼリーの服」を選び、「画像を選ぶ」で PNG を選ぶ', '編集欄のプレビューと、鍛冶屋での見え方のゼリーの服が画像になる', async () => {
+    await step('「⚒️ 合成」タブで「ゼリーの服」を選び、「画像を選ぶ」で PNG を選ぶ', '編集欄のプレビューと、鍛冶屋での見え方のゼリーの服が画像になる。アップロードはしない', async () => {
       await page.getByRole('tab', { name: '⚒️ 合成' }).click();
       await craftTab.locator('.craft-row', { hasText: 'ゼリーの服' }).first().click();
       await craftTab.getByLabel('画像のファイル').setInputFiles({ name: 'robe.png', mimeType: 'image/png', buffer: PNG });
-      await expect(craftTab.locator('.image-preview img')).toHaveAttribute('src', /\/rpg-item-images\/[0-9a-f-]+\.png$/);
+      await expect(craftTab.locator('.image-preview img')).toHaveAttribute('src', /^blob:/);
       await expect(craftTab.locator('.smith-row', { hasText: 'ゼリーの服' }).first().locator('.smith-icon img')).toBeVisible();
+      expect(uploads).toBe(1);
     });
 
-    await step('RPG(/rpg)を開き、持ち物を見てから「道具屋 ミナ」に話しかける', '持ち物・道具屋の上回復薬が画像で出る', async () => {
+    await step('保存せずに RPG(/rpg)を開き、持ち物を見てから「道具屋 ミナ」に話しかける', 'ゼリーの服の画像はアップロードされない(アップロードは上回復薬の1回だけ)。持ち物・道具屋の上回復薬が画像で出る', async () => {
       await page.goto('/rpg');
+      expect(uploads).toBe(1);
       await expect(page.getByRole('region', { name: '持ち物' }).locator('.inv-row', { hasText: '上回復薬' }).locator('img')).toHaveAttribute('src', imageSrc);
       await clickNpc(page, '道具屋 ミナ');
       const shopTalk = page.getByRole('dialog', { name: '道具屋 ミナとの会話' });

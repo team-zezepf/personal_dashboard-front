@@ -1,10 +1,11 @@
-import { Component, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { concat, toArray } from 'rxjs';
+import { Observable, concat, switchMap, toArray } from 'rxjs';
 import { RpgCraft, RpgEnemy, RpgItem, RpgItemInput, RpgItemType, RpgMap, RpgObjectDef, RpgPointShopItem } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
 import { STATIC_NAMES, StaticType, rpgItemImageUrl, setItems } from '../../../rpg/rpg-data';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
+import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
 
 type Source = 'shop' | 'point' | 'craft' | 'other';
 type Where = 'drop' | 'material' | 'object' | 'quest' | 'craft' | 'point' | 'locked';
@@ -206,8 +207,8 @@ export class RpgItemPageComponent {
   readonly dirtyIds = signal<Set<string>>(new Set());
   readonly filter = signal('');
   readonly saving = signal(false);
-  // 画像をアップロードしている途中(front#345)
-  readonly uploading = signal(false);
+  // 選んだけれど、まだアップロードしていない画像(保存するときにアップロードする。front#347)
+  readonly pendingImages = new PendingImages();
   readonly message = signal('');
   // アイテムごとの、持っている人の数(読めなければ空)
   readonly owners = signal<Map<string, number>>(new Map());
@@ -254,6 +255,7 @@ export class RpgItemPageComponent {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.pendingImages.clear());
     afterNextRender(() => {
       this.stored = this.items().map(cloneItem);
       this.rows.set(sortRows(this.stored.map((i) => ({ item: cloneItem(i), isNew: false }))));
@@ -290,6 +292,11 @@ export class RpgItemPageComponent {
     return image ? rpgItemImageUrl(image) : null;
   }
 
+  /** アイテムの画像の表示に使うURL。選んだばかり(保存前)の画像があればそのプレビュー */
+  imageOf(item: RpgItem): string | null {
+    return this.pendingImages.url(item.id) ?? this.imageUrl(item.image);
+  }
+
   iconsOf(type: RpgItemType): string[] {
     return ICONS[type];
   }
@@ -321,11 +328,11 @@ export class RpgItemPageComponent {
         const point = this.pointOf(r.item.id);
         const source: Source = r.item.inShop ? 'shop' : point !== null ? 'point' : 'other';
         const cost = source === 'shop' ? `${r.item.price ?? 0}G` : source === 'point' ? `${point}pt` : (LOCKED_ITEMS[r.item.id] ?? '—');
-        return { id: r.item.id, name: r.item.name || '（名前なし）', icon: r.item.icon, image: r.item.image, power: statOf(r.item) ?? 0, source, cost };
+        return { id: r.item.id, name: r.item.name || '（名前なし）', icon: r.item.icon, image: this.imageOf(r.item), power: statOf(r.item) ?? 0, source, cost };
       });
     const crafts: Rung[] = this.crafts()
       .filter((c) => c.type === type)
-      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, image: c.image, power: c.power, source: 'craft', cost: `${c.gold}G＋素材` }));
+      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, image: this.imageUrl(c.image), power: c.power, source: 'craft', cost: `${c.gold}G＋素材` }));
     return [...items, ...crafts].sort((a, b) => a.power - b.power);
   }
 
@@ -402,7 +409,8 @@ export class RpgItemPageComponent {
   }
 
   /**
-   * 画像を選んだら、すぐアップロードして画像のファイル名を入れる(保存ボタンで確定。front#345)。
+   * 画像を選んだら、ブラウザの中だけでプレビューを出す(front#345 / front#347)。
+   * アップロードは保存するときに行うので、保存しなければ API には何も残らない。
    * 古い画像は、保存したときにAPIが(ほかで使っていなければ)消す
    */
   pickImage(input: HTMLInputElement): void {
@@ -414,23 +422,19 @@ export class RpgItemPageComponent {
       this.flash('画像は1MBまでにしてください');
       return;
     }
-    this.uploading.set(true);
-    this.rpgService.uploadItemImage(file).subscribe({
-      next: (filename) => {
-        this.uploading.set(false);
-        // アップロード中にほかのアイテムを選んでも、選んだときのアイテムに入れる
-        this.rows.update((rows) => rows.map((r) => (r.item.id === sel.item.id ? { ...r, item: { ...r.item, image: filename } } : r)));
-        this.markDirty(sel.item.id);
-      },
-      error: (err: Error) => {
-        this.uploading.set(false);
-        this.flash(err.message || '画像のアップロードに失敗しました');
-      }
-    });
+    this.pendingImages.set(sel.item.id, file);
+    this.markDirty(sel.item.id);
   }
 
+  /** 画像を外す(選んだばかりの画像も捨てる) */
   clearImage(): void {
+    const sel = this.selected();
+    if (sel) this.pendingImages.remove(sel.item.id);
     this.update((i) => (i.image = null));
+  }
+
+  hasImage(item: RpgItem): boolean {
+    return !!item.image || !!this.pendingImages.url(item.id);
   }
 
   setDesc(desc: string): void {
@@ -467,6 +471,9 @@ export class RpgItemPageComponent {
       : { id, name: '新しい回復薬', icon: '🧪', type: 'use', heal: 50, atk: null, def: null, desc: '', inShop: false, price: null, sortOrder: 0 };
     item.sortOrder = this.nextSortOrder();
     this.rows.update((rows) => [...rows, { item, isNew: true }]);
+    // 複製元に選んだばかりの画像があれば、それも持っていく
+    const pending = base && this.pendingImages.file(base.id);
+    if (pending) this.pendingImages.set(id, pending);
     this.filter.set('');
     this.markDirty(id);
     this.select(id);
@@ -503,6 +510,7 @@ export class RpgItemPageComponent {
   }
 
   private removeRow(id: string): void {
+    this.pendingImages.remove(id);
     const index = this.rows().findIndex((r) => r.item.id === id);
     this.rows.update((rows) => rows.filter((r) => r.item.id !== id));
     const dirty = new Set(this.dirtyIds());
@@ -523,8 +531,9 @@ export class RpgItemPageComponent {
       return;
     }
     this.saving.set(true);
-    concat(...targets.map((r) => this.rpgService.saveItem(toInput(r)))).pipe(toArray()).subscribe({
+    concat(...targets.map((r) => this.saveRow(r))).pipe(toArray()).subscribe({
       next: (savedList) => {
+        for (const r of targets) this.pendingImages.remove(r.item.id);
         // 新しいアイテムは、APIが決めたIDに置き換える
         const selected = this.selectedId();
         let nextSelected = selected;
@@ -550,6 +559,13 @@ export class RpgItemPageComponent {
         this.flash(err.message || '保存に失敗しました');
       }
     });
+  }
+
+  /** 1つのアイテムを保存する。選んだばかりの画像があれば、先にアップロードしてそのファイル名で保存する(front#347) */
+  private saveRow(row: ItemRow): Observable<RpgItem> {
+    const file = this.pendingImages.file(row.item.id);
+    if (!file) return this.rpgService.saveItem(toInput(row));
+    return this.rpgService.uploadItemImage(file).pipe(switchMap((image) => this.rpgService.saveItem({ ...toInput(row), image })));
   }
 
   // 保存してあるアイテム(新しいアイテム・保存していない変更は含めない)を、ゲームのアイテムにする

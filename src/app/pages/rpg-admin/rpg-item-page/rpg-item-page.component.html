@@ -28,7 +28,7 @@
           <div class="group">{{ typeLabels[group.type] }}（{{ group.rows.length + group.crafts.length }}）</div>
           @for (row of group.rows; track row.item.id) {
             <button type="button" class="item-row" [class.active]="row.item.id === selectedId()" [attr.aria-pressed]="row.item.id === selectedId()" (click)="select(row.item.id)">
-              <span class="ic"><app-rpg-item-icon [icon]="row.item.icon" [image]="imageUrl(row.item.image)" /></span>
+              <span class="ic"><app-rpg-item-icon [icon]="row.item.icon" [image]="imageOf(row.item)" /></span>
               <span class="row-text">
                 <span class="name">
                   {{ row.item.name || '（名前なし）' }}
@@ -68,7 +68,7 @@
           <div class="shop-title">🏪 道具屋</div>
           @for (row of shopRows(); track row.item.id; let first = $first; let last = $last) {
             <div class="shop-row" [class.me]="row.item.id === selectedId()">
-              <span class="shop-icon"><app-rpg-item-icon [icon]="row.item.icon" [image]="imageUrl(row.item.image)" /></span>
+              <span class="shop-icon"><app-rpg-item-icon [icon]="row.item.icon" [image]="imageOf(row.item)" /></span>
               <button type="button" class="shop-text" (click)="select(row.item.id)">
                 <span class="nm">{{ row.item.name || '（名前なし）' }}</span>
                 <span class="st">{{ row.item.type === 'use' ? (row.item.desc || statText(row.item)) : statText(row.item) }}</span>
@@ -125,7 +125,7 @@
             <div class="ladder">
               @for (r of ladder(sel.item.type); track r.id) {
                 <div class="rung" [class.me]="r.id === sel.item.id">
-                  <span class="ic"><app-rpg-item-icon [icon]="r.icon" [image]="imageUrl(r.image)" /></span>
+                  <span class="ic"><app-rpg-item-icon [icon]="r.icon" [image]="r.image" /></span>
                   <span class="rung-name"><span [class]="'src ' + r.source">{{ sourceLabels[r.source] }}</span>{{ r.name }}</span>
                   <span class="bar-wrap">
                     <span class="val">+{{ r.power }}</span>
@@ -186,14 +186,14 @@
           <div class="field" role="group" aria-label="画像">
             <span>画像（任意）</span>
             <div class="image-box">
-              <div class="image-preview"><app-rpg-item-icon [icon]="sel.item.icon" [image]="imageUrl(sel.item.image)" /></div>
+              <div class="image-preview"><app-rpg-item-icon [icon]="sel.item.icon" [image]="imageOf(sel.item)" /></div>
               <div class="image-btns">
-                <button type="button" class="btn small" [disabled]="uploading()" (click)="imageInput.click()">{{ uploading() ? 'アップロード中…' : '🖼 画像を選ぶ' }}</button>
-                <button type="button" class="btn small danger" [disabled]="!sel.item.image || uploading()" (click)="clearImage()">画像を外す（絵文字に戻す）</button>
+                <button type="button" class="btn small" [disabled]="saving()" (click)="imageInput.click()">🖼 画像を選ぶ</button>
+                <button type="button" class="btn small danger" [disabled]="!hasImage(sel.item) || saving()" (click)="clearImage()">画像を外す（絵文字に戻す）</button>
                 <input #imageInput type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" aria-label="画像のファイル" (change)="pickImage(imageInput)" />
               </div>
             </div>
-            <p class="hint">画像を設定すると、絵文字の代わりに画像で表示します（ショートカットキーの選択欄・ログは絵文字のまま）。png / jpeg / webp / gif、1MBまで。正方形・背景が透明な画像（64×64 くらい）がおすすめです。</p>
+            <p class="hint">画像を設定すると、絵文字の代わりに画像で表示します（ショートカットキーの選択欄・ログは絵文字のまま）。画像は保存するときにアップロードします。png / jpeg / webp / gif、1MBまで。正方形・背景が透明な画像（64×64 くらい）がおすすめです。</p>
           </div>
           <label class="field">
             <span>説明（持ち物・道具屋に出ます）</span>
