@@ -422,25 +422,167 @@ function drawRaptor(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): n
   return 42;
 }
 
+// ゴーレム(front#348): 体=明るい色、手足=暗い色。角ばった岩を積み上げた体に、光る目と胸のコア。
+// 右向き(斜め前向き)で描き、左を向くときは左右を反転する。顔とコアは向いている側に寄り、反対側に頭・胴の側面が見える。
+// 斜め前を向いているので、向いている側の腕が奥(胴の後ろ)、側面が見えている側の腕が手前(胴の前)になる。
+// 歩くときは腕を前後に振り、攻撃のときは奥の腕を胴の後ろから向いている方へ突き出す
 function drawGolem(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
-  const bob = p.moving ? Math.abs(Math.sin(p.time * 6)) * -2 : 0;
-  shadow(c, 24, 9, 0.2);
-  const col = p.flash ? '#ffffff' : def.color;
-  const d = p.flash ? '#ffffff' : def.dark;
-  c.fillStyle = d;
-  c.beginPath(); c.roundRect(-15, -14, 11, 14, 4); c.fill();
-  c.beginPath(); c.roundRect(4, -14, 11, 14, 4); c.fill();
-  c.fillStyle = col;
-  c.beginPath(); c.roundRect(-20, -42 + bob, 40, 32, 10); c.fill();
-  c.fillStyle = d;
-  c.beginPath(); c.roundRect(-30, -38 + bob, 11, 22, 5); c.fill();
-  c.beginPath(); c.roundRect(19, -38 + bob, 11, 22, 5); c.fill();
-  c.fillStyle = col;
-  c.beginPath(); c.roundRect(-12, -58 + bob, 24, 18, 6); c.fill();
-  c.fillStyle = p.aggro ? '#ff7a2f' : '#ffd54a';
-  c.fillRect(-7 + p.dir * 2, -52 + bob, 4, 4);
-  c.fillRect(3 + p.dir * 2, -52 + bob, 4, 4);
-  return 60;
+  const t = p.time + (p.seed ?? 0);
+  const lunge = p.lunge ?? 0;
+  const walk = p.moving ? Math.sin(p.time * 6) : 0;
+  const bob = -Math.abs(walk) * 2;
+  const flash = !!p.flash;
+  const col = flash ? '#ffffff' : def.color;
+  const dk = flash ? '#ffffff' : def.dark;
+  const lit = flash ? '#ffffff' : mix(def.color, '#ffffff', 0.35);
+  const deep = flash ? '#ffffff' : shade(def.dark, 0.7);
+  const glow = flash ? '#ffffff' : p.aggro ? '#ff5a1f' : '#ffd54a';
+  const pulse = 0.75 + Math.sin(t * (p.aggro ? 8 : 3)) * 0.25;
+  shadow(c, 26, 9, 0.22);
+  c.save();
+  c.scale(p.dir < 0 ? -1 : 1, 1);
+
+  const outline = (pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+    c.closePath();
+  };
+  // 岩のかたまり: 前面を塗り、上面に光を当て、ふちを暗い色でなぞる
+  const rock = (pts: [number, number][], top: [number, number][], fill: string, light: string) => {
+    poly(c, pts, fill);
+    poly(c, top, light);
+    c.strokeStyle = deep;
+    c.lineWidth = 1.2;
+    c.lineJoin = 'round';
+    outline(pts);
+    c.stroke();
+  };
+  // 見えている側面を暗くする
+  const side = (pts: [number, number][]) => {
+    if (flash) return;
+    c.save();
+    c.globalAlpha *= 0.5;
+    poly(c, pts, deep);
+    c.restore();
+  };
+
+  // 足(腕と反対側の足を交互に上げる)
+  for (const sd of [-1, 1]) {
+    const lift = Math.max(0, -walk * sd) * 3;
+    const x = sd * 10 + 1;
+    rock([[x - 7, -lift], [x + 7, -lift], [x + 8, -12 - lift], [x - 8, -13 - lift]],
+      [[x - 8, -13 - lift], [x + 8, -12 - lift], [x + 7, -9 - lift], [x - 7, -10 - lift]], dk, col);
+  }
+
+  // 攻撃のときは、上半身を少し前へ傾ける
+  c.save();
+  c.translate(lunge * 3, bob - 12);
+  c.rotate(lunge * 0.12);
+  c.translate(0, 12);
+
+  // 腕。肩から垂らす。角度は負にするほど前(向いている側)へ振る
+  const arm = (x: number, angle: number, front: boolean) => {
+    c.save();
+    c.translate(x, -38);
+    c.rotate(angle);
+    rock([[-6, -2], [6, -3], [7, 12], [-6, 13]], [[-6, -2], [6, -3], [6, 1], [-6, 2]], front ? dk : deep, front ? col : dk);
+    // こぶし
+    rock([[-8, 12], [8, 11], [9, 24], [3, 27], [-6, 26], [-9, 20]], [[-8, 12], [8, 11], [8, 15], [-8, 16]], front ? col : dk, front ? lit : col);
+    c.strokeStyle = deep;
+    c.lineWidth = 1;
+    c.beginPath(); c.moveTo(-2, 16); c.lineTo(-2, 23); c.moveTo(3, 15.5); c.lineTo(3, 23); c.stroke();
+    c.restore();
+  };
+  // 奥の腕(向いている側)は、胴の後ろに描く。攻撃のときは、向いている方へまっすぐ突き出す
+  arm(18, -walk * 0.25 - lunge * 1.45, false);
+
+  // 胴(上が明るく、下が暗い岩)
+  const body: [number, number][] = [[-19, -10], [-22, -30], [-15, -45], [14, -46], [22, -31], [18, -10], [6, -7], [-8, -7]];
+  if (flash) {
+    c.fillStyle = '#ffffff';
+  } else {
+    const g = c.createLinearGradient(0, -46, 0, -7);
+    g.addColorStop(0, lit);
+    g.addColorStop(0.45, col);
+    g.addColorStop(1, dk);
+    c.fillStyle = g;
+  }
+  outline(body);
+  c.fill();
+  side([[-19, -10], [-22, -30], [-15, -45], [-9, -44], [-13, -30], [-11, -9], [-8, -7]]);
+  outline(body);
+  c.strokeStyle = deep;
+  c.lineWidth = 1.4;
+  c.lineJoin = 'round';
+  c.stroke();
+  // 肩の段差
+  poly(c, [[-9, -44], [14, -46], [17, -40], [-12, -39]], lit);
+
+  if (!flash) {
+    // ひび
+    c.strokeStyle = shade(def.dark, 0.8);
+    c.lineWidth = 1;
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(-6, -38); c.lineTo(-3, -32); c.lineTo(-6, -25);
+    c.moveTo(15, -21); c.lineTo(11, -16); c.lineTo(13, -11);
+    c.moveTo(2, -13); c.lineTo(5, -9);
+    c.stroke();
+    // 肩の苔
+    c.fillStyle = 'rgba(101, 163, 13, 0.75)';
+    c.beginPath(); c.ellipse(-11, -44, 5, 2.2, -0.1, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(15, -42, 3.5, 1.8, 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(132, 204, 22, 0.8)';
+    c.beginPath(); c.ellipse(-9, -45, 2.5, 1.2, 0, 0, Math.PI * 2); c.fill();
+  }
+
+  // 胸のコア(ひし形のルーン。ゆっくり脈打ち、怒ると速くなる)
+  const cx = 5;
+  const cy = -27;
+  c.save();
+  c.shadowColor = glow;
+  c.shadowBlur = flash ? 0 : 10 * pulse;
+  poly(c, [[cx, cy - 6], [cx + 5, cy], [cx, cy + 6], [cx - 4, cy]], deep);
+  c.globalAlpha *= flash ? 1 : 0.6 + pulse * 0.4;
+  poly(c, [[cx, cy - 4], [cx + 3, cy], [cx, cy + 4], [cx - 2.5, cy]], glow);
+  c.restore();
+
+  // 頭(肩の間に少し埋まっている)。顔は向いている側に寄り、反対側に側面が見える
+  rock([[-9, -44], [-11, -56], [-6, -61], [8, -61], [13, -55], [12, -44]],
+    [[-11, -56], [-6, -61], [8, -61], [13, -55], [8, -56.5], [-5, -57]], col, lit);
+  side([[-9, -44], [-11, -56], [-5, -57], [-3, -45]]);
+  // 張り出したまゆの岩
+  poly(c, [[-3, -54], [13, -54], [11, -50.5], [-2, -50.5]], dk);
+  // 目(光る細いすき間。奥の目は細く見える。怒るとつり上がり、赤く強く光る)
+  c.save();
+  c.shadowColor = glow;
+  c.shadowBlur = flash ? 0 : p.aggro ? 9 : 5;
+  const tilt = p.aggro ? 1.5 : 0;
+  // [目の中心, 半分の幅, 鼻側の向き]。鼻側の上を下げて、つり目にする
+  const eyeList: [number, number, number][] = [[1.5, 2, 1], [8, 3, -1]];
+  for (const [ex, w, inner] of eyeList) {
+    poly(c, [[ex - inner * w, -50 - tilt * 0.3], [ex + inner * w, -50 + tilt], [ex + inner * (w - 0.5), -47.3], [ex - inner * (w - 0.5), -47.3]], glow);
+  }
+  c.restore();
+  // 口のすき間
+  c.strokeStyle = deep;
+  c.lineWidth = 1.2;
+  c.beginPath(); c.moveTo(1, -45.5); c.lineTo(10, -45.5); c.stroke();
+
+  // 手前の腕(側面が見えている側)は、胴の前に描く。攻撃のときは少し後ろへ引く
+  arm(-19, walk * 0.25 + lunge * 0.2, true);
+  if (lunge > 0.2 && !flash) {
+    // 殴った勢いの線(奥の腕のこぶしの先)
+    c.strokeStyle = `rgba(255,255,255,${lunge * 0.8})`;
+    c.lineWidth = 2;
+    c.lineCap = 'round';
+    c.beginPath();
+    for (const dy of [-8, 0, 8]) { c.moveTo(49, -34 + dy); c.lineTo(55 + lunge * 6, -34 + dy); }
+    c.stroke();
+  }
+  c.restore();
+  c.restore();
+  return 63;
 }
 
 function drawGhost(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
