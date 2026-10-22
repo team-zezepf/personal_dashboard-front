@@ -706,6 +706,16 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
+  /** エリアをまとめて90°回す(front#353)。元に戻す1回で戻せる。形が変わるので、全体が入るように表示し直す */
+  rotateArea(cw: boolean): void {
+    if (!this.editor) return;
+    this.editor.checkpoint();
+    this.editor.rotate(cw);
+    this.selection.set(null);
+    this.markDirty();
+    this.fitView();
+  }
+
   npcLines(sel: Selection): string {
     return sel.kind === 'npc' ? sel.ref.lines.join('\n') : '';
   }

@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, MAX_HEIGHT, SAVE_POINT, SIDES, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { ENEMIES, MAX_HEIGHT, SAVE_POINT, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -233,6 +233,59 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
 }
 
 const clone = (map: RpgMap): RpgMap => JSON.parse(JSON.stringify(map));
+
+/**
+ * エリアを90°回したマップ(front#353)。cw なら画面で見て右回り(右下の端 → 左下 → 左上 → 右上)、そうでなければ左回り。
+ * 地面・高さ・置物・NPC・敵の位置と、ほかのダンジョンへの端のつながりを回し、幅と奥行きを入れ替える。
+ * 家は向きを1つ回し、置く位置(占めるマスのいちばん左上)を回したあとの形に合わせる。看板は矢印の向きを決めているときだけ回す。
+ * 同じダンジョンの隣のエリアとのつながりは、エリアの並び(gridX, gridY)で決まるので変わらない
+ */
+export function rotateMap(map: RpgMap, cw: boolean): RpgMap {
+  const w = map.width, h = map.height;
+  // 右回り: (x, y) → (h-1-y, x)、向き (dx, dy) → (-dy, dx)。左回り: (x, y) → (y, w-1-x)、向き (dx, dy) → (dy, -dx)
+  const pos = (x: number, y: number): [number, number] => (cw ? [h - 1 - y, x] : [y, w - 1 - x]);
+  // -0 にならないよう 0 から引く
+  const dir = ([dx, dy]: readonly [number, number]): [number, number] => (cw ? [0 - dy, dx] : [dy, 0 - dx]);
+  // 回したあとの (nx, ny) に来る、元のマスの文字
+  const grid = (rows: string[], fill: string): string[] =>
+    Array.from({ length: w }, (_, ny) =>
+      Array.from({ length: h }, (_, nx) => {
+        const [x, y] = cw ? [ny, h - 1 - nx] : [w - 1 - ny, nx];
+        return rows[y]?.[x] ?? fill;
+      }).join('')
+    );
+  const objects = map.objects.map((o) => {
+    if (o.type === 'house') {
+      const moved = objectTiles(o).map(([x, y]) => pos(x, y));
+      // 家の向きは1つ増やすごとに画面で見て左回り(扉が右下 → 右上)なので、右回りは3つ、左回りは1つ増やす
+      const rotation = ((o.rotation ?? 0) + (cw ? 3 : 1)) % 4;
+      return { ...o, rotation, x: Math.min(...moved.map((p) => p[0])), y: Math.min(...moved.map((p) => p[1])) };
+    }
+    const [x, y] = pos(o.x, o.y);
+    const sign = o.type === 'sign' && o.signDir ? SIGN_DIRS.find(([k]) => k === o.signDir) : undefined;
+    if (!sign) return { ...o, x, y };
+    const [sx, sy] = dir(sign[2]);
+    return { ...o, x, y, signDir: SIGN_DIRS.find(([, , s]) => s[0] === sx && s[1] === sy)![0] };
+  });
+  const move = <T extends { x: number; y: number }>(e: T): T => {
+    const [x, y] = pos(e.x, e.y);
+    return { ...e, x, y };
+  };
+  return {
+    ...map,
+    width: h,
+    height: w,
+    ground: grid(map.ground, 'g'),
+    heights: grid(map.heights ?? flatHeights(w, h), '0'),
+    objects,
+    npcs: map.npcs.map(move),
+    enemies: map.enemies.map(move),
+    links: (map.links ?? []).map((l) => {
+      const [dx, dy] = dir([l.dx, l.dy]);
+      return { ...l, dx, dy };
+    })
+  };
+}
 
 /** 1エリア分の編集。map は画面に出しているマップのデータそのもの(書き換えるとすぐ画面に出る) */
 export class RpgMapEditor {
@@ -492,6 +545,11 @@ export class RpgMapEditor {
     this.map.objects = this.map.objects.filter((o) => objectTiles(o).every(([tx, ty]) => tx < w && ty < h));
     this.map.npcs = this.map.npcs.filter(inside);
     this.map.enemies = this.map.enemies.filter(inside);
+  }
+
+  /** エリアをまとめて90°回す(front#353)。cw なら画面で見て右回り。元に戻せるようにするときは、先に checkpoint を呼ぶ */
+  rotate(cw: boolean): void {
+    Object.assign(this.map, rotateMap(this.map, cw));
   }
 
   /** 保存する前の確認。問題があっても保存はできるが、ゲームで困るものを知らせる */

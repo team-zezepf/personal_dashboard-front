@@ -1,5 +1,6 @@
 import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, paletteGroups, selectsPlaced, toMapInput } from './rpg-editor';
+import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, paletteGroups, rotateMap, selectsPlaced, toMapInput } from './rpg-editor';
+import { houseTiles } from './rpg-house';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
 import { PALETTE, PaletteItem } from './rpg-editor';
@@ -430,6 +431,115 @@ describe('RpgMapEditor', () => {
       expect(selectsPlaced({ kind: 'height', op: 'up' })).toBe(false);
       expect(selectsPlaced({ kind: 'erase' })).toBe(false);
       expect(SELECT_ITEM.tool.kind).toBe('select');
+    });
+  });
+
+  describe('エリアを90°回す(front#353)', () => {
+    const at = (rows: string[], x: number, y: number) => rows[y][x];
+    const setAt = (rows: string[], x: number, y: number, c: string) => (rows[y] = rows[y].slice(0, x) + c + rows[y].slice(x + 1));
+
+    it('右に回すと、幅と奥行きが入れ替わり、地面・高さ・置物・NPC・敵が画面で見て右回りに動く', () => {
+      // 14×12。左上の角(0, 0)は画面のいちばん上で、右に回すと画面の右の角(回したあとの (11, 0))へ行く
+      setAt(editor.map.ground, 0, 0, 'w');
+      setAt(editor.map.heights, 1, 0, '2');
+      editor.map.objects.push({ type: 'tree', x: 13, y: 0, roof: null, torch: false });
+      editor.map.npcs.push({ name: '村人', x: 2, y: 5, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: ['やあ'], look: lookFromColors('#000000', '#000000'), quests: [] });
+      editor.map.enemies.push({ type: 'slime', x: 3, y: 4 });
+
+      editor.rotate(true);
+
+      expect([editor.map.width, editor.map.height]).toEqual([12, 14]);
+      expect(editor.map.ground).toHaveLength(14);
+      expect(editor.map.ground.every((r) => r.length === 12)).toBe(true);
+      expect(at(editor.map.ground, 11, 0)).toBe('w');
+      expect(editor.map.ground.join('').replace(/g/g, '')).toBe('w');
+      expect(at(editor.map.heights, 11, 1)).toBe('2');
+      expect(editor.map.objects.map((o) => [o.x, o.y])).toEqual([[11, 13]]);
+      expect([editor.map.npcs[0].x, editor.map.npcs[0].y]).toEqual([6, 2]);
+      expect([editor.map.enemies[0].x, editor.map.enemies[0].y]).toEqual([7, 3]);
+    });
+
+    it('左に回すと、反対の向きに動く', () => {
+      setAt(editor.map.ground, 0, 0, 'w');
+      editor.rotate(false);
+      expect([editor.map.width, editor.map.height]).toEqual([12, 14]);
+      // 画面のいちばん上の角は、画面の左の角(回したあとの (0, 13))へ行く
+      expect(at(editor.map.ground, 0, 13)).toBe('w');
+    });
+
+    it('ほかのダンジョンへの端のつながりは、出口と一緒に回る(右回り: 右下 → 左下 → 左上 → 右上)', () => {
+      editor.map.links.push({ dx: 1, dy: 0, to: 'plain' }, { dx: 0, dy: -1, to: 'tower' });
+      editor.rotate(true);
+      expect(editor.map.links).toEqual([{ dx: 0, dy: 1, to: 'plain' }, { dx: 1, dy: 0, to: 'tower' }]);
+      editor.rotate(false);
+      editor.rotate(false);
+      expect(editor.map.links).toEqual([{ dx: 0, dy: -1, to: 'plain' }, { dx: -1, dy: 0, to: 'tower' }]);
+    });
+
+    it('家は、形4種・向き4つのどれでも、回したあとに同じマスを占める', () => {
+      for (const shape of ['1x1', '2x1', '2x2', 'L']) {
+        for (let rotation = 0; rotation < 4; rotation++) {
+          for (const cw of [true, false]) {
+            const map = blankMap('a', 'a', 'd', 0, 0, 14, 12);
+            const house: RpgMapObject = { type: 'house', x: 4, y: 3, roof: '#e0605a', torch: false, shape, rotation };
+            map.objects.push(house);
+            const pos = ([x, y]: [number, number]) => (cw ? [11 - y, x] : [y, 13 - x]).join(',');
+            const want = houseTiles(house.x, house.y, shape, rotation).map(pos).sort();
+
+            const turned = rotateMap(map, cw).objects[0];
+            const got = houseTiles(turned.x, turned.y, turned.shape, turned.rotation).map((t) => t.join(',')).sort();
+            expect(got, `${shape} 向き${rotation} ${cw ? '右' : '左'}`).toEqual(want);
+          }
+        }
+      }
+    });
+
+    it('看板は矢印の向きを決めているときだけ回り、自動はそのまま', () => {
+      editor.map.objects.push({ type: 'sign', x: 1, y: 1, roof: null, torch: false, signDir: 'se' }, { type: 'sign', x: 2, y: 1, roof: null, torch: false, signDir: null });
+      editor.rotate(true);
+      expect(editor.map.objects.map((o) => o.signDir)).toEqual(['sw', null]);
+      editor.rotate(false);
+      editor.rotate(false);
+      expect(editor.map.objects.map((o) => o.signDir)).toEqual(['ne', null]);
+    });
+
+    it('4回右に回す・右に回して左に回すと、元に戻る', () => {
+      setAt(editor.map.ground, 3, 2, 'p');
+      setAt(editor.map.heights, 5, 7, '3');
+      editor.map.objects.push(
+        { type: 'house', x: 6, y: 5, roof: '#e0605a', torch: false, shape: 'L', rotation: 1 },
+        { type: 'rock', x: 0, y: 11, roof: null, torch: false },
+        { type: 'sign', x: 9, y: 2, roof: null, torch: false, signDir: 'nw' }
+      );
+      editor.map.enemies.push({ type: 'slime', x: 13, y: 11 });
+      editor.map.links.push({ dx: -1, dy: 0, to: 'plain' });
+      const before = JSON.stringify(editor.map);
+
+      for (let i = 0; i < 4; i++) editor.rotate(true);
+      expect(JSON.stringify(editor.map)).toBe(before);
+      editor.rotate(true);
+      editor.rotate(false);
+      expect(JSON.stringify(editor.map)).toBe(before);
+    });
+
+    it('元に戻す1回で、回す前に戻る', () => {
+      setAt(editor.map.ground, 0, 0, 'w');
+      const before = JSON.stringify(editor.map);
+      editor.checkpoint();
+      editor.rotate(true);
+      expect(editor.undo()).toBe(true);
+      expect(JSON.stringify(editor.map)).toBe(before);
+    });
+
+    it('同じダンジョンの隣のエリアとのつながりは回らないので、出られなくなった端は保存する前の確認に出る', () => {
+      // 右下の端(x = 13)だけ通れて、右下に隣のエリアがある
+      editor.map.ground = editor.map.ground.map((r, y) => (y === 0 || y === 11 ? 'w'.repeat(14) : 'w' + 'g'.repeat(12) + 'g'));
+      const next = blankMap('area6', '隣の浜', 'sea', 1, 0, 12, 12);
+      expect(editor.checks([editor.map, next]).map((c) => c.text)).toContain('右下の「隣の浜」へ出られる');
+
+      editor.rotate(true);
+
+      expect(editor.checks([editor.map, next]).filter((c) => !c.ok).map((c) => c.text)).toContain('右下の端に通れるマスがなく、「隣の浜」へ出られません');
     });
   });
 });
