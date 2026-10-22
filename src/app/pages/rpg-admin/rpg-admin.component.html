@@ -289,6 +289,13 @@
           (wheel)="onWheel($event)"
           (contextmenu)="$event.preventDefault()"
         ></canvas>
+        <!-- エリアを90°回す(front#353)。同じダンジョンの隣のエリアとのつながりは回らないので、出られなくなった端は「保存する前の確認」に出る -->
+        @if (current()) {
+          <div class="rotate" role="group" aria-label="エリアを回す">
+            <button type="button" class="btn small" (click)="rotateArea(false)" title="エリアを左に90°回す（画面で見て左回り）">↺ 左に90°</button>
+            <button type="button" class="btn small" (click)="rotateArea(true)" title="エリアを右に90°回す（画面で見て右回り）">↻ 右に90°</button>
+          </div>
+        }
         <div class="zoom">
           <button type="button" class="btn small" (click)="zoomBy(1 / 1.15)" aria-label="縮小">－</button>
           <button type="button" class="btn small" (click)="fitView()">全体</button>

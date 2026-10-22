@@ -376,3 +376,97 @@ test(
     );
   }
 );
+
+// 管理者のアカウントで、保存してある村のエリアの広さと、木のおけの位置を API から読む
+async function savedVillage(): Promise<{ width: number; height: number; bucket: [number, number] | null }> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgMaps { id width height objects { type x y } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgMaps: { id: string; width: number; height: number; objects: { type: string; x: number; y: number }[] }[] } };
+  const village = body.data.rpgMaps.find((m) => m.id === 'plain')!;
+  const bucket = village.objects.find((o) => o.type === 'bucket');
+  return { width: village.width, height: village.height, bucket: bucket ? [bucket.x, bucket.y] : null };
+}
+
+test(
+  'E2E-23 RPGマップ作成で、マップの左上のボタンでエリアを90°回せ、元に戻せて、保存すると回したまま残る(front#353)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
+      'E2E 用の RPG データで、村(32×32)の (4, 7) に木のおけを置いてある'
+    ],
+    expected: [
+      'マップの左上に「↺ 左に90°」「↻ 右に90°」が出る',
+      '「↻ 右に90°」を押してすぐ「元に戻す」を1回押すと、回す前に戻り、木のおけは (4, 7) のまま',
+      'もう一度「↻ 右に90°」を押すと、確認なしですぐに回り、木のおけが (4, 7) から (24, 4) へ動く(画面で見て右回り)。「保存する」が押せるようになる',
+      '保存すると「保存しました。ゲームに反映されます」と出て、API でも木のおけが (24, 4) にある',
+      '読み込み直しても、木のおけは (24, 4) にある',
+      '(あと片づけ)「↺ 左に90°」で回して保存すると、木のおけが (4, 7) に戻る'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const dialog = page.getByRole('dialog', { name: '木のおけ' });
+    const rotate = page.getByRole('group', { name: 'エリアを回す' });
+    // (x, y) をクリックすると木のおけの設定のモーダルが開くことを確かめ、「やめる」で閉じる
+    const bucketAt = async (x: number, y: number) => {
+      await clickTile(page, x, y);
+      await expect(dialog).toBeVisible();
+      await dialog.getByRole('button', { name: 'やめる' }).click();
+      await expect(dialog).toBeHidden();
+    };
+
+    await step('RPGマップ作成(/rpg/admin)を開き、パレットの「その他」の「選ぶ・動かす」を選ぶ', 'マップの左上に「↺ 左に90°」「↻ 右に90°」が出て、(4, 7) に木のおけがある', async () => {
+      await page.goto('/rpg/admin');
+      await page.locator('aside.palette').getByRole('button', { name: 'その他', exact: true }).click();
+      await page.locator('aside.palette').getByRole('button', { name: /選ぶ・動かす/ }).click();
+      await expect(rotate.getByRole('button', { name: '↺ 左に90°' })).toBeVisible();
+      await expect(rotate.getByRole('button', { name: '↻ 右に90°' })).toBeVisible();
+      await bucketAt(4, 7);
+    });
+
+    // 置物をクリックして選ぶと、ドラッグに備えて元に戻す位置ができるので、回してすぐ元に戻す
+    await step('「↻ 右に90°」を押し、すぐに「元に戻す」を1回押す', '回す前に戻り、木のおけは (4, 7) のまま', async () => {
+      await rotate.getByRole('button', { name: '↻ 右に90°' }).click();
+      await page.getByRole('button', { name: '↶ 元に戻す' }).click();
+      await bucketAt(4, 7);
+    });
+
+    await step('もう一度「↻ 右に90°」を押す', '確認なしですぐに回り、木のおけが (24, 4) へ動く。「保存する」が押せる', async () => {
+      await rotate.getByRole('button', { name: '↻ 右に90°' }).click();
+      await expect(page.getByRole('button', { name: '保存する' })).toBeEnabled();
+      await bucketAt(24, 4);
+    });
+
+    await step('「保存する」を押す', '「保存しました。ゲームに反映されます」と出て、API でも木のおけが (24, 4) にある', async () => {
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+      expect(await savedVillage()).toEqual({ width: 32, height: 32, bucket: [24, 4] });
+    });
+
+    await step('画面を読み込み直し、「選ぶ・動かす」で (24, 4) をクリックする', '木のおけの設定のモーダルが開く(回したまま残っている)', async () => {
+      await page.reload();
+      await page.locator('aside.palette').getByRole('button', { name: 'その他', exact: true }).click();
+      await page.locator('aside.palette').getByRole('button', { name: /選ぶ・動かす/ }).click();
+      await bucketAt(24, 4);
+    });
+
+    await step('(あと片づけ)「↺ 左に90°」を押して保存する', '木のおけが (4, 7) に戻り、API でも (4, 7) にある', async () => {
+      await rotate.getByRole('button', { name: '↺ 左に90°' }).click();
+      await bucketAt(4, 7);
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+      expect(await savedVillage()).toEqual({ width: 32, height: 32, bucket: [4, 7] });
+    });
+  }
+);
