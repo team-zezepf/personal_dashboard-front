@@ -293,6 +293,8 @@ export class RpgMapEditor {
   // 1回のドラッグで高さを変えたマス
   private readonly heightPainted = new Set<number>();
   private redoStack: string[] = [];
+  // holdCheckpoint で覚えておいた、変えるかもしれない直前の状態(front#356)
+  private held: string | null = null;
 
   constructor(public map: RpgMap) {}
 
@@ -306,7 +308,27 @@ export class RpgMapEditor {
 
   /** 変える直前に呼ぶ(元に戻すときは、ここに戻る) */
   checkpoint(): void {
-    this.undoStack.push(JSON.stringify(this.map));
+    this.pushUndo(JSON.stringify(this.map));
+  }
+
+  /**
+   * 変えるかもしれない直前に呼び、今の状態を覚えておく(元に戻す位置はまだ作らない)。
+   * 実際に変えたら commitHeld で、覚えておいた状態を元に戻す位置にする。
+   * 置いてある物を押したとき、ドラッグで動かすまでは位置を作らないために使う(front#356)
+   */
+  holdCheckpoint(): void {
+    this.held = JSON.stringify(this.map);
+  }
+
+  /** holdCheckpoint で覚えておいた状態を、元に戻す位置にする(1回だけ)。覚えていなければ何もしない */
+  commitHeld(): void {
+    if (this.held === null) return;
+    this.pushUndo(this.held);
+    this.held = null;
+  }
+
+  private pushUndo(state: string): void {
+    this.undoStack.push(state);
     if (this.undoStack.length > MAX_UNDO) this.undoStack.shift();
     this.redoStack = [];
   }

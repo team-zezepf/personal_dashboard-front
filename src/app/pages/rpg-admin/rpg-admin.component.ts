@@ -567,7 +567,8 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (hit || tool.kind === 'select') {
       this.selection.set(hit);
       if (hit) {
-        editor.checkpoint();
+        // 選ぶだけなら元に戻す位置は作らず、ドラッグで動かしたときに作る(front#356)
+        editor.holdCheckpoint();
         this.dragging = hit;
         this.dragOffset = [x - hit.ref.x, y - hit.ref.y];
         this.dragMoved = false;
@@ -606,6 +607,8 @@ export class RpgAdminPageComponent implements OnDestroy {
     const tool = this.tool().tool;
     if (this.painting && tool.kind !== 'npc') this.useTool(tool, x, y, false);
     if (this.dragging && editor.moveTo(this.dragging, x - this.dragOffset[0], y - this.dragOffset[1])) {
+      // はじめて動いたときに、押す前の状態を元に戻す位置にする
+      if (!this.dragMoved) editor.commitHeld();
       this.dragMoved = true;
       this.markDirty();
     }

@@ -434,6 +434,39 @@ describe('RpgMapEditor', () => {
     });
   });
 
+  describe('置いてある物を押したときの元に戻す位置(front#356)', () => {
+    it('押しただけ(動かさない)なら、元に戻す位置はできず、やり直すも消えない', () => {
+      editor.apply({ kind: 'object', type: 'tree' }, 3, 3, true);
+      editor.checkpoint();
+      editor.apply({ kind: 'object', type: 'rock' }, 5, 5, true);
+      editor.undo();
+      expect(editor.canRedo).toBe(true);
+      const undoable = editor.canUndo;
+
+      editor.holdCheckpoint();
+
+      expect(editor.canUndo).toBe(undoable);
+      expect(editor.canRedo).toBe(true);
+    });
+
+    it('動かしたときに、押す前の状態が元に戻す位置になる(何回動かしても1つだけ)', () => {
+      editor.apply({ kind: 'object', type: 'tree' }, 3, 3, true);
+      const before = JSON.stringify(editor.map);
+      const tree = editor.entityAt(3, 3)!;
+
+      editor.holdCheckpoint();
+      expect(editor.moveTo(tree, 4, 3)).toBe(true);
+      editor.commitHeld();
+      expect(editor.moveTo(tree, 5, 3)).toBe(true);
+      editor.commitHeld();
+
+      expect(editor.objectAt(5, 3)?.type).toBe('tree');
+      expect(editor.undo()).toBe(true);
+      expect(JSON.stringify(editor.map)).toBe(before);
+      expect(editor.canUndo).toBe(false);
+    });
+  });
+
   describe('エリアを90°回す(front#353)', () => {
     const at = (rows: string[], x: number, y: number) => rows[y][x];
     const setAt = (rows: string[], x: number, y: number, c: string) => (rows[y] = rows[y].slice(0, x) + c + rows[y].slice(x + 1));
