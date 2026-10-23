@@ -6,27 +6,52 @@ import { RpgLook } from '../models/rpg.models';
  * 部品の名前はAPI(RpgLooks)と合わせる。
  */
 
+// お団子・三つ編み・ウェーブ・サイドテールは front#362 で追加
 export const HAIRS: [string, string][] = [
   ['short', 'ショート'], ['long', 'ロング'], ['ponytail', 'ポニーテール'], ['twintail', 'ツインテール'],
-  ['bob', 'ボブ'], ['spiky', 'ツンツン'], ['bald', 'ぼうず']
+  ['bob', 'ボブ'], ['spiky', 'ツンツン'], ['bald', 'ぼうず'],
+  ['bun', 'お団子'], ['braid', '三つ編み'], ['wavy', 'ウェーブ'], ['sidetail', 'サイドテール']
+];
+// 眉(front#362)。ふつう・太め・細めは、目の形(つり目・たれ目)に合わせて傾ける
+export const BROWS: [string, string][] = [
+  ['normal', 'ふつう'], ['thick', '太め'], ['thin', '細め'], ['arch', '山なり'],
+  ['sharp', 'きりっ'], ['worried', 'こまり'], ['short', 'まろ'], ['none', 'なし']
 ];
 export const EYES: [string, string][] = [
   ['normal', 'ふつう'], ['smile', 'にっこり'], ['sharp', 'つり目'], ['droopy', 'たれ目'],
   ['sleepy', 'ねむそう'], ['sparkle', 'キラキラ'], ['glasses', 'メガネ']
 ];
 export const MOUTHS: [string, string][] = [['none', 'なし'], ['smile', 'にっこり'], ['open', 'ひらく'], ['flat', 'まっすぐ'], ['cat', 'ねこ口']];
-export const CLOTHES: [string, string][] = [['shirt', 'シャツ'], ['robe', 'ローブ'], ['armor', 'よろい'], ['dress', 'ワンピース'], ['vest', 'ベスト']];
+// パーカー・セーラー服は front#362 で追加
+export const CLOTHES: [string, string][] = [
+  ['shirt', 'シャツ'], ['robe', 'ローブ'], ['armor', 'よろい'], ['dress', 'ワンピース'], ['vest', 'ベスト'],
+  ['hoodie', 'パーカー'], ['sailor', 'セーラー服']
+];
 
-export const HAIR_COLORS = ['#6b3f1f', '#8b5a2b', '#1f2937', '#e5e7eb', '#fcd34d', '#f08a4b', '#dc2626', '#f472b6', '#4b9e5f', '#10b981', '#a7f3d0', '#60a5fa'];
+// 色の一覧(front#362)。2段に並べ、上下が同じ系統の色(上: 濃い / 下: 明るい)になるよう「上の段 → 下の段」の順に持つ。
+// 左から 黒白 → 茶 → 赤 → 橙黄 → 緑 → 青 → 紫。一覧にない色もカスタムで選べる(肌の色を除く)
+export const HAIR_COLORS = [
+  '#1f2937', '#6b3f1f', '#dc2626', '#f08a4b', '#4b9e5f', '#2563eb', '#7c3aed',
+  '#e5e7eb', '#8b5a2b', '#f472b6', '#fcd34d', '#a7f3d0', '#60a5fa', '#c4b5fd'
+];
 export const SKINS = ['#fce6d4', '#ffe0bd', '#f5c99b', '#d9a066', '#8d5a3b'];
-export const EYE_COLORS = ['#3b2f2f', '#1f2937', '#2563eb', '#0891b2', '#16a34a', '#d97706', '#dc2626', '#9333ea'];
-export const CLOTHES_COLORS = ['#3b82f6', '#4b9e5f', '#f08a4b', '#8b5cf6', '#10b981', '#ef4444', '#64748b', '#f9a8d4', '#1f2937', '#f8fafc', '#8b5a2b', '#facc15'];
-export const ACCENT_COLORS = ['#f8fafc', '#fbbf24', '#f08a4b', '#1f2937', '#ef4444', '#3b82f6', '#4b9e5f', '#8b5a2b', '#f9a8d4', '#a78bfa'];
+export const EYE_COLORS = [
+  '#1f2937', '#3b2f2f', '#dc2626', '#16a34a', '#2563eb', '#9333ea',
+  '#64748b', '#d97706', '#f472b6', '#84cc16', '#0891b2', '#c084fc'
+];
+export const CLOTHES_COLORS = [
+  '#1f2937', '#8b5a2b', '#ef4444', '#f08a4b', '#4b9e5f', '#3b82f6', '#8b5cf6',
+  '#f8fafc', '#64748b', '#f9a8d4', '#facc15', '#10b981', '#7dd3fc', '#c4b5fd'
+];
+export const ACCENT_COLORS = [
+  '#1f2937', '#8b5a2b', '#ef4444', '#f08a4b', '#4b9e5f', '#3b82f6', '#a78bfa',
+  '#f8fafc', '#fbbf24', '#f9a8d4', '#fde68a', '#a7f3d0', '#93c5fd', '#ddd6fe'
+];
 
 // プレイヤーの最初の見た目(APIの RpgLook の初期値と同じ)
 export const DEFAULT_LOOK: RpgLook = {
   hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
-  mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc'
+  mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc', brows: 'normal', browColor: null
 };
 
 /** 差し色は服の色と同じにならないようにする(白い服なら茶色) */
@@ -47,7 +72,9 @@ export function randomLook(rand: () => number = Math.random): RpgLook {
   if (accentColor === clothesColor) accentColor = accentFor(clothesColor);
   return {
     hair: pick(HAIRS)[0], hairColor: pick(HAIR_COLORS), skin: pick(SKINS), eyes: pick(EYES)[0], eyeColor: pick(EYE_COLORS),
-    mouth: pick(MOUTHS)[0], clothes: pick(CLOTHES)[0], clothesColor, accentColor
+    mouth: pick(MOUTHS)[0], clothes: pick(CLOTHES)[0], clothesColor, accentColor,
+    // 眉の色は髪の色に合わせる
+    brows: pick(BROWS)[0], browColor: null
   };
 }
 
@@ -176,6 +203,8 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   }
 
   drawFace(c, L, y0, f);
+  // 三つ編みは肩から前へ垂らすので、体・顔の手前に描く
+  if (L.hair === 'braid') drawBraid(c, L, y0, d);
 
   if (pose.slash && pose.slash > 0) {
     c.strokeStyle = `rgba(255,255,255,${pose.slash})`;
@@ -248,16 +277,35 @@ function backHair(L: RpgLook, y0: number, d: number): Path2D | null {
       teardrop(p, -12, y0 - 37, -17, y0 - 14, 6, -2.5);
       teardrop(p, 12, y0 - 37, 17, y0 - 14, 6, 2.5);
       break;
+    case 'sidetail': teardrop(p, d * 11, y0 - 38, d * 17, y0 - 15, 6.5, d * 3); break;
+    case 'bun': p.arc(0, y0 - 45.5, 6.5, 0, Math.PI * 2); break;
+    case 'wavy':
+      // ふちを小さく波打たせたロング。上は頭の丸みにそわせ(角を作らない)、すそは少しすぼめる
+      p.moveTo(0, y0 - 44.5);
+      p.bezierCurveTo(-9, y0 - 44.5, -15, y0 - 40, -15, y0 - 33);
+      p.quadraticCurveTo(-17, y0 - 27, -14.5, y0 - 22);
+      p.quadraticCurveTo(-16.5, y0 - 16, -13.5, y0 - 11.5);
+      p.quadraticCurveTo(-13, y0 - 6.5, -9, y0 - 7.5);
+      p.quadraticCurveTo(-5.5, y0 - 5.5, -3, y0 - 9);
+      p.lineTo(3, y0 - 9);
+      p.quadraticCurveTo(5.5, y0 - 5.5, 9, y0 - 7.5);
+      p.quadraticCurveTo(13, y0 - 6.5, 13.5, y0 - 11.5);
+      p.quadraticCurveTo(16.5, y0 - 16, 14.5, y0 - 22);
+      p.quadraticCurveTo(17, y0 - 27, 15, y0 - 33);
+      p.bezierCurveTo(15, y0 - 40, 9, y0 - 44.5, 0, y0 - 44.5);
+      p.closePath();
+      break;
     default: return null;
   }
   return p;
 }
 
-// ポニーテール・ツインテールの結び目(髪の色を暗くした小さなゴム)
+// ポニーテール・ツインテール・サイドテールの結び目(髪の色を暗くした小さなゴム)
 function hairTies(c: CanvasRenderingContext2D, L: RpgLook, y0: number, d: number): void {
   const ties: Record<string, [number, number][]> = {
     ponytail: [[-d * 9, y0 - 40]],
-    twintail: [[-12, y0 - 37], [12, y0 - 37]]
+    twintail: [[-12, y0 - 37], [12, y0 - 37]],
+    sidetail: [[d * 11, y0 - 38]]
   };
   const list = ties[L.hair];
   if (!list) return;
@@ -289,7 +337,7 @@ function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
     const pts = [[10, -33.5], [8.5, -31.6], [5.5, -35.2], [3, -32.6], [0, -36], [-3, -32.8], [-6, -35.4], [-8.5, -31.8], [-10.5, -33.8]];
     for (const [px, py] of pts) p.lineTo(px + s, Y(py));
     p.lineTo(-13, Y(-30.5));
-  } else if (L.hair === 'long') {
+  } else if (L.hair === 'long' || L.hair === 'wavy') {
     // 横分け(向いている側へ流す)
     if (d > 0) {
       p.quadraticCurveTo(9, Y(-31), 3 + s, Y(-34.5));
@@ -304,24 +352,49 @@ function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
     p.lineTo(-10, Y(-33.8));
     p.quadraticCurveTo(-12.6, Y(-33.8), -13, Y(-30.5));
   } else {
-    // ポニーテール・ツインテール: まん中分けで、おでこが少し見える
+    // ポニーテール・ツインテール・サイドテール・お団子・三つ編み: まん中分けで、おでこが少し見える
     p.quadraticCurveTo(8.5 + s, Y(-32.5), 1.2 + s, Y(-39.5));
     p.lineTo(-0.2 + s, Y(-39.5));
     p.quadraticCurveTo(-8.5 + s, Y(-32.5), -13, Y(-30.5));
   }
   p.closePath();
-  // 顔の横に垂らす髪(len: 長さ。ショートは垂らさない)
-  const len = L.hair === 'long' ? 17 : L.hair === 'bob' ? 10 : L.hair === 'short' ? 0 : 7;
+  // 顔の横に垂らす髪(len: 長さ。ショートは垂らさない。ウェーブは波打たせる)
+  const len = L.hair === 'long' || L.hair === 'wavy' ? 17 : L.hair === 'bob' ? 10 : L.hair === 'short' ? 0 : 7;
   if (len > 0) {
     for (const side of [-1, 1]) {
       p.moveTo(side * 13.3, Y(-34));
-      p.quadraticCurveTo(side * 14.6, Y(-34 + len * 0.55), side * 12.4, Y(-34 + len));
+      if (L.hair === 'wavy') {
+        p.quadraticCurveTo(side * 15.5, Y(-28), side * 13, Y(-24));
+        p.quadraticCurveTo(side * 15, Y(-20), side * 12.6, Y(-34 + len));
+      } else {
+        p.quadraticCurveTo(side * 14.6, Y(-34 + len * 0.55), side * 12.4, Y(-34 + len));
+      }
       p.lineTo(side * 10, Y(-34 + len - 3.5));
       p.quadraticCurveTo(side * 10.7, Y(-34 + len * 0.45), side * 10.2, Y(-33));
       p.closePath();
     }
   }
   return p;
+}
+
+// 三つ編み: 向きと反対側の肩から前へ垂らす(編み目を少しずつ小さくし、先にゴムと毛先)
+function drawBraid(c: CanvasRenderingContext2D, L: RpgLook, y0: number, d: number): void {
+  const x0 = -d * 10.5, yA = y0 - 30, x1 = -d * 12, yB = y0 - 10;
+  const p = new Path2D();
+  const n = 5;
+  for (let i = 0; i < n; i++) {
+    const k = i / (n - 1);
+    const x = x0 + (x1 - x0) * k + Math.sin(i * 1.7) * 0.4;
+    const y = yA + (yB - yA) * k;
+    const r = 3.3 - k * 0.7;
+    p.moveTo(x + r, y);
+    p.ellipse(x, y, r, r * 0.8, i % 2 ? 0.4 : -0.4, 0, Math.PI * 2);
+  }
+  fillShaded(c, p, L.hairColor, [x1 - 5, yA - 4, x1 + 5, yB + 4], 0.2, 0.5);
+  c.fillStyle = shade(L.hairColor, 0.55);
+  c.beginPath(); c.arc(x1, yB + 2.4, 1.6, 0, Math.PI * 2); c.fill();
+  c.fillStyle = L.hairColor;
+  c.beginPath(); c.moveTo(x1 - 2, yB + 3.2); c.lineTo(x1 + 2, yB + 3.2); c.lineTo(x1, yB + 7); c.closePath(); c.fill();
 }
 
 function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number): void {
@@ -369,15 +442,7 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     }
     c.stroke();
   }
-  // 眉毛(髪の色を少し暗くした色。白っぽい髪でも見えるように)。つり目は外側を上げ、たれ目は外側を下げる
-  c.strokeStyle = shade(L.hairColor, 0.85);
-  c.lineWidth = 1.2;
-  const tilt = e === 'sharp' ? 1.1 : e === 'droopy' ? -1.1 : 0;
-  for (const [i, x0] of ex.entries()) {
-    const out = i === 0 ? -1 : 1;
-    const by = ey - 4.6;
-    c.beginPath(); c.moveTo(x0 - out * 1.8, by + tilt * 0.6); c.lineTo(x0 + out * 2.2, by - tilt); c.stroke();
-  }
+  drawBrows(c, L, ex, ey - 4.6);
   if (e === 'glasses') {
     // レンズは薄い白とツヤだけにして、レンズ越しに目が見えるようにする
     for (const x0 of ex) {
@@ -411,6 +476,48 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
   }
 }
 
+/**
+ * 眉(front#362)。色を選んでいなければ髪の色を少し暗くした色(白っぽい髪でも見えるように)。by は眉の高さ。
+ * ふつう・太め・細めは、つり目なら外側を上げ、たれ目なら外側を下げる
+ */
+function drawBrows(c: CanvasRenderingContext2D, L: RpgLook, ex: number[], by: number): void {
+  const brows = L.brows ?? 'normal';
+  if (brows === 'none') return;
+  const color = L.browColor || shade(L.hairColor, 0.85);
+  const eyeTilt = L.eyes === 'sharp' ? 1.1 : L.eyes === 'droopy' ? -1.1 : 0;
+  const tilt = brows === 'sharp' ? 1.7 : brows === 'worried' ? -1.7 : eyeTilt;
+  c.strokeStyle = color;
+  c.fillStyle = color;
+  c.lineCap = 'round';
+  c.lineWidth = brows === 'thick' ? 2.2 : brows === 'thin' ? 0.8 : 1.2;
+  for (const [i, x0] of ex.entries()) {
+    // 外側の向き(-1: 左 / 1: 右)
+    const out = i === 0 ? -1 : 1;
+    c.beginPath();
+    if (brows === 'short') {
+      // まろ: 小さな楕円
+      c.ellipse(x0 - out * 0.4, by - 0.6, 1.3, 0.9, 0, 0, Math.PI * 2);
+      c.fill();
+      continue;
+    }
+    if (brows === 'arch') {
+      // 山なり: まん中より少し外側をいちばん高くする
+      c.moveTo(x0 - out * 2, by + 0.6);
+      c.quadraticCurveTo(x0 + out * 0.4, by - 2.4, x0 + out * 2.4, by + 0.8);
+    } else {
+      c.moveTo(x0 - out * 1.8, by + tilt * 0.6);
+      c.lineTo(x0 + out * 2.2, by - tilt);
+    }
+    c.stroke();
+  }
+}
+
+// 赤っぽい色か(セーラー服のスカーフを、えりと同じような色にしない)
+function isRed(hex: string): boolean {
+  const [r, g, b] = rgb(hex);
+  return r > 180 && g < 120 && b < 120;
+}
+
 // 服の形
 function clothesPath(type: string, y0: number): Path2D {
   const p = new Path2D();
@@ -419,6 +526,9 @@ function clothesPath(type: string, y0: number): Path2D {
   } else if (type === 'dress') {
     p.roundRect(-8, y0 - 20, 16, 9, 5);
     p.moveTo(-7, y0 - 12); p.lineTo(7, y0 - 12); p.lineTo(13, y0 - 3); p.lineTo(-13, y0 - 3); p.closePath();
+  } else if (type === 'sailor') {
+    // セーラー服の上着(スカートは drawClothes で描く)
+    p.roundRect(-9, y0 - 20, 18, 11, 5);
   } else {
     p.roundRect(-9, y0 - 20, 18, 16, 6);
   }
@@ -453,6 +563,27 @@ function drawClothes(c: CanvasRenderingContext2D, L: RpgLook, y0: number, cc: st
     c.fillRect(-3, y0 - 20, 6, 16);
     c.fillStyle = shade(cc, 0.8);
     c.fillRect(-1, y0 - 20, 2, 16);
+  } else if (type === 'hoodie') {
+    // パーカー: 首のまわりのフード・ひも(差し色)・ポケット
+    c.fillStyle = shade(cc, 0.82);
+    c.beginPath(); c.ellipse(0, y0 - 20.5, 10.5, 3.6, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = ac; c.lineWidth = 1; c.lineCap = 'round';
+    for (const x of [-2.5, 2.5]) { c.beginPath(); c.moveTo(x, y0 - 18); c.lineTo(x * 1.1, y0 - 12.5); c.stroke(); }
+    c.fillStyle = shade(cc, 0.86);
+    c.beginPath(); c.roundRect(-6, y0 - 10.5, 12, 4.5, 2); c.fill();
+  } else if (type === 'sailor') {
+    // セーラー服: スカート・えり(差し色)・スカーフ
+    const skirt = new Path2D();
+    skirt.moveTo(-8.5, y0 - 10.5); skirt.lineTo(8.5, y0 - 10.5); skirt.lineTo(12, y0 - 3); skirt.lineTo(-12, y0 - 3); skirt.closePath();
+    fillShaded(c, skirt, ac, [-14, y0 - 21, 14, y0]);
+    c.strokeStyle = shade(ac, 0.7); c.lineWidth = 0.8;
+    for (const x of [-5, 0, 5]) { c.beginPath(); c.moveTo(x, y0 - 10); c.lineTo(x * 1.35, y0 - 3.5); c.stroke(); }
+    c.fillStyle = ac;
+    c.beginPath(); c.moveTo(-8.5, y0 - 20); c.lineTo(8.5, y0 - 20); c.lineTo(6, y0 - 16.5); c.lineTo(0, y0 - 13); c.lineTo(-6, y0 - 16.5); c.closePath(); c.fill();
+    c.fillStyle = cc;
+    c.beginPath(); c.moveTo(-3.5, y0 - 20); c.lineTo(3.5, y0 - 20); c.lineTo(0, y0 - 15.5); c.closePath(); c.fill();
+    c.fillStyle = isRed(ac) ? '#fbbf24' : '#ef4444';
+    c.beginPath(); c.moveTo(-2.6, y0 - 15); c.lineTo(2.6, y0 - 15); c.lineTo(0, y0 - 11.5); c.closePath(); c.fill();
   } else {
     // シャツ: 襟と裾のライン
     c.beginPath(); c.moveTo(-4.5, y0 - 20); c.lineTo(0, y0 - 14.5); c.lineTo(4.5, y0 - 20); c.closePath(); c.fill();
