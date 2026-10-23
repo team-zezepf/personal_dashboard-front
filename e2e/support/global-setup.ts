@@ -8,7 +8,7 @@ import { useRpgFixture } from './rpg-fixture';
  * 1. sandbox が起動しているかを確かめる(起動していなければ、起動のしかたを出して止める)
  * 2. E2E 専用のアカウント・管理者のアカウント(front#341)がなければ作る
  * 3. 前回の実行で失敗して残った、E2E のデータ(タイトルが [E2E] で始まる予定・つぶやき)を消す
- * 4. sandbox の RPG データを、E2E 用のデータ(e2e/fixtures/rpg/)に置き換える。終わったら global-teardown で元に戻す(front#260)
+ * 4. sandbox の RPG データを、E2E 用のデータ(e2e/fixtures/rpg/)に置き換え、セーブデータは空にする(front#366)。終わったら global-teardown で元に戻す(front#260)
  */
 export default async function globalSetup(): Promise<void> {
   await assertReachable(FRONT_URL, 'フロント');
