@@ -90,8 +90,8 @@ export interface LookPose {
 // 陰影をかける範囲 [左, 上, 右, 下]
 type Box = [number, number, number, number];
 
-// 手の位置。side は -1: 左手 / 1: 右手
-interface Hand { side: number; x: number; y: number }
+// 手の位置。side は -1: 左手 / 1: 右手。back は体の後ろに回した腕(向いている側。front#373)
+interface Hand { side: number; back: boolean; x: number; y: number }
 
 /**
  * 形を塗り、光(左上から)と陰(右・下)を形の中だけに重ねて、ふちを描く(front#361)。
@@ -138,25 +138,31 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
     c.beginPath(); c.ellipse(sx - 1, -3 - lift, 1.4, 0.8, 0, 0, Math.PI * 2); c.fill();
   }
 
-  // 手の位置(歩くと前後に振る)。剣は向いている側の手で握る
-  const hands: Hand[] = [-1, 1].map((side) => ({ side, x: side * 10.6, y: y0 - 8.6 + side * swing * 0.9 }));
-  const front = hands[d > 0 ? 1 : 0];
-  if (pose.sword) drawSword(c, front.x, front.y, d, pose.swordColor ?? '#cbd5e1');
+  // 手の位置(歩くと前後に振る)。向いている側の腕は体の後ろに回して少し内側に寄せ(front#373)、剣はその手で握る
+  const hands: Hand[] = [-1, 1].map((side) => ({
+    side, back: side === d, x: side * (side === d ? 9.2 : 10.6), y: y0 - 8.6 + side * swing * 0.9
+  }));
+  const holder = hands.find((h) => h.back) ?? hands[1];
+  if (pose.sword) drawSword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1');
 
   // 後ろ髪(髪のふちは服より細く)
   const back = backHair(L, y0, d);
   if (back) fillShaded(c, back, L.hairColor, [-20, y0 - 50, 20, y0], 0.14, 0.5);
   hairTies(c, L, y0, d);
 
+  // 体の後ろの腕 → 服 → 手前の腕
+  drawArms(c, L, hands.filter((h) => h.back), cc, y0);
   drawClothes(c, L, y0, cc);
-  drawArms(c, L, hands, cc, y0);
+  drawArms(c, L, hands.filter((h) => !h.back), cc, y0);
   drawClothesOver(c, L, y0);
 
-  // 頭
+  // 頭。向いている側のほっぺ〜あごを少しだけ前に出し、向きが分かるようにする(front#372)
+  const head = headPath(y0, d);
   c.fillStyle = L.skin;
   c.strokeStyle = 'rgba(0,0,0,0.15)';
   c.lineWidth = 1;
-  c.beginPath(); c.arc(0, y0 - 31, 12, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fill(head);
+  c.stroke(head);
 
   // 前髪
   if (L.hair === 'bald') {
@@ -184,6 +190,21 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   }
 }
 
+// 頭の輪郭(front#372)。後ろ側は丸のまま、向いている側(d)は あご → ほっぺ を少し外へふくらませて丸に戻す
+function headPath(y0: number, d: number): Path2D {
+  const p = new Path2D();
+  const cy = y0 - 31;
+  // 後ろ側の半円を描く向き(右を向いているときは、上 → 左 → 下)
+  const backward = d > 0;
+  p.moveTo(0, cy - 12);
+  p.arc(0, cy, 12, -Math.PI / 2, Math.PI / 2, backward);
+  p.bezierCurveTo(d * 4, cy + 12.4, d * 10.6, cy + 10.4, d * 12.5, cy + 5);
+  p.bezierCurveTo(d * 13.2, cy + 2, d * 12.3, cy - 1.5, d * 11.6, cy - 3.1);
+  p.arc(0, cy, 12, Math.atan2(-3.1, d * 11.6), -Math.PI / 2, backward);
+  p.closePath();
+  return p;
+}
+
 // 剣: 握っている手の位置から、斜め上へ伸ばす(手は剣のあとに描くので、柄を握って見える)
 function drawSword(c: CanvasRenderingContext2D, hx: number, hy: number, d: number, color: string): void {
   // 刃の向き(ux, uy)と、つばの向き(px, py: 刃に直角)
@@ -206,7 +227,8 @@ function drawArms(c: CanvasRenderingContext2D, L: RpgLook, hands: Hand[], cc: st
   const sleeve = L.clothes === 'vest' ? L.accentColor : cc;
   c.lineCap = 'round';
   for (const h of hands) {
-    const sx = h.side * 8.3;
+    // 体の後ろの腕は、肩も少し内側にする
+    const sx = h.side * (h.back ? 6.8 : 8.3);
     const sy = y0 - 18;
     const ex = h.x - h.side * 0.3;
     const ey = h.y - 1.6;
