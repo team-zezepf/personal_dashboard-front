@@ -115,6 +115,10 @@ export interface RpgLook {
   clothesColor: string;
   // 差し色(襟・ふち・帯など)
   accentColor: string;
+  // 眉(front#362 / api#171)。ないときは normal として描く
+  brows?: string;
+  // 眉の色(front#362 / api#171)。null・ないときは髪の色に合わせる
+  browColor?: string | null;
 }
 
 export interface RpgStats {

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { API_URL, E2E_ACCOUNT, E2E_MATE_ACCOUNT, SANDBOX_DATA_DIR } from './support/env';
 import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence';
 
@@ -34,7 +34,9 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
       respawn: { area: 'plain', x: 6, y: 7 },
       look: {
         hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
-        mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc'
+        mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc',
+        // 眉(front#362)も ふつう・髪の色に合わせる に戻す
+        brows: 'normal', browColor: null
       }
     }
   });
@@ -467,10 +469,10 @@ test(
   caseOf({
     precondition: ['sandbox が起動している', 'E2E 専用のアカウントでログインしている', 'RPGのセーブデータを最初の状態(ショート・ふつうの目・シャツ)に戻してある'],
     expected: [
-      'サイド欄の「見た目を変える」を押すと「見た目」の画面が開き、今の見た目(ショート・ふつう・シャツ)が選ばれている',
-      '目を「メガネ」にすると、目の色の欄が消える',
+      'サイド欄の「見た目を変える」を押すと「見た目」の画面が開き、部品ごとに1行で今の見た目(ショート・眉ふつう・目ふつう・シャツ)が出ている(front#362)',
+      '目を「メガネ」にしても、目の色の欄は残る(メガネ越しに目が見える。front#361)',
       '「やめる」で閉じると、見た目は変わらない',
-      '髪型・目・服・服の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
+      '< > で髪型・眉・目・服を、色の丸から服の色・眉の色を、カスタムで髪の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
       '画面を読み込み直して「見た目を変える」を開いても、選んだ見た目のまま'
     ]
   }),
@@ -479,51 +481,83 @@ test(
     await resetRpg();
     await loginAsE2E(page, step);
     const dialog = page.getByRole('dialog', { name: '見た目' });
-    const option = (group: string, name: string) => dialog.getByRole('group', { name: group, exact: true }).getByRole('button', { name: `${group} ${name}` });
+    // 部品の1行(名前・< 部品 >・色)
+    const row = (label: string) => dialog.getByRole('group', { name: label, exact: true });
+    const part = (label: string) => row(label).locator('.name');
+    const next = (label: string, times = 1) => clickTimes(dialog.getByRole('button', { name: `${label} 次へ` }), times);
+    const prev = (label: string, times = 1) => clickTimes(dialog.getByRole('button', { name: `${label} 前へ` }), times);
+    const chip = (label: string, color: string) => row(label).getByRole('button', { name: new RegExp(color) });
 
-    await step('RPG(/rpg)を開き、サイド欄の「見た目を変える」を押す', '「見た目」の画面が開き、ショート・ふつう・シャツが選ばれている', async () => {
+    await step('RPG(/rpg)を開き、サイド欄の「見た目を変える」を押す', '「見た目」の画面が開き、髪型 ショート・眉 ふつう(眉の色は髪に合わせる)・目 ふつう・服 シャツと出る', async () => {
       await page.goto('/rpg');
       await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
-      await expect(option('髪型', 'ショート')).toHaveAttribute('aria-pressed', 'true');
-      await expect(option('目', 'ふつう')).toHaveAttribute('aria-pressed', 'true');
-      await expect(option('服', 'シャツ')).toHaveAttribute('aria-pressed', 'true');
+      await expect(part('髪型')).toContainText('ショート');
+      await expect(part('眉')).toContainText('ふつう');
+      await expect(chip('眉', '眉の色')).toContainText('髪に合わせる');
+      await expect(part('目')).toContainText('ふつう');
+      await expect(part('服')).toContainText('シャツ');
     });
 
-    await step('目の「メガネ」を押す', '目の色の欄が消える', async () => {
-      await expect(dialog.getByRole('group', { name: '目の色' })).toBeVisible();
-      await option('目', 'メガネ').click();
-      await expect(dialog.getByRole('group', { name: '目の色' })).toHaveCount(0);
+    await step('目の「前へ」を押して「メガネ」にする', '目の色の欄は残っている', async () => {
+      await prev('目');
+      await expect(part('目')).toContainText('メガネ');
+      await expect(chip('目', '目の色')).toBeVisible();
     });
 
     await step('「やめる」で閉じて、もう一度開く', '目は「ふつう」のまま', async () => {
       await dialog.getByRole('button', { name: 'やめる' }).click();
       await expect(dialog).toHaveCount(0);
       await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
-      await expect(option('目', 'ふつう')).toHaveAttribute('aria-pressed', 'true');
+      await expect(part('目')).toContainText('ふつう');
     });
 
-    await step('ポニーテール・メガネ・ローブ・紫の服を選んで「決める」を押す', '画面が閉じ、ログに「見た目を変えた」と出る', async () => {
-      await option('髪型', 'ポニーテール').click();
-      await option('目', 'メガネ').click();
-      await option('服', 'ローブ').click();
-      await dialog.getByRole('button', { name: '服の色 #8b5cf6' }).click();
-      await dialog.getByRole('button', { name: '決める' }).click();
-      await expect(dialog).toHaveCount(0);
-      await expect(page.getByRole('region', { name: 'ログ' }).getByText('見た目を変えた')).toBeVisible();
-    });
+    await step(
+      'ポニーテール・カスタムの髪の色(#123456)・山なりの眉・赤い眉・メガネ・セーラー服・紫の服を選んで「決める」を押す',
+      '画面が閉じ、ログに「見た目を変えた」と出る',
+      async () => {
+        await next('髪型', 2);
+        await expect(part('髪型')).toContainText('ポニーテール');
+        await chip('髪型', '髪の色').click();
+        await dialog.getByLabel('髪の色 カスタム').fill('#123456');
+        await next('眉', 3);
+        await expect(part('眉')).toContainText('山なり');
+        await chip('眉', '眉の色').click();
+        await dialog.getByRole('button', { name: '眉の色 #dc2626' }).click();
+        await prev('目');
+        // 服の最後はセーラー服
+        await prev('服');
+        await expect(part('服')).toContainText('セーラー服');
+        await chip('服', '服の色').click();
+        await dialog.getByRole('button', { name: '服の色 #8b5cf6' }).click();
+        await dialog.getByRole('button', { name: '決める' }).click();
+        await expect(dialog).toHaveCount(0);
+        await expect(page.getByRole('region', { name: 'ログ' }).getByText('見た目を変えた')).toBeVisible();
+      }
+    );
 
-    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール・メガネ・ローブ・紫の服のまま', async () => {
+    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール・カスタムの髪の色・山なりの赤い眉・メガネ・紫のセーラー服のまま', async () => {
       // 見た目は「決める」ですぐ保存する。保存が終わるのを待ってから読み込み直す
       await page.waitForLoadState('networkidle');
       await page.reload();
       await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
-      await expect(option('髪型', 'ポニーテール')).toHaveAttribute('aria-pressed', 'true');
-      await expect(option('目', 'メガネ')).toHaveAttribute('aria-pressed', 'true');
-      await expect(option('服', 'ローブ')).toHaveAttribute('aria-pressed', 'true');
+      await expect(part('髪型')).toContainText('ポニーテール');
+      await expect(part('眉')).toContainText('山なり');
+      await expect(part('目')).toContainText('メガネ');
+      await expect(part('服')).toContainText('セーラー服');
+      await chip('髪型', '髪の色').click();
+      await expect(row('髪型').locator('.custom')).toContainText('#123456');
+      await chip('眉', '眉の色').click();
+      await expect(dialog.getByRole('button', { name: '眉の色 #dc2626' })).toHaveAttribute('aria-pressed', 'true');
+      await chip('服', '服の色').click();
       await expect(dialog.getByRole('button', { name: '服の色 #8b5cf6' })).toHaveAttribute('aria-pressed', 'true');
     });
   }
 );
+
+// ボタンを決まった回数押す
+async function clickTimes(button: Locator, times: number): Promise<void> {
+  for (let i = 0; i < times; i++) await button.click();
+}
 
 test(
   'E2E-12 RPGで、村長のクエストを受けてスライムを3体たおし、報告すると報酬をもらえ、開き直しても終わったまま',
