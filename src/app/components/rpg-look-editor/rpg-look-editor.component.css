@@ -72,69 +72,134 @@
   color: var(--on-primary);
 }
 
-.group {
-  padding: 8px 0;
+/* 選ぶ欄の幅に合わせて、色の丸を < > の横に置くか下に置くかを決める */
+.rows {
+  container-type: inline-size;
+  /* 色の丸の大きさ */
+  --sw: 28px;
+}
+
+/* 1つの部品 = 1行(名前・< 部品 >・色) */
+.row {
+  display: grid;
+  grid-template-columns: 44px 200px 1fr;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 9px 0;
   border-top: 1px solid var(--line);
 }
 
-.groups > .group:first-child {
+.rows > .row:first-child {
   border-top: none;
   padding-top: 0;
 }
 
-.group h3 {
-  margin: 0 0 6px;
-  font-size: 12px;
+.label {
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--muted);
 }
 
-.colors-row {
+.stepper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0 16px;
-}
-
-.options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.opt {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: 32px 1fr 32px;
   align-items: center;
-  gap: 2px;
-  width: 70px;
-  padding: 4px;
-  border: 2px solid var(--line);
+  border: 1px solid var(--line);
   border-radius: 10px;
+  overflow: hidden;
   background: var(--card);
-  font-size: 11px;
+}
+
+.stepper button {
+  height: 36px;
+  border: none;
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
   cursor: pointer;
 }
 
-.opt canvas {
-  width: 52px;
-  height: 52px;
-}
-
-.opt.active {
-  border-color: var(--indigo);
+.stepper button:hover {
   background: var(--indigo-soft);
-  font-weight: 700;
 }
 
-.colors {
+.stepper .name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.stepper .count {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
-.color {
-  width: 24px;
-  height: 24px;
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chip.open {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 2px var(--indigo-soft);
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* 「髪の色に合わせる」: 半分ずつ塗った丸 */
+.dot.auto {
+  background: conic-gradient(#8b5a2b 0 50%, #e5e7eb 0);
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* 色の一覧(色の丸を押すと、その行の下に開く) */
+.palette {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.swatches {
+  display: grid;
+  gap: 6px;
+  justify-content: start;
+}
+
+.sw {
+  width: var(--sw);
+  height: var(--sw);
   padding: 0;
   border-radius: 50%;
   border: 3px solid var(--card);
@@ -142,11 +207,76 @@
   cursor: pointer;
 }
 
-.color.active {
+.sw.active {
   box-shadow: 0 0 0 2px var(--indigo);
 }
 
-/* マップ作成画面の右側の欄: プレビューを上に、選ぶ欄を下に縦に並べる */
+.extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.auto-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.auto-btn.active,
+.custom.active {
+  border: 2px solid var(--indigo);
+  font-weight: 700;
+}
+
+.custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.custom input {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* 選ぶ欄がせまいとき(マップ作成画面の村人のダイアログなど)は、色の丸を < > の下の段に出す */
+@container (max-width: 440px) {
+  .row {
+    grid-template-columns: 40px minmax(0, 220px);
+  }
+
+  .chips {
+    grid-column: 2;
+  }
+
+  .row {
+    --sw: 24px;
+  }
+
+  .swatches {
+    gap: 4px;
+  }
+}
+
+/* マップ作成画面の右側の欄:プレビューを上に、選ぶ欄を下に縦に並べる。色は < > の下の段に出す */
 .designer.narrow {
   grid-template-columns: 1fr;
   gap: 4px;
@@ -162,18 +292,12 @@
   bottom: 8px;
 }
 
-.designer.narrow .opt {
-  width: 60px;
-  font-size: 10px;
+.designer.narrow .row {
+  grid-template-columns: 36px 1fr;
 }
 
-.designer.narrow .opt canvas {
-  width: 44px;
-  height: 44px;
-}
-
-.designer.narrow .colors-row {
-  grid-template-columns: 1fr;
+.designer.narrow .chips {
+  grid-column: 2;
 }
 
 /* 右側の欄の上の余白(14px)の分だけ上で止め、その間に下の部品がのぞかないよう余白も塗る */

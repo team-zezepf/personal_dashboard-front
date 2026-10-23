@@ -8,48 +8,75 @@
     </div>
   </div>
 
-  <div class="groups">
-    @for (part of parts; track part.key) {
-      <div class="group" role="group" [attr.aria-label]="part.label">
-        <h3>{{ part.label }}</h3>
-        <div class="options">
-          @for (o of part.list; track o[0]) {
+  <div class="rows">
+    @for (row of rows; track row.label) {
+      <div class="row" role="group" [attr.aria-label]="row.label">
+        <div class="label">{{ row.label }}</div>
+        @if (row.key) {
+          <div class="stepper">
+            <button type="button" [attr.aria-label]="row.label + ' 前へ'" (click)="step(row, -1)">&lt;</button>
+            <div class="name" aria-live="polite">
+              <span>{{ partName(row) }}</span>
+              <span class="count">{{ index(row) + 1 }} / {{ row.list.length }}</span>
+            </div>
+            <button type="button" [attr.aria-label]="row.label + ' 次へ'" (click)="step(row, 1)">&gt;</button>
+          </div>
+        } @else {
+          <div></div>
+        }
+        <div class="chips">
+          @for (col of row.colors; track col.key) {
             <button
               type="button"
-              class="opt"
-              [class.active]="look()[part.key] === o[0]"
-              [attr.aria-pressed]="look()[part.key] === o[0]"
-              [attr.aria-label]="part.label + ' ' + o[1]"
-              (click)="set(part.key, o[0])"
+              class="chip"
+              [class.open]="openColor() === col.key"
+              [attr.aria-expanded]="openColor() === col.key"
+              (click)="toggleColor(col.key)"
             >
-              <canvas #thumb width="112" height="112" [attr.data-key]="part.key" [attr.data-id]="o[0]"></canvas>
-              <span>{{ o[1] }}</span>
+              <span class="dot" [class.auto]="!color(col.key)" [style.background]="color(col.key) ?? null"></span>
+              {{ col.label }}@if (!color(col.key)) {<span class="hint">（髪に合わせる）</span>}
             </button>
           }
         </div>
-      </div>
-      @if (colorKeys(part.colors).length) {
-        <div class="colors-row">
-          @for (key of colorKeys(part.colors); track key) {
-            <div class="group" role="group" [attr.aria-label]="colorLists[key].label">
-              <h3>{{ colorLists[key].label }}</h3>
-              <div class="colors">
-                @for (c of colorLists[key].list; track c) {
-                  <button
-                    type="button"
-                    class="color"
-                    [class.active]="look()[key] === c"
-                    [attr.aria-pressed]="look()[key] === c"
-                    [style.background]="c"
-                    [attr.aria-label]="colorLists[key].label + ' ' + c"
-                    (click)="set(key, c)"
-                  ></button>
+        @if (openDef(row); as col) {
+          <div class="palette" role="group" [attr.aria-label]="col.label + 'を選ぶ'">
+            <div class="swatches" [style.grid-template-columns]="'repeat(' + col.cols + ', var(--sw))'">
+              @for (c of col.list; track c) {
+                <button
+                  type="button"
+                  class="sw"
+                  [class.active]="isActive(col, c)"
+                  [attr.aria-pressed]="isActive(col, c)"
+                  [style.background]="c"
+                  [attr.aria-label]="col.label + ' ' + c"
+                  (click)="set(col.key, c)"
+                ></button>
+              }
+            </div>
+            @if (col.auto || col.custom) {
+              <div class="extra">
+                @if (col.auto) {
+                  <button type="button" class="auto-btn" [class.active]="!color(col.key)" [attr.aria-pressed]="!color(col.key)" (click)="set(col.key, null)">
+                    髪の色に合わせる
+                  </button>
+                }
+                @if (col.custom) {
+                  <label class="custom" [class.active]="isCustom(col)">
+                    <input
+                      type="color"
+                      [value]="isCustom(col) ? color(col.key) : '#888888'"
+                      [attr.aria-label]="col.label + ' カスタム'"
+                      (input)="set(col.key, $any($event.target).value)"
+                    />
+                    <span>カスタム@if (isCustom(col)) {（{{ color(col.key) }}）}</span>
+                  </label>
+                  <span class="hint">一覧にない色を自由に選べます</span>
                 }
               </div>
-            </div>
-          }
-        </div>
-      }
+            }
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
