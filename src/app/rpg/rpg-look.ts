@@ -19,7 +19,7 @@ export const BROWS: [string, string][] = [
 ];
 export const EYES: [string, string][] = [
   ['normal', 'ふつう'], ['smile', 'にっこり'], ['sharp', 'つり目'], ['droopy', 'たれ目'],
-  ['sleepy', 'ねむそう'], ['sparkle', 'キラキラ'], ['glasses', 'メガネ']
+  ['sleepy', 'ねむそう'], ['glasses', 'メガネ']
 ];
 export const MOUTHS: [string, string][] = [['none', 'なし'], ['smile', 'にっこり'], ['open', 'ひらく'], ['flat', 'まっすぐ'], ['cat', 'ねこ口']];
 // パーカー・セーラー服は front#362 で追加
@@ -410,9 +410,9 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
       c.beginPath(); c.arc(x0, ey + 1, 2.3, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
       continue;
     }
-    const big = e === 'sparkle';
-    const rx = big ? 2.1 : e === 'sharp' ? 1.7 : 1.9;
-    const ry = big ? 2.85 : e === 'sharp' ? 2.3 : 2.6;
+    // キラキラ(sparkle)は選べなくした(front#371)。すでにキラキラの見た目は、ふつうの目として描く
+    const rx = e === 'sharp' ? 1.7 : 1.9;
+    const ry = e === 'sharp' ? 2.3 : 2.6;
     c.save();
     // ねむそうな目は、瞳の上半分を隠す
     if (e === 'sleepy') { c.beginPath(); c.rect(x0 - 4, ey - 0.3, 8, 6); c.clip(); }
@@ -424,10 +424,9 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     c.fillStyle = lighten(L.eyeColor, 0.45);
     c.beginPath(); c.ellipse(x0, ey + ry * 0.55, rx * 0.6, ry * 0.3, 0, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#fff';
-    c.beginPath(); c.arc(x0 - rx * 0.35, ey - ry * 0.4, big ? 1 : 0.8, 0, Math.PI * 2); c.fill();
-    if (big) { c.beginPath(); c.arc(x0 + rx * 0.4, ey + ry * 0.35, 0.5, 0, Math.PI * 2); c.fill(); }
+    c.beginPath(); c.arc(x0 - rx * 0.35, ey - ry * 0.4, 0.8, 0, Math.PI * 2); c.fill();
     c.restore();
-    // 上まぶたの細い線。ふつう・キラキラ・メガネは瞳の丸みにそった弧(外側を少し長く)、
+    // 上まぶたの細い線。ふつう・メガネ(と、以前のキラキラ)は瞳の丸みにそった弧(外側を少し長く)、
     // つり目は外側を上げ、たれ目は外側を下げる
     c.strokeStyle = '#2b2020'; c.lineWidth = 0.55;
     c.beginPath();

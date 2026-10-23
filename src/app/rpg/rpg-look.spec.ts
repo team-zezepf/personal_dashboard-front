@@ -32,6 +32,8 @@ describe('rpg-look', () => {
     expect(ids(CLOTHES)).not.toContain('cape');
     expect(ids(CLOTHES)).not.toContain('apron');
     expect(ids(BROWS)).toEqual(['normal', 'thick', 'thin', 'arch', 'sharp', 'worried', 'short', 'none']);
+    // キラキラは「ふつう」と差が小さいので選べなくした(front#371)
+    expect(ids(EYES)).not.toContain('sparkle');
   });
 
   it('front#362 色の一覧は2段で、同じ色が重ならない', () => {
