@@ -1,4 +1,4 @@
-import { ACCENT_COLORS, BROWS, CLOTHES, CLOTHES_COLORS, DEFAULT_LOOK, EYES, EYE_COLORS, HAIRS, HAIR_COLORS, MOUTHS, lookFromColors, randomLook } from './rpg-look';
+import { ACCENT_COLORS, BROWS, HAIR_BACKS, HAIR_TOPS, hairBackOf, hairTopOf, CLOTHES, CLOTHES_COLORS, DEFAULT_LOOK, EYES, EYE_COLORS, HAIRS, HAIR_COLORS, MOUTHS, lookFromColors, randomLook } from './rpg-look';
 
 describe('rpg-look', () => {
   it('髪の色・服の色だけから作る見た目は、差し色が服の色と同じにならない', () => {
@@ -47,5 +47,31 @@ describe('rpg-look', () => {
     expect(EYE_COLORS).toContain(DEFAULT_LOOK.eyeColor);
     expect(CLOTHES_COLORS).toContain(DEFAULT_LOOK.clothesColor);
     expect(ACCENT_COLORS).toContain(DEFAULT_LOOK.accentColor);
+  });
+});
+
+describe('rpg-look 髪のトップ・後ろ(front#370)', () => {
+  it('選んでいなければ髪型どおりのトップ・後ろになる', () => {
+    expect([hairTopOf(DEFAULT_LOOK), hairBackOf(DEFAULT_LOOK)]).toEqual(['tufts', 'none']);
+    expect([hairTopOf({ ...DEFAULT_LOOK, hair: 'long' }), hairBackOf({ ...DEFAULT_LOOK, hair: 'long' })]).toEqual(['sweep', 'long']);
+    expect([hairTopOf({ ...DEFAULT_LOOK, hair: 'bob' }), hairBackOf({ ...DEFAULT_LOOK, hair: 'bob' })]).toEqual(['straight', 'bob']);
+    expect([hairTopOf({ ...DEFAULT_LOOK, hair: 'ponytail' }), hairBackOf({ ...DEFAULT_LOOK, hair: 'ponytail' })]).toEqual(['center', 'ponytail']);
+    expect([hairTopOf({ ...DEFAULT_LOOK, hair: 'bald' }), hairBackOf({ ...DEFAULT_LOOK, hair: 'bald' })]).toEqual(['none', 'none']);
+  });
+
+  it('選んだトップ・後ろは髪型より優先する。トップ・後ろの一覧の名前は API と同じで、最初は「髪型に合わせる」', () => {
+    expect(hairTopOf({ ...DEFAULT_LOOK, hair: 'bob', hairTop: 'point' })).toBe('point');
+    expect(hairBackOf({ ...DEFAULT_LOOK, hair: 'bob', hairBack: 'flip' })).toBe('flip');
+    expect(HAIR_TOPS.map(([id]) => id)).toEqual([null, 'tufts', 'sweep', 'straight', 'center', 'point', 'spiky', 'none']);
+    expect(HAIR_BACKS.map(([id]) => id)).toEqual([null, 'none', 'long', 'bob', 'flip', 'ponytail', 'twintail', 'sidetail', 'bun', 'braid', 'wavy']);
+    // 髪型どおりのトップ・後ろは、必ず一覧にある
+    for (const [hair] of HAIRS) {
+      expect(HAIR_TOPS.map(([id]) => id)).toContain(hairTopOf({ ...DEFAULT_LOOK, hair }));
+      expect(HAIR_BACKS.map(([id]) => id)).toContain(hairBackOf({ ...DEFAULT_LOOK, hair }));
+    }
+  });
+
+  it('おまかせでは、トップ・後ろは髪型に合わせる(null)', () => {
+    expect(randomLook()).toMatchObject({ hairTop: null, hairBack: null });
   });
 });

@@ -12,6 +12,29 @@ export const HAIRS: [string, string][] = [
   ['bob', 'ボブ'], ['spiky', 'ツンツン'], ['bald', 'ぼうず'],
   ['bun', 'お団子'], ['braid', '三つ編み'], ['wavy', 'ウェーブ'], ['sidetail', 'サイドテール']
 ];
+// 髪のトップ(前髪・頭の上)と後ろ(後ろ髪・結んだ髪)(front#370)。最初の「髪型に合わせる」は null
+export const HAIR_TOPS: [string | null, string][] = [
+  [null, '髪型に合わせる'], ['tufts', 'ぱらぱら'], ['sweep', '横分け'], ['straight', 'ぱっつん'],
+  ['center', 'まん中分け'], ['point', 'とんがり'], ['spiky', 'ツンツン'], ['none', 'なし']
+];
+export const HAIR_BACKS: [string | null, string][] = [
+  [null, '髪型に合わせる'], ['none', 'なし'], ['long', 'ロング'], ['bob', 'ボブ'], ['flip', '外ハネ'], ['ponytail', 'ポニーテール'],
+  ['twintail', 'ツインテール'], ['sidetail', 'サイドテール'], ['bun', 'お団子'], ['braid', '三つ編み'], ['wavy', 'ウェーブ']
+];
+// 髪型ごとのトップ・後ろ(トップ・後ろを選んでいないときに使う)。載っていない髪型は、トップ まん中分け・後ろ 髪型と同じ名前
+const TOP_OF_HAIR: Record<string, string> = { short: 'tufts', long: 'sweep', wavy: 'sweep', bob: 'straight', spiky: 'spiky', bald: 'none' };
+const BACK_OF_HAIR: Record<string, string> = { short: 'none', spiky: 'none', bald: 'none' };
+
+/** 描くときのトップ。選んでいなければ髪型どおり */
+export function hairTopOf(L: RpgLook): string {
+  return L.hairTop || TOP_OF_HAIR[L.hair] || 'center';
+}
+
+/** 描くときの後ろ。選んでいなければ髪型どおり */
+export function hairBackOf(L: RpgLook): string {
+  return L.hairBack || BACK_OF_HAIR[L.hair] || L.hair;
+}
+
 // 眉(front#362)。ふつう・太め・細めは、目の形(つり目・たれ目)に合わせて傾ける
 export const BROWS: [string, string][] = [
   ['normal', 'ふつう'], ['thick', '太め'], ['thin', '細め'], ['arch', '山なり'],
@@ -51,7 +74,8 @@ export const ACCENT_COLORS = [
 // プレイヤーの最初の見た目(APIの RpgLook の初期値と同じ)
 export const DEFAULT_LOOK: RpgLook = {
   hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
-  mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc', brows: 'normal', browColor: null
+  mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc', brows: 'normal', browColor: null,
+  hairTop: null, hairBack: null
 };
 
 /** 差し色は服の色と同じにならないようにする(白い服なら茶色) */
@@ -74,7 +98,9 @@ export function randomLook(rand: () => number = Math.random): RpgLook {
     hair: pick(HAIRS)[0], hairColor: pick(HAIR_COLORS), skin: pick(SKINS), eyes: pick(EYES)[0], eyeColor: pick(EYE_COLORS),
     mouth: pick(MOUTHS)[0], clothes: pick(CLOTHES)[0], clothesColor, accentColor,
     // 眉の色は髪の色に合わせる
-    brows: pick(BROWS)[0], browColor: null
+    brows: pick(BROWS)[0], browColor: null,
+    // 髪のトップ・後ろは髪型に合わせる(front#370)
+    hairTop: null, hairBack: null
   };
 }
 
@@ -192,7 +218,7 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   c.stroke(head);
 
   // 前髪
-  if (L.hair === 'bald') {
+  if (hairTopOf(L) === 'none') {
     c.fillStyle = 'rgba(255,255,255,0.5)';
     c.beginPath(); c.ellipse(-4, y0 - 38, 4, 2, -0.4, 0, Math.PI * 2); c.fill();
   } else {
@@ -210,7 +236,7 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
 
   drawFace(c, L, y0, f);
   // 三つ編みは肩から前へ垂らすので、体・顔の手前に描く
-  if (L.hair === 'braid') drawBraid(c, L, y0, d);
+  if (hairBackOf(L) === 'braid') drawBraid(c, L, y0, d);
 
   if (pose.slash && pose.slash > 0) {
     c.strokeStyle = `rgba(255,255,255,${pose.slash})`;
@@ -288,12 +314,26 @@ function teardrop(p: Path2D, rx: number, ry: number, tx: number, ty: number, w: 
   p.closePath();
 }
 
-// 後ろ髪の形。後ろ髪のない髪型は null
+// 後ろ髪の形(front#370 で、髪型ではなく「後ろ」を見て描く)。後ろ髪のないときは null
 function backHair(L: RpgLook, y0: number, d: number): Path2D | null {
   const p = new Path2D();
-  switch (L.hair) {
+  switch (hairBackOf(L)) {
     case 'long': p.roundRect(-14, y0 - 40, 28, 33, 10); break;
     case 'bob': p.roundRect(-15, y0 - 42, 30, 23, 10); break;
+    case 'flip':
+      // 外ハネ: ボブの長さで、毛先が外へ跳ねる
+      p.moveTo(0, y0 - 44.5);
+      p.bezierCurveTo(-9.5, y0 - 44.5, -15, y0 - 40, -15, y0 - 33);
+      p.quadraticCurveTo(-15, y0 - 27, -15.2, y0 - 24.5);
+      p.quadraticCurveTo(-16.5, y0 - 23, -17.6, y0 - 21.6);
+      p.quadraticCurveTo(-15, y0 - 22, -12, y0 - 22);
+      p.lineTo(12, y0 - 22);
+      p.quadraticCurveTo(15, y0 - 22, 17.6, y0 - 21.6);
+      p.quadraticCurveTo(16.5, y0 - 23, 15.2, y0 - 24.5);
+      p.quadraticCurveTo(15, y0 - 27, 15, y0 - 33);
+      p.bezierCurveTo(15, y0 - 40, 9.5, y0 - 44.5, 0, y0 - 44.5);
+      p.closePath();
+      break;
     case 'ponytail': teardrop(p, -d * 9, y0 - 40, -d * 15, y0 - 18, 6.5, -d * 2.5); break;
     case 'twintail':
       teardrop(p, -12, y0 - 37, -17, y0 - 14, 6, -2.5);
@@ -329,19 +369,20 @@ function hairTies(c: CanvasRenderingContext2D, L: RpgLook, y0: number, d: number
     twintail: [[-12, y0 - 37], [12, y0 - 37]],
     sidetail: [[d * 11, y0 - 38]]
   };
-  const list = ties[L.hair];
+  const list = ties[hairBackOf(L)];
   if (!list) return;
   c.fillStyle = shade(L.hairColor, 0.55);
   for (const [x, y] of list) { c.beginPath(); c.arc(x, y, 2, 0, Math.PI * 2); c.fill(); }
 }
 
-// 前髪の形。髪型ごとに前髪の下のふちを変え、ロング・ボブ・ポニーテール・ツインテールは顔の横に髪を垂らす
+// 前髪の形(front#370 で、髪型ではなく「トップ」を見て描く)。顔の横に垂らす髪の長さは「後ろ」に合わせる
 function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
   const p = new Path2D();
   // 向いている側へ少しずらす
   const s = f * 0.8;
   const Y = (v: number) => y0 + v;
-  if (L.hair === 'spiky') {
+  const top = hairTopOf(L);
+  if (top === 'spiky') {
     p.moveTo(-13, Y(-30.5));
     const pts = [[-14, -44], [-8, -41], [-5, -49], [0, -43.5], [5, -49], [8, -41], [14, -44], [13, -30.5]];
     for (const [px, py] of pts) p.lineTo(px, Y(py));
@@ -354,12 +395,12 @@ function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
   p.moveTo(-13, Y(-30.5));
   p.arc(0, Y(-32), 13, Math.PI, 0);
   p.lineTo(13, Y(-30.5));
-  if (L.hair === 'short') {
-    // 毛先が分かれた前髪
+  if (top === 'tufts') {
+    // ぱらぱら: 毛先が分かれた前髪
     const pts = [[10, -33.5], [8.5, -31.6], [5.5, -35.2], [3, -32.6], [0, -36], [-3, -32.8], [-6, -35.4], [-8.5, -31.8], [-10.5, -33.8]];
     for (const [px, py] of pts) p.lineTo(px + s, Y(py));
     p.lineTo(-13, Y(-30.5));
-  } else if (L.hair === 'long' || L.hair === 'wavy') {
+  } else if (top === 'sweep') {
     // 横分け(向いている側へ流す)
     if (d > 0) {
       p.quadraticCurveTo(9, Y(-31), 3 + s, Y(-34.5));
@@ -368,24 +409,31 @@ function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
       p.quadraticCurveTo(5, Y(-39.5), -3 + s, Y(-34.5));
       p.quadraticCurveTo(-9, Y(-31), -13, Y(-30.5));
     }
-  } else if (L.hair === 'bob') {
+  } else if (top === 'straight') {
     // ぱっつん
     p.quadraticCurveTo(12.6, Y(-33.8), 10, Y(-33.8));
     p.lineTo(-10, Y(-33.8));
     p.quadraticCurveTo(-12.6, Y(-33.8), -13, Y(-30.5));
+  } else if (top === 'point') {
+    // とんがり: 両側からゆるやかに下がり、まん中で合わさる幅の広い「く」の字の前髪
+    p.quadraticCurveTo(12.5, Y(-35), 9.5 + s, Y(-36.4));
+    p.quadraticCurveTo(4.5 + s, Y(-35.4), 0.3 + s, Y(-31.6));
+    p.quadraticCurveTo(-3.9 + s, Y(-35.4), -8.9 + s, Y(-36.4));
+    p.quadraticCurveTo(-12.5, Y(-35), -13, Y(-30.5));
   } else {
-    // ポニーテール・ツインテール・サイドテール・お団子・三つ編み: まん中分けで、おでこが少し見える
+    // まん中分け: おでこが少し見える
     p.quadraticCurveTo(8.5 + s, Y(-32.5), 1.2 + s, Y(-39.5));
     p.lineTo(-0.2 + s, Y(-39.5));
     p.quadraticCurveTo(-8.5 + s, Y(-32.5), -13, Y(-30.5));
   }
   p.closePath();
-  // 顔の横に垂らす髪(len: 長さ。ショートは垂らさない。ウェーブは波打たせる)
-  const len = L.hair === 'long' || L.hair === 'wavy' ? 17 : L.hair === 'bob' ? 10 : L.hair === 'short' ? 0 : 7;
+  // 顔の横に垂らす髪(len: 長さ)。後ろの髪に合わせ、後ろ髪がなければ垂らさない。ウェーブは波打たせる
+  const back = hairBackOf(L);
+  const len = back === 'long' || back === 'wavy' ? 17 : back === 'bob' || back === 'flip' ? 10 : back === 'none' ? 0 : 7;
   if (len > 0) {
     for (const side of [-1, 1]) {
       p.moveTo(side * 13.3, Y(-34));
-      if (L.hair === 'wavy') {
+      if (back === 'wavy') {
         p.quadraticCurveTo(side * 15.5, Y(-28), side * 13, Y(-24));
         p.quadraticCurveTo(side * 15, Y(-20), side * 12.6, Y(-34 + len));
       } else {

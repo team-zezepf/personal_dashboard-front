@@ -9,14 +9,17 @@
   </div>
 
   <div class="rows">
-    @for (row of rows; track row.label) {
-      <div class="row" role="group" [attr.aria-label]="row.label">
+    @for (row of visibleRows(); track row.label) {
+      <div class="row" [class.sub]="row.sub" role="group" [attr.aria-label]="row.label">
         <div class="label">{{ row.label }}</div>
         @if (row.key) {
           <div class="stepper">
             <button type="button" [attr.aria-label]="row.label + ' 前へ'" (click)="step(row, -1)">&lt;</button>
             <div class="name" aria-live="polite">
               <span>{{ partName(row) }}</span>
+              @if (nowName(row); as now) {
+                <span class="now">いまは {{ now }}</span>
+              }
               <span class="count">{{ index(row) + 1 }} / {{ row.list.length }}</span>
             </div>
             <button type="button" [attr.aria-label]="row.label + ' 次へ'" (click)="step(row, 1)">&gt;</button>
@@ -38,6 +41,11 @@
             </button>
           }
         </div>
+        @if (row.key === 'hair') {
+          <button type="button" class="detail-toggle" [attr.aria-expanded]="hairDetail()" (click)="toggleHairDetail()">
+            {{ hairDetail() ? '▾' : '▸' }} くわしく（トップ・後ろ）
+          </button>
+        }
         @if (openDef(row); as col) {
           <div class="palette" role="group" [attr.aria-label]="col.label + 'を選ぶ'">
             <div class="swatches" [style.grid-template-columns]="'repeat(' + col.cols + ', var(--sw))'">

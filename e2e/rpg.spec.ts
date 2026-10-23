@@ -36,7 +36,7 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
         hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
         mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc',
         // 眉(front#362)も ふつう・髪の色に合わせる に戻す
-        brows: 'normal', browColor: null
+        brows: 'normal', browColor: null, hairTop: null, hairBack: null
       }
     }
   });
@@ -472,7 +472,7 @@ test(
       'サイド欄の「見た目を変える」を押すと「見た目」の画面が開き、部品ごとに1行で今の見た目(ショート・眉ふつう・目ふつう・シャツ)が出ている(front#362)',
       '目を「メガネ」にしても、目の色の欄は残る(メガネ越しに目が見える。front#361)',
       '「やめる」で閉じると、見た目は変わらない',
-      '< > で髪型・眉・目・服を、色の丸から服の色・眉の色を、カスタムで髪の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
+      '< > で髪型・眉・目・服を、「くわしく」を開いて髪のトップ・後ろを(front#370)、色の丸から服の色・眉の色を、カスタムで髪の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
       '画面を読み込み直して「見た目を変える」を開いても、選んだ見た目のまま'
     ]
   }),
@@ -512,11 +512,19 @@ test(
     });
 
     await step(
-      'ポニーテール・カスタムの髪の色(#123456)・山なりの眉・赤い眉・メガネ・セーラー服・紫の服を選んで「決める」を押す',
+      'ポニーテール・カスタムの髪の色(#123456)・トップ とんがり・後ろ 外ハネ・山なりの眉・赤い眉・メガネ・セーラー服・紫の服を選んで「決める」を押す',
       '画面が閉じ、ログに「見た目を変えた」と出る',
       async () => {
         await next('髪型', 2);
         await expect(part('髪型')).toContainText('ポニーテール');
+        // 髪のトップ・後ろ(front#370)は「くわしく」を開くと出る。選んでいなければ髪型どおり
+        await expect(row('トップ')).toHaveCount(0);
+        await dialog.getByRole('button', { name: /くわしく/ }).click();
+        await expect(part('トップ')).toContainText('いまは まん中分け');
+        await next('トップ', 5);
+        await expect(part('トップ')).toContainText('とんがり');
+        await next('後ろ', 4);
+        await expect(part('後ろ')).toContainText('外ハネ');
         await chip('髪型', '髪の色').click();
         await dialog.getByLabel('髪の色 カスタム').fill('#123456');
         await next('眉', 3);
@@ -535,7 +543,7 @@ test(
       }
     );
 
-    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール・カスタムの髪の色・山なりの赤い眉・メガネ・紫のセーラー服のまま', async () => {
+    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール(トップ とんがり・後ろ 外ハネ)・カスタムの髪の色・山なりの赤い眉・メガネ・紫のセーラー服のまま', async () => {
       // 見た目は「決める」ですぐ保存する。保存が終わるのを待ってから読み込み直す
       await page.waitForLoadState('networkidle');
       await page.reload();
@@ -544,6 +552,9 @@ test(
       await expect(part('眉')).toContainText('山なり');
       await expect(part('目')).toContainText('メガネ');
       await expect(part('服')).toContainText('セーラー服');
+      await dialog.getByRole('button', { name: /くわしく/ }).click();
+      await expect(part('トップ')).toContainText('とんがり');
+      await expect(part('後ろ')).toContainText('外ハネ');
       await chip('髪型', '髪の色').click();
       await expect(row('髪型').locator('.custom')).toContainText('#123456');
       await chip('眉', '眉の色').click();

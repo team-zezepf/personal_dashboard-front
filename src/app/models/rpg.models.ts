@@ -119,6 +119,9 @@ export interface RpgLook {
   brows?: string;
   // 眉の色(front#362 / api#171)。null・ないときは髪の色に合わせる
   browColor?: string | null;
+  // 髪のトップ・後ろ(front#370 / api#174)。null・ないときは髪型に合わせる
+  hairTop?: string | null;
+  hairBack?: string | null;
 }
 
 export interface RpgStats {
