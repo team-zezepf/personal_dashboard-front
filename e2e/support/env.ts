@@ -30,6 +30,14 @@ export const E2E_ADMIN_ACCOUNT = {
   name: 'E2E管理者'
 };
 
+// RPGの集会場で呼ぶ仲間の役をする E2E 専用のアカウント(front#358)。なければ global-setup で作る。
+// このアカウントでは RPG を開かない(開くと「本人が遊んでいる」扱いになり、しばらく呼べなくなる)
+export const E2E_MATE_ACCOUNT = {
+  email: process.env['E2E_MATE_EMAIL'] ?? 'e2e-mate@example.com',
+  password: process.env['E2E_MATE_PASSWORD'] ?? 'e2e-pass-1234',
+  name: 'E2E仲間'
+};
+
 // テストで作るデータ(予定・つぶやき)のタイトルの先頭に付ける印。前回の実行で残ったものを global-setup で消すのに使う
 export const E2E_DATA_PREFIX = '[E2E]';
 

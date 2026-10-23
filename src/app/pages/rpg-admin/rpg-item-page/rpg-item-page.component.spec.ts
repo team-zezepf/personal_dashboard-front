@@ -23,8 +23,8 @@ describe('アイテムタブ(front#343)', () => {
       setCrafts(DEFAULT_CRAFTS);
     });
 
-    it('最初のアイテムでは、道具屋の9つ・素材23種類・合成の装備8つがそろう', () => {
-      expect(SHOP_ITEMS).toEqual(['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor']);
+    it('最初のアイテムでは、道具屋の10（いのちの羽 front#358 を含む）・素材23種類・合成の装備8つがそろう', () => {
+      expect(SHOP_ITEMS).toEqual(['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor', 'life_feather']);
       expect(MATERIAL_IDS).toHaveLength(23);
       expect(RECIPES).toHaveLength(8);
       expect(ITEMS['potion']).toEqual({ name: '回復薬', icon: '🧪', type: 'use', heal: 35, price: 10, desc: 'HPを35回復' });

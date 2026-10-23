@@ -18,6 +18,7 @@ import {
   RpgEnemy,
   RpgEnemyInput,
   RpgExchangeResult,
+  RpgHallMember,
   RpgItemCount,
   RpgMap,
   RpgMapInput,
@@ -46,7 +47,10 @@ const SAVE_FIELDS = `
   look { ${LOOK_FIELDS} }
   quests { id state count }
   respawn { area x y }
+  party { userId name level exp hp weapon armor items { itemId count } stats { hp atk def mag spd luk } statPoints look { ${LOOK_FIELDS} } }
 `;
+
+const HALL_FIELDS = `userId name level look { ${LOOK_FIELDS} } partyOf playing inMyParty`;
 
 const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
@@ -351,6 +355,30 @@ export class RpgService {
     } catch {
       // 送れなくても、30秒ごとの保存までの分が戻るだけなので何もしない
     }
+  }
+
+  // ===== 集会場・パーティ(front#358) =====
+
+  getHall(): Observable<RpgHallMember[]> {
+    const query = `query GetRpgHall { rpgHall { ${HALL_FIELDS} } }`;
+    return this.graphql.query<{ rpgHall: RpgHallMember[] }>(query).pipe(map((res) => res.rpgHall));
+  }
+
+  // メールアドレスのアカウントを集会場に登録する(メールは送らず、APIのログに残る)
+  inviteToHall(email: string): Observable<RpgHallMember> {
+    const mutation = `mutation InviteRpgHall($email: String!) { inviteRpgHall(email: $email) { ${HALL_FIELDS} } }`;
+    return this.graphql.mutation<{ inviteRpgHall: RpgHallMember }>(mutation, { email }).pipe(map((res) => res.inviteRpgHall));
+  }
+
+  callCompanion(userId: string): Observable<RpgSave> {
+    const mutation = `mutation CallRpgCompanion($userId: ID!) { callRpgCompanion(userId: $userId) { ${SAVE_FIELDS} } }`;
+    return this.graphql.mutation<{ callRpgCompanion: RpgSave }>(mutation, { userId }).pipe(map((res) => res.callRpgCompanion));
+  }
+
+  // 仲間をパーティから外し、集会場に戻す(別れる・間に合わなかった・町に戻った)
+  dismissCompanion(userId: string): Observable<RpgSave> {
+    const mutation = `mutation DismissRpgCompanion($userId: ID!) { dismissRpgCompanion(userId: $userId) { ${SAVE_FIELDS} } }`;
+    return this.graphql.mutation<{ dismissRpgCompanion: RpgSave }>(mutation, { userId }).pipe(map((res) => res.dismissRpgCompanion));
   }
 
   // ポイントの減算はAPI側で行う。交換した後の残高をヘッダーのポイント表示に反映する

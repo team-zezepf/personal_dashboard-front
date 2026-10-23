@@ -902,3 +902,282 @@
   font-size: 12px;
   line-height: 1.6;
 }
+
+/* ===== 仲間(front#358) ===== */
+
+/* 左下の自分の状態の右に、仲間のHP・持ち物を並べる */
+.party-hud {
+  position: absolute;
+  left: 344px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.party-hud .mate {
+  width: 118px;
+  background: rgba(17, 24, 39, 0.72);
+  color: #fff;
+  border-radius: 12px;
+  border-left: 3px solid #60a5fa;
+  padding: 6px 8px;
+  font-size: 11px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.party-hud .mate.down {
+  background: rgba(127, 29, 29, 0.8);
+}
+
+.mate-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.mate-top b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mate-hp {
+  margin: 2px 0 3px;
+}
+
+.party-hud .vitals-bar {
+  height: 6px;
+}
+
+.mate-items {
+  margin-top: 3px;
+  opacity: 0.9;
+}
+
+/* たおれて待っているとき。画面は少し暗くするだけで、案内は右下に小さく出す */
+.wait-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.3);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.wait-box {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 232px;
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid #dc2626;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  z-index: 5;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.wait-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.wait-count {
+  color: #dc2626;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.wait-sub {
+  color: var(--muted);
+  font-size: 11.5px;
+  margin: 2px 0;
+}
+
+.wait-box .btn {
+  width: 100%;
+  margin: 6px 0 2px;
+}
+
+/* 集会場 */
+.hall-menu {
+  display: flex;
+  gap: 10px;
+}
+
+.hall-menu .btn {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.invite-row {
+  display: flex;
+  gap: 8px;
+}
+
+.invite-row input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.hall-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.hall-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 4px;
+  font-size: 13px;
+}
+
+.hall-member:not(:disabled):hover {
+  border-color: var(--primary);
+}
+
+.hall-member:disabled {
+  background: var(--surface);
+}
+
+.hall-lv {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.hall-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: var(--red-soft);
+  color: var(--red-text);
+}
+
+.hall-tag.mine {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.hall-empty {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.hall-pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.hall-message {
+  font-size: 12.5px;
+  color: #15803d;
+  margin: 10px 0 0;
+}
+
+.hall-message.ng {
+  color: var(--red-text);
+}
+
+/* 道具を使う相手 */
+.target-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.target-row:not(:disabled):hover {
+  border-color: var(--primary);
+}
+
+.target-row:disabled {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.target-row.dead .target-state {
+  color: var(--red-text);
+}
+
+/* 右の欄の仲間 */
+.party-row {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+}
+
+.party-row:first-of-type {
+  border-top: none;
+}
+
+.party-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-head .btn {
+  margin-left: auto;
+}
+
+.party-lv,
+.party-meta,
+.party-none {
+  color: var(--muted);
+}
+
+.party-meta {
+  font-size: 11.5px;
+  margin: 2px 0;
+}
+
+.party-items,
+.party-gift {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.party-item {
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.btn.small {
+  padding: 3px 8px;
+  font-size: 11.5px;
+}

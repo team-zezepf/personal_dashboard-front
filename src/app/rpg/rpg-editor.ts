@@ -156,7 +156,7 @@ export function selectsPlaced(tool: EditorTool): boolean {
   return tool.kind !== 'ground' && tool.kind !== 'height' && tool.kind !== 'erase';
 }
 
-export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼', smith: '鍛冶屋' };
+export const NPC_ROLES: Record<RpgNpcRole, string> = { talk: '話すだけ', shop: '道具屋', exchange: 'ポイント交換所', quest: 'クエスト依頼', smith: '鍛冶屋', hall: '集会場の受付' };
 
 /** 新しいクエスト(front#239)。最初は、いちばん最初の敵を3体たおすクエスト */
 export function blankQuest(): RpgQuest {

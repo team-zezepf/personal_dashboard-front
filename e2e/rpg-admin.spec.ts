@@ -103,7 +103,7 @@ test(
     precondition: [
       'sandbox が起動している',
       'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
-      'E2E 用の RPG データで、アイテムは最初のアイテムのまま(道具屋で売るのは回復薬〜魔法の鎧の9つ)',
+      'E2E 用の RPG データで、アイテムは最初のアイテムのまま(道具屋で売るのは回復薬〜魔法の鎧・いのちの羽の10)',
       '管理者のアカウントの RPG のセーブデータを、最初の状態(30G・回復薬×3)に戻してある'
     ],
     expected: [
@@ -122,11 +122,11 @@ test(
     const shop = tab.getByRole('region', { name: '道具屋での見え方' });
     const name = '[E2E]特製回復薬';
 
-    await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材の一覧と、道具屋での見え方(回復薬〜魔法の鎧の9つ)が出る', async () => {
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材の一覧と、道具屋での見え方(回復薬〜魔法の鎧・いのちの羽の10)が出る', async () => {
       await page.goto('/rpg/admin');
       await page.getByRole('tab', { name: '🎒 アイテム' }).click();
       for (const group of ['回復の道具（2）', '武器（', '防具（', '素材（23）']) await expect(tab.getByText(group).first()).toBeVisible();
-      await expect(shop.locator('.shop-row')).toHaveCount(9);
+      await expect(shop.locator('.shop-row')).toHaveCount(10);
       await expect(shop.locator('.shop-row').first()).toContainText('回復薬');
     });
 
@@ -142,7 +142,7 @@ test(
         await props.getByLabel('道具屋で売る').check();
         await props.getByLabel(/値段/).fill('15');
         await expect(props.getByText('✅ 問題はありません')).toBeVisible();
-        await expect(shop.locator('.shop-row')).toHaveCount(10);
+        await expect(shop.locator('.shop-row')).toHaveCount(11);
         await expect(shop.locator('.shop-row').last()).toContainText(name);
         await expect(shop.locator('.shop-row').last()).toContainText('15 G');
       }
@@ -180,7 +180,7 @@ test(
       await tab.getByRole('button', { name: '🗑 このアイテムを消す' }).click();
       await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
       expect(confirmText).toContain('1人が持っています');
-      await expect(shop.locator('.shop-row')).toHaveCount(9);
+      await expect(shop.locator('.shop-row')).toHaveCount(10);
     });
 
     await step('RPG(/rpg)を開き直す', `持ち物に「${name}」がない`, async () => {

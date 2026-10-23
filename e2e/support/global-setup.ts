@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { API_URL, E2E_ACCOUNT, E2E_ADMIN_ACCOUNT, E2E_DATA_PREFIX, FRONT_URL, SANDBOX_DATA_DIR } from './env';
+import { API_URL, E2E_ACCOUNT, E2E_ADMIN_ACCOUNT, E2E_DATA_PREFIX, E2E_MATE_ACCOUNT, FRONT_URL, SANDBOX_DATA_DIR } from './env';
 import { useRpgFixture } from './rpg-fixture';
 
 /**
@@ -16,6 +16,7 @@ export default async function globalSetup(): Promise<void> {
 
   const token = await loginOrRegister();
   await ensureAdmin();
+  await ensureMate();
   await removeLeftovers(token);
   useRpgFixture();
 }
@@ -61,6 +62,11 @@ async function loginOrRegister(account: Account = E2E_ACCOUNT): Promise<string> 
  * 管理者の画面を確かめる E2E 専用のアカウント(front#341)がなければ作り、管理者(ADMIN)にする。
  * ロールを変える API はないので、sandbox の users.json を書きかえる(API はロールを毎回 users.json から読む)
  */
+/** RPGの仲間の役のアカウント(front#358)がなければ作る(ログインだけなら、集会場で呼べなくなることはない) */
+async function ensureMate(): Promise<void> {
+  await loginOrRegister(E2E_MATE_ACCOUNT);
+}
+
 async function ensureAdmin(): Promise<void> {
   await loginOrRegister(E2E_ADMIN_ACCOUNT);
   const file = path.join(SANDBOX_DATA_DIR, 'users.json');
