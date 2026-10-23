@@ -37,6 +37,30 @@ describe('RpgLookEditorComponent(front#362)', () => {
     expect(row(el, '眉').querySelector('.chip')?.textContent).toContain('髪に合わせる');
   });
 
+  it('front#370 髪のトップ・後ろは「くわしく」を押したときだけ出し、選んでいなければ「髪型に合わせる」と今の形を出す', () => {
+    const { fixture, el, changes } = render({ ...DEFAULT_LOOK, hair: 'long' });
+    expect(row(el, 'トップ')).toBeNull();
+    const toggle = el.querySelector('.detail-toggle') as HTMLElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    fixture.detectChanges();
+    expect(row(el, 'トップ').querySelector('.name')?.textContent).toContain('髪型に合わせる');
+    expect(row(el, 'トップ').querySelector('.now')?.textContent).toContain('いまは 横分け');
+    expect(row(el, '後ろ').querySelector('.now')?.textContent).toContain('いまは ロング');
+
+    click(el, 'トップ 次へ');
+    expect(changes.at(-1)).toMatchObject({ hair: 'long', hairTop: 'tufts' });
+    click(el, '後ろ 前へ');
+    // 「髪型に合わせる」の前は、最後の ウェーブ
+    expect(changes.at(-1)?.hairBack).toBe('wavy');
+  });
+
+  it('front#370 髪型を変えると、トップ・後ろは「髪型に合わせる」(null)に戻る', () => {
+    const { el, changes } = render({ ...DEFAULT_LOOK, hair: 'bob', hairTop: 'point', hairBack: 'flip' });
+    click(el, '髪型 次へ');
+    expect(changes.at(-1)).toMatchObject({ hair: 'spiky', hairTop: null, hairBack: null });
+  });
+
   it('front#371 選べなくした目(キラキラ)の見た目は、目を「ふつう」として出す', () => {
     const { el } = render({ ...DEFAULT_LOOK, eyes: 'sparkle' });
     expect(row(el, '目').querySelector('.name')?.textContent).toContain('ふつう');

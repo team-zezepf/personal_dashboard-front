@@ -36,7 +36,7 @@ export const RPG_BGM_ACCEPT = '.mp3,.ogg,.m4a,.wav';
 // 効果音のファイルの大きさの上限(APIと合わせる。front#278)
 export const RPG_SE_MAX_BYTES = 1024 * 1024;
 
-const LOOK_FIELDS = `hair hairColor skin eyes eyeColor mouth clothes clothesColor accentColor brows browColor`;
+const LOOK_FIELDS = `hair hairColor skin eyes eyeColor mouth clothes clothesColor accentColor brows browColor hairTop hairBack`;
 
 const SAVE_FIELDS = `
   level exp hp gold weapon armor

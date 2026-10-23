@@ -8,14 +8,18 @@ import {
   EYES,
   EYE_COLORS,
   HAIRS,
+  HAIR_BACKS,
   HAIR_COLORS,
+  HAIR_TOPS,
   MOUTHS,
   SKINS,
   drawLook,
+  hairBackOf,
+  hairTopOf,
   randomLook
 } from '../../rpg/rpg-look';
 
-type PartKey = 'hair' | 'brows' | 'eyes' | 'mouth' | 'clothes';
+type PartKey = 'hair' | 'hairTop' | 'hairBack' | 'brows' | 'eyes' | 'mouth' | 'clothes';
 type ColorKey = 'hairColor' | 'browColor' | 'skin' | 'eyeColor' | 'clothesColor' | 'accentColor';
 
 // 色の欄。cols は一覧を何列で並べるか(2段にして、上下が同じ系統の色になるようにする)
@@ -34,8 +38,13 @@ interface ColorDef {
 interface Row {
   key: PartKey | null;
   label: string;
-  list: [string, string][];
+  // 部品の一覧。null は「髪型に合わせる」(髪のトップ・後ろ)
+  list: [string | null, string][];
   colors: ColorDef[];
+  // 「くわしく」を開いたときだけ出す行(髪のトップ・後ろ。front#370)
+  sub?: boolean;
+  // 「髪型に合わせる」のとき、今の髪型で実際に描いているもの
+  now?: (look: RpgLook) => string;
 }
 
 /**
@@ -59,6 +68,8 @@ export class RpgLookEditorComponent implements OnDestroy {
 
   readonly rows: Row[] = [
     { key: 'hair', label: '髪型', list: HAIRS, colors: [{ key: 'hairColor', label: '髪の色', list: HAIR_COLORS, cols: 7, custom: true }] },
+    { key: 'hairTop', label: 'トップ', list: HAIR_TOPS, colors: [], sub: true, now: hairTopOf },
+    { key: 'hairBack', label: '後ろ', list: HAIR_BACKS, colors: [], sub: true, now: hairBackOf },
     { key: 'brows', label: '眉', list: BROWS, colors: [{ key: 'browColor', label: '眉の色', list: HAIR_COLORS, cols: 7, custom: true, auto: true }] },
     { key: 'eyes', label: '目', list: EYES, colors: [{ key: 'eyeColor', label: '目の色', list: EYE_COLORS, cols: 6, custom: true }] },
     { key: 'mouth', label: '口', list: MOUTHS, colors: [] },
@@ -75,6 +86,8 @@ export class RpgLookEditorComponent implements OnDestroy {
   readonly walking = signal(true);
   // 開いている色の欄
   readonly openColor = signal<ColorKey | null>(null);
+  // 髪型の「くわしく(トップ・後ろ)」を開いているか。ふだんは閉じている(front#370)
+  readonly hairDetail = signal(false);
 
   private readonly preview = viewChild<ElementRef<HTMLCanvasElement>>('preview');
   private frame = 0;
@@ -103,9 +116,26 @@ export class RpgLookEditorComponent implements OnDestroy {
     this.frame = requestAnimationFrame(() => this.loop());
   }
 
-  // 部品の今の値(眉は、選ぶ前のデータなら ふつう)
-  private partValue(key: PartKey): string {
-    return key === 'brows' ? (this.look().brows ?? 'normal') : this.look()[key];
+  // 部品の今の値(眉は、選ぶ前のデータなら ふつう。髪のトップ・後ろは、選んでいなければ null = 髪型に合わせる)
+  private partValue(key: PartKey): string | null {
+    if (key === 'brows') return this.look().brows ?? 'normal';
+    return this.look()[key] ?? null;
+  }
+
+  // 出す行(髪のトップ・後ろは「くわしく」を開いたときだけ)
+  visibleRows(): Row[] {
+    return this.hairDetail() ? this.rows : this.rows.filter((r) => !r.sub);
+  }
+
+  // 「髪型に合わせる」のとき、今の髪型で実際に描いているものの名前(例: 横分け)
+  nowName(row: Row): string | null {
+    if (!row.now || this.partValue(row.key!) !== null) return null;
+    const now = row.now(this.look());
+    return row.list.find(([id]) => id === now)?.[1] ?? null;
+  }
+
+  toggleHairDetail(): void {
+    this.hairDetail.update((v) => !v);
   }
 
   // 今選んでいる部品の、一覧の中での位置(知らない部品なら最初)
@@ -150,7 +180,9 @@ export class RpgLookEditorComponent implements OnDestroy {
 
   set(key: PartKey | ColorKey, value: string | null): void {
     if ((this.look()[key] ?? null) === value) return;
-    this.lookChange.emit({ ...this.look(), [key]: value });
+    // 髪型を変えたら、髪のトップ・後ろは「髪型に合わせる」に戻す(front#370)
+    const reset = key === 'hair' ? { hairTop: null, hairBack: null } : {};
+    this.lookChange.emit({ ...this.look(), [key]: value, ...reset });
   }
 
   turn(): void {
