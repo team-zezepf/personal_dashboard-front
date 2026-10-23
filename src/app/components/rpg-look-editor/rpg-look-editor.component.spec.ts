@@ -37,6 +37,11 @@ describe('RpgLookEditorComponent(front#362)', () => {
     expect(row(el, '眉').querySelector('.chip')?.textContent).toContain('髪に合わせる');
   });
 
+  it('front#371 選べなくした目(キラキラ)の見た目は、目を「ふつう」として出す', () => {
+    const { el } = render({ ...DEFAULT_LOOK, eyes: 'sparkle' });
+    expect(row(el, '目').querySelector('.name')?.textContent).toContain('ふつう');
+  });
+
   it('色の丸を押すと一覧が開き、色を選べる。眉の色は「髪の色に合わせる」で null に戻せる', () => {
     const { fixture, el, changes } = render({ ...DEFAULT_LOOK, browColor: '#1f2937' });
     (row(el, '眉').querySelector('.chip') as HTMLElement).click();
