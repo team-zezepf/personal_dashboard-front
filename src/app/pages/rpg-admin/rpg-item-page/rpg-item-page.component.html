@@ -166,8 +166,8 @@
                 <input
                   type="number"
                   [min]="limits.power[0]"
-                  [max]="limits.power[1]"
-                  [ngModel]="sel.item.type === 'use' ? sel.item.heal : sel.item.type === 'weapon' ? sel.item.atk : sel.item.def"
+                  [max]="sel.item.type === 'revive' ? 100 : limits.power[1]"
+                  [ngModel]="sel.item.type === 'use' || sel.item.type === 'revive' ? sel.item.heal : sel.item.type === 'weapon' ? sel.item.atk : sel.item.def"
                   (ngModelChange)="setStat($event)"
                 />
               </label>

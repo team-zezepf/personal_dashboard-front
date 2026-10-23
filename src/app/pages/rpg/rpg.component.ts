@@ -6,7 +6,7 @@ import { RpgItemIconComponent } from '../../components/rpg-item-icon/rpg-item-ic
 import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
-import { RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgLook, RpgMap, RpgObjectDef, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
+import { RpgBgm, RpgCompanion, RpgCraft, RpgDungeon, RpgEnemy, RpgHallMember, RpgLook, RpgMap, RpgObjectDef, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer, areaBgmId, browserStorage } from '../../rpg/rpg-bgm';
 import { SePlayer } from '../../rpg/rpg-se';
@@ -40,7 +40,7 @@ import {
   swordColorOf,
   walkSpeedOf
 } from '../../rpg/rpg-data';
-import { Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
+import { Fighter, MAX_PARTY, Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '../../rpg/rpg-cursor';
 
@@ -49,6 +49,10 @@ import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '..
 const AUTOSAVE_MS = 30_000;
 const MAX_LOGS = 8;
 const AREA_TITLE_MS = 1800;
+// 集会場(front#358)で、1ページに出す人数
+export const HALL_PAGE_SIZE = 4;
+// 仲間のHPなど、毎フレーム変わる表示を描き直す間隔
+const PARTY_REFRESH_MS = 250;
 // 宝石のカーソルの代わりに、ゲーム用の手を出す押せる部品(front#244 / front#252)。押せないボタンの上は宝石のまま
 const CONTROL_SELECTOR = 'button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]';
 
@@ -97,6 +101,91 @@ export class RpgPageComponent implements OnDestroy {
   // ダンジョンに入ったときに画面の中央に大きく出す、ダンジョンの名前と推奨レベル
   readonly areaTitle = signal<RpgDungeon | null>(null);
   readonly knockedOut = signal(false);
+  // 仲間がいるときにたおれて、起こしてもらうのを待っている(front#358)。残りの秒
+  readonly waiting = signal(false);
+  readonly waitLeft = signal(0);
+  readonly waitText = computed(() => `${Math.floor(this.waitLeft() / 60)}:${String(this.waitLeft() % 60).padStart(2, '0')}`);
+
+  // ===== 集会場(front#358) =====
+  // menu: 招待するか呼ぶかを選ぶ / invite: メールアドレスを入れる / pick: 仲間を選ぶ
+  readonly hallMode = signal<'menu' | 'invite' | 'pick' | null>(null);
+  readonly hallMembers = signal<RpgHallMember[]>([]);
+  readonly hallPage = signal(0);
+  readonly hallMessage = signal<{ text: string; ok: boolean } | null>(null);
+  readonly hallBusy = signal(false);
+  readonly inviteEmail = signal('');
+  readonly hallPages = computed(() => Math.max(1, Math.ceil(this.hallMembers().length / HALL_PAGE_SIZE)));
+  readonly hallRows = computed(() => {
+    this.version();
+    const page = Math.min(this.hallPage(), this.hallPages() - 1);
+    const full = (this.game?.companions.length ?? 0) >= MAX_PARTY;
+    return this.hallMembers()
+      .slice(page * HALL_PAGE_SIZE, (page + 1) * HALL_PAGE_SIZE)
+      .map((m) => ({
+        ...m,
+        // 呼べないときの理由(呼べるなら null)
+        blocker: m.inMyParty ? 'パーティにいる' : m.partyOf ? `${m.partyOf}と冒険中` : m.playing ? '自分で冒険中' : full ? 'パーティがいっぱい' : null,
+        full
+      }));
+  });
+
+  // ===== 仲間(front#358) =====
+  readonly party = computed(() => {
+    this.version();
+    const game = this.game;
+    if (!game) return [];
+    return game.companions.map((c) => {
+      const max = game.maxHpOf(c);
+      const count = (type: string) => Object.entries(c.inv).filter(([id, n]) => n > 0 && ITEMS[id]?.type === type).reduce((s, [, n]) => s + n, 0);
+      const left = Math.max(0, Math.ceil(c.downT));
+      return {
+        userId: c.userId,
+        name: c.name,
+        level: c.level,
+        hp: Math.max(0, Math.round(c.hp)),
+        maxHp: max,
+        hpRate: (Math.max(0, c.hp) / max) * 100,
+        dead: c.dead,
+        left: `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`,
+        atk: game.atkOf(c),
+        def: game.defOf(c),
+        weapon: ITEMS[c.weapon]?.name ?? '',
+        armor: ITEMS[c.armor]?.name ?? '',
+        potions: count('use'),
+        feathers: count('revive'),
+        items: Object.entries(c.inv)
+          .filter(([id, n]) => n > 0 && (ITEMS[id]?.type === 'use' || ITEMS[id]?.type === 'revive'))
+          .map(([id, n]) => ({ id, icon: ITEMS[id].icon, image: ITEMS[id].image, name: ITEMS[id].name, count: n }))
+      };
+    });
+  });
+  // 仲間に渡せる、プレイヤーの持ち物の道具(回復薬・いのちの羽)
+  readonly giftItems = computed(() => {
+    this.version();
+    const game = this.game;
+    if (!game) return [];
+    return Object.keys(ITEMS)
+      .filter((id) => game.owned(id) && (ITEMS[id].type === 'use' || ITEMS[id].type === 'revive'))
+      .map((id) => ({ id, icon: ITEMS[id].icon, image: ITEMS[id].image, name: ITEMS[id].name, count: game.player.inv[id] }));
+  });
+  readonly maxParty = MAX_PARTY;
+  readonly hallPageSize = HALL_PAGE_SIZE;
+
+  // 道具を誰に使うか選んでいる(front#358)。選ぶ道具のID
+  readonly itemTarget = signal<string | null>(null);
+  readonly targetRows = computed(() => {
+    this.version();
+    const game = this.game;
+    const id = this.itemTarget();
+    if (!game || !id) return [];
+    return game.fighters().map((f, i) => ({
+      index: i,
+      name: game.nameOf(f),
+      state: f.dead ? `たおれている（あと ${Math.max(0, Math.ceil(f.downT))}秒）` : `HP ${Math.max(0, Math.round(f.hp))}/${game.maxHpOf(f)}`,
+      dead: f.dead,
+      blocker: game.itemBlocker(id, f)
+    }));
+  });
 
   // 会話中のNPCと、話しているセリフ・表示しているセリフの番号。
   // クエスト(front#239)の会話では、依頼(offer)・進み具合(progress)・報告(report)のどれか
@@ -258,7 +347,8 @@ export class RpgPageComponent implements OnDestroy {
           icon: item.icon,
           image: item.image,
           name: item.name,
-          usable: item.type === 'use',
+          // 回復薬・いのちの羽(front#358)は「使う」。仲間がいれば誰に使うか選ぶ
+          usable: item.type === 'use' || item.type === 'revive',
           // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
           material: item.type === 'material',
           count: game.player.inv[id],
@@ -293,13 +383,15 @@ export class RpgPageComponent implements OnDestroy {
       return SHOP_ITEMS.map((id) => {
         const item = ITEMS[id];
         const price = item.price ?? 0;
-        const has = item.type !== 'use' && game.owned(id);
+        // 回復薬・いのちの羽(front#358)はいくつでも買える
+        const consumable = item.type === 'use' || item.type === 'revive';
+        const has = !consumable && game.owned(id);
         return {
           id,
           icon: item.icon,
           image: item.image,
           name: item.name,
-          desc: item.type === 'use' ? `${item.desc}（${game.player.inv[id] ?? 0}個持っている）` : itemStatLabel(item),
+          desc: consumable ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）` : itemStatLabel(item),
           price: `${price} G`,
           buttonLabel: has ? '持っている' : '買う',
           disabled: has || game.player.gold < price
@@ -337,8 +429,10 @@ export class RpgPageComponent implements OnDestroy {
   private dirty = false;
   private saving = false;
 
+  // タブを閉じる・再読み込みするとき。保存していない変更があれば「離れる」印を付けて保存し、なければ離れたことだけ知らせる(front#360)
   private readonly onPageHide = () => {
-    if (this.loaded && this.dirty && this.game) this.rpgService.saveOnUnload(this.game.toSaveInput());
+    if (this.loaded && this.dirty && this.game) this.rpgService.saveOnUnload({ ...this.game.toSaveInput(), leaving: true });
+    else this.rpgService.leaveOnUnload();
   };
 
   constructor() {
@@ -425,6 +519,7 @@ export class RpgPageComponent implements OnDestroy {
       const dt = Math.min(0.05, (now - this.lastFrame) / 1000);
       this.lastFrame = now;
       game.update(dt);
+      this.refreshParty(game, now);
       this.renderer!.draw(game, this.dpr);
       this.drawGem(dt);
       this.frameId = requestAnimationFrame(loop);
@@ -438,8 +533,8 @@ export class RpgPageComponent implements OnDestroy {
     if (this.autosaveTimer) clearInterval(this.autosaveTimer);
     if (this.areaTitleTimer) clearTimeout(this.areaTitleTimer);
     window.removeEventListener('pagehide', this.onPageHide);
-    // ほかの画面へ移るときは、まだ保存していない分を保存する
-    this.saveIfDirty();
+    // ほかの画面へ移るときは、まだ保存していない分を保存し、集会場の「自分で冒険中」をすぐ外す(front#360)
+    this.leave();
     this.game?.dispose();
     this.bgmPlayer.dispose();
     if (!environment.production) delete (window as unknown as Record<string, unknown>)['rpgTest'];
@@ -466,7 +561,16 @@ export class RpgPageComponent implements OnDestroy {
       areaEntered: (area, dungeon) => this.playAreaBgm(area, dungeon),
       captureScreen: () => this.captureScreen(),
       knockedOut: (on) => this.knockedOut.set(on),
-      sound: (slot) => this.sePlayer.play(slot)
+      sound: (slot) => this.sePlayer.play(slot),
+      waiting: (on) => {
+        this.waiting.set(on);
+        this.version.update((v) => v + 1);
+      },
+      // パーティから抜けた仲間(front#358)は、APIでも集会場に戻す
+      companionsLeft: (cs) => {
+        const before = this.game?.toSaveInput();
+        cs.forEach((c, i) => this.releaseCompanion(c.userId, i === 0 ? before : undefined));
+      }
     };
   }
 
@@ -489,13 +593,25 @@ export class RpgPageComponent implements OnDestroy {
     this.dirty = false;
     this.saving = true;
     this.rpgService.save(this.game.toSaveInput()).subscribe({
-      next: () => (this.saving = false),
+      next: (save) => {
+        this.saving = false;
+        this.syncParty(save.party ?? []);
+      },
       error: () => {
         // 保存できなかった分は、次の機会にもう一度保存する
         this.saving = false;
         this.dirty = true;
       }
     });
+  }
+
+  private leave(): void {
+    if (this.loaded && this.dirty && !this.saving && this.game) {
+      this.dirty = false;
+      this.rpgService.save({ ...this.game.toSaveInput(), leaving: true }).subscribe({ error: () => undefined });
+      return;
+    }
+    this.rpgService.leave().subscribe({ error: () => undefined });
   }
 
   // ===== マウス・キーボード =====
@@ -603,7 +719,7 @@ export class RpgPageComponent implements OnDestroy {
     // ショートカットキー(front#272)。設定の選ぶ欄などで数字を打ったときは使わない
     const slot = shortcutIndexOf(event.key);
     const typing = event.target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName);
-    if (slot >= 0 && !typing && !this.talking() && !this.shopMode()) {
+    if (slot >= 0 && !typing && !this.talking() && !this.shopMode() && !this.hallMode()) {
       const id = this.shortcuts()[slot];
       if (id) this.game?.useShortcut(id);
     }
@@ -612,6 +728,8 @@ export class RpgPageComponent implements OnDestroy {
       this.closeShop();
       this.closeStatus();
       this.closeLook();
+      this.closeHall();
+      this.closeItemTarget();
     }
   }
 
@@ -630,6 +748,7 @@ export class RpgPageComponent implements OnDestroy {
     if (current.quest?.mode === 'report') this.game?.reportQuest(current.quest.quest);
     const role = current.npc?.role;
     if (role === 'shop' || role === 'exchange' || role === 'smith') this.openShop(role);
+    if (role === 'hall') this.openHall();
     this.syncLock();
   }
 
@@ -678,7 +797,7 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
   private syncLock(): void {
-    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft();
+    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget();
   }
 
   // ===== 見た目 =====
@@ -790,8 +909,180 @@ export class RpgPageComponent implements OnDestroy {
 
   // ===== 持ち物 =====
 
+  // 仲間がいるとき・いのちの羽(front#358)は、誰に使うか選ぶ。仲間がいなければ今までどおり自分に使う
   useItem(id: string): void {
-    this.game?.useItem(id);
+    const game = this.game;
+    if (!game) return;
+    if (game.companions.length || ITEMS[id]?.type === 'revive') {
+      this.itemTarget.set(id);
+      this.syncLock();
+      return;
+    }
+    game.useItem(id);
+  }
+
+  useItemOn(index: number): void {
+    const game = this.game;
+    const id = this.itemTarget();
+    const target: Fighter | undefined = game?.fighters()[index];
+    if (!game || !id || !target) return;
+    if (game.useItemOn(id, target)) this.closeItemTarget();
+  }
+
+  closeItemTarget(): void {
+    this.itemTarget.set(null);
+    this.syncLock();
+  }
+
+  readonly itemName = (id: string | null) => (id ? (ITEMS[id]?.name ?? '') : '');
+  readonly itemIcon = (id: string | null) => (id ? (ITEMS[id]?.icon ?? '') : '');
+
+  // ===== 仲間(front#358) =====
+
+  giveItem(userId: string, id: string): void {
+    this.game?.giveItem(userId, id);
+  }
+
+  /** 別れる。仲間は集会場に戻る(それまでの経験値などは、外す前に保存する) */
+  dismiss(userId: string): void {
+    const game = this.game;
+    const c = game?.companions.find((m) => m.userId === userId);
+    if (!game || !c) return;
+    this.log(`${c.name}と別れた。集会場に戻っていった`);
+    this.releaseCompanion(userId, game.toSaveInput());
+    game.removeCompanion(userId);
+    this.dirty = true;
+  }
+
+  /** たおれて待っているのをやめて、町に戻る */
+  giveUp(): void {
+    this.game?.giveUp();
+  }
+
+  /**
+   * APIでもパーティから外す(テストプレイでは呼べないので何もしない)。
+   * before があれば、外す前の状態(抜ける仲間の経験値なども入っている)を先に保存する
+   */
+  private releaseCompanion(userId: string, before?: ReturnType<RpgGame['toSaveInput']>): void {
+    if (this.testArea || !this.loaded) return;
+    const dismiss$ = this.rpgService.dismissCompanion(userId);
+    if (!before) {
+      dismiss$.subscribe({ error: () => undefined });
+      return;
+    }
+    this.rpgService.save(before).subscribe({
+      next: () => dismiss$.subscribe({ error: () => undefined }),
+      error: () => dismiss$.subscribe({ error: () => undefined })
+    });
+  }
+
+  /** 保存したあとのパーティ(APIの結果)に合わせる。本人がRPGを始めたなどで外れた仲間は、ゲームからも外す */
+  private syncParty(party: RpgCompanion[]): void {
+    const game = this.game;
+    if (!game) return;
+    for (const c of [...game.companions]) {
+      if (party.some((p) => p.userId === c.userId)) continue;
+      game.removeCompanion(c.userId);
+      this.log(`${c.name}は自分で冒険を始めたので、集会場に戻っていった`);
+    }
+  }
+
+  // 仲間のHP・たおれている残り時間は毎フレーム変わるので、少しずつ描き直す
+  private lastPartyRefresh = 0;
+  private refreshParty(game: RpgGame, now: number): void {
+    if (!game.companions.length && !this.waiting()) return;
+    if (now - this.lastPartyRefresh < PARTY_REFRESH_MS) return;
+    this.lastPartyRefresh = now;
+    this.waitLeft.set(Math.max(0, Math.ceil(game.player.downT)));
+    this.version.update((v) => v + 1);
+  }
+
+  // ===== 集会場(front#358) =====
+
+  private openHall(): void {
+    this.hallMessage.set(null);
+    this.hallMode.set('menu');
+    this.syncLock();
+  }
+
+  closeHall(): void {
+    this.hallMode.set(null);
+    this.syncLock();
+  }
+
+  showInvite(): void {
+    this.hallMessage.set(null);
+    this.inviteEmail.set('');
+    this.hallMode.set('invite');
+  }
+
+  showPick(): void {
+    this.hallMessage.set(null);
+    this.hallMode.set('pick');
+    this.loadHall();
+  }
+
+  backToHallMenu(): void {
+    this.hallMessage.set(null);
+    this.hallMode.set('menu');
+  }
+
+  private loadHall(): void {
+    this.rpgService.getHall().subscribe({
+      next: (members) => {
+        this.hallMembers.set(members);
+        this.hallPage.update((p) => Math.min(p, this.hallPages() - 1));
+      },
+      error: () => this.hallMessage.set({ text: '集会場の一覧を読み込めませんでした', ok: false })
+    });
+  }
+
+  changeHallPage(delta: number): void {
+    this.hallPage.update((p) => Math.min(this.hallPages() - 1, Math.max(0, p + delta)));
+  }
+
+  sendInvite(): void {
+    const email = this.inviteEmail().trim();
+    if (!email || this.hallBusy()) return;
+    this.hallBusy.set(true);
+    this.rpgService.inviteToHall(email).subscribe({
+      next: (m) => {
+        this.hallBusy.set(false);
+        this.inviteEmail.set('');
+        this.hallMessage.set({ text: `${m.name}さんに招待メールを送りました。集会場に登録しました！`, ok: true });
+      },
+      error: (err: Error) => {
+        this.hallBusy.set(false);
+        this.hallMessage.set({ text: err.message || '招待できませんでした', ok: false });
+      }
+    });
+  }
+
+  callCompanion(userId: string): void {
+    const game = this.game;
+    if (!game || this.hallBusy()) return;
+    // 呼ぶとAPIのパーティが変わるため、テストプレイではできない
+    if (this.testArea) {
+      this.hallMessage.set({ text: 'テストプレイ中は仲間を呼べません', ok: false });
+      return;
+    }
+    this.hallBusy.set(true);
+    this.rpgService.callCompanion(userId).subscribe({
+      next: (save) => {
+        this.hallBusy.set(false);
+        const rc = (save.party ?? []).find((p) => p.userId === userId);
+        if (rc) {
+          game.addCompanion(rc);
+          this.hallMessage.set({ text: `${rc.name}「よろしくお願いします！」　${rc.name}が仲間になった！`, ok: true });
+        }
+        this.loadHall();
+      },
+      error: (err: Error) => {
+        this.hallBusy.set(false);
+        this.hallMessage.set({ text: err.message || '呼べませんでした', ok: false });
+        this.loadHall();
+      }
+    });
   }
 
   equip(id: string): void {
@@ -856,6 +1147,10 @@ export class RpgPageComponent implements OnDestroy {
         (game as unknown as { killEnemy(e: typeof enemy): void }).killEnemy(enemy);
         return true;
       },
+      // プレイヤーをたおす(仲間がいれば、起こしてもらうのを待つ。front#358)
+      knockOut: (): void => (this.game as unknown as { knockOut(): void } | null)?.knockOut(),
+      // 連れている仲間の名前とHP(front#358)
+      party: (): { name: string; hp: number; dead: boolean }[] => this.game?.companions.map((c) => ({ name: c.name, hp: c.hp, dead: c.dead })) ?? [],
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl

@@ -1,4 +1,4 @@
-import { RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
+import { RpgCompanion, RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
 import {
   BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, besideSavePoint, buildAreaMap, centerSpot, edgeMiddle,
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
@@ -117,7 +117,8 @@ describe('RpgGame', () => {
         stats: { ...ZERO_STATS }, statPoints: 6,
         look: LOOK,
         quests: [],
-        respawn: null
+        respawn: null,
+        companions: []
       });
     });
 
@@ -1390,6 +1391,280 @@ describe('RpgGame', () => {
       expect(signPointing(MAPS, area, { x: 2, y: 2, signDir: 'se' })).toMatchObject({ side: [1, 0], auto: false });
       game.loadMap(map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }], objects: [{ type: 'sign', x: 2, y: 2, torch: false, signDir: 'nw' }] }));
       expect(game.signLines(game.map.statics.find((s) => s.type === 'sign')!)).toBeNull();
+    });
+  });
+
+  describe('仲間(front#358)', () => {
+    // すぐ襲ってくる、攻撃の間隔の短い敵(HPが高く、こちらからは倒れない)。運のステータスは0なので、攻撃はよけない
+    const test = (patch: Partial<EnemyDef>): EnemyDef => ({
+      ...DEFAULT_ENEMIES[0], id: 'test', name: 'テスト', hp: 9999, atk: 20, sight: 8, interval: 0.5, speed: 1, ...patch
+    });
+
+    const mate = (userId: string, partial: Partial<RpgCompanion> = {}): RpgCompanion => ({
+      userId, name: `仲間${userId}`, level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth',
+      items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, look: LOOK, ...partial
+    });
+
+    let waits: boolean[];
+    let left: [string[], string][];
+
+    beforeEach(() => {
+      waits = [];
+      left = [];
+      ev.waiting = (on) => waits.push(on);
+      ev.companionsLeft = (cs, reason) => left.push([cs.map((c) => c.userId), reason]);
+    });
+
+    afterEach(() => setEnemies(DEFAULT_ENEMIES));
+
+    function run(seconds: number, each?: () => void): void {
+      for (let t = 0; t < seconds; t += 0.05) {
+        game.update(0.05);
+        each?.();
+      }
+    }
+
+    // 敵のいないエリアで、プレイヤーを (6, 6) に立たせ、仲間を加える
+    function withParty(...mates: RpgCompanion[]): void {
+      game.loadSave(save({ area: 'plain', x: 6, y: 6 }));
+      for (const m of mates) game.addCompanion(m);
+    }
+
+    function setEnemy(def: EnemyDef, at: [number, number]): void {
+      setEnemies([...DEFAULT_ENEMIES, def]);
+      game.loadMap(map('field', { enemies: [{ type: def.id, x: at[0], y: at[1] }] }));
+    }
+
+    const kill = (e: unknown) => (game as unknown as { killEnemy(e: unknown): void }).killEnemy(e);
+
+    it('セーブデータの仲間を読み込み、仲間のデータも保存用の形に入る。たおれたまま保存された仲間はHPが全回復', () => {
+      game.loadSave(save({ party: [mate('3', { hp: 30, items: [{ itemId: 'potion', count: 2 }] }), mate('4', { hp: 0 })] }));
+
+      expect(game.companions.map((c) => [c.userId, c.hp])).toEqual([['3', 30], ['4', maxHpOf({ ...ZERO_STATS, atk: 3 })]]);
+      expect(game.toSaveInput().companions).toEqual([
+        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0 },
+        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0 }
+      ]);
+    });
+
+    it('呼んだ仲間はHPが全回復した状態で、プレイヤーのまわりの別々の通れるマスに立つ。3人まで', () => {
+      withParty(mate('3', { hp: 1 }), mate('4'), mate('5'), mate('6'));
+
+      expect(game.companions.map((c) => c.userId)).toEqual(['3', '4', '5']);
+      expect(game.companions[0].hp).toBe(50);
+      const spots = game.companions.map((c) => `${c.x},${c.y}`);
+      expect(new Set([...spots, '6,6']).size).toBe(4);
+      for (const c of game.companions) expect(Math.max(Math.abs(c.x - 6), Math.abs(c.y - 6))).toBe(1);
+    });
+
+    it('エリアを移ると、仲間もついてきてプレイヤーのまわりに立つ', () => {
+      game.loadSave(save({ area: 'cave1', x: 11, y: 6 }));
+      game.addCompanion(mate('3'));
+      game.addCompanion(mate('4'));
+      game.goNeighbor([1, 0]);
+
+      expect(game.area.id).toBe('cave2');
+      for (const c of game.companions) expect(Math.max(Math.abs(c.x - game.player.x), Math.abs(c.y - game.player.y))).toBeLessThanOrEqual(1);
+    });
+
+    it('仲間はプレイヤーについて歩く', () => {
+      withParty(mate('3'));
+      game.player.x = 10;
+      game.player.y = 10;
+      run(4);
+
+      const c = game.companions[0];
+      expect(Math.max(Math.abs(c.x - 10), Math.abs(c.y - 10))).toBeLessThanOrEqual(2);
+    });
+
+    it('経験値はパーティの人数(たおれている仲間も数える)で割り、切り上げて全員に入る。ゴールドは割らない', () => {
+      withParty(mate('3'), mate('4', { hp: 0 }));
+      game.companions[1].dead = true;
+      setEnemy(test({ exp: 40, gold: 7, sight: 0 }), [9, 9]);
+      const [exp, gold] = [game.player.exp, game.player.gold];
+
+      kill(game.enemies[0]);
+
+      expect(game.player.exp - exp).toBe(14);
+      expect(game.player.gold - gold).toBe(7);
+      expect(game.companions.map((c) => c.exp)).toEqual([14, 14]);
+      expect(ev.messages.some((m) => m.includes('経験値40を3人で分けて+14'))).toBe(true);
+    });
+
+    it('仲間のレベルが上がると、もらった3ポイントをランダムに振り分け、HPが全回復する', () => {
+      withParty(mate('3', { hp: 10 }));
+      setEnemy(test({ exp: 200, sight: 0 }), [9, 9]);
+
+      kill(game.enemies[0]);
+
+      const c = game.companions[0];
+      expect(c.level).toBeGreaterThan(2);
+      const total = Object.values(c.stats).reduce((n, v) => n + v, 0);
+      expect(total + c.statPoints).toBe((c.level - 1) * 3);
+      expect(c.hp).toBe(game.maxHpOf(c));
+      expect(ev.messages.some((m) => m.startsWith(`仲間3がレベル${c.level}になった！`))).toBe(true);
+    });
+
+    it('敵は、いちばん近い人を狙う。プレイヤーから遠い仲間が先に狙われる', () => {
+      withParty(mate('3'));
+      setEnemy(test({ attack: 'tackle', dash: 1, charge: 0, speed: 0.01 }), [2, 2]);
+      // プレイヤーは敵から6マス。仲間は敵のすぐそばで、敵を叩き、敵も近い仲間を狙う
+      game.player.x = 8;
+      game.player.y = 8;
+      const c = game.companions[0];
+      Object.assign(c, { x: 3, y: 2, path: [] });
+      const [php, chp] = [game.player.hp, c.hp];
+      run(1.5);
+
+      expect(game.enemies[0].foe).toBe(c);
+      expect(c.hp).toBeLessThan(chp);
+      // プレイヤーは攻撃されない(戦っていないので、少し回復することはある)
+      expect(game.player.hp).toBeGreaterThanOrEqual(php);
+    });
+
+    it('範囲の攻撃(魔法陣)は、範囲の中にいる全員に当たる', () => {
+      withParty(mate('3'));
+      setEnemy(test({ attack: 'circle', range: 6, radius: 1, interval: 5, sight: 8, speed: 0.01 }), [2, 7]);
+      game.player.x = 6;
+      game.player.y = 7;
+      const c = game.companions[0];
+      Object.assign(c, { x: 6, y: 8, path: [] });
+      // 仲間がその場から動かないように、近づいて叩く前に確かめる
+      const [php, chp] = [game.player.hp, c.hp];
+      run(1.6, () => Object.assign(c, { x: 6, y: 8, path: [] }));
+
+      expect(game.player.hp).toBeLessThan(php);
+      expect(c.hp).toBeLessThan(chp);
+    });
+
+    it('仲間はHPが3割を切った人に、自分の持ち物の回復薬を使う', () => {
+      withParty(mate('3', { items: [{ itemId: 'potion', count: 2 }] }));
+      game.player.hp = 5;
+      run(0.1);
+
+      expect(game.player.hp).toBeGreaterThan(5);
+      expect(game.companions[0].inv['potion']).toBe(1);
+      expect(ev.messages.some((m) => m.startsWith('仲間3が回復薬を使った'))).toBe(true);
+    });
+
+    it('仲間がたおれて1分のうちに起こしてもらえなければ、パーティから抜けて集会場に戻る', () => {
+      withParty(mate('3'), mate('4'));
+      const c = game.companions[0];
+      c.hp = 1;
+      setEnemy(test({ attack: 'tackle', dash: 1, charge: 0, speed: 0.01 }), [2, 2]);
+      Object.assign(c, { x: 3, y: 2, path: [] });
+      game.player.x = 8;
+      game.player.y = 8;
+      run(1.5);
+      expect(c.dead).toBe(true);
+      expect(c.downT).toBeGreaterThan(55);
+      // たおれている仲間は狙わない
+      run(1);
+      expect(game.enemies[0].foe).not.toBe(c);
+
+      game.enemies[0].alive = false;
+      game.enemies[0].respawn = 999;
+      run(61);
+      expect(game.companions.map((m) => m.userId)).toEqual(['4']);
+      expect(left).toEqual([[['3'], 'timeout']]);
+    });
+
+    it('会話・お店などを開いている間は、たおれている時間が進まない', () => {
+      withParty(mate('3'));
+      Object.assign(game.companions[0], { dead: true, hp: 0, downT: 60 });
+      game.locked = true;
+      run(5);
+      expect(game.companions[0].downT).toBe(60);
+    });
+
+    it('いのちの羽を持っている仲間は、たおれた仲間のそばへ行って起こす(HP5割)', () => {
+      withParty(mate('3', { items: [{ itemId: 'life_feather', count: 1 }] }), mate('4'));
+      const down = game.companions[1];
+      Object.assign(down, { dead: true, hp: 0, downT: 60, x: 9, y: 9 });
+      run(4);
+
+      expect(down.dead).toBe(false);
+      expect(down.hp).toBe(Math.round(game.maxHpOf(down) * 0.5));
+      expect(game.companions[0].inv['life_feather']).toBe(0);
+    });
+
+    it('仲間がいるときにプレイヤーがたおれたら待ち、仲間がいのちの羽で起こしてくれる', () => {
+      withParty(mate('3', { items: [{ itemId: 'life_feather', count: 1 }] }));
+      (game as unknown as { knockOut(): void }).knockOut();
+      expect(game.player.dead).toBe(true);
+      expect(waits).toEqual([true]);
+
+      run(4);
+      expect(game.player.dead).toBe(false);
+      expect(game.player.hp).toBe(Math.round(game.maxHp() * 0.5));
+      expect(waits).toEqual([true, false]);
+      expect(game.area.id).toBe('plain');
+    });
+
+    it('待つのをやめて町に戻ると、ゴールドを1割落として復活地点に戻り、仲間は集会場に戻る', () => {
+      vi.useFakeTimers();
+      withParty(mate('3'), mate('4'));
+      const gold = game.player.gold;
+      (game as unknown as { knockOut(): void }).knockOut();
+      game.giveUp();
+
+      expect(game.companions).toEqual([]);
+      expect(left).toEqual([[['3', '4'], 'town']]);
+      expect(game.player.gold).toBe(gold - Math.floor(gold * 0.1));
+      vi.advanceTimersByTime(5000);
+      expect(game.player.dead).toBe(false);
+      expect(game.player.hp).toBe(game.maxHp());
+    });
+
+    it('1分待っても起こしてもらえなければ、町に戻る', () => {
+      vi.useFakeTimers();
+      withParty(mate('3'));
+      (game as unknown as { knockOut(): void }).knockOut();
+      run(61);
+      expect(left).toEqual([[['3'], 'town']]);
+      expect(waits).toEqual([true, false]);
+    });
+
+    it('仲間がいない・全員たおれたときは、待たずに町に戻る', () => {
+      vi.useFakeTimers();
+      withParty(mate('3'));
+      Object.assign(game.companions[0], { dead: true, hp: 0, downT: 30 });
+      (game as unknown as { knockOut(): void }).knockOut();
+      expect(waits).toEqual([false]);
+      expect(left).toEqual([[['3'], 'town']]);
+    });
+
+    it('持ち物の道具を仲間に使える。回復薬はたおれていない人に、いのちの羽はたおれている人にだけ', () => {
+      withParty(mate('3'));
+      game.player.inv['life_feather'] = 1;
+      const c = game.companions[0];
+      c.hp = 10;
+
+      expect(game.useItemOn('life_feather', c)).toBe(false);
+      expect(game.useItemOn('potion', c)).toBe(true);
+      expect(c.hp).toBeGreaterThan(10);
+
+      Object.assign(c, { dead: true, hp: 0, downT: 40 });
+      expect(game.useItemOn('potion', c)).toBe(false);
+      expect(game.useItemOn('life_feather', c)).toBe(true);
+      expect(c.dead).toBe(false);
+      expect(game.player.inv['life_feather']).toBe(0);
+    });
+
+    it('持ち物の回復薬・いのちの羽を仲間に渡せる(装備・素材は渡せない)', () => {
+      withParty(mate('3'));
+      game.player.inv['life_feather'] = 2;
+
+      expect(game.giveItem('3', 'life_feather')).toBe(true);
+      expect(game.giveItem('3', 'copper_sword')).toBe(false);
+      expect([game.player.inv['life_feather'], game.companions[0].inv['life_feather']]).toEqual([1, 1]);
+    });
+
+    it('いのちの羽はいくつでも買える', () => {
+      game.player.gold = 1000;
+      expect(game.buy('life_feather')).toBe(true);
+      expect(game.buy('life_feather')).toBe(true);
+      expect(game.player.inv['life_feather']).toBe(2);
     });
   });
 

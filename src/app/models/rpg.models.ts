@@ -27,7 +27,41 @@ export interface RpgSave {
   quests: RpgQuestProgress[];
   // 復活地点(front#337)。セーブポイントを調べたときに立っていたエリアとマス。まだ調べていなければ null
   respawn?: RpgRespawn | null;
+  // 連れている仲間(front#358)。集会場で呼んだほかのアカウント。最大3人
+  party?: RpgCompanion[];
   updatedAt?: string | null;
+}
+
+// 連れている仲間1人(front#358)。レベル・装備・持ち物などは、仲間のアカウントのセーブデータ
+export interface RpgCompanion {
+  userId: string;
+  name: string;
+  level: number;
+  exp: number;
+  hp: number;
+  weapon: string;
+  armor: string;
+  items: RpgItemCount[];
+  stats: RpgStats;
+  statPoints: number;
+  look: RpgLook;
+}
+
+// 保存するときにいっしょに送る仲間のデータ(front#358)。それぞれのアカウントのセーブデータに書かれる
+export type RpgCompanionInput = Omit<RpgCompanion, 'name' | 'look'>;
+
+// 集会場の一覧の1人(front#358)。登録した順
+export interface RpgHallMember {
+  userId: string;
+  name: string;
+  level: number;
+  look: RpgLook;
+  // ほかのユーザーが連れているときは、その人の名前
+  partyOf: string | null;
+  // 本人がRPGを遊んでいる(呼べない)
+  playing: boolean;
+  // 自分のパーティにいる
+  inMyParty: boolean;
 }
 
 // RPGの復活地点(front#337)。たおれたときに戻るエリア(RpgMap の id)とマス
@@ -95,7 +129,12 @@ export interface RpgStats {
   luk: number;
 }
 
-export type RpgSaveInput = Omit<RpgSave, 'updatedAt'>;
+export type RpgSaveInput = Omit<RpgSave, 'updatedAt' | 'party'> & {
+  // 連れている仲間のデータ(front#358)
+  companions?: RpgCompanionInput[];
+  // RPG画面を離れるときの保存(front#360)。保存したあと、集会場の「自分で冒険中」がすぐ外れる
+  leaving?: boolean;
+};
 
 // RPGのダンジョン(front#234 / api#96)。名前・推奨レベル・見た目・BGMを持つ、エリアのまとまり
 export interface RpgDungeon {
@@ -180,7 +219,8 @@ export type RpgObjectDefInput = Omit<RpgObjectDef, 'updatedAt'> & { expectedUpda
 
 // quest はクエスト依頼(front#239)
 // smith: 鍛冶屋(素材で装備を合成する。front#277)
-export type RpgNpcRole = 'talk' | 'shop' | 'exchange' | 'quest' | 'smith';
+// hall: 集会場の受付(front#358)
+export type RpgNpcRole = 'talk' | 'shop' | 'exchange' | 'quest' | 'smith' | 'hall';
 
 export interface RpgMapNpc {
   name: string;
@@ -314,7 +354,8 @@ export interface RpgCraft {
 export type RpgCraftInput = Omit<RpgCraft, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder: number | null };
 
 // RPGのアイテム(front#343 / api#163)。回復の道具・武器・防具・素材。マップ作成画面の「アイテム」タブで作る(合成の装備は含まない)
-export type RpgItemType = 'use' | 'weapon' | 'armor' | 'material';
+// revive: たおれた人を起き上がらせる道具(front#358)。heal は起き上がるときのHPの割合(%)
+export type RpgItemType = 'use' | 'revive' | 'weapon' | 'armor' | 'material';
 
 export interface RpgItem {
   // アイテムのID(持ち物・装備のIDと同じ)

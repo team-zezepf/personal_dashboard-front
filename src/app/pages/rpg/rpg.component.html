@@ -160,6 +160,86 @@
       </div>
     }
 
+    <!-- 集会場(front#358) -->
+    @if (hallMode(); as mode) {
+      <div class="modal">
+        <div class="modal-card hall-card" role="dialog" aria-label="集会場">
+          <div class="modal-head">
+            <span>🏛 集会場</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeHall()">×</button>
+          </div>
+          @if (mode === 'menu') {
+            <p class="modal-sub">いっしょに冒険する仲間を呼べます（仲間は{{ maxParty }}人まで）。</p>
+            <div class="hall-menu">
+              <button type="button" class="btn" (click)="showInvite()">✉ 招待メールを送る</button>
+              <button type="button" class="btn" (click)="showPick()">🤝 仲間を呼ぶ</button>
+            </div>
+          } @else if (mode === 'invite') {
+            <p class="modal-sub">招待したい人のメールアドレスを入れてください。集会場に登録して、いつでも呼べるようにします。</p>
+            <form class="invite-row" (submit)="$event.preventDefault(); sendInvite()">
+              <input type="email" aria-label="招待するメールアドレス" placeholder="例: lillie@example.com" [value]="inviteEmail()" (input)="inviteEmail.set($any($event.target).value)" />
+              <button type="submit" class="btn" [disabled]="!inviteEmail().trim() || hallBusy()">送る</button>
+            </form>
+          } @else {
+            <p class="modal-sub">だれを呼びますか？（登録した順。いま {{ party().length }}/{{ maxParty }}人）</p>
+            <div class="hall-cards">
+              @for (m of hallRows(); track m.userId) {
+                <button
+                  type="button"
+                  class="hall-member"
+                  [disabled]="!!m.blocker || hallBusy()"
+                  [attr.aria-label]="m.name + 'を呼ぶ'"
+                  (click)="callCompanion(m.userId)"
+                >
+                  <b>{{ m.name }}</b>
+                  <span class="hall-lv">Lv {{ m.level }}</span>
+                  @if (m.blocker) {
+                    <span class="hall-tag" [class.mine]="m.inMyParty">{{ m.blocker }}</span>
+                  }
+                </button>
+              } @empty {
+                <p class="hall-empty">まだだれも登録されていません。「招待メールを送る」で招待できます。</p>
+              }
+            </div>
+            @if (hallPages() > 1) {
+              <div class="hall-pager">
+                <button type="button" class="btn ghost" [disabled]="hallPage() === 0" (click)="changeHallPage(-1)">◀ 前の{{ hallPageSize }}人</button>
+                <span>{{ hallPage() + 1 }} / {{ hallPages() }}</span>
+                <button type="button" class="btn ghost" [disabled]="hallPage() >= hallPages() - 1" (click)="changeHallPage(1)">次の{{ hallPageSize }}人 ▶</button>
+              </div>
+            }
+          }
+          @if (hallMessage(); as msg) {
+            <p class="hall-message" [class.ng]="!msg.ok">{{ msg.text }}</p>
+          }
+          @if (mode !== 'menu') {
+            <div class="status-actions">
+              <button type="button" class="btn ghost" (click)="backToHallMenu()">もどる</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- 道具を誰に使うか選ぶ(front#358) -->
+    @if (itemTarget(); as id) {
+      <div class="modal" (click)="closeItemTarget()">
+        <div class="modal-card target-card" role="dialog" aria-label="道具を使う相手" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <span>{{ itemIcon(id) }} {{ itemName(id) }} を誰に使う？</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeItemTarget()">×</button>
+          </div>
+          <p class="modal-sub">そばにいなくても使えます。</p>
+          @for (row of targetRows(); track row.index) {
+            <button type="button" class="target-row" [class.dead]="row.dead" [disabled]="!!row.blocker" [attr.aria-label]="row.name + 'に使う'" (click)="useItemOn(row.index)">
+              <span>{{ row.name }}</span>
+              <span class="target-state">{{ row.state }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
     <!-- 左下: レベル・お金・ステータスのボタンと、HP・経験値のバー(front#223) -->
     @if (stats(); as s) {
       <section class="vitals" aria-label="プレイヤーの状態">
@@ -254,6 +334,31 @@
       </div>
     }
 
+    <!-- 連れている仲間のHP・持ち物(front#358)。左下の自分の状態の右に並べる -->
+    @if (party().length) {
+      <section class="party-hud" aria-label="仲間の状態">
+        @for (m of party(); track m.userId) {
+          <div class="mate" [class.down]="m.dead" [attr.aria-label]="m.name">
+            <div class="mate-top"><b>{{ m.name }}</b><span>Lv {{ m.level }}</span></div>
+            <div class="mate-hp">{{ m.dead ? 'たおれている ' + m.left : 'HP ' + m.hp + '/' + m.maxHp }}</div>
+            <div class="vitals-bar"><div class="hp" [class.low]="m.hpRate <= 30" [style.width.%]="m.hpRate"></div></div>
+            <div class="mate-items">🧪{{ m.potions }}　🕊️{{ m.feathers }}</div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 仲間がいるときにたおれたら(front#358)、画面を少し暗くし、右下に小さく案内を出す(戦いの様子は見える) -->
+    @if (waiting()) {
+      <div class="wait-dim"></div>
+      <div class="wait-box" role="status" aria-label="たおれている">
+        <div class="wait-head"><span>たおれてしまった…</span><span class="wait-count">{{ waitText() }}</span></div>
+        <div class="wait-sub">仲間が助けてくれるのを待っています</div>
+        <button type="button" class="btn" (click)="giveUp()">町に戻る</button>
+        <div class="wait-sub">町に戻ると、仲間は集会場に戻ります</div>
+      </div>
+    }
+
     @if (knockedOut()) {
       <div class="banner">たおれてしまった…</div>
     }
@@ -300,6 +405,41 @@
               <span class="badge">装備中</span>
             } @else {
               <button type="button" class="btn ghost" [attr.aria-label]="item.name + 'を装備する'" (click)="equip(item.id)">装備する</button>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 連れている仲間(front#358)。道具を渡す・別れる -->
+    @if (party().length) {
+      <section class="card" aria-label="仲間">
+        <h2>仲間（{{ party().length }}/{{ maxParty }}人）</h2>
+        @for (m of party(); track m.userId) {
+          <div class="party-row">
+            <div class="party-head">
+              <b>{{ m.name }}</b>
+              <span class="party-lv">Lv {{ m.level }}</span>
+              <span class="party-hp">{{ m.dead ? 'たおれている' : 'HP ' + m.hp + '/' + m.maxHp }}</span>
+              <button type="button" class="btn ghost" [attr.aria-label]="m.name + 'と別れる'" (click)="dismiss(m.userId)">別れる</button>
+            </div>
+            <div class="party-meta">攻撃 {{ m.atk }}・防御 {{ m.def }}・{{ m.weapon }}／{{ m.armor }}</div>
+            <div class="party-items">
+              持ち物:
+              @for (it of m.items; track it.id) {
+                <span class="party-item"><app-rpg-item-icon [icon]="it.icon" [image]="it.image" /> {{ it.name }}×{{ it.count }}</span>
+              } @empty {
+                <span class="party-none">なし</span>
+              }
+            </div>
+            @if (giftItems().length) {
+              <div class="party-gift">
+                @for (g of giftItems(); track g.id) {
+                  <button type="button" class="btn ghost small" [attr.aria-label]="m.name + 'に' + g.name + 'を渡す'" (click)="giveItem(m.userId, g.id)">
+                    <app-rpg-item-icon [icon]="g.icon" [image]="g.image" /> を渡す
+                  </button>
+                }
+              </div>
             }
           </div>
         }

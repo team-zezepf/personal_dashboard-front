@@ -1,6 +1,6 @@
 import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
-import { AreaSlide, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
+import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
@@ -409,9 +409,9 @@ export class RpgRenderer {
   private drawEntities(): void {
     const game = this.game;
     const map = game.map;
-    type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player | Drop;
+    type Drawable = StaticObj | (typeof game.npcs)[number] | Enemy | typeof game.player | Companion | Drop;
     // 壊れている置物は描かない(front#264)。落ちたアイテム(front#276)は同じマスの人・敵より奥に描く
-    const list: Drawable[] = [...map.statics.filter((o) => !o.broken), ...game.drops, ...game.npcs, ...game.enemies.filter((e) => e.alive), game.player];
+    const list: Drawable[] = [...map.statics.filter((o) => !o.broken), ...game.drops, ...game.npcs, ...game.enemies.filter((e) => e.alive), ...game.companions, game.player];
     // 奥(x + y が小さい)から順に描く。同じ奥行きなら置物・落ちたアイテムを先に。大きな家は、いちばん手前のマスで並べる
     const depth = (o: Drawable) => (o.kind === 'static' ? staticDepth(o) : o.x + o.y);
     const order = (o: Drawable) => (o.kind === 'static' ? 0 : o.kind === 'drop' ? 1 : 2);
@@ -437,7 +437,7 @@ export class RpgRenderer {
     }
   }
 
-  private drawEntity(o: StaticObj | Npc | Enemy | Player | Drop): void {
+  private drawEntity(o: StaticObj | Npc | Enemy | Player | Companion | Drop): void {
     const game = this.game;
     if (o.kind === 'drop') return this.drawDrop(o);
     const [sx, sy0] = iso(o.x, o.y);
@@ -453,7 +453,41 @@ export class RpgRenderer {
       const mark = game.questMark(o);
       if (mark) this.drawNotice(sx, sy - 78 + Math.sin(this.time * 4) * 3, mark);
     } else if (o.kind === 'enemy') this.drawEnemy(o, sx, sy);
+    else if (o.kind === 'mate') this.drawCompanion(o, sx, sy);
     else if (!game.hidePlayer) this.drawPlayer(sx, sy);
+  }
+
+  /**
+   * 仲間(front#358)。足元の青い輪で敵・NPCと見分ける。頭の上に名前と緑のHPバー。
+   * たおれているときは薄く描き、起こしてもらえるまでの残り時間を出す
+   */
+  private drawCompanion(c: Companion, sx: number, sy: number): void {
+    const ctx = this.ctx;
+    ctx.strokeStyle = c.dead ? 'rgba(96,165,250,0.4)' : 'rgba(96,165,250,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 17, 7, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (c.dead) ctx.globalAlpha = 0.45;
+    this.drawLook(sx + c.lunge * 7 * c.dir, sy, c.look, {
+      dir: c.dir,
+      time: this.time,
+      moving: c.moving,
+      hurt: c.hurt > 0,
+      sword: true,
+      swordColor: swordColorOf(c.weapon),
+      slash: c.lunge
+    });
+    ctx.globalAlpha = 1;
+    if (c.dead) {
+      const left = Math.max(0, Math.ceil(c.downT));
+      this.label(`${c.name}  ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, sx, sy - 62, 'rgba(185,28,28,0.85)');
+      return;
+    }
+    this.label(c.name, sx, sy - 66, 'rgba(37,99,235,0.85)');
+    this.hpBar(sx, sy - 56, c.hp / this.game.maxHpOf(c));
+    // いのちの羽で起こしているところ
+    if (c.reviving > 0) this.label('🕊️ 起こしている…', sx, sy - 86, 'rgba(22,163,74,0.9)');
   }
 
   // 落ちたアイテム(front#276)。最初の0.5秒で落ちた場所から弧をえがいて飛び出し、そのあとは足元を光らせて小さく上下する。
@@ -915,7 +949,9 @@ export class RpgRenderer {
       const { duration, hitAt } = attackTiming(def);
       const [ex, ey] = this.at(e.x, e.y);
       const spell = SPELLS.includes(def.attack);
-      const [tx, ty] = spell ? this.at(e.act.tx, e.act.ty) : this.at(p.x, p.y);
+      // 狙っている相手(front#358)の位置に向けて描く
+      const foe = e.act.foe ?? p;
+      const [tx, ty] = spell ? this.at(e.act.tx, e.act.ty) : this.at(foe.x, foe.y);
       if (!this.onScreen(ex, ey, 300) && !this.onScreen(tx, ty, 200)) continue;
       drawAttackEffect(this.ctx, {
         attack: def.attack, k: Math.min(1, e.act.t / duration), time: this.time, ex, ey, tx, ty, dir: e.dir, s: 1,

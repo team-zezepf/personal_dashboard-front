@@ -34,5 +34,6 @@
   { "id": "cursed_page", "name": "呪われた頁", "icon": "📜", "type": "material", "desc": "浮かぶ魔導書が落とす", "sort_order": 33 },
   { "id": "shadow_shard", "name": "影のかけら", "icon": "🌑", "type": "material", "desc": "影の分身が落とす", "sort_order": 34 },
   { "id": "dark_crystal", "name": "闇の結晶片", "icon": "🔷", "type": "material", "desc": "闇の水晶が落とす", "sort_order": 35 },
-  { "id": "gargoyle_wing", "name": "ガーゴイルの翼", "icon": "🗿", "type": "material", "desc": "ガーゴイルが落とす", "sort_order": 36 }
+  { "id": "gargoyle_wing", "name": "ガーゴイルの翼", "icon": "🗿", "type": "material", "desc": "ガーゴイルが落とす", "sort_order": 36 },
+  { "id": "life_feather", "name": "いのちの羽", "icon": "🕊️", "type": "revive", "heal": 50, "desc": "たおれた人をHP5割で起き上がらせる", "in_shop": true, "price": 300, "sort_order": 37 }
 ]

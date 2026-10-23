@@ -51,14 +51,18 @@ export const IMAGE_MAX_BYTES = 1024 * 1024;
 // 消せないアイテム(api#163 の RpgItemService.LOCKED と同じ)
 export const LOCKED_ITEMS: Record<string, string> = { wood_sword: '初期装備', cloth: '初期装備', potion: '初めの持ち物' };
 
-export const TYPE_LABELS: Record<RpgItemType, string> = { use: '回復の道具', weapon: '武器', armor: '防具', material: '素材' };
-const TYPE_ICONS: Record<RpgItemType, string> = { use: '🧪', weapon: '🗡️', armor: '🛡️', material: '💎' };
+// revive: たおれた人を起き上がらせる道具(front#358)。強さは起き上がるときのHPの割合(%)
+export const TYPE_LABELS: Record<RpgItemType, string> = { use: '回復の道具', revive: '復活の道具', weapon: '武器', armor: '防具', material: '素材' };
+const TYPE_ICONS: Record<RpgItemType, string> = { use: '🧪', revive: '🕊️', weapon: '🗡️', armor: '🛡️', material: '💎' };
 const TYPES = Object.keys(TYPE_LABELS) as RpgItemType[];
-const STAT_LABELS: Record<Exclude<RpgItemType, 'material'>, string> = { use: '回復量', weapon: '攻撃力', armor: '防御力' };
-const STAT_KEYS = { use: 'heal', weapon: 'atk', armor: 'def' } as const;
+const STAT_LABELS: Record<Exclude<RpgItemType, 'material'>, string> = { use: '回復量', revive: '起き上がるHP（%）', weapon: '攻撃力', armor: '防御力' };
+const STAT_KEYS = { use: 'heal', revive: 'heal', weapon: 'atk', armor: 'def' } as const;
+// 起き上がるときのHPの割合(%)の範囲(api#168 の RpgItemService.REVIVE_RANGE と同じ)
+const REVIVE_RANGE = [1, 100] as const;
 
 const ICONS: Record<RpgItemType, string[]> = {
   use: ['🧪', '⚗️', '🍵', '🍎', '🍖', '💊', '🌿', '🍄'],
+  revive: ['🕊️', '🌟', '💖', '🔥', '🌸', '🍀', '✨'],
   weapon: ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️'],
   armor: ['🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨'],
   material: ['💎', '🧱', '🦴', '🔮', '🍯', '🗝️', '🔩', '🍃']
@@ -88,6 +92,7 @@ export function statOf(item: RpgItem): number | null {
 /** 一覧・道具屋に出す強さの文字 */
 export function statText(item: RpgItem): string {
   if (item.type === 'use') return `HP +${item.heal ?? 0}`;
+  if (item.type === 'revive') return `HP${item.heal ?? 0}%で起き上がる`;
   if (item.type === 'weapon') return `攻撃 +${item.atk ?? 0}`;
   if (item.type === 'armor') return `防御 +${item.def ?? 0}`;
   return '素材';
@@ -383,7 +388,7 @@ export class RpgItemPageComponent {
     this.update((i) => {
       i.type = type;
       i.icon = ICONS[type][0];
-      i.heal = type === 'use' ? (i.heal ?? 50) : null;
+      i.heal = type === 'use' || type === 'revive' ? (i.heal ?? 50) : null;
       i.atk = type === 'weapon' ? (i.atk ?? 10) : null;
       i.def = type === 'armor' ? (i.def ?? 5) : null;
       if (type === 'material') {
@@ -404,7 +409,7 @@ export class RpgItemPageComponent {
   setStat(v: number): void {
     this.update((i) => {
       if (i.type === 'material') return;
-      i[STAT_KEYS[i.type]] = clamp(v, ITEM_LIMITS.power);
+      i[STAT_KEYS[i.type]] = clamp(v, i.type === 'revive' ? REVIVE_RANGE : ITEM_LIMITS.power);
     });
   }
 
@@ -602,7 +607,7 @@ export function toInput(row: ItemRow): RpgItemInput {
     name: i.name.trim(),
     icon: i.icon,
     type: i.type,
-    heal: i.type === 'use' ? (i.heal ?? null) : null,
+    heal: i.type === 'use' || i.type === 'revive' ? (i.heal ?? null) : null,
     atk: i.type === 'weapon' ? (i.atk ?? null) : null,
     def: i.type === 'armor' ? (i.def ?? null) : null,
     desc: i.desc?.trim() || null,

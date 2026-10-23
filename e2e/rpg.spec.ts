@@ -1,5 +1,7 @@
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { Page } from '@playwright/test';
-import { API_URL, E2E_ACCOUNT } from './support/env';
+import { API_URL, E2E_ACCOUNT, E2E_MATE_ACCOUNT, SANDBOX_DATA_DIR } from './support/env';
 import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence';
 
 // 前回の実行の続きにならないよう、セーブデータを最初の状態(始まりの草原の村・30G・回復薬×3)に戻す。
@@ -662,6 +664,289 @@ test(
       const respawn = (await savedRespawn())!;
       expect(respawn.area).toBe('plain');
       expect(Math.max(Math.abs(respawn.x - 9), Math.abs(respawn.y - 5))).toBe(1);
+    });
+  }
+);
+
+// ===== 集会場・仲間(front#358) =====
+
+type SandboxUser = { id: number; email: string };
+type SandboxSave = { user_id: number; level: number; exp: number; items: { item_id: string; count: number }[]; party?: number[] };
+
+const readJson = <T>(file: string): T => JSON.parse(readFileSync(path.join(SANDBOX_DATA_DIR, file), 'utf8')) as T;
+const writeJson = (file: string, data: unknown) => writeFileSync(path.join(SANDBOX_DATA_DIR, file), JSON.stringify(data, null, 2), 'utf8');
+const userIdOf = (email: string) => readJson<SandboxUser[]>('users.json').find((u) => u.email === email)!.id;
+
+/**
+ * 仲間の役のアカウント(E2E_MATE_ACCOUNT)を、集会場に登録していない・まだRPGを遊んでいない状態に戻し、
+ * E2E のアカウントのパーティも空にする。
+ * 仲間の役のアカウントで API を使うと「本人が遊んでいる」扱いになって呼べなくなるため、sandbox のファイルを直す(API は毎回ファイルを読む)
+ */
+function resetParty(): void {
+  const mate = userIdOf(E2E_MATE_ACCOUNT.email);
+  const me = userIdOf(E2E_ACCOUNT.email);
+  if (existsSync(path.join(SANDBOX_DATA_DIR, 'rpg_hall.json'))) {
+    writeJson('rpg_hall.json', readJson<{ user_id: number }[]>('rpg_hall.json').filter((h) => h.user_id !== mate));
+  }
+  const saves = readJson<SandboxSave[]>('rpg_saves.json')
+    .filter((s) => s.user_id !== mate)
+    .map((s) => (s.user_id === me ? { ...s, party: [] } : s));
+  writeJson('rpg_saves.json', saves);
+}
+
+/** 仲間の役のアカウントのセーブデータ(sandbox のファイルを読む)。まだなければ undefined */
+function mateSave(): SandboxSave | undefined {
+  const mate = userIdOf(E2E_MATE_ACCOUNT.email);
+  return readJson<SandboxSave[]>('rpg_saves.json').find((s) => s.user_id === mate);
+}
+
+test(
+  'E2E-24 RPGで、集会場に仲間を招待して呼ぶと、いっしょに冒険でき、経験値を分け合い、道具を渡せる。開き直しても仲間がいる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態で、いのちの羽を1つ持っている。パーティは空',
+      '仲間の役のアカウント(E2E仲間)は、集会場に登録しておらず、まだRPGを遊んでいない',
+      'はじまりの村に「集会場の受付 リン」がいる(E2E 用のマップのデータ)'
+    ],
+    expected: [
+      '受付に話しかけると、集会場が開き「招待メールを送る」「仲間を呼ぶ」を選べる',
+      '仲間の役のメールアドレスで招待すると「E2E仲間さんに招待メールを送りました。集会場に登録しました！」と出る',
+      '「仲間を呼ぶ」に E2E仲間(Lv 1)が出て、押すと「E2E仲間が仲間になった！」と出る。もう一度は押せない(パーティにいる)',
+      '左下の自分の状態の右に E2E仲間のHPが出て、右の欄に「仲間（1/3人）」が出る',
+      'いのちの羽を E2E仲間に渡すと、E2E仲間の持ち物に いのちの羽×1 が入り、自分の持ち物から消える',
+      'スライムをたおすと、ログに「経験値6を2人で分けて+3」と出て、E2E仲間のアカウントのセーブデータの経験値が増えている',
+      '画面を開き直しても、E2E仲間がパーティにいて、いのちの羽×1 を持っている',
+      '「別れる」を押すと、仲間の欄と左下のHPが消え、ログに「E2E仲間と別れた。集会場に戻っていった」と出る'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'life_feather', count: 1 }]);
+    resetParty();
+    const hall = page.getByRole('dialog', { name: '集会場' });
+    const party = page.getByRole('region', { name: '仲間', exact: true });
+    const hud = page.getByRole('region', { name: '仲間の状態' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    await step('RPG(/rpg)を開き、集会場の受付 リンに話しかけ、セリフを進める', '集会場が開き「招待メールを送る」「仲間を呼ぶ」を選べる', async () => {
+      await page.goto('/rpg');
+      await expect(items.getByText('いのちの羽')).toBeVisible();
+      await clickNpc(page, '集会場の受付 リン');
+      const dialog = page.getByRole('dialog', { name: '集会場の受付 リンとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await expect(hall.getByRole('button', { name: '✉ 招待メールを送る' })).toBeVisible();
+      await expect(hall.getByRole('button', { name: '🤝 仲間を呼ぶ' })).toBeVisible();
+    });
+
+    await step('「招待メールを送る」を押し、仲間の役のメールアドレスを入れて「送る」を押す', '「E2E仲間さんに招待メールを送りました。集会場に登録しました！」と出る', async () => {
+      await hall.getByRole('button', { name: '✉ 招待メールを送る' }).click();
+      await hall.getByLabel('招待するメールアドレス').fill(E2E_MATE_ACCOUNT.email);
+      await hall.getByRole('button', { name: '送る' }).click();
+      await expect(hall.getByText('E2E仲間さんに招待メールを送りました。集会場に登録しました！')).toBeVisible();
+    });
+
+    await step('「もどる」→「仲間を呼ぶ」を押し、E2E仲間を押す', '「E2E仲間が仲間になった！」と出て、E2E仲間はもう押せない(パーティにいる)', async () => {
+      await hall.getByRole('button', { name: 'もどる' }).click();
+      await hall.getByRole('button', { name: '🤝 仲間を呼ぶ' }).click();
+      const mate = hall.getByRole('button', { name: 'E2E仲間を呼ぶ' });
+      await expect(mate).toContainText('Lv 1');
+      await mate.click();
+      await expect(hall.getByText('E2E仲間が仲間になった！')).toBeVisible();
+      await expect(mate).toBeDisabled();
+      await expect(mate).toContainText('パーティにいる');
+    });
+
+    await step('集会場を閉じる', '左下に E2E仲間のHPが出て、右の欄に「仲間（1/3人）」が出る', async () => {
+      await hall.getByRole('button', { name: '閉じる' }).click();
+      await expect(hud.getByLabel('E2E仲間')).toContainText('HP 50/50');
+      await expect(party.getByRole('heading', { name: '仲間（1/3人）' })).toBeVisible();
+    });
+
+    await step('右の欄の仲間で、いのちの羽を渡す', 'E2E仲間の持ち物に いのちの羽×1 が入り、自分の持ち物から消える', async () => {
+      await party.getByRole('button', { name: 'E2E仲間にいのちの羽を渡す' }).click();
+      await expect(party.getByText('いのちの羽×1')).toBeVisible();
+      await expect(items.getByText('いのちの羽')).toHaveCount(0);
+    });
+
+    await step('スライムを1体たおす', 'ログに「経験値6を2人で分けて+3」と出て、E2E仲間のアカウントの経験値が増えている', async () => {
+      await page.evaluate(() => (window as any).rpgTest.defeat('slime'));
+      await expect(log.getByText('スライムをたおした！ 経験値6を2人で分けて+3', { exact: false })).toBeVisible();
+      // すぐ保存されるよう、画面を読み込み直す(離れるときに保存する)
+      await page.reload();
+      await expect.poll(() => mateSave()?.exp ?? 0).toBeGreaterThanOrEqual(3);
+    });
+
+    await step('(読み込み直したあとの画面を見る)', 'E2E仲間がパーティにいて、いのちの羽×1 を持っている', async () => {
+      await expect(party.getByRole('heading', { name: '仲間（1/3人）' })).toBeVisible();
+      await expect(party.getByText('いのちの羽×1')).toBeVisible();
+      await expect(hud.getByLabel('E2E仲間')).toBeVisible();
+    });
+
+    await step('右の欄の「別れる」を押す', '仲間の欄と左下のHPが消え、ログに「E2E仲間と別れた。集会場に戻っていった」と出る', async () => {
+      await party.getByRole('button', { name: 'E2E仲間と別れる' }).click();
+      await expect(log.getByText('E2E仲間と別れた。集会場に戻っていった')).toBeVisible();
+      await expect(party).toHaveCount(0);
+      await expect(hud).toHaveCount(0);
+    });
+  }
+);
+
+test(
+  'E2E-25 RPGで、仲間がいるときにたおれると、右下の案内で待ち、仲間がいのちの羽で起こしてくれる。起こしてもらえないときは「町に戻る」で村に戻る',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態で、いのちの羽を1つ持っている。パーティは空',
+      '仲間の役のアカウント(E2E仲間)は、まだRPGを遊んでいない'
+    ],
+    expected: [
+      'E2E仲間を呼び、いのちの羽を渡してからたおれると、画面の右下に「たおれてしまった…」と残り時間・「町に戻る」が出る(画面の真ん中には何も出ない)',
+      'E2E仲間がそばに来て いのちの羽を使い、右下の案内が消え、ログに「E2E仲間がいのちの羽を使った！ あなたが起き上がった」と出る。E2E仲間の いのちの羽はなくなる',
+      'もう一度たおれ(仲間は いのちの羽を持っていない)、「町に戻る」を押すと、ログに「E2E仲間は集会場に戻っていった」と出て、仲間がいなくなる',
+      '集会場の「仲間を呼ぶ」で、E2E仲間をまた呼べる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'life_feather', count: 1 }]);
+    resetParty();
+    const hall = page.getByRole('dialog', { name: '集会場' });
+    const party = page.getByRole('region', { name: '仲間', exact: true });
+    const wait = page.getByRole('status', { name: 'たおれている' });
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    const openHall = async () => {
+      await clickNpc(page, '集会場の受付 リン');
+      const dialog = page.getByRole('dialog', { name: '集会場の受付 リンとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await hall.getByRole('button', { name: '🤝 仲間を呼ぶ' }).click();
+    };
+
+    await step('集会場で E2E仲間を招待して呼び、いのちの羽を渡す', 'E2E仲間が いのちの羽×1 を持っている', async () => {
+      await page.goto('/rpg');
+      await clickNpc(page, '集会場の受付 リン');
+      const dialog = page.getByRole('dialog', { name: '集会場の受付 リンとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await hall.getByRole('button', { name: '✉ 招待メールを送る' }).click();
+      await hall.getByLabel('招待するメールアドレス').fill(E2E_MATE_ACCOUNT.email);
+      await hall.getByRole('button', { name: '送る' }).click();
+      await expect(hall.getByText('集会場に登録しました！', { exact: false })).toBeVisible();
+      await hall.getByRole('button', { name: 'もどる' }).click();
+      await hall.getByRole('button', { name: '🤝 仲間を呼ぶ' }).click();
+      await hall.getByRole('button', { name: 'E2E仲間を呼ぶ' }).click();
+      await expect(hall.getByText('E2E仲間が仲間になった！')).toBeVisible();
+      await hall.getByRole('button', { name: '閉じる' }).click();
+      await party.getByRole('button', { name: 'E2E仲間にいのちの羽を渡す' }).click();
+      await expect(party.getByText('いのちの羽×1')).toBeVisible();
+    });
+
+    await step('たおれる', '画面の右下に「たおれてしまった…」と残り時間・「町に戻る」が出る', async () => {
+      await page.evaluate(() => (window as any).rpgTest.knockOut());
+      await expect(wait).toBeVisible();
+      await expect(wait).toContainText('たおれてしまった…');
+      await expect(wait).toContainText(/0:5\d|1:00/);
+      await expect(wait.getByRole('button', { name: '町に戻る' })).toBeVisible();
+      // 案内は右下にある(ゲーム画面の右半分・下半分)
+      const area = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+      const box = (await wait.boundingBox())!;
+      expect(box.x).toBeGreaterThan(area.x + area.width / 2);
+      expect(box.y).toBeGreaterThan(area.y + area.height / 2);
+    });
+
+    await step('仲間が起こしてくれるのを待つ', '右下の案内が消え、ログに「E2E仲間がいのちの羽を使った！ あなたが起き上がった」と出る。E2E仲間の いのちの羽はなくなる', async () => {
+      await expect(wait).toHaveCount(0, { timeout: 15_000 });
+      await expect(log.getByText('E2E仲間がいのちの羽を使った！ あなたが起き上がった')).toBeVisible();
+      await expect(party.getByText('いのちの羽×1')).toHaveCount(0);
+    });
+
+    await step('もう一度たおれ、右下の「町に戻る」を押す', 'ログに「E2E仲間は集会場に戻っていった」と出て、仲間がいなくなる', async () => {
+      await page.evaluate(() => (window as any).rpgTest.knockOut());
+      await wait.getByRole('button', { name: '町に戻る' }).click();
+      await expect(log.getByText('E2E仲間は集会場に戻っていった')).toBeVisible();
+      await expect(party).toHaveCount(0);
+    });
+
+    await step('村に戻ったら、集会場の「仲間を呼ぶ」を開く', 'E2E仲間をまた呼べる', async () => {
+      await expect(log.getByText(/にもどってきた。HPが全回復した/)).toBeVisible({ timeout: 10_000 });
+      await openHall();
+      await expect(hall.getByRole('button', { name: 'E2E仲間を呼ぶ' })).toBeEnabled();
+    });
+  }
+);
+
+/**
+ * 仲間の役のアカウントで API を呼ぶ(front#360)。集会場の一覧を見る・招待するだけなら「本人が遊んでいる」扱いにならない
+ */
+async function asMate<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_MATE_ACCOUNT.email, password: E2E_MATE_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+  return ((await res.json()) as { data: T }).data;
+}
+
+/** 仲間の役のアカウントから見た、E2E のアカウントの「自分で冒険中」 */
+async function e2ePlaying(): Promise<boolean> {
+  const data = await asMate<{ rpgHall: { name: string; playing: boolean }[] }>('{ rpgHall { name playing } }');
+  return data.rpgHall.find((m) => m.name === E2E_ACCOUNT.name)?.playing ?? false;
+}
+
+test(
+  'E2E-26 RPG画面を開いている間は、集会場で「自分で冒険中」になり、ほかの画面へ移るとすぐ外れる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'E2E のアカウントが集会場に登録されている(仲間の役のアカウントから招待する)'
+    ],
+    expected: [
+      'RPG(/rpg)を開くと、仲間の役のアカウントから見た集会場の一覧で、E2E のアカウントが「自分で冒険中」になる',
+      'タイトルのメニューからダッシュボードへ移ると、3分待たずに「自分で冒険中」が外れる',
+      'もう一度RPGを開いてから、ほかのページ(about:blank)へ移る(タブを閉じるのと同じくページから出る)と、すぐ外れる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    resetParty();
+    // E2E のアカウントを集会場に登録しておく(登録ずみならエラーになるが、そのままでよい)
+    await asMate('mutation($email: String!) { inviteRpgHall(email: $email) { name } }', { email: E2E_ACCOUNT.email });
+
+    await step('RPG(/rpg)を開く', '集会場の一覧で、E2E のアカウントが「自分で冒険中」になる', async () => {
+      await page.goto('/rpg');
+      await expect(page.getByRole('region', { name: 'プレイヤーの状態' })).toBeVisible();
+      await expect.poll(e2ePlaying).toBe(true);
+    });
+
+    await step('左上のタイトル(RPG)のメニューから「Dashboard」を押す', '3分待たずに「自分で冒険中」が外れる', async () => {
+      await page.getByRole('button', { name: 'RPG', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Dashboard' }).click();
+      await page.getByRole('heading', { name: 'カレンダー' }).waitFor();
+      await expect.poll(e2ePlaying, { timeout: 10_000 }).toBe(false);
+    });
+
+    await step('もう一度RPGを開き、ほかのページ(about:blank)へ移る', 'RPGを開くと「自分で冒険中」になり、ページから出るとすぐ外れる', async () => {
+      await page.goto('/rpg');
+      await expect(page.getByRole('region', { name: 'プレイヤーの状態' })).toBeVisible();
+      await expect.poll(e2ePlaying).toBe(true);
+      await page.goto('about:blank');
+      await expect.poll(e2ePlaying, { timeout: 10_000 }).toBe(false);
     });
   }
 );

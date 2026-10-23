@@ -1515,6 +1515,27 @@
       "accent_color" : "#f8fafc"
     },
     "quests" : [ ]
+  }, {
+    "name" : "集会場の受付 リン",
+    "x" : 5,
+    "y" : 9,
+    "hair" : "#7c3aed",
+    "body" : "#2563eb",
+    "role" : "hall",
+    "notice" : false,
+    "lines" : [ "ようこそ、集会場へ！ いっしょに冒険する仲間を呼べますよ。" ],
+    "look" : {
+      "hair" : "ponytail",
+      "hair_color" : "#7c3aed",
+      "skin" : "#ffe0bd",
+      "eyes" : "smile",
+      "eye_color" : "#3b2f2f",
+      "mouth" : "smile",
+      "clothes" : "dress",
+      "clothes_color" : "#2563eb",
+      "accent_color" : "#f8fafc"
+    },
+    "quests" : [ ]
   } ],
   "enemies" : [ {
     "type" : "slime",

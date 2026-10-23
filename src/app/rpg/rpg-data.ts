@@ -67,7 +67,9 @@ export const DEFAULT_ITEMS: RpgItem[] = [
   { id: 'cursed_page', name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす', inShop: false, sortOrder: 33 },
   { id: 'shadow_shard', name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす', inShop: false, sortOrder: 34 },
   { id: 'dark_crystal', name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす', inShop: false, sortOrder: 35 },
-  { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sortOrder: 36 }
+  { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sortOrder: 36 },
+  // たおれた人をHP5割で起き上がらせる(front#358)
+  { id: 'life_feather', name: 'いのちの羽', icon: '🕊️', type: 'revive', heal: 50, desc: 'たおれた人をHP5割で起き上がらせる', inShop: true, price: 300, sortOrder: 37 }
 ];
 
 /** アイテム(合成の装備も含む)。setItems・setCrafts で中身を入れ替える(使っている所はそのまま新しい中身を使える) */
@@ -122,7 +124,7 @@ export function toItemDef(item: RpgItem): ItemDef {
     name: item.name,
     icon: item.icon,
     type: item.type,
-    ...(item.type === 'use' ? { heal: item.heal ?? 0 } : {}),
+    ...(item.type === 'use' || item.type === 'revive' ? { heal: item.heal ?? 0 } : {}),
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
