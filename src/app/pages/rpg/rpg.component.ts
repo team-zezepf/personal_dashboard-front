@@ -429,8 +429,10 @@ export class RpgPageComponent implements OnDestroy {
   private dirty = false;
   private saving = false;
 
+  // タブを閉じる・再読み込みするとき。保存していない変更があれば「離れる」印を付けて保存し、なければ離れたことだけ知らせる(front#360)
   private readonly onPageHide = () => {
-    if (this.loaded && this.dirty && this.game) this.rpgService.saveOnUnload(this.game.toSaveInput());
+    if (this.loaded && this.dirty && this.game) this.rpgService.saveOnUnload({ ...this.game.toSaveInput(), leaving: true });
+    else this.rpgService.leaveOnUnload();
   };
 
   constructor() {
@@ -531,8 +533,8 @@ export class RpgPageComponent implements OnDestroy {
     if (this.autosaveTimer) clearInterval(this.autosaveTimer);
     if (this.areaTitleTimer) clearTimeout(this.areaTitleTimer);
     window.removeEventListener('pagehide', this.onPageHide);
-    // ほかの画面へ移るときは、まだ保存していない分を保存する
-    this.saveIfDirty();
+    // ほかの画面へ移るときは、まだ保存していない分を保存し、集会場の「自分で冒険中」をすぐ外す(front#360)
+    this.leave();
     this.game?.dispose();
     this.bgmPlayer.dispose();
     if (!environment.production) delete (window as unknown as Record<string, unknown>)['rpgTest'];
@@ -601,6 +603,15 @@ export class RpgPageComponent implements OnDestroy {
         this.dirty = true;
       }
     });
+  }
+
+  private leave(): void {
+    if (this.loaded && this.dirty && !this.saving && this.game) {
+      this.dirty = false;
+      this.rpgService.save({ ...this.game.toSaveInput(), leaving: true }).subscribe({ error: () => undefined });
+      return;
+    }
+    this.rpgService.leave().subscribe({ error: () => undefined });
   }
 
   // ===== マウス・キーボード =====

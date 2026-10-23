@@ -882,3 +882,71 @@ test(
     });
   }
 );
+
+/**
+ * 仲間の役のアカウントで API を呼ぶ(front#360)。集会場の一覧を見る・招待するだけなら「本人が遊んでいる」扱いにならない
+ */
+async function asMate<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_MATE_ACCOUNT.email, password: E2E_MATE_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+  return ((await res.json()) as { data: T }).data;
+}
+
+/** 仲間の役のアカウントから見た、E2E のアカウントの「自分で冒険中」 */
+async function e2ePlaying(): Promise<boolean> {
+  const data = await asMate<{ rpgHall: { name: string; playing: boolean }[] }>('{ rpgHall { name playing } }');
+  return data.rpgHall.find((m) => m.name === E2E_ACCOUNT.name)?.playing ?? false;
+}
+
+test(
+  'E2E-26 RPG画面を開いている間は、集会場で「自分で冒険中」になり、ほかの画面へ移るとすぐ外れる',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'E2E のアカウントが集会場に登録されている(仲間の役のアカウントから招待する)'
+    ],
+    expected: [
+      'RPG(/rpg)を開くと、仲間の役のアカウントから見た集会場の一覧で、E2E のアカウントが「自分で冒険中」になる',
+      'タイトルのメニューからダッシュボードへ移ると、3分待たずに「自分で冒険中」が外れる',
+      'もう一度RPGを開いてから、ほかのページ(about:blank)へ移る(タブを閉じるのと同じくページから出る)と、すぐ外れる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    resetParty();
+    // E2E のアカウントを集会場に登録しておく(登録ずみならエラーになるが、そのままでよい)
+    await asMate('mutation($email: String!) { inviteRpgHall(email: $email) { name } }', { email: E2E_ACCOUNT.email });
+
+    await step('RPG(/rpg)を開く', '集会場の一覧で、E2E のアカウントが「自分で冒険中」になる', async () => {
+      await page.goto('/rpg');
+      await expect(page.getByRole('region', { name: 'プレイヤーの状態' })).toBeVisible();
+      await expect.poll(e2ePlaying).toBe(true);
+    });
+
+    await step('左上のタイトル(RPG)のメニューから「Dashboard」を押す', '3分待たずに「自分で冒険中」が外れる', async () => {
+      await page.getByRole('button', { name: 'RPG', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Dashboard' }).click();
+      await page.getByRole('heading', { name: 'カレンダー' }).waitFor();
+      await expect.poll(e2ePlaying, { timeout: 10_000 }).toBe(false);
+    });
+
+    await step('もう一度RPGを開き、ほかのページ(about:blank)へ移る', 'RPGを開くと「自分で冒険中」になり、ページから出るとすぐ外れる', async () => {
+      await page.goto('/rpg');
+      await expect(page.getByRole('region', { name: 'プレイヤーの状態' })).toBeVisible();
+      await expect.poll(e2ePlaying).toBe(true);
+      await page.goto('about:blank');
+      await expect.poll(e2ePlaying, { timeout: 10_000 }).toBe(false);
+    });
+  }
+);

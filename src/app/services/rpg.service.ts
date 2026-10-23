@@ -93,6 +93,9 @@ const SAVE_MUTATION = `
   }
 `;
 
+// RPG画面を離れた(front#360)
+const LEAVE_MUTATION = `mutation LeaveRpg { leaveRpg }`;
+
 @Injectable({ providedIn: 'root' })
 export class RpgService {
   private graphql = inject(GraphQLService);
@@ -343,6 +346,21 @@ export class RpgService {
   // タブを閉じる・再読み込みするときの保存。画面が消えても送信を続けられるよう keepalive で送る
   // (HttpClient は画面が消えると途中で止まることがある)。結果は待たない
   saveOnUnload(input: RpgSaveInput): void {
+    // 送れなくても、30秒ごとの保存までの分が戻るだけなので何もしない
+    this.sendOnUnload(SAVE_MUTATION, { input });
+  }
+
+  /** RPG画面を離れた(front#360)。集会場の「自分で冒険中」をすぐ外す */
+  leave(): Observable<boolean> {
+    return this.graphql.mutation<{ leaveRpg: boolean }>(LEAVE_MUTATION).pipe(map((res) => res.leaveRpg));
+  }
+
+  /** タブを閉じる・再読み込みするときに、RPG画面を離れたことを知らせる(front#360)。送れなくても3分たてば外れる */
+  leaveOnUnload(): void {
+    this.sendOnUnload(LEAVE_MUTATION, {});
+  }
+
+  private sendOnUnload(query: string, variables: Record<string, unknown>): void {
     const token = this.authService.getToken();
     if (!token) return;
     try {
@@ -350,10 +368,10 @@ export class RpgService {
         method: 'POST',
         keepalive: true,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ query: SAVE_MUTATION, variables: { input } })
+        body: JSON.stringify({ query, variables })
       }).catch(() => undefined);
     } catch {
-      // 送れなくても、30秒ごとの保存までの分が戻るだけなので何もしない
+      // 送れなくても何もしない
     }
   }
 

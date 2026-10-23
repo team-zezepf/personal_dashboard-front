@@ -132,6 +132,8 @@ export interface RpgStats {
 export type RpgSaveInput = Omit<RpgSave, 'updatedAt' | 'party'> & {
   // 連れている仲間のデータ(front#358)
   companions?: RpgCompanionInput[];
+  // RPG画面を離れるときの保存(front#360)。保存したあと、集会場の「自分で冒険中」がすぐ外れる
+  leaving?: boolean;
 };
 
 // RPGのダンジョン(front#234 / api#96)。名前・推奨レベル・見た目・BGMを持つ、エリアのまとまり
