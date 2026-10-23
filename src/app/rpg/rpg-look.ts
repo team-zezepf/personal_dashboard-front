@@ -390,24 +390,25 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     for (const x0 of ex) { c.beginPath(); c.arc(x0, ey, 3.7, 0, Math.PI * 2); c.stroke(); }
     c.beginPath(); c.moveTo(ex[0] + 3.7, ey - 0.5); c.lineTo(ex[1] - 3.7, ey - 0.5); c.stroke();
   }
-  // ほっぺ
+  // ほっぺ(front#369 で少し小さく)
   c.fillStyle = 'rgba(255,120,120,0.35)';
-  c.beginPath(); c.ellipse(-7 + f, y0 - 23, 2.4, 1.6, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(7 + f, y0 - 23, 2.4, 1.6, 0, 0, Math.PI * 2); c.fill();
-  // 口
+  c.beginPath(); c.ellipse(-7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
+  // 口(front#368 で全体的に小さく)
   const mx = f;
   const my = y0 - 22;
   c.strokeStyle = '#7c2d12';
   c.lineWidth = 0.8;
-  if (L.mouth === 'smile') { c.beginPath(); c.arc(mx, my - 1.5, 2.2, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke(); }
+  if (L.mouth === 'smile') { c.beginPath(); c.arc(mx, my - 1.1, 1.7, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke(); }
   if (L.mouth === 'open') {
-    c.fillStyle = '#9f1239'; c.beginPath(); c.ellipse(mx, my, 1.9, 1.6, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#fb7185'; c.beginPath(); c.ellipse(mx, my + 0.7, 1.1, 0.6, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#9f1239'; c.beginPath(); c.ellipse(mx, my, 1.4, 1.2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fb7185'; c.beginPath(); c.ellipse(mx, my + 0.55, 0.8, 0.45, 0, 0, Math.PI * 2); c.fill();
   }
-  if (L.mouth === 'flat') { c.beginPath(); c.moveTo(mx - 2, my); c.lineTo(mx + 2, my); c.stroke(); }
-  // ねこ口は「ω」の2つの弧だけ(弧どうしを線でつながない)
+  if (L.mouth === 'flat') { c.beginPath(); c.moveTo(mx - 1.5, my); c.lineTo(mx + 1.5, my); c.stroke(); }
+  // ねこ口は「ω」の2つの弧だけ(弧どうしを線でつながない)。目立ちすぎないよう、小さく・細く
   if (L.mouth === 'cat') {
-    for (const k of [-1, 1]) { c.beginPath(); c.arc(mx + k * 1.4, my - 1, 1.4, 0, Math.PI); c.stroke(); }
+    c.lineWidth = 0.6;
+    for (const k of [-1, 1]) { c.beginPath(); c.arc(mx + k * 0.85, my - 0.8, 0.85, 0, Math.PI); c.stroke(); }
   }
 }
 
