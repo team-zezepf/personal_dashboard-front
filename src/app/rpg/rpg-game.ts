@@ -1645,8 +1645,8 @@ export class RpgGame {
         c.repath = 0.5;
       }
     }
-    // 離れているときは少し速く歩いて追いつく
-    this.stepCompanion(c, dt, cheb(c.x, c.y, p.x, p.y) > 3 ? 1.3 : 1);
+    // 離れていても、仲間自身の速さのまま歩く(front#377)
+    this.stepCompanion(c, dt, 1);
 
     // 戦っていないときは少しずつ回復する(プレイヤーと同じ)
     if (this.time - c.lastCombat > 4 && c.hp < this.maxHpOf(c)) {
