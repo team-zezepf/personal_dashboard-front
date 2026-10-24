@@ -66,6 +66,10 @@ interface ShopRow {
   price: string;
   buttonLabel: string;
   disabled: boolean;
+  // 道具屋で個数を選べる行(front#379)。今選んでいる数と、選べる最大の数
+  qty?: { value: number; max: number };
+  // 装備中(売れない。front#379)
+  equipped?: boolean;
   // 鍛冶屋(front#277)の合成に使う素材と、持っている数・いる数
   materials?: { icon: string; image?: string; name: string; have: number; need: number }[];
 }
@@ -221,6 +225,12 @@ export class RpgPageComponent implements OnDestroy {
   readonly pointShop = signal<RpgPointShopItem[]>([]);
   readonly exchanging = signal(false);
   readonly shopError = signal('');
+  // 道具屋の「買う／売る」(front#379)
+  readonly shopTab = signal<'buy' | 'sell'>('buy');
+  // 道具屋で選んでいる個数(「buy:potion」のように、買う・売るとアイテムごと)。選んでいなければ1
+  readonly shopQty = signal<Record<string, number>>({});
+  // 武器・防具を売る前の確認(front#379)
+  readonly sellConfirm = signal<{ id: string; name: string; gold: number; buyPrice?: number } | null>(null);
 
   // ===== BGM(front#218) =====
   private readonly bgmPlayer = new BgmPlayer();
@@ -380,12 +390,42 @@ export class RpgPageComponent implements OnDestroy {
       });
     }
     if (mode === 'shop') {
+      const qtys = this.shopQty();
+      // 選んでいる個数(1〜max。max が0でも1と出す)
+      const pick = (key: string, max: number) => Math.min(Math.max(qtys[key] ?? 1, 1), Math.max(max, 1));
+      if (this.shopTab() === 'sell') {
+        // 売る(front#379): 持ち物のうち売値があるもの。装備中のものは「装備中」で売れない
+        return Object.keys(ITEMS)
+          .filter((id) => game.owned(id) && ITEMS[id].sellPrice !== undefined)
+          .map((id) => {
+            const item = ITEMS[id];
+            const price = item.sellPrice ?? 0;
+            const equipped = game.isEquipped(id);
+            const max = game.sellableCount(id);
+            const gear = item.type === 'weapon' || item.type === 'armor';
+            const value = pick(`sell:${id}`, max);
+            return {
+              id,
+              icon: item.icon,
+              image: item.image,
+              name: item.name,
+              desc: gear ? itemStatLabel(item) : `${game.player.inv[id] ?? 0}個持っている`,
+              price: `${price} G`,
+              buttonLabel: equipped ? '装備中' : gear ? '売る' : `売る（${price * value}G）`,
+              disabled: max < 1,
+              equipped,
+              ...(gear || equipped ? {} : { qty: { value, max } })
+            };
+          });
+      }
       return SHOP_ITEMS.map((id) => {
         const item = ITEMS[id];
         const price = item.price ?? 0;
-        // 回復薬・いのちの羽(front#358)はいくつでも買える
+        // 回復薬・いのちの羽(front#358)はいくつでも買える。個数を選んで買う(front#379)
         const consumable = item.type === 'use' || item.type === 'revive';
         const has = !consumable && game.owned(id);
+        const max = game.buyableCount(id);
+        const value = pick(`buy:${id}`, max);
         return {
           id,
           icon: item.icon,
@@ -393,8 +433,9 @@ export class RpgPageComponent implements OnDestroy {
           name: item.name,
           desc: consumable ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）` : itemStatLabel(item),
           price: `${price} G`,
-          buttonLabel: has ? '持っている' : '買う',
-          disabled: has || game.player.gold < price
+          buttonLabel: has ? '持っている' : consumable ? `買う（${price * value}G）` : '買う',
+          disabled: max < 1,
+          ...(consumable ? { qty: { value, max } } : {})
         };
       });
     }
@@ -858,20 +899,50 @@ export class RpgPageComponent implements OnDestroy {
 
   private openShop(mode: 'shop' | 'exchange' | 'smith'): void {
     this.shopError.set('');
+    this.shopTab.set('buy');
+    this.shopQty.set({});
+    this.sellConfirm.set(null);
     this.shopMode.set(mode);
     this.syncLock();
   }
 
   closeShop(): void {
+    this.sellConfirm.set(null);
     this.shopMode.set(null);
     this.syncLock();
+  }
+
+  setShopTab(tab: 'buy' | 'sell'): void {
+    this.shopTab.set(tab);
+    this.sellConfirm.set(null);
+  }
+
+  /** 道具屋の個数の －／＋(front#379)。1〜選べる最大の数におさめる */
+  changeShopQty(id: string, delta: number): void {
+    const row = this.shopRows().find((r) => r.id === id);
+    if (!row?.qty) return;
+    const value = Math.min(Math.max(row.qty.value + delta, 1), Math.max(row.qty.max, 1));
+    this.shopQty.update((q) => ({ ...q, [`${this.shopTab()}:${id}`]: value }));
   }
 
   onShopButton(id: string): void {
     const game = this.game;
     if (!game) return;
     if (this.shopMode() === 'shop') {
-      game.buy(id);
+      const row = this.shopRows().find((r) => r.id === id);
+      const count = row?.qty?.value ?? 1;
+      const key = `${this.shopTab()}:${id}`;
+      if (this.shopTab() === 'buy') {
+        if (game.buy(id, count)) this.shopQty.update((q) => ({ ...q, [key]: 1 }));
+        return;
+      }
+      const item = ITEMS[id];
+      // 武器・防具は売ると戻らないので、確認してから売る
+      if (item && (item.type === 'weapon' || item.type === 'armor')) {
+        if (game.sellableCount(id) > 0 && item.sellPrice !== undefined) this.sellConfirm.set({ id, name: item.name, gold: item.sellPrice, buyPrice: item.price });
+        return;
+      }
+      if (game.sell(id, count)) this.shopQty.update((q) => ({ ...q, [key]: 1 }));
       return;
     }
     if (this.shopMode() === 'smith') {
@@ -879,6 +950,16 @@ export class RpgPageComponent implements OnDestroy {
       return;
     }
     this.exchange(id);
+  }
+
+  confirmSell(): void {
+    const target = this.sellConfirm();
+    this.sellConfirm.set(null);
+    if (target) this.game?.sell(target.id, 1);
+  }
+
+  cancelSell(): void {
+    this.sellConfirm.set(null);
   }
 
   private exchange(itemId: string): void {
