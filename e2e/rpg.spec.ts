@@ -995,3 +995,99 @@ test(
     });
   }
 );
+
+test(
+  'E2E-27 RPGの道具屋で、持ち物を売る・回復薬を個数を選んで買うと、開き直しても残っている(front#379)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'RPGのセーブデータを最初の状態(30G・回復薬×3)に戻し、銅の剣×1・スライムゼリー×4 を足してある',
+      'E2E 用のアイテム(e2e/fixtures/rpg)は 回復薬 10G・銅の剣 45G(売値は空)、スライムゼリーの売値 2G'
+    ],
+    expected: [
+      '道具屋に「買う／売る」の切り替えがあり、「売る」には売値のある持ち物だけが並ぶ(値段のない木の剣・布の服は出ない)',
+      '装備中の銅の剣は「装備中」で売れない。外すと、確認のあと道具屋の値段の半分(22G)で売れる',
+      'スライムゼリーは －／＋ で個数を選び、選んだ数だけまとめて売れる(3個で 6G)',
+      '「買う」では回復薬を －／＋ で個数を選び、まとめて買える(2個で 20G)',
+      'ほかの画面に移ってから開き直しても、ゴールドと持ち物が残っている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetRpg(1, [
+      { itemId: 'copper_sword', count: 1 },
+      { itemId: 'slime_jelly', count: 4 }
+    ]);
+    await loginAsE2E(page, step);
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const shop = page.getByRole('dialog', { name: '道具屋' });
+    const openShop = async () => {
+      await clickNpc(page, '道具屋 ミナ');
+      const dialog = page.getByRole('dialog', { name: '道具屋 ミナとの会話' });
+      await dialog.click();
+      await dialog.click();
+      await expect(shop).toBeVisible();
+    };
+
+    await step('RPG(/rpg)を開き、持ち物の銅の剣を装備する', '30G で始まり、装備欄が銅の剣になる', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByText('30G')).toBeVisible();
+      await page.getByRole('button', { name: '銅の剣を装備する' }).click();
+      await expect(page.getByRole('region', { name: '装備' }).getByText('銅の剣')).toBeVisible();
+    });
+
+    await step('「道具屋 ミナ」に話しかけ、「売る」に切り替える', '売値のある 銅の剣・回復薬・スライムゼリー が並び、装備中の銅の剣は「装備中」で押せない。木の剣・布の服は出ない', async () => {
+      await openShop();
+      await shop.getByRole('tab', { name: '売る' }).click();
+      await expect(shop.getByRole('button', { name: '銅の剣を装備中' })).toBeDisabled();
+      await expect(shop.getByRole('button', { name: '回復薬を売る（5G）' })).toBeEnabled();
+      await expect(shop.getByRole('button', { name: 'スライムゼリーを売る（2G）' })).toBeEnabled();
+      await expect(shop.getByText('木の剣')).toHaveCount(0);
+      await expect(shop.getByText('布の服')).toHaveCount(0);
+      await page.getByRole('button', { name: '閉じる' }).click();
+    });
+
+    await step('木の剣を装備し直して道具屋の「売る」で銅の剣を売り、確認で「売る」を押す', '「銅の剣を 22G で売りますか？」と確認が出て、売ると 52G になり、持ち物から銅の剣がなくなる', async () => {
+      await page.getByRole('button', { name: '木の剣を装備する' }).click();
+      await openShop();
+      await shop.getByRole('tab', { name: '売る' }).click();
+      await shop.getByRole('button', { name: '銅の剣を売る' }).click();
+      const confirm = page.getByRole('alertdialog', { name: '売る確認' });
+      await expect(confirm).toContainText('銅の剣を 22G で売りますか？');
+      await confirm.getByRole('button', { name: '売る' }).click();
+      await expect(status.getByText('52G')).toBeVisible();
+      await expect(shop.getByText('銅の剣')).toHaveCount(0);
+    });
+
+    await step('スライムゼリーの「＋」を2回押して3個にし、売る', '売るボタンが「売る（6G）」になり、売ると 58G・残り1個になる', async () => {
+      const plus = shop.getByRole('button', { name: 'スライムゼリーを1個ふやす' });
+      await plus.click();
+      await plus.click();
+      await expect(shop.getByLabel('スライムゼリーの個数')).toHaveText('3');
+      await shop.getByRole('button', { name: 'スライムゼリーを売る（6G）' }).click();
+      await expect(status.getByText('58G')).toBeVisible();
+      await expect(shop.getByText('1個持っている')).toBeVisible();
+    });
+
+    await step('「買う」に切り替え、回復薬の「＋」を1回押して2個にし、買う', '買うボタンが「買う（20G）」になり、買うと 38G・回復薬が5個になる(3個 + 買った2個)', async () => {
+      await shop.getByRole('tab', { name: '買う' }).click();
+      await shop.getByRole('button', { name: '回復薬を1個ふやす', exact: true }).click();
+      await expect(shop.getByLabel('回復薬の個数', { exact: true })).toHaveText('2');
+      await shop.getByRole('button', { name: '回復薬を買う（20G）', exact: true }).click();
+      await expect(status.getByText('38G')).toBeVisible();
+      await page.getByRole('button', { name: '閉じる' }).click();
+      await expect(items.getByText('×5')).toBeVisible();
+    });
+
+    await step('ダッシュボードへ移ってから、RPG(/rpg)を開き直す', '38G・回復薬×5 のままで、銅の剣はない', async () => {
+      await page.goto('/');
+      await page.getByRole('heading', { name: 'カレンダー' }).waitFor();
+      await page.goto('/rpg');
+      await expect(status.getByText('38G')).toBeVisible();
+      await expect(items.getByText('×5')).toBeVisible();
+      await expect(items.getByText('銅の剣')).toHaveCount(0);
+    });
+  }
+);

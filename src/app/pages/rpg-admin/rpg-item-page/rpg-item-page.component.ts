@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable, concat, switchMap, toArray } from 'rxjs';
 import { RpgCraft, RpgEnemy, RpgItem, RpgItemInput, RpgItemType, RpgMap, RpgObjectDef, RpgPointShopItem } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { STATIC_NAMES, StaticType, rpgItemImageUrl, setItems } from '../../../rpg/rpg-data';
+import { STATIC_NAMES, StaticType, rpgItemImageUrl, sellPriceOf, setItems } from '../../../rpg/rpg-data';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
 
@@ -150,6 +150,12 @@ export function problemsOf(item: RpgItem, others: { name: string }[], shopGear: 
   }
   if (item.inShop && !((item.price ?? 0) >= ITEM_LIMITS.price[0] && (item.price ?? 0) <= ITEM_LIMITS.price[1])) {
     out.push({ ng: true, text: `道具屋で売るなら、値段を ${ITEM_LIMITS.price[0]}〜${ITEM_LIMITS.price[1]}G にしてください。` });
+  }
+  // 売値(front#379)
+  if (item.sellPrice != null && !(item.sellPrice >= ITEM_LIMITS.price[0] && item.sellPrice <= ITEM_LIMITS.price[1])) {
+    out.push({ ng: true, text: `売値は ${ITEM_LIMITS.price[0]}〜${ITEM_LIMITS.price[1]}G にしてください。` });
+  } else if (item.sellPrice && item.inShop && item.price && item.sellPrice >= item.price) {
+    out.push({ ng: false, text: `売値（${item.sellPrice}G）が道具屋の値段（${item.price}G）以上なので、買って売るだけでゴールドが増えます。` });
   }
   const obtainable = item.inShop || usages.some((u) => u.where !== 'craft');
   if (!obtainable) {
@@ -462,6 +468,20 @@ export class RpgItemPageComponent {
     this.update((i) => (i.price = clamp(v, ITEM_LIMITS.price)));
   }
 
+  /** 売値(front#379)。空にすると決めない(道具屋の値段の半分になる) */
+  setSellPrice(v: number | string | null): void {
+    this.update((i) => (i.sellPrice = v === null || v === '' ? null : clamp(Number(v), ITEM_LIMITS.price)));
+  }
+
+  /** 売値の案内(front#379)。プレイヤーがいくらで売れるか */
+  sellHint(item: RpgItem): string {
+    if (item.sellPrice) return `プレイヤーは ${item.sellPrice}G で売れます。`;
+    const half = sellPriceOf(item);
+    return half !== undefined
+      ? `空なら ${half}G（道具屋の値段 ${item.price}G の半分）で売れます。`
+      : '空のままだと、道具屋の値段がないので売れません。';
+  }
+
   private markDirty(id: string): void {
     this.dirtyIds.update((s) => new Set(s).add(id));
     this.dirtyChange.emit(true);
@@ -613,6 +633,7 @@ export function toInput(row: ItemRow): RpgItemInput {
     desc: i.desc?.trim() || null,
     inShop,
     price: inShop ? (i.price ?? null) : null,
+    sellPrice: i.sellPrice ?? null,
     sortOrder: i.sortOrder,
     image: i.image ?? null
   };

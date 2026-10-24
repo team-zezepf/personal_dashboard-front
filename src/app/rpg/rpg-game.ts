@@ -10,6 +10,7 @@ import {
   ITEMS,
   TH,
   TW,
+  MAX_GOLD,
   MAX_LUCK,
   RECIPES,
   Recipe,
@@ -1013,15 +1014,53 @@ export class RpgGame {
     this.events.dirty();
   }
 
-  /** 道具屋で買う。装備は1つまで */
-  buy(id: string): boolean {
+  /** 道具屋で今買える数。回復薬・いのちの羽(front#358)は所持ゴールドで買える数まで、装備は持っていなければ1つ */
+  buyableCount(id: string): number {
     const item = ITEMS[id];
-    if (!item || item.price === undefined || this.player.gold < item.price) return false;
-    // 回復薬・いのちの羽(front#358)はいくつでも買える
-    if (item.type !== 'use' && item.type !== 'revive' && this.owned(id)) return false;
-    this.player.gold -= item.price;
-    this.player.inv[id] = (this.player.inv[id] ?? 0) + 1;
-    this.events.log(`${item.name}を買った（-${item.price}G）`);
+    if (!item || item.price === undefined) return 0;
+    const can = item.price > 0 ? Math.floor(this.player.gold / item.price) : 1;
+    if (item.type === 'use' || item.type === 'revive') return can;
+    return this.owned(id) ? 0 : Math.min(can, 1);
+  }
+
+  /** 道具屋で買う。回復薬などは count 個まとめて買える(front#379)。装備は1つまで */
+  buy(id: string, count = 1): boolean {
+    const item = ITEMS[id];
+    if (!item || item.price === undefined || !Number.isInteger(count) || count < 1 || count > this.buyableCount(id)) return false;
+    const gold = item.price * count;
+    this.player.gold -= gold;
+    this.player.inv[id] = (this.player.inv[id] ?? 0) + count;
+    this.events.log(count > 1 ? `${item.name}を${count}個買った（-${gold}G）` : `${item.name}を買った（-${gold}G）`);
+    this.events.statsChanged();
+    this.events.inventoryChanged();
+    this.events.dirty();
+    return true;
+  }
+
+  /** 装備しているか(装備中のものは売れない) */
+  isEquipped = (id: string) => this.player.weapon === id || this.player.armor === id;
+
+  /**
+   * 道具屋で今売れる数(front#379)。売値がない・装備中なら0。
+   * 武器・防具は1つずつ、回復薬・素材は持っている数まで。ゴールドの上限を超える分は売れない
+   */
+  sellableCount(id: string): number {
+    const item = ITEMS[id];
+    const price = item?.sellPrice;
+    if (!item || price === undefined || this.isEquipped(id)) return 0;
+    const room = Math.floor((MAX_GOLD - this.player.gold) / price);
+    const max = item.type === 'weapon' || item.type === 'armor' ? 1 : Infinity;
+    return Math.max(0, Math.min(this.player.inv[id] ?? 0, max, room));
+  }
+
+  /** 道具屋で売る(front#379)。売れなければ何もせず false */
+  sell(id: string, count = 1): boolean {
+    const item = ITEMS[id];
+    if (!item || item.sellPrice === undefined || !Number.isInteger(count) || count < 1 || count > this.sellableCount(id)) return false;
+    const gold = item.sellPrice * count;
+    this.player.inv[id] -= count;
+    this.player.gold += gold;
+    this.events.log(count > 1 ? `${item.name}を${count}個売った（+${gold}G）` : `${item.name}を売った（+${gold}G）`);
     this.events.statsChanged();
     this.events.inventoryChanged();
     this.events.dirty();

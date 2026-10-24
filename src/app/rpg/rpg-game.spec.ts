@@ -223,6 +223,60 @@ describe('RpgGame', () => {
       expect(game.player.gold).toBe(80);
     });
 
+    it('回復薬は個数を選んでまとめて買え、所持ゴールドで買える数までしか買えない(front#379)', () => {
+      expect(game.buyableCount('potion')).toBe(10); // 100G ÷ 10G
+      expect(game.buy('potion', 11)).toBe(false);
+      expect(game.buy('potion', 3)).toBe(true);
+      expect(game.player.inv['potion']).toBe(5);
+      expect(game.player.gold).toBe(70);
+      expect(ev.messages.at(-1)).toBe('回復薬を3個買った（-30G）');
+      // 装備は1つだけ
+      expect(game.buyableCount('leather')).toBe(1);
+      expect(game.buy('leather', 2)).toBe(false);
+    });
+
+    it('売値がなければ道具屋の値段の半分で売れ、値段もなければ売れない(front#379)', () => {
+      expect(ITEMS['potion'].sellPrice).toBe(5);
+      expect(ITEMS['slime_jelly'].sellPrice).toBe(2);
+      expect(ITEMS['wood_sword'].sellPrice).toBeUndefined();
+      expect(game.sell('wood_sword')).toBe(false);
+    });
+
+    it('回復薬・素材は個数を選んで売れ、持っている数より多くは売れない(front#379)', () => {
+      game.player.inv['slime_jelly'] = 4;
+      expect(game.sellableCount('slime_jelly')).toBe(4);
+      expect(game.sell('slime_jelly', 5)).toBe(false);
+      expect(game.sell('slime_jelly', 3)).toBe(true);
+      expect(game.player.inv['slime_jelly']).toBe(1);
+      expect(game.player.gold).toBe(106);
+      expect(ev.messages.at(-1)).toBe('スライムゼリーを3個売った（+6G）');
+      expect(game.sell('potion')).toBe(true);
+      expect(game.player.inv['potion']).toBe(1);
+      expect(game.player.gold).toBe(111);
+      // 0個になったものはセーブに入らない
+      game.sell('slime_jelly');
+      expect(game.toSaveInput().items.some((i) => i.itemId === 'slime_jelly')).toBe(false);
+    });
+
+    it('装備中のものは売れず、外せば1つずつ売れる(front#379)', () => {
+      expect(game.sellableCount('copper_sword')).toBe(0); // 装備中
+      expect(game.sell('copper_sword')).toBe(false);
+      game.equip('wood_sword');
+      expect(game.sellableCount('copper_sword')).toBe(1);
+      expect(game.sell('copper_sword')).toBe(true);
+      expect(game.player.gold).toBe(122); // 45G の半分(22G)
+      expect(game.owned('copper_sword')).toBe(false);
+    });
+
+    it('ゴールドの上限(9,999,999G)を超える分は売れない(front#379)', () => {
+      game.player.gold = 9_999_995;
+      game.player.inv['slime_jelly'] = 5;
+      expect(game.sellableCount('slime_jelly')).toBe(2);
+      expect(game.sell('slime_jelly', 3)).toBe(false);
+      expect(game.sell('slime_jelly', 2)).toBe(true);
+      expect(game.player.gold).toBe(9_999_999);
+    });
+
     it('回復薬を使うとHPが回復し、満タンなら使わない', () => {
       game.player.hp = game.maxHp();
       game.useItem('potion');

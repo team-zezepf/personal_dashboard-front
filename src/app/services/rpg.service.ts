@@ -78,7 +78,7 @@ const SE_FIELDS = `id name filename size createdAt`;
 
 const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt image`;
 
-const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sortOrder updatedAt image`;
+const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sellPrice sortOrder updatedAt image`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 
