@@ -17,6 +17,8 @@ export interface ItemDef {
   def?: number;
   // 道具屋での値段(ゴールド)。ポイント交換限定の品物は持たない
   price?: number;
+  // プレイヤーが道具屋で売るときの値段(front#379)。売値がなければ道具屋の値段の半分。どちらもなければ持たない(売れない)
+  sellPrice?: number;
   desc?: string;
   // 画像のURL(front#345)。なければ絵文字(icon)で出す
   image?: string;
@@ -45,29 +47,29 @@ export const DEFAULT_ITEMS: RpgItem[] = [
   { id: 'chain_mail', name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, inShop: true, price: 260, sortOrder: 11 },
   { id: 'magic_armor', name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, inShop: true, price: 800, sortOrder: 12 },
   { id: 'star_robe', name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定', inShop: false, sortOrder: 13 },
-  { id: 'slime_jelly', name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす', inShop: false, sortOrder: 14 },
-  { id: 'mushroom_spore', name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす', inShop: false, sortOrder: 15 },
-  { id: 'spirit_light', name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす', inShop: false, sortOrder: 16 },
-  { id: 'raptor_fang', name: '恐竜の牙', icon: '🦷', type: 'material', desc: 'ラプトルが落とす', inShop: false, sortOrder: 17 },
-  { id: 'golem_stone', name: '岩のかけら', icon: '🧱', type: 'material', desc: 'いわゴーレムが落とす', inShop: false, sortOrder: 18 },
-  { id: 'ghost_cloth', name: '霊の布', icon: '🧣', type: 'material', desc: 'ゴーストが落とす', inShop: false, sortOrder: 19 },
-  { id: 'black_iron', name: '黒鉄のかけら', icon: '🔩', type: 'material', desc: 'ダークナイトが落とす', inShop: false, sortOrder: 20 },
-  { id: 'dark_gem', name: '闇の魔石', icon: '🔮', type: 'material', desc: '闇の魔導士が落とす', inShop: false, sortOrder: 21 },
-  { id: 'bat_wing', name: 'コウモリの翼', icon: '🦇', type: 'material', desc: 'ナイトバットが落とす', inShop: false, sortOrder: 22 },
-  { id: 'old_bone', name: '古い骨', icon: '🦴', type: 'material', desc: 'ガイコツ兵が落とす', inShop: false, sortOrder: 23 },
-  { id: 'poison_petal', name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす', inShop: false, sortOrder: 24 },
-  { id: 'dragon_scale', name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす', inShop: false, sortOrder: 25 },
-  { id: 'mimic_tongue', name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす', inShop: false, sortOrder: 26 },
-  { id: 'magic_scrap', name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす', inShop: false, sortOrder: 27 },
-  { id: 'rabbit_horn', name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす', inShop: false, sortOrder: 28 },
-  { id: 'honey', name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす', inShop: false, sortOrder: 29 },
-  { id: 'rat_tail', name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす', inShop: false, sortOrder: 30 },
-  { id: 'rusty_key', name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす', inShop: false, sortOrder: 31 },
-  { id: 'iron_chain', name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす', inShop: false, sortOrder: 32 },
-  { id: 'cursed_page', name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす', inShop: false, sortOrder: 33 },
-  { id: 'shadow_shard', name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす', inShop: false, sortOrder: 34 },
-  { id: 'dark_crystal', name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす', inShop: false, sortOrder: 35 },
-  { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sortOrder: 36 },
+  { id: 'slime_jelly', name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす', inShop: false, sellPrice: 2, sortOrder: 14 },
+  { id: 'mushroom_spore', name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす', inShop: false, sellPrice: 6, sortOrder: 15 },
+  { id: 'spirit_light', name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす', inShop: false, sellPrice: 8, sortOrder: 16 },
+  { id: 'raptor_fang', name: '恐竜の牙', icon: '🦷', type: 'material', desc: 'ラプトルが落とす', inShop: false, sellPrice: 10, sortOrder: 17 },
+  { id: 'golem_stone', name: '岩のかけら', icon: '🧱', type: 'material', desc: 'いわゴーレムが落とす', inShop: false, sellPrice: 30, sortOrder: 18 },
+  { id: 'ghost_cloth', name: '霊の布', icon: '🧣', type: 'material', desc: 'ゴーストが落とす', inShop: false, sellPrice: 15, sortOrder: 19 },
+  { id: 'black_iron', name: '黒鉄のかけら', icon: '🔩', type: 'material', desc: 'ダークナイトが落とす', inShop: false, sellPrice: 20, sortOrder: 20 },
+  { id: 'dark_gem', name: '闇の魔石', icon: '🔮', type: 'material', desc: '闇の魔導士が落とす', inShop: false, sellPrice: 300, sortOrder: 21 },
+  { id: 'bat_wing', name: 'コウモリの翼', icon: '🦇', type: 'material', desc: 'ナイトバットが落とす', inShop: false, sellPrice: 15, sortOrder: 22 },
+  { id: 'old_bone', name: '古い骨', icon: '🦴', type: 'material', desc: 'ガイコツ兵が落とす', inShop: false, sellPrice: 12, sortOrder: 23 },
+  { id: 'poison_petal', name: '毒の花びら', icon: '🌺', type: 'material', desc: 'ひとくいそうが落とす', inShop: false, sellPrice: 6, sortOrder: 24 },
+  { id: 'dragon_scale', name: '竜のうろこ', icon: '🐉', type: 'material', desc: 'レッドドラゴンが落とす', inShop: false, sellPrice: 40, sortOrder: 25 },
+  { id: 'mimic_tongue', name: 'ミミックの舌', icon: '👅', type: 'material', desc: 'ミミックが落とす', inShop: false, sellPrice: 30, sortOrder: 26 },
+  { id: 'magic_scrap', name: '魔法の鉄くず', icon: '⚙️', type: 'material', desc: 'リビングアーマーが落とす', inShop: false, sellPrice: 20, sortOrder: 27 },
+  { id: 'rabbit_horn', name: 'ウサギのつの', icon: '🦄', type: 'material', desc: 'つのウサギが落とす', inShop: false, sellPrice: 3, sortOrder: 28 },
+  { id: 'honey', name: 'はちみつ', icon: '🍯', type: 'material', desc: 'ミツバチンが落とす', inShop: false, sellPrice: 3, sortOrder: 29 },
+  { id: 'rat_tail', name: 'ネズミのしっぽ', icon: '🐀', type: 'material', desc: 'ドブネズミが落とす', inShop: false, sellPrice: 10, sortOrder: 30 },
+  { id: 'rusty_key', name: '錆びた鍵', icon: '🗝️', type: 'material', desc: '看守が落とす', inShop: false, sellPrice: 20, sortOrder: 31 },
+  { id: 'iron_chain', name: '鉄の鎖', icon: '⛓️', type: 'material', desc: '囚われの亡霊が落とす', inShop: false, sellPrice: 12, sortOrder: 32 },
+  { id: 'cursed_page', name: '呪われた頁', icon: '📜', type: 'material', desc: '浮かぶ魔導書が落とす', inShop: false, sellPrice: 15, sortOrder: 33 },
+  { id: 'shadow_shard', name: '影のかけら', icon: '🌑', type: 'material', desc: '影の分身が落とす', inShop: false, sellPrice: 25, sortOrder: 34 },
+  { id: 'dark_crystal', name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす', inShop: false, sellPrice: 25, sortOrder: 35 },
+  { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sellPrice: 15, sortOrder: 36 },
   // たおれた人をHP5割で起き上がらせる(front#358)
   { id: 'life_feather', name: 'いのちの羽', icon: '🕊️', type: 'revive', heal: 50, desc: 'たおれた人をHP5割で起き上がらせる', inShop: true, price: 300, sortOrder: 37 }
 ];
@@ -118,8 +120,19 @@ export const isCraftItem = (id: string) => craftItemIds.has(id);
 let currentItems: RpgItem[] = DEFAULT_ITEMS;
 let currentCrafts: RpgCraft[] = DEFAULT_CRAFTS;
 
+/** ゴールドの上限(api の RpgService.MAX_GOLD と同じ)。超えるとセーブできないので、売るときに超えないようにする */
+export const MAX_GOLD = 9_999_999;
+
+/** プレイヤーが道具屋で売るときの値段(front#379)。売値がなければ道具屋の値段の半分(切り捨て)。どちらもなければ売れない(undefined) */
+export function sellPriceOf(item: RpgItem): number | undefined {
+  if (item.sellPrice) return item.sellPrice;
+  const half = item.inShop && item.price ? Math.floor(item.price / 2) : 0;
+  return half > 0 ? half : undefined;
+}
+
 /** APIのアイテムを、ゲームで使う形にする。種類に関係ない値と、売らないアイテムの値段は持たない */
 export function toItemDef(item: RpgItem): ItemDef {
+  const sellPrice = sellPriceOf(item);
   return {
     name: item.name,
     icon: item.icon,
@@ -128,6 +141,7 @@ export function toItemDef(item: RpgItem): ItemDef {
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
+    ...(sellPrice !== undefined ? { sellPrice } : {}),
     ...(item.desc ? { desc: item.desc } : {}),
     ...(item.image ? { image: rpgItemImageUrl(item.image) } : {})
   };

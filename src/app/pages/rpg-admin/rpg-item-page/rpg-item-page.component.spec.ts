@@ -1,5 +1,5 @@
 import { RpgCraft, RpgEnemy, RpgItem, RpgMap } from '../../../models/rpg.models';
-import { DEFAULT_CRAFTS, DEFAULT_ITEMS, ITEMS, MATERIAL_IDS, RECIPES, SHOP_ITEMS, isCraftItem, itemsVersion, setCrafts, setItems } from '../../../rpg/rpg-data';
+import { DEFAULT_CRAFTS, DEFAULT_ITEMS, ITEMS, MATERIAL_IDS, RECIPES, SHOP_ITEMS, isCraftItem, itemsVersion, sellPriceOf, setCrafts, setItems } from '../../../rpg/rpg-data';
 import { DEFAULT_ENEMIES } from '../../../rpg/rpg-enemy';
 import { ItemUsage, problemsOf, toInput, usagesOf } from './rpg-item-page.component';
 
@@ -27,7 +27,7 @@ describe('アイテムタブ(front#343)', () => {
       expect(SHOP_ITEMS).toEqual(['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor', 'life_feather']);
       expect(MATERIAL_IDS).toHaveLength(23);
       expect(RECIPES).toHaveLength(8);
-      expect(ITEMS['potion']).toEqual({ name: '回復薬', icon: '🧪', type: 'use', heal: 35, price: 10, desc: 'HPを35回復' });
+      expect(ITEMS['potion']).toEqual({ name: '回復薬', icon: '🧪', type: 'use', heal: 35, price: 10, sellPrice: 5, desc: 'HPを35回復' });
       // 売らない装備は値段を持たない(道具屋で買えない)
       expect(ITEMS['wood_sword'].price).toBeUndefined();
     });
@@ -38,7 +38,7 @@ describe('アイテムタブ(front#343)', () => {
 
       expect(itemsVersion()).toBe(before + 1);
       expect(SHOP_ITEMS[0]).toBe('item1');
-      expect(ITEMS['item1']).toEqual({ name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, price: 25, desc: 'HPを80回復' });
+      expect(ITEMS['item1']).toEqual({ name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, price: 25, sellPrice: 12, desc: 'HPを80回復' });
       expect(MATERIAL_IDS).toContain('item3');
       expect(isCraftItem('fang_sword')).toBe(true);
       expect(RECIPES).toHaveLength(8);
@@ -64,7 +64,7 @@ describe('アイテムタブ(front#343)', () => {
 
     it('種類に関係ない値は持たない', () => {
       setItems([...DEFAULT_ITEMS, sword({ heal: 10, def: 5 })]);
-      expect(ITEMS['item2']).toEqual({ name: '雷の剣', icon: '⚡', type: 'weapon', atk: 30, price: 600 });
+      expect(ITEMS['item2']).toEqual({ name: '雷の剣', icon: '⚡', type: 'weapon', atk: 30, price: 600, sellPrice: 300 });
     });
   });
 
@@ -136,13 +136,38 @@ describe('アイテムタブ(front#343)', () => {
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
       expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, atk: null, def: null, desc: null, inShop: true, price: 25, sortOrder: 37, image: null
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
       });
       // 画像(front#345)はファイル名のまま送る
       expect(toInput({ item: potion({ image: 'a.png' }), isNew: false }).image).toBe('a.png');
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
       // 素材は売れない
       expect(toInput({ item: stone({ inShop: true, price: 10 }), isNew: false })).toMatchObject({ inShop: false, price: null });
+    });
+
+    it('売値(front#379)は、素材にも道具屋で売らないアイテムにも付けて送れる', () => {
+      expect(toInput({ item: stone({ sellPrice: 7 }), isNew: false }).sellPrice).toBe(7);
+      expect(toInput({ item: sword({ inShop: false, price: null, sellPrice: 50 }), isNew: false }).sellPrice).toBe(50);
+    });
+  });
+
+  describe('売値(front#379)', () => {
+    const texts = (i: RpgItem) => problemsOf(i, [], [], dropped).map((p) => `${p.ng ? 'ng' : 'warn'}: ${p.text}`);
+
+    it('売値が範囲外なら保存できず、道具屋の値段以上なら注意する', () => {
+      expect(texts(stone({ sellPrice: 0 }))).toEqual(['ng: 売値は 1〜99999G にしてください。']);
+      expect(texts(stone({ sellPrice: 100_000 }))).toEqual(['ng: 売値は 1〜99999G にしてください。']);
+      expect(texts(potion({ sellPrice: 25 }))).toEqual(['warn: 売値（25G）が道具屋の値段（25G）以上なので、買って売るだけでゴールドが増えます。']);
+      expect(texts(potion({ sellPrice: 12 }))).toEqual([]);
+    });
+
+    it('売値が空なら道具屋の値段の半分、値段もなければ売れない', () => {
+      expect(sellPriceOf(potion())).toBe(12);
+      expect(sellPriceOf(potion({ sellPrice: 20 }))).toBe(20);
+      expect(sellPriceOf(stone())).toBeUndefined();
+      expect(sellPriceOf(stone({ sellPrice: 4 }))).toBe(4);
+      // 道具屋で売らないなら、値段が残っていても半分にはしない
+      expect(sellPriceOf(sword({ inShop: false }))).toBeUndefined();
     });
   });
 });

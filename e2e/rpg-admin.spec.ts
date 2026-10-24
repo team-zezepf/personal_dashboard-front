@@ -109,6 +109,7 @@ test(
     expected: [
       '「🎒 アイテム」タブを開くと、回復の道具・武器・防具・素材に分かれた一覧と、道具屋での見え方が出る',
       '「＋ 新しいアイテム」で作り、名前・回復量・道具屋で売る・値段を入れると、チェックが ✅ になり、道具屋での見え方のいちばん下に並ぶ',
+      '売値(front#379)が空なら道具屋の値段の半分を案内し、道具屋の値段以上にすると注意が出る',
       '保存すると「アイテムを保存しました」と出て、APIが決めたID(item1)になる',
       'ゲーム(/rpg)の道具屋 ミナに、作ったアイテムが 15G で並び、買うと 15G になって持ち物に入る',
       '「アイテム」タブで作ったアイテムを消すと、一覧から消え、ゲームの持ち物からもなくなる'
@@ -145,6 +146,20 @@ test(
         await expect(shop.locator('.shop-row')).toHaveCount(11);
         await expect(shop.locator('.shop-row').last()).toContainText(name);
         await expect(shop.locator('.shop-row').last()).toContainText('15 G');
+      }
+    );
+
+    await step(
+      '売値(front#379)は空のまま案内を見てから、20 を入れ、次に 8 に直す',
+      '空なら「空なら 7G（道具屋の値段 15G の半分）で売れます。」、20 なら道具屋の値段以上の注意が出て、8 なら「プレイヤーは 8G で売れます。」になり、チェックは ✅ に戻る',
+      async () => {
+        const props = tab.getByRole('complementary', { name: 'アイテム', exact: true });
+        await expect(props.getByText('空なら 7G（道具屋の値段 15G の半分）で売れます。')).toBeVisible();
+        await props.getByLabel('売値', { exact: true }).fill('20');
+        await expect(props.getByText('売値（20G）が道具屋の値段（15G）以上なので、買って売るだけでゴールドが増えます。')).toBeVisible();
+        await props.getByLabel('売値', { exact: true }).fill('8');
+        await expect(props.getByText('プレイヤーは 8G で売れます。')).toBeVisible();
+        await expect(props.getByText('✅ 問題はありません')).toBeVisible();
       }
     );
 

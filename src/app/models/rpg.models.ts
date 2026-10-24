@@ -379,6 +379,8 @@ export interface RpgItem {
   // 道具屋で売るか。売るときだけ値段(ゴールド)がある
   inShop: boolean;
   price?: number | null;
+  // プレイヤーが道具屋で売るときの値段(front#379 / api#177)。null なら道具屋の値段の半分、値段もなければ売れない
+  sellPrice?: number | null;
   // 道具屋に並ぶ順番(一覧もこの順)
   sortOrder: number;
   updatedAt?: string | null;

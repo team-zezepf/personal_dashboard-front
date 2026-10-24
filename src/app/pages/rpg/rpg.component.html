@@ -129,11 +129,26 @@
           @if (shopError()) {
             <p class="shop-error">{{ shopError() }}</p>
           }
+          <!-- 買う／売る(front#379) -->
+          @if (mode === 'shop') {
+            <div class="shop-tabs" role="tablist" aria-label="買う・売る">
+              <button type="button" role="tab" class="shop-tab" [class.on]="shopTab() === 'buy'" [attr.aria-selected]="shopTab() === 'buy'" (click)="setShopTab('buy')">買う</button>
+              <button type="button" role="tab" class="shop-tab" [class.on]="shopTab() === 'sell'" [attr.aria-selected]="shopTab() === 'sell'" (click)="setShopTab('sell')">売る</button>
+            </div>
+            @if (shopTab() === 'sell' && !shopRows().length) {
+              <p class="shop-empty">売れるものを持っていません</p>
+            }
+          }
           @for (row of shopRows(); track row.id) {
             <div class="shop-row">
               <span class="shop-icon"><app-rpg-item-icon [icon]="row.icon" [image]="row.image" /></span>
               <div class="shop-info">
-                <div class="shop-name">{{ row.name }}</div>
+                <div class="shop-name">
+                  {{ row.name }}
+                  @if (row.equipped) {
+                    <span class="equipped-chip">装備中</span>
+                  }
+                </div>
                 <div class="shop-desc">{{ row.desc }}</div>
                 @if (row.materials) {
                   <div class="shop-materials">
@@ -144,6 +159,13 @@
                 }
               </div>
               <span class="shop-price" [class.pt]="mode === 'exchange'">{{ row.price }}</span>
+              @if (row.qty; as qty) {
+                <div class="stepper">
+                  <button type="button" [disabled]="qty.value <= 1" [attr.aria-label]="row.name + 'を1個へらす'" (click)="changeShopQty(row.id, -1)">－</button>
+                  <span [attr.aria-label]="row.name + 'の個数'">{{ qty.value }}</span>
+                  <button type="button" [disabled]="qty.value >= qty.max" [attr.aria-label]="row.name + 'を1個ふやす'" (click)="changeShopQty(row.id, 1)">＋</button>
+                </div>
+              }
               <button
                 type="button"
                 class="btn"
@@ -156,7 +178,23 @@
               </button>
             </div>
           }
+          @if (mode === 'shop' && shopTab() === 'sell' && shopRows().length) {
+            <p class="shop-foot">装備中のものは、外すと売れます。</p>
+          }
         </div>
+        <!-- 武器・防具を売る前の確認(front#379) -->
+        @if (sellConfirm(); as c) {
+          <div class="sell-confirm">
+            <div class="sell-confirm-box" role="alertdialog" aria-label="売る確認">
+              <p>{{ c.name }}を {{ c.gold }}G で売りますか？</p>
+              <p class="sub">{{ c.buyPrice ? '売ったあと、また買うには ' + c.buyPrice + 'G かかります。' : 'このアイテムは道具屋では買えません。' }}</p>
+              <div class="row">
+                <button type="button" class="btn ghost" (click)="cancelSell()">やめる</button>
+                <button type="button" class="btn" (click)="confirmSell()">売る</button>
+              </div>
+            </div>
+          </div>
+        }
       </div>
     }
 
