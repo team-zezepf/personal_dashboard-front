@@ -440,35 +440,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.shop-qty {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.shop-qty button {
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.shop-qty button:disabled {
-  color: var(--line-strong);
-}
-
-.shop-qty span {
-  min-width: 24px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
 .equipped-chip {
   display: inline-block;
   margin-left: 6px;

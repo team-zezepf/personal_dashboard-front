@@ -160,7 +160,7 @@
               </div>
               <span class="shop-price" [class.pt]="mode === 'exchange'">{{ row.price }}</span>
               @if (row.qty; as qty) {
-                <div class="shop-qty">
+                <div class="stepper">
                   <button type="button" [disabled]="qty.value <= 1" [attr.aria-label]="row.name + 'を1個へらす'" (click)="changeShopQty(row.id, -1)">－</button>
                   <span [attr.aria-label]="row.name + 'の個数'">{{ qty.value }}</span>
                   <button type="button" [disabled]="qty.value >= qty.max" [attr.aria-label]="row.name + 'を1個ふやす'" (click)="changeShopQty(row.id, 1)">＋</button>
