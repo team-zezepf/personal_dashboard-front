@@ -258,7 +258,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   });
 
   newArea = { name: '新しいエリア', width: 20, height: 20, gridX: 0, gridY: 0 };
-  newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
+  newDungeon = { name: '新しいダンジョン', theme: 'plain', width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
   readonly page = signal<'map' | 'bgm' | 'enemy' | 'item' | 'craft' | 'object'>('map');
@@ -682,7 +682,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.markDirty();
   }
 
-  // ダンジョンの設定(名前・推奨レベル・見た目・BGM)を変えた。ダンジョンの中のすべてのエリアで共通
+  // ダンジョンの設定(名前・見た目・BGM)を変えた。ダンジョンの中のすべてのエリアで共通
   editDungeon(dungeon: RpgDungeon, change: Partial<RpgDungeon>): void {
     Object.assign(dungeon, change);
     if (!this.dirtyDungeonIds().has(dungeon.id)) this.dirtyDungeonIds.set(new Set([...this.dirtyDungeonIds(), dungeon.id]));
@@ -1358,14 +1358,14 @@ export class RpgAdminPageComponent implements OnDestroy {
   }
 
   openNewDungeon(): void {
-    this.newDungeon = { name: '新しいダンジョン', theme: 'plain', recommendedLevel: 1, width: 20, height: 20 };
+    this.newDungeon = { name: '新しいダンジョン', theme: 'plain', width: 20, height: 20 };
     this.newDungeonOpen.set(true);
   }
 
   // 新しいダンジョンと、その最初のエリア(位置 0, 0)をすぐに保存する
   createDungeon(): void {
     const d = this.newDungeon;
-    const input = { id: null, name: d.name.trim() || '新しいダンジョン', theme: d.theme, recommendedLevel: Math.max(1, Number(d.recommendedLevel) || 1), bgmId: null };
+    const input = { id: null, name: d.name.trim() || '新しいダンジョン', theme: d.theme, bgmId: null };
     this.saving.set(true);
     this.rpgService.saveDungeon(input).subscribe({
       next: (dungeon) => {
@@ -1392,7 +1392,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.saving.set(true);
     concat(
       ...dungeons.map((d) =>
-        this.rpgService.saveDungeon({ id: d.id, name: d.name, recommendedLevel: d.recommendedLevel, theme: d.theme, bgmId: d.bgmId ?? null })
+        this.rpgService.saveDungeon({ id: d.id, name: d.name, theme: d.theme, bgmId: d.bgmId ?? null })
       ),
       ...targets.map((m) => this.rpgService.saveMap(toMapInput(m)))
     )

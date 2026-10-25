@@ -36,7 +36,6 @@ import {
   healRateOf,
   itemStatLabel,
   maxHpOf,
-  recLabel,
   swordColorOf,
   walkSpeedOf
 } from '../../rpg/rpg-data';
@@ -88,7 +87,6 @@ export class RpgPageComponent implements OnDestroy {
   // マップ作成画面の「この場所からテストプレイ」で開いたとき(/rpg?test=<エリアのID>)。
   // そのエリアの中央付近から始め(front#337)、セーブデータは保存しない
   readonly testArea = inject(ActivatedRoute).snapshot.queryParamMap.get('test');
-  readonly recLabel = recLabel;
 
   private readonly gameArea = viewChild.required<ElementRef<HTMLDivElement>>('gameArea');
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
@@ -102,7 +100,7 @@ export class RpgPageComponent implements OnDestroy {
   private readonly version = signal(0);
   readonly logs = signal<string[]>([]);
   readonly fading = signal(false);
-  // ダンジョンに入ったときに画面の中央に大きく出す、ダンジョンの名前と推奨レベル
+  // ダンジョンに入ったときに画面の中央に大きく出す、ダンジョンの名前
   readonly areaTitle = signal<RpgDungeon | null>(null);
   readonly knockedOut = signal(false);
   // 仲間がいるときにたおれて、起こしてもらうのを待っている(front#358)。残りの秒

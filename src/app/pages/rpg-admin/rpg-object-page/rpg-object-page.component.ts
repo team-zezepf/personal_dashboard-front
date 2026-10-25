@@ -205,7 +205,7 @@ export class RpgObjectPageComponent implements OnDestroy {
     const o: RpgMapObject = { type, x: 2, y: 2, torch: type === 'pillar' };
     applyDraft(o, { ...this.draftOf(type), showMessage: false, lines: '', signDir: null, mimics: [] });
     map.objects = [o];
-    return { map, dungeon: { id: 'object-preview', name: '見本', recommendedLevel: 1, theme, sortOrder: 0 } };
+    return { map, dungeon: { id: 'object-preview', name: '見本', theme, sortOrder: 0 } };
   }
 
   private gameFor(type: string, theme: string): RpgGame {

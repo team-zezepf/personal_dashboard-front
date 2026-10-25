@@ -7,16 +7,16 @@ const maps = [area('村', 'd1', 0, 0), area('丘', 'd1', 1, 0), area('湖', 'd1'
 const [village, hill] = maps;
 
 describe('signLinesOf(front#314)', () => {
-  const tower = { name: '闇の塔', recommendedLevel: 15 };
+  const tower = { name: '闇の塔' };
 
   it('文章があれば、前後の空白・空の行を捨てた文章', () => {
     expect(signLinesOf(['  この先 霧の沼。 ', '', ' ', '足元に注意！'], tower)).toEqual(['この先 霧の沼。', '足元に注意！']);
   });
 
   it('文章がなく、ほかのダンジョンへの端を指すなら、行き先の案内', () => {
-    expect(signLinesOf([], tower)).toEqual(['この先 闇の塔（推奨 Lv15〜）']);
-    expect(signLinesOf(null, tower)).toEqual(['この先 闇の塔（推奨 Lv15〜）']);
-    expect(signLinesOf([' ', ''], tower)).toEqual(['この先 闇の塔（推奨 Lv15〜）']);
+    expect(signLinesOf([], tower)).toEqual(['この先 闇の塔']);
+    expect(signLinesOf(null, tower)).toEqual(['この先 闇の塔']);
+    expect(signLinesOf([' ', ''], tower)).toEqual(['この先 闇の塔']);
   });
 
   it('文章がなく、指す端もなければ読めない(null)', () => {
