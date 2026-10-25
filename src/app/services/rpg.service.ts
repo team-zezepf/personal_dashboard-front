@@ -70,7 +70,7 @@ const MAP_FIELDS = `
   sortOrder updatedAt bgmId
 `;
 
-const DUNGEON_FIELDS = `id name recommendedLevel theme bgmId sortOrder updatedAt`;
+const DUNGEON_FIELDS = `id name theme bgmId sortOrder updatedAt`;
 
 const BGM_FIELDS = `id name filename size createdAt`;
 

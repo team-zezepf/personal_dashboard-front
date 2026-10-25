@@ -62,9 +62,9 @@ const MAPS: RpgMap[] = [
 ];
 
 const DUNGEONS: RpgDungeon[] = [
-  { id: 'plain', name: '始まりの草原', recommendedLevel: 1, theme: 'plain', sortOrder: 1 },
-  { id: 'forest', name: '精霊の森', recommendedLevel: 4, theme: 'forest', sortOrder: 2 },
-  { id: 'cave', name: '海辺の洞くつ', recommendedLevel: 6, theme: 'tower', sortOrder: 3 }
+  { id: 'plain', name: '始まりの草原', theme: 'plain', sortOrder: 1 },
+  { id: 'forest', name: '精霊の森', theme: 'forest', sortOrder: 2 },
+  { id: 'cave', name: '海辺の洞くつ', theme: 'tower', sortOrder: 3 }
 ];
 
 function save(partial: Partial<RpgSave> = {}): RpgSave {
@@ -733,10 +733,10 @@ describe('RpgGame', () => {
     });
 
     it('文章がなく、ほかのダンジョンへの端を指す看板は、行き先の案内を出す', () => {
-      // 始まりの草原は、右下の端が精霊の森(推奨 Lv4)につながる
+      // 始まりの草原は、右下の端が精霊の森につながる
       game.loadMap(map('plain', { links: [{ dx: 1, dy: 0, to: 'forest' }], objects: [sign(9, 5)] }));
       const o = game.map.statics.find((s) => s.type === 'sign')!;
-      expect(game.signLines(o)).toEqual(['この先 精霊の森（推奨 Lv4〜）']);
+      expect(game.signLines(o)).toEqual(['この先 精霊の森']);
     });
   });
 

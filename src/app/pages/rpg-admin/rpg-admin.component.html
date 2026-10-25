@@ -327,11 +327,8 @@
               <span>名前</span>
               <input type="text" maxlength="30" [ngModel]="dungeon.name" (ngModelChange)="editDungeon(dungeon, { name: $event })" />
             </label>
+            <!-- 見た目とデフォルトBGMを横に並べる(front#381) -->
             <div class="row2">
-              <label class="field">
-                <span>推奨レベル</span>
-                <input type="number" min="1" max="99" [ngModel]="dungeon.recommendedLevel" (ngModelChange)="editDungeon(dungeon, { recommendedLevel: $event })" />
-              </label>
               <label class="field">
                 <span>見た目</span>
                 <select [ngModel]="dungeon.theme" (ngModelChange)="editDungeon(dungeon, { theme: $event })">
@@ -340,17 +337,16 @@
                   }
                 </select>
               </label>
+              <label class="field">
+                <span>デフォルトBGM</span>
+                <select [ngModel]="dungeon.bgmId ?? ''" (ngModelChange)="setDungeonBgm(dungeon, $event)">
+                  <option value="">（曲なし）</option>
+                  @for (bgm of bgms(); track bgm.id) {
+                    <option [value]="bgm.id">{{ bgm.name }}</option>
+                  }
+                </select>
+              </label>
             </div>
-            <label class="field">
-              <span>BGM</span>
-              <select [ngModel]="dungeon.bgmId ?? ''" (ngModelChange)="setDungeonBgm(dungeon, $event)">
-                <option value="">（曲なし）</option>
-                @for (bgm of bgms(); track bgm.id) {
-                  <option [value]="bgm.id">{{ bgm.name }}</option>
-                }
-              </select>
-            </label>
-            <p class="muted small">ダンジョンの中のすべてのエリアで流れます。エリアの設定で、エリアだけ別の曲にもできます。</p>
           </section>
 
           <section aria-label="エリアの配置">
@@ -543,17 +539,14 @@
       <div class="modal-card" role="dialog" aria-label="新しいダンジョン">
         <h2>新しいダンジョン</h2>
         <label class="field"><span>名前</span><input type="text" maxlength="30" [(ngModel)]="newDungeon.name" /></label>
-        <div class="row2">
-          <label class="field">
-            <span>見た目</span>
-            <select [(ngModel)]="newDungeon.theme">
-              @for (t of themes; track t.id) {
-                <option [value]="t.id">{{ t.label }}</option>
-              }
-            </select>
-          </label>
-          <label class="field"><span>推奨レベル</span><input type="number" min="1" max="99" [(ngModel)]="newDungeon.recommendedLevel" /></label>
-        </div>
+        <label class="field">
+          <span>見た目</span>
+          <select [(ngModel)]="newDungeon.theme">
+            @for (t of themes; track t.id) {
+              <option [value]="t.id">{{ t.label }}</option>
+            }
+          </select>
+        </label>
         <div class="row2">
           <label class="field"><span>最初のエリアの幅（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.width" /></label>
           <label class="field"><span>奥行き（マス）</span><input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [(ngModel)]="newDungeon.height" /></label>

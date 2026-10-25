@@ -517,7 +517,6 @@ export const THEMES: Record<string, ThemeDef> = {
 };
 
 export const themeOf = (theme: string): ThemeDef => THEMES[theme] ?? THEMES['plain'];
-export const recLabel = (level: number) => `推奨 Lv${level}〜`;
 
 // ===== ダンジョンの中のエリアのつながり(front#234) =====
 // エリアはダンジョンの中で縦横のマス目(gridX, gridY)に並び、隣り合うエリアは向かい合う端でつながる。
@@ -661,12 +660,12 @@ export function firstSpot(map: AreaMap): [number, number] {
 
 /**
  * 看板をクリックしたときに出す文(front#314)。1行が1ページ。
- * 文章があればその文章、なければ指すダンジョンへの案内(「この先 闇の塔(推奨 Lv15〜)」)。どちらもなければ null(読めない看板)
+ * 文章があればその文章、なければ指すダンジョンへの案内(「この先 闇の塔」)。どちらもなければ null(読めない看板)
  */
-export function signLinesOf(lines: readonly string[] | null | undefined, to: Pick<RpgDungeon, 'name' | 'recommendedLevel'> | null): string[] | null {
+export function signLinesOf(lines: readonly string[] | null | undefined, to: Pick<RpgDungeon, 'name'> | null): string[] | null {
   const own = (lines ?? []).map((l) => l.trim()).filter((l) => l);
   if (own.length) return own;
-  return to ? [`この先 ${to.name}（${recLabel(to.recommendedLevel)}）`] : null;
+  return to ? [`この先 ${to.name}`] : null;
 }
 
 /** 看板(front#274)が指す、いちばん近い「ほかのダンジョンへの端」。そのエリアにほかのダンジョンへの端がなければ null */

@@ -143,11 +143,10 @@ export type RpgSaveInput = Omit<RpgSave, 'updatedAt' | 'party'> & {
   leaving?: boolean;
 };
 
-// RPGのダンジョン(front#234 / api#96)。名前・推奨レベル・見た目・BGMを持つ、エリアのまとまり
+// RPGのダンジョン(front#234 / api#96)。名前・見た目・BGMを持つ、エリアのまとまり(推奨レベルは front#381 で廃止)
 export interface RpgDungeon {
   id: string;
   name: string;
-  recommendedLevel: number;
   // plain / forest / valley / tower
   theme: string;
   // ダンジョンで流すBGM(RpgBgm の id)。なければ何も流さない(front#218)
@@ -157,7 +156,7 @@ export interface RpgDungeon {
 }
 
 // id が null なら新しいダンジョンとして追加する
-export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'recommendedLevel' | 'theme'> & { id: string | null; bgmId: string | null };
+export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'theme'> & { id: string | null; bgmId: string | null };
 
 // RPGのマップ(エリア)(front#217 / api#82)。マップ作成画面で作り、ゲームはこれを読んで地形を作る
 export interface RpgMapObject {

@@ -308,7 +308,7 @@ export interface AreaSlide {
  */
 export class RpgGame {
   area!: RpgMap;
-  // area が入っているダンジョン。見た目(theme)・BGM・推奨レベルはダンジョンで決まる
+  // area が入っているダンジョン。見た目(theme)・BGMはダンジョンで決まる
   dungeon!: RpgDungeon;
   theme!: ThemeDef;
   map!: AreaMap;
@@ -381,7 +381,7 @@ export class RpgGame {
   }
 
   dungeonOf(area: RpgMap): RpgDungeon {
-    return this.dungeons.find((d) => d.id === area.dungeonId) ?? { id: area.dungeonId, name: area.name, recommendedLevel: 1, theme: 'plain', sortOrder: 0 };
+    return this.dungeons.find((d) => d.id === area.dungeonId) ?? { id: area.dungeonId, name: area.name, theme: 'plain', sortOrder: 0 };
   }
 
   private homeArea(): RpgMap {

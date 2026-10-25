@@ -485,3 +485,48 @@ test(
     });
   }
 );
+
+test(
+  'E2E-28 ダンジョンの推奨レベルをなくし、マップ作成画面では見た目とデフォルトBGMが並び、ゲームのエリア名にも出ない(front#381)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: 見た目 草原)'],
+    expected: [
+      'マップ作成画面の「🏰 ダンジョン」の設定に「推奨レベル」の欄がなく、「見た目」と「デフォルトBGM」が横に並ぶ',
+      '「＋ 新しいダンジョン」の画面にも「推奨レベル」の欄がなく、「見た目」がある',
+      'ゲーム(/rpg)でエリアに入ったときのタイトルは、ダンジョン名だけで「推奨 Lv」は出ない'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const settings = page.getByRole('region', { name: 'ダンジョンの設定' });
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「🏰 ダンジョン」の設定を見る', '「推奨レベル」の欄がなく、「見た目」(草原)と「デフォルトBGM」が同じ高さに横に並ぶ', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+      await expect(settings.getByText('推奨レベル')).toHaveCount(0);
+      const look = settings.getByLabel('見た目');
+      const bgm = settings.getByLabel('デフォルトBGM');
+      await expect(look.locator('option:checked')).toHaveText('草原');
+      const [a, b] = [(await look.boundingBox())!, (await bgm.boundingBox())!];
+      expect(Math.abs(a.y - b.y)).toBeLessThan(2);
+      expect(b.x).toBeGreaterThan(a.x);
+    });
+
+    await step('「＋ 新しいダンジョン」を押し、作らずに「やめる」を押す', '「推奨レベル」の欄がなく、「見た目」がある。やめると閉じる', async () => {
+      await page.getByRole('button', { name: '＋ 新しいダンジョン' }).click();
+      const dialog = page.getByRole('dialog', { name: '新しいダンジョン' });
+      await expect(dialog.getByLabel('見た目')).toBeVisible();
+      await expect(dialog.getByText('推奨レベル')).toHaveCount(0);
+      await dialog.getByRole('button', { name: 'やめる' }).click();
+      await expect(dialog).toBeHidden();
+    });
+
+    await step('RPG(/rpg)を開く', 'エリア名「始まりの草原」が大きく出て、「推奨 Lv」は出ない', async () => {
+      await page.goto('/rpg');
+      await expect(page.getByText('始まりの草原', { exact: true }).first()).toBeVisible();
+      await expect(page.getByText(/推奨 Lv/)).toHaveCount(0);
+    });
+  }
+);

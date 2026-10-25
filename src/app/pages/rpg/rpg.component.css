@@ -223,11 +223,6 @@
   letter-spacing: 0.1em;
 }
 
-.area-title-rec {
-  font-size: 13px;
-  margin-top: 4px;
-}
-
 @keyframes area-title {
   0% { opacity: 0; }
   20% { opacity: 1; }
