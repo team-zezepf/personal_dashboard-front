@@ -265,8 +265,9 @@ export class RpgPageComponent implements OnDestroy {
       return { id, icon: s.icon, name: s.name, mp: s.mp, kind: s.kind, desc: s.desc, learned, canUse: learned && p.mp >= s.mp && !p.dead };
     });
   });
-  // 選んでいる敵・仲間・自分(front#383)。画面の上のまんなかに出す。毎フレーム変わるHPは、変わったときだけ入れ直す
-  readonly selection = signal<{ enemy: boolean; name: string; hp: number; maxHp: number; rate: number } | null>(null);
+  // 選んでいる仲間・自分(front#383)。回復をだれに使うか分かるよう、画面の上のまんなかに出す。毎フレーム変わるHPは、変わったときだけ入れ直す。
+  // 敵を選んだときは、敵の頭の上に名前・HPが出ているので出さない(front#385)
+  readonly selection = signal<{ name: string; hp: number; maxHp: number; rate: number } | null>(null);
   private selectionKey = '';
   // 今のダンジョンの曲(なければ null)
   readonly areaBgm = signal<RpgBgm | null>(null);
@@ -842,20 +843,16 @@ export class RpgPageComponent implements OnDestroy {
     if (game && c) game.select(c);
   }
 
-  /** 選んでいる相手の表示を、変わったときだけ入れ直す(毎フレーム呼ぶ) */
+  /** 選んでいる仲間・自分の表示を、変わったときだけ入れ直す(毎フレーム呼ぶ) */
   private refreshSelection(game: RpgGame): void {
-    const enemy = game.selectedEnemy();
-    const fighter = enemy ? null : game.selectedFighter();
+    const fighter = game.selectedFighter();
     let view: ReturnType<typeof this.selection> = null;
-    if (enemy) {
-      const max = ENEMIES[enemy.type]?.hp ?? 1;
-      view = { enemy: true, name: ENEMIES[enemy.type]?.name ?? '', hp: Math.max(0, Math.round(enemy.hp)), maxHp: max, rate: 0 };
-    } else if (fighter) {
-      const max = game.maxHpOf(fighter);
-      view = { enemy: false, name: game.nameOf(fighter), hp: Math.max(0, Math.round(fighter.hp)), maxHp: max, rate: 0 };
+    if (fighter) {
+      const hp = Math.max(0, Math.round(fighter.hp));
+      const maxHp = game.maxHpOf(fighter);
+      view = { name: game.nameOf(fighter), hp, maxHp, rate: (hp / maxHp) * 100 };
     }
-    if (view) view.rate = (view.hp / view.maxHp) * 100;
-    const key = view ? `${view.enemy}|${view.name}|${view.hp}|${view.maxHp}` : '';
+    const key = view ? `${view.name}|${view.hp}|${view.maxHp}` : '';
     if (key === this.selectionKey) return;
     this.selectionKey = key;
     this.selection.set(view);
@@ -1355,6 +1352,11 @@ export class RpgPageComponent implements OnDestroy {
       },
       // 選んでいる相手(front#383)。画面の上のまんなかに出しているもの
       selection: () => this.selection(),
+      // 選んでいる敵の名前とHP(front#385。画面には出さないので、テストで確かめるため)。選んでいなければ null
+      selectedEnemy: (): { name: string; hp: number } | null => {
+        const e = this.game?.selectedEnemy();
+        return e ? { name: ENEMIES[e.type]?.name ?? '', hp: e.hp } : null;
+      },
       // プレイヤーの足元の画面上の位置(front#383)
       playerPosition: (): [number, number] | null => (this.game ? this.game.screenPositionOf(this.game.player) : null),
       // MPと覚えた魔法(front#383)

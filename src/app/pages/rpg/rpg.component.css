@@ -85,7 +85,7 @@
   background: rgba(30, 58, 138, 0.78);
 }
 
-/* 選んでいる敵・仲間・自分(front#383)。左上と同じチップで、上のまんなか(ショートカットの下)に出す */
+/* 選んでいる仲間・自分(front#383。敵は出さない front#385)。左上と同じチップで、上のまんなか(ショートカットの下)に出す */
 .selection {
   position: absolute;
   top: 52px;
@@ -103,14 +103,6 @@
 .selection .vitals-bar {
   width: 64px;
   height: 6px;
-}
-
-.selection.enemy {
-  border-left-color: #ef4444;
-}
-
-.selection.enemy .hp {
-  background: #ef4444;
 }
 
 .chip.test {

@@ -1114,7 +1114,7 @@ test(
       '左下にMPのバー(20 / 20)と「🔮 魔法」ボタンがある。魔法の一覧では、まだ覚えていない魔法は押せない',
       '持ち物の魔法書を使うと、ログに「…を覚えた！」と出て魔法書がなくなり、魔法の一覧でファイア・ヒールの「使う」を押せる(ブリザドは押せない)',
       '歯車(設定)のショートカットで 3キーにファイア、4キーにヒールを選ぶと、左上に「3 🔥 ファイア MP4」「4 💚 ヒール MP5」が出る',
-      'いちばん近いスライムをクリックすると、画面の上のまんなかに「🎯 スライム」と出る。3キーを押すと、ログに「🔥 ファイア！」と出て MP が4減り、スライムのHPが減る(または たおれる)',
+      'いちばん近いスライムをクリックすると選ばれる(画面の上のまんなかには出さない front#385)。3キーを押すと、ログに「🔥 ファイア！」と出て MP が4減り、スライムのHPが減る(または たおれる)',
       '自分をクリックすると「💚 あなた」に変わる。HPを20に減らして4キーを押すと、ログに「💚 ヒール！」と出てHPが35以上に戻り、MP が5減る',
       'Esc を押すと選択が外れる。持ち物の魔法の水を使うと MP が 20(最大)に戻る',
       '画面を読み込み直しても、覚えた魔法(ファイア・ヒール)は残っている'
@@ -1176,19 +1176,20 @@ test(
 
     await step(
       'いちばん近いスライムをクリックし、3キーを押す',
-      '上のまんなかに「🎯 スライム」と出て、ログに「🔥 ファイア！」、MP が4減り、スライムのHPが22より減る(または たおれる)',
+      'スライムが選ばれ(上のまんなかには何も出ない)、ログに「🔥 ファイア！」、MP が4減り、スライムのHPが22より減る(または たおれる)',
       async () => {
         await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
         const slime = await page.evaluate(() => (window as any).rpgTest.enemyPosition('slime') as [number, number]);
         await clickCanvas(page, slime, 10);
-        await expect(selection).toContainText('🎯 スライム');
+        await expect.poll(() => page.evaluate(() => (window as any).rpgTest.selectedEnemy()?.name)).toBe('スライム');
+        await expect(selection).toHaveCount(0);
         await page.keyboard.press('3');
         await expect(log.getByText('🔥 ファイア！')).toBeVisible();
         // 戦っている間も MP は3秒に1ずつ戻るので、16 か 17
         expect(await mpValue()).toBeGreaterThanOrEqual(16);
         expect(await mpValue()).toBeLessThanOrEqual(17);
         await expect
-          .poll(() => page.evaluate(() => { const s = (window as any).rpgTest.selection(); return s === null || s.hp < 22; }))
+          .poll(() => page.evaluate(() => { const s = (window as any).rpgTest.selectedEnemy(); return s === null || s.hp < 22; }))
           .toBe(true);
       }
     );
