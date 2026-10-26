@@ -13,6 +13,10 @@ export interface ItemDef {
   icon: string;
   type: ItemType;
   heal?: number;
+  // MPの回復量(使う道具。front#383)
+  mp?: number;
+  // 覚える魔法のID(魔法書。front#383)
+  spell?: string;
   atk?: number;
   def?: number;
   // 道具屋での値段(ゴールド)。ポイント交換限定の品物は持たない
@@ -71,7 +75,14 @@ export const DEFAULT_ITEMS: RpgItem[] = [
   { id: 'dark_crystal', name: '闇の結晶片', icon: '🔷', type: 'material', desc: '闇の水晶が落とす', inShop: false, sellPrice: 25, sortOrder: 35 },
   { id: 'gargoyle_wing', name: 'ガーゴイルの翼', icon: '🗿', type: 'material', desc: 'ガーゴイルが落とす', inShop: false, sellPrice: 15, sortOrder: 36 },
   // たおれた人をHP5割で起き上がらせる(front#358)
-  { id: 'life_feather', name: 'いのちの羽', icon: '🕊️', type: 'revive', heal: 50, desc: 'たおれた人をHP5割で起き上がらせる', inShop: true, price: 300, sortOrder: 37 }
+  { id: 'life_feather', name: 'いのちの羽', icon: '🕊️', type: 'revive', heal: 50, desc: 'たおれた人をHP5割で起き上がらせる', inShop: true, price: 300, sortOrder: 37 },
+  // MPを回復する道具と魔法書(front#383 / api#181)
+  { id: 'magic_water', name: '魔法の水', icon: '💧', type: 'use', mp: 30, desc: 'MPを30回復', inShop: true, price: 25, sortOrder: 38 },
+  { id: 'book_fire', name: '魔法書: ファイア', icon: '📕', type: 'book', spell: 'fire', desc: '炎の攻撃魔法を覚える', inShop: true, price: 150, sortOrder: 39 },
+  { id: 'book_blizzard', name: '魔法書: ブリザド', icon: '📘', type: 'book', spell: 'blizzard', desc: '氷の攻撃魔法を覚える', inShop: true, price: 400, sortOrder: 40 },
+  { id: 'book_thunder', name: '魔法書: サンダー', icon: '📒', type: 'book', spell: 'thunder', desc: '雷の攻撃魔法を覚える', inShop: false, sellPrice: 300, sortOrder: 41 },
+  { id: 'book_heal', name: '魔法書: ヒール', icon: '📗', type: 'book', spell: 'heal', desc: '回復魔法を覚える', inShop: true, price: 120, sortOrder: 42 },
+  { id: 'book_healall', name: '魔法書: ヒールオール', icon: '📙', type: 'book', spell: 'healall', desc: '全員を回復する魔法を覚える', inShop: false, sellPrice: 500, sortOrder: 43 }
 ];
 
 /** アイテム(合成の装備も含む)。setItems・setCrafts で中身を入れ替える(使っている所はそのまま新しい中身を使える) */
@@ -138,6 +149,8 @@ export function toItemDef(item: RpgItem): ItemDef {
     icon: item.icon,
     type: item.type,
     ...(item.type === 'use' || item.type === 'revive' ? { heal: item.heal ?? 0 } : {}),
+    ...(item.type === 'use' && item.mp ? { mp: item.mp } : {}),
+    ...(item.type === 'book' && item.spell ? { spell: item.spell } : {}),
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
@@ -223,7 +236,7 @@ export const STAT_DEFS: { key: StatKey; label: string; desc: string; max?: numbe
   { key: 'hp', label: 'HP', desc: '最大HP' },
   { key: 'atk', label: '攻撃', desc: 'あたえるダメージ' },
   { key: 'def', label: '防御', desc: '受けるダメージを減らす' },
-  { key: 'mag', label: '魔力', desc: '回復薬の回復量（あとで魔法の威力にも）' },
+  { key: 'mag', label: '魔力', desc: '魔法の威力・回復量・最大MP・回復薬の回復量' },
   { key: 'spd', label: '速さ', desc: '歩く速さ・攻撃の間隔' },
   { key: 'luk', label: '運', desc: '会心・回避・アイテム', max: MAX_LUCK }
 ];

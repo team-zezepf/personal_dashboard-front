@@ -40,6 +40,7 @@ import {
   walkSpeedOf
 } from '../../rpg/rpg-data';
 import { Fighter, MAX_PARTY, Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
+import { SPELLS, SPELL_IDS, isSpellId, maxMpOf, spellOfShortcut, spellRangeOf, spellShortcut } from '../../rpg/rpg-magic';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '../../rpg/rpg-cursor';
 
@@ -161,13 +162,13 @@ export class RpgPageComponent implements OnDestroy {
       };
     });
   });
-  // 仲間に渡せる、プレイヤーの持ち物の道具(回復薬・いのちの羽)
+  // 仲間に渡せる、プレイヤーの持ち物の道具(回復薬・いのちの羽。MPだけを回復する道具(front#383)は仲間は使わないので出さない)
   readonly giftItems = computed(() => {
     this.version();
     const game = this.game;
     if (!game) return [];
     return Object.keys(ITEMS)
-      .filter((id) => game.owned(id) && (ITEMS[id].type === 'use' || ITEMS[id].type === 'revive'))
+      .filter((id) => game.owned(id) && ((ITEMS[id].type === 'use' && !!ITEMS[id].heal) || ITEMS[id].type === 'revive'))
       .map((id) => ({ id, icon: ITEMS[id].icon, image: ITEMS[id].image, name: ITEMS[id].name, count: game.player.inv[id] }));
   });
   readonly maxParty = MAX_PARTY;
@@ -241,9 +242,32 @@ export class RpgPageComponent implements OnDestroy {
   readonly seVolume = signal(Math.round(this.sePlayer.settings.volume * 100));
   readonly seMuted = signal(this.sePlayer.settings.muted);
   readonly bgmUnlocked = signal(false);
-  // ショートカットキー(front#272)。1〜5のキーに登録した道具と、選べる道具
+  // ショートカットキー(front#272)。1〜5のキーに登録した道具・魔法(front#383)と、選べる道具・覚えた魔法
   readonly shortcuts = signal<Shortcuts>(loadShortcuts(browserStorage()));
   readonly shortcutOptions = shortcutItems().map((id) => ({ id, icon: ITEMS[id].icon, name: ITEMS[id].name }));
+  readonly shortcutSpells = computed(() => {
+    this.version();
+    const learned = this.game?.player.spells ?? [];
+    return learned.map((id) => ({ id: spellShortcut(id), icon: SPELLS[id].icon, name: SPELLS[id].name, mp: SPELLS[id].mp }));
+  });
+
+  // ===== 魔法(front#383) =====
+  // 左下の「🔮 魔法」で開く、魔法の一覧
+  readonly spellsOpen = signal(false);
+  readonly spellRows = computed(() => {
+    this.version();
+    const game = this.game;
+    if (!game) return [];
+    const p = game.player;
+    return SPELL_IDS.map((id) => {
+      const s = SPELLS[id];
+      const learned = p.spells.includes(id);
+      return { id, icon: s.icon, name: s.name, mp: s.mp, kind: s.kind, desc: s.desc, learned, canUse: learned && p.mp >= s.mp && !p.dead };
+    });
+  });
+  // 選んでいる敵・仲間・自分(front#383)。画面の上のまんなかに出す。毎フレーム変わるHPは、変わったときだけ入れ直す
+  readonly selection = signal<{ enemy: boolean; name: string; hp: number; maxHp: number; rate: number } | null>(null);
+  private selectionKey = '';
   // 今のダンジョンの曲(なければ null)
   readonly areaBgm = signal<RpgBgm | null>(null);
 
@@ -261,6 +285,7 @@ export class RpgPageComponent implements OnDestroy {
     if (!game) return null;
     const p = game.player;
     const maxHp = game.maxHp();
+    const maxMp = game.maxMp();
     const nextExp = game.nextExp();
     const weapon = ITEMS[p.weapon];
     const armor = ITEMS[p.armor];
@@ -269,6 +294,10 @@ export class RpgPageComponent implements OnDestroy {
       hp: Math.max(0, p.hp),
       maxHp,
       hpRate: (Math.max(0, p.hp) / maxHp) * 100,
+      // MP(front#383)
+      mp: Math.floor(Math.max(0, p.mp)),
+      maxMp,
+      mpRate: (Math.max(0, p.mp) / maxMp) * 100,
       exp: p.exp,
       nextExp,
       expRate: (p.exp / nextExp) * 100,
@@ -327,19 +356,31 @@ export class RpgPageComponent implements OnDestroy {
         meta('会心', (s) => `${Math.round(critRateOf(s) * 100)}%`),
         meta('回避', (s) => `${Math.round(evadeRateOf(s) * 100)}%`),
         meta('アイテム', (s) => `×${dropRateOf(s).toFixed(2)}`),
-        meta('回復量', (s) => `×${healRateOf(s).toFixed(2)}`)
+        meta('回復量', (s) => `×${healRateOf(s).toFixed(2)}`),
+        // 魔力で伸びる最大MP・攻撃魔法の届く距離(front#383)
+        meta('最大MP', (s) => `${maxMpOf(s)}`),
+        meta('魔法の届く距離', (s) => `${spellRangeOf(s).toFixed(1)}マス`)
       ]
     };
   });
 
-  // 左上に出す、登録したキーと道具・持っている数
+  // 左上に出す、登録したキーと道具・持っている数。魔法(front#383)はMPを出し、覚えていない・MPが足りなければ薄くする
   readonly shortcutChips = computed(() => {
     this.version();
-    const inv = this.game?.player.inv ?? {};
+    const p = this.game?.player;
+    const inv = p?.inv ?? {};
     return this.shortcuts()
-      .map((id, i) => ({ key: i + 1, id }))
-      .filter((s) => ITEMS[s.id])
-      .map((s) => ({ key: s.key, name: ITEMS[s.id].name, count: inv[s.id] ?? 0 }));
+      .map((id, i) => ({ key: i + 1, id, spell: spellOfShortcut(id) }))
+      .filter((s) => s.spell || ITEMS[s.id])
+      .map((s) => {
+        if (s.spell) {
+          const def = SPELLS[s.spell];
+          const usable = !!p && p.spells.includes(s.spell) && p.mp >= def.mp;
+          return { key: s.key, spell: true, name: `${def.icon} ${def.name}`, count: 0, mp: def.mp, empty: !usable };
+        }
+        const count = inv[s.id] ?? 0;
+        return { key: s.key, spell: false, name: ITEMS[s.id].name, count, mp: 0, empty: !count };
+      });
   });
 
   readonly inventory = computed(() => {
@@ -355,8 +396,10 @@ export class RpgPageComponent implements OnDestroy {
           icon: item.icon,
           image: item.image,
           name: item.name,
-          // 回復薬・いのちの羽(front#358)は「使う」。仲間がいれば誰に使うか選ぶ
-          usable: item.type === 'use' || item.type === 'revive',
+          // 回復薬・いのちの羽(front#358)・魔法書(front#383)は「使う」。回復薬は選んでいる仲間・自分に使う
+          usable: item.type === 'use' || item.type === 'revive' || item.type === 'book',
+          // もう覚えている魔法の書(front#383)は使えない(売れる)
+          learned: item.type === 'book' && game.knowsBook(id),
           // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
           material: item.type === 'material',
           count: game.player.inv[id],
@@ -422,16 +465,24 @@ export class RpgPageComponent implements OnDestroy {
         // 回復薬・いのちの羽(front#358)はいくつでも買える。個数を選んで買う(front#379)
         const consumable = item.type === 'use' || item.type === 'revive';
         const has = !consumable && game.owned(id);
+        // 魔法書(front#383)は、覚えている魔法の書は買えない
+        const book = item.type === 'book';
+        const known = book && game.knowsBook(id);
         const max = game.buyableCount(id);
         const value = pick(`buy:${id}`, max);
+        const spell = book && isSpellId(item.spell) ? SPELLS[item.spell] : null;
         return {
           id,
           icon: item.icon,
           image: item.image,
           name: item.name,
-          desc: consumable ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）` : itemStatLabel(item),
+          desc: consumable
+            ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）`
+            : book
+              ? `${item.desc ?? ''}${spell ? `（MP${spell.mp}）` : ''}`
+              : itemStatLabel(item),
           price: `${price} G`,
-          buttonLabel: has ? '持っている' : consumable ? `買う（${price * value}G）` : '買う',
+          buttonLabel: known ? '覚えている' : has ? '持っている' : consumable ? `買う（${price * value}G）` : '買う',
           disabled: max < 1,
           ...(consumable ? { qty: { value, max } } : {})
         };
@@ -559,6 +610,7 @@ export class RpgPageComponent implements OnDestroy {
       this.lastFrame = now;
       game.update(dt);
       this.refreshParty(game, now);
+      this.refreshSelection(game);
       this.renderer!.draw(game, this.dpr);
       this.drawGem(dt);
       this.frameId = requestAnimationFrame(loop);
@@ -760,16 +812,69 @@ export class RpgPageComponent implements OnDestroy {
     const typing = event.target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName);
     if (slot >= 0 && !typing && !this.talking() && !this.shopMode() && !this.hallMode()) {
       const id = this.shortcuts()[slot];
-      if (id) this.game?.useShortcut(id);
+      // 魔法(front#383)は、選んでいる相手に使う
+      if (id) this.game?.useShortcut(id, spellOfShortcut(id));
     }
     if (event.key === 'Escape') {
+      // 開いているものがなければ、選んでいる相手を外す(front#383)
+      const open = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen();
+      if (!open) this.clearSelection();
       this.talking.set(null);
       this.closeShop();
       this.closeStatus();
       this.closeLook();
       this.closeHall();
       this.closeItemTarget();
+      this.closeSpells();
     }
+  }
+
+  // ===== 選ぶ・魔法(front#383) =====
+
+  clearSelection(): void {
+    this.game?.clearSelection();
+  }
+
+  /** 左下の仲間の欄をクリックしたら、その仲間を選ぶ */
+  selectMate(userId: string): void {
+    const game = this.game;
+    const c = game?.companions.find((m) => m.userId === userId);
+    if (game && c) game.select(c);
+  }
+
+  /** 選んでいる相手の表示を、変わったときだけ入れ直す(毎フレーム呼ぶ) */
+  private refreshSelection(game: RpgGame): void {
+    const enemy = game.selectedEnemy();
+    const fighter = enemy ? null : game.selectedFighter();
+    let view: ReturnType<typeof this.selection> = null;
+    if (enemy) {
+      const max = ENEMIES[enemy.type]?.hp ?? 1;
+      view = { enemy: true, name: ENEMIES[enemy.type]?.name ?? '', hp: Math.max(0, Math.round(enemy.hp)), maxHp: max, rate: 0 };
+    } else if (fighter) {
+      const max = game.maxHpOf(fighter);
+      view = { enemy: false, name: game.nameOf(fighter), hp: Math.max(0, Math.round(fighter.hp)), maxHp: max, rate: 0 };
+    }
+    if (view) view.rate = (view.hp / view.maxHp) * 100;
+    const key = view ? `${view.enemy}|${view.name}|${view.hp}|${view.maxHp}` : '';
+    if (key === this.selectionKey) return;
+    this.selectionKey = key;
+    this.selection.set(view);
+  }
+
+  openSpells(): void {
+    this.spellsOpen.set(true);
+    this.syncLock();
+  }
+
+  closeSpells(): void {
+    this.spellsOpen.set(false);
+    this.syncLock();
+  }
+
+  /** 一覧から魔法を使う。一覧を閉じてから(ゲームを動かしてから)使う */
+  castSpell(id: string): void {
+    this.closeSpells();
+    this.game?.castSpell(id);
   }
 
   // ===== 会話 =====
@@ -836,7 +941,7 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
   private syncLock(): void {
-    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget();
+    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen();
   }
 
   // ===== 見た目 =====
@@ -988,11 +1093,19 @@ export class RpgPageComponent implements OnDestroy {
 
   // ===== 持ち物 =====
 
-  // 仲間がいるとき・いのちの羽(front#358)は、誰に使うか選ぶ。仲間がいなければ今までどおり自分に使う
+  /**
+   * 持ち物の道具を使う。回復薬は選んでいる仲間・自分(front#383。なければ自分)に使う。
+   * いのちの羽(front#358)は、たおれている仲間を選んでいればその仲間に使い、そうでなければ誰に使うか選ぶ
+   */
   useItem(id: string): void {
     const game = this.game;
     if (!game) return;
-    if (game.companions.length || ITEMS[id]?.type === 'revive') {
+    if (ITEMS[id]?.type === 'revive') {
+      const chosen = game.selectedFighter();
+      if (chosen?.dead) {
+        game.useItemOn(id, chosen);
+        return;
+      }
       this.itemTarget.set(id);
       this.syncLock();
       return;
@@ -1230,6 +1343,27 @@ export class RpgPageComponent implements OnDestroy {
       knockOut: (): void => (this.game as unknown as { knockOut(): void } | null)?.knockOut(),
       // 連れている仲間の名前とHP(front#358)
       party: (): { name: string; hp: number; dead: boolean }[] => this.game?.companions.map((c) => ({ name: c.name, hp: c.hp, dead: c.dead })) ?? [],
+      // その種類の敵のうち、プレイヤーにいちばん近い敵の足元の画面上の位置(クリックして選ぶため。front#383)。いなければ null
+      enemyPosition: (type: string): [number, number] | null => {
+        const game = this.game;
+        if (!game) return null;
+        const p = game.player;
+        const enemy = game.enemies
+          .filter((e) => e.type === type && e.alive)
+          .sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+        return enemy ? game.screenPositionOf(enemy) : null;
+      },
+      // 選んでいる相手(front#383)。画面の上のまんなかに出しているもの
+      selection: () => this.selection(),
+      // プレイヤーの足元の画面上の位置(front#383)
+      playerPosition: (): [number, number] | null => (this.game ? this.game.screenPositionOf(this.game.player) : null),
+      // MPと覚えた魔法(front#383)
+      magic: (): { mp: number; maxMp: number; spells: string[] } | null =>
+        this.game ? { mp: this.game.player.mp, maxMp: this.game.maxMp(), spells: [...this.game.player.spells] } : null,
+      // プレイヤーのHPを減らす(回復を見るため。front#383)
+      hurtPlayer: (hp: number): void => {
+        if (this.game) this.game.player.hp = Math.max(1, hp);
+      },
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl

@@ -1,7 +1,7 @@
 import { RpgCraft, RpgEnemy, RpgItem, RpgMap } from '../../../models/rpg.models';
 import { DEFAULT_CRAFTS, DEFAULT_ITEMS, ITEMS, MATERIAL_IDS, RECIPES, SHOP_ITEMS, isCraftItem, itemsVersion, sellPriceOf, setCrafts, setItems } from '../../../rpg/rpg-data';
 import { DEFAULT_ENEMIES } from '../../../rpg/rpg-enemy';
-import { ItemUsage, problemsOf, toInput, usagesOf } from './rpg-item-page.component';
+import { ItemUsage, problemsOf, statText, toInput, usagesOf } from './rpg-item-page.component';
 
 const enemies = DEFAULT_ENEMIES as unknown as RpgEnemy[];
 
@@ -23,8 +23,13 @@ describe('アイテムタブ(front#343)', () => {
       setCrafts(DEFAULT_CRAFTS);
     });
 
-    it('最初のアイテムでは、道具屋の10（いのちの羽 front#358 を含む）・素材23種類・合成の装備8つがそろう', () => {
-      expect(SHOP_ITEMS).toEqual(['potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor', 'life_feather']);
+    it('最初のアイテムでは、道具屋の14（いのちの羽 front#358・魔法の水と魔法書3つ front#383 を含む）・素材23種類・合成の装備8つがそろう', () => {
+      expect(SHOP_ITEMS).toEqual([
+        'potion', 'hipotion', 'copper_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'leather', 'chain_mail', 'magic_armor', 'life_feather',
+        'magic_water', 'book_fire', 'book_blizzard', 'book_heal'
+      ]);
+      expect(ITEMS['magic_water']).toMatchObject({ type: 'use', heal: 0, mp: 30 });
+      expect(ITEMS['book_thunder']).toMatchObject({ type: 'book', spell: 'thunder', sellPrice: 300 });
       expect(MATERIAL_IDS).toHaveLength(23);
       expect(RECIPES).toHaveLength(8);
       expect(ITEMS['potion']).toEqual({ name: '回復薬', icon: '🧪', type: 'use', heal: 35, price: 10, sellPrice: 5, desc: 'HPを35回復' });
@@ -111,7 +116,12 @@ describe('アイテムタブ(front#343)', () => {
       const ng = (i: RpgItem) => problemsOf(i, [], [], dropped).filter((p) => p.ng).map((p) => p.text);
 
       expect(ng(potion({ name: ' ' }))).toEqual(['名前を入れてください。']);
-      expect(ng(potion({ heal: 0 }))).toEqual(['回復量は 1〜999 にしてください。']);
+      // 回復の道具は HP・MP(front#383)のどちらかを回復する
+      expect(ng(potion({ heal: 0 }))).toEqual(['HPかMPの回復量を入れてください。']);
+      expect(ng(potion({ heal: 0, mp: 30 }))).toEqual([]);
+      expect(ng(potion({ heal: 1000 }))).toEqual(['回復量は 1〜999 にしてください。']);
+      expect(ng(potion({ type: 'book', heal: null, spell: null }))).toEqual(['覚える魔法を選んでください。']);
+      expect(ng(potion({ type: 'book', heal: null, spell: 'fire' }))).toEqual([]);
       expect(ng(sword({ atk: 1000 }))).toEqual(['攻撃力は 1〜999 にしてください。']);
       expect(ng(sword({ type: 'armor', def: null }))).toEqual(['防御力は 1〜999 にしてください。']);
       expect(ng(potion({ price: 0 }))).toEqual(['道具屋で売るなら、値段を 1〜99999G にしてください。']);
@@ -135,9 +145,12 @@ describe('アイテムタブ(front#343)', () => {
 
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
-      expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
+      expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ', spell: 'fire' }), isNew: true })).toEqual({
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
       });
+      // MPだけを回復する道具は、HPの回復量を送らない。魔法書は覚える魔法だけを送る(front#383)
+      expect(toInput({ item: potion({ heal: 0, mp: 30 }), isNew: false })).toMatchObject({ heal: null, mp: 30, spell: null });
+      expect(toInput({ item: potion({ type: 'book', heal: 80, mp: 5, spell: 'heal' }), isNew: false })).toMatchObject({ heal: null, mp: null, spell: 'heal' });
       // 画像(front#345)はファイル名のまま送る
       expect(toInput({ item: potion({ image: 'a.png' }), isNew: false }).image).toBe('a.png');
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
@@ -148,6 +161,15 @@ describe('アイテムタブ(front#343)', () => {
     it('売値(front#379)は、素材にも道具屋で売らないアイテムにも付けて送れる', () => {
       expect(toInput({ item: stone({ sellPrice: 7 }), isNew: false }).sellPrice).toBe(7);
       expect(toInput({ item: sword({ inShop: false, price: null, sellPrice: 50 }), isNew: false }).sellPrice).toBe(50);
+    });
+  });
+
+  describe('魔法の道具の表示(front#383)', () => {
+    it('回復の道具はHP・MPの回復量、魔法書は覚える魔法を出す', () => {
+      expect(statText(potion({ heal: 80 }))).toBe('HP +80');
+      expect(statText(potion({ heal: 0, mp: 30 }))).toBe('MP +30');
+      expect(statText(potion({ heal: 20, mp: 20 }))).toBe('HP +20・MP +20');
+      expect(statText(potion({ type: 'book', spell: 'thunder' }))).toBe('⚡ サンダーを覚える');
     });
   });
 

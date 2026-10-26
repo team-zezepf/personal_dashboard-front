@@ -22,9 +22,24 @@
         <div class="chip test">テストプレイ中（保存されません）</div>
       }
       @for (s of shortcutChips(); track s.key) {
-        <div class="chip shortcut" [class.empty]="!s.count"><span class="key">{{ s.key }}</span>{{ s.name }} ×{{ s.count }}</div>
+        @if (s.spell) {
+          <div class="chip shortcut spell" [class.empty]="s.empty"><span class="key">{{ s.key }}</span>{{ s.name }} MP{{ s.mp }}</div>
+        } @else {
+          <div class="chip shortcut" [class.empty]="s.empty"><span class="key">{{ s.key }}</span>{{ s.name }} ×{{ s.count }}</div>
+        }
       }
     </div>
+
+    <!-- 選んでいる敵・仲間・自分(front#383)。選んだ相手に魔法・回復薬を使う -->
+    @if (selection(); as sel) {
+      <div class="chip selection" [class.enemy]="sel.enemy" role="status" aria-label="選んでいる相手">
+        <b>{{ sel.enemy ? '🎯' : '💚' }} {{ sel.name }}</b>
+        <div class="vitals-bar"><div class="hp" [style.width.%]="sel.rate"></div></div>
+        <span>{{ sel.hp }}/{{ sel.maxHp }}</span>
+        <small>{{ sel.enemy ? '攻撃魔法の相手' : '回復の相手' }}</small>
+        <button type="button" class="status-button" aria-label="選択を外す" title="選択を外す（Esc）" (click)="clearSelection()">×</button>
+      </div>
+    }
 
     <div class="settings">
       <button
@@ -73,8 +88,18 @@
               <span class="key">{{ $index + 1 }}</span>
               <select [attr.aria-label]="$index + 1 + 'キーで使う道具'" (change)="setShortcut($index, $any($event.target).value)">
                 <option value="" [selected]="!id">なし</option>
-                @for (item of shortcutOptions; track item.id) {
-                  <option [value]="item.id" [selected]="item.id === id">{{ item.icon }} {{ item.name }}</option>
+                <optgroup label="道具">
+                  @for (item of shortcutOptions; track item.id) {
+                    <option [value]="item.id" [selected]="item.id === id">{{ item.icon }} {{ item.name }}</option>
+                  }
+                </optgroup>
+                <!-- 覚えた魔法(front#383) -->
+                @if (shortcutSpells().length) {
+                  <optgroup label="魔法（覚えたもの）">
+                    @for (sp of shortcutSpells(); track sp.id) {
+                      <option [value]="sp.id" [selected]="sp.id === id">{{ sp.icon }} {{ sp.name }}（MP{{ sp.mp }}）</option>
+                    }
+                  </optgroup>
                 }
               </select>
             </div>
@@ -277,6 +302,34 @@
       </div>
     }
 
+    <!-- 魔法の一覧(front#383) -->
+    @if (spellsOpen()) {
+      <div class="modal" (click)="closeSpells()">
+        <div class="modal-card spell-card" role="dialog" aria-label="魔法" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <span>🔮 魔法</span>
+            <span class="mp-cost">MP {{ stats()?.mp }} / {{ stats()?.maxMp }}</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeSpells()">×</button>
+          </div>
+          <p class="modal-sub">攻撃魔法は選んでいる敵（なければ近い敵）に、回復魔法は選んでいる仲間・自分（なければ自分）に使います。魔法書を使うと新しい魔法を覚えます。</p>
+          @for (row of spellRows(); track row.id) {
+            <div class="shop-row">
+              <span class="shop-icon">{{ row.icon }}</span>
+              <div class="shop-info">
+                <div class="shop-name">
+                  {{ row.name }}
+                  <span class="equipped-chip">{{ row.kind === 'heal' ? '回復' : '攻撃' }}</span>
+                </div>
+                <div class="shop-desc">{{ row.learned ? row.desc : 'まだ覚えていない（魔法書で覚える）' }}</div>
+              </div>
+              <span class="shop-price mp-cost">MP {{ row.mp }}</span>
+              <button type="button" class="btn" [disabled]="!row.canUse" [attr.aria-label]="row.name + 'を使う'" (click)="castSpell(row.id)">使う</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <!-- 左下: レベル・お金・ステータスのボタンと、HP・経験値のバー(front#223) -->
     @if (stats(); as s) {
       <section class="vitals" aria-label="プレイヤーの状態">
@@ -290,11 +343,18 @@
               <span class="points-badge" [attr.aria-label]="'振り分けていないポイント ' + s.statPoints">+{{ s.statPoints }}</span>
             }
           </button>
+          <button type="button" class="status-button" (click)="openSpells()">🔮 魔法</button>
         </div>
         <div class="vitals-row">
           <span>HP</span>
           <div class="vitals-bar"><div class="hp" [class.low]="s.hpRate <= 30" [style.width.%]="s.hpRate"></div></div>
           <span class="vitals-num">{{ s.hp }} / {{ s.maxHp }}</span>
+        </div>
+        <!-- MP(front#383) -->
+        <div class="vitals-row">
+          <span>MP</span>
+          <div class="vitals-bar"><div class="mp" [style.width.%]="s.mpRate"></div></div>
+          <span class="vitals-num" aria-label="MP">{{ s.mp }} / {{ s.maxMp }}</span>
         </div>
         <div class="vitals-row">
           <span>EXP</span>
@@ -375,7 +435,8 @@
     @if (party().length) {
       <section class="party-hud" aria-label="仲間の状態">
         @for (m of party(); track m.userId) {
-          <div class="mate" [class.down]="m.dead" [attr.aria-label]="m.name">
+          <!-- クリックすると、その仲間を選ぶ(front#383) -->
+          <div class="mate" [class.down]="m.dead" [class.selected]="selection()?.name === m.name && !selection()?.enemy" [attr.aria-label]="m.name" (click)="selectMate(m.userId)">
             <div class="mate-top"><b>{{ m.name }}</b><span>Lv {{ m.level }}</span></div>
             <div class="mate-hp">{{ m.dead ? 'たおれている ' + m.left : 'HP ' + m.hp + '/' + m.maxHp }}</div>
             <div class="vitals-bar"><div class="hp" [class.low]="m.hpRate <= 30" [style.width.%]="m.hpRate"></div></div>
@@ -435,6 +496,9 @@
             @if (item.material) {
               <span class="count">×{{ item.count }}</span>
               <span class="badge material">素材</span>
+            } @else if (item.learned) {
+              <span class="count">×{{ item.count }}</span>
+              <span class="badge">覚えている</span>
             } @else if (item.usable) {
               <span class="count">×{{ item.count }}</span>
               <button type="button" class="btn" [attr.aria-label]="item.name + 'を使う'" (click)="useItem(item.id)">使う</button>

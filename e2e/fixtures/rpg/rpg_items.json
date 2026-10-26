@@ -35,5 +35,11 @@
   { "id": "shadow_shard", "name": "影のかけら", "icon": "🌑", "type": "material", "desc": "影の分身が落とす", "sell_price": 25, "sort_order": 34 },
   { "id": "dark_crystal", "name": "闇の結晶片", "icon": "🔷", "type": "material", "desc": "闇の水晶が落とす", "sell_price": 25, "sort_order": 35 },
   { "id": "gargoyle_wing", "name": "ガーゴイルの翼", "icon": "🗿", "type": "material", "desc": "ガーゴイルが落とす", "sell_price": 15, "sort_order": 36 },
-  { "id": "life_feather", "name": "いのちの羽", "icon": "🕊️", "type": "revive", "heal": 50, "desc": "たおれた人をHP5割で起き上がらせる", "in_shop": true, "price": 300, "sort_order": 37 }
+  { "id": "life_feather", "name": "いのちの羽", "icon": "🕊️", "type": "revive", "heal": 50, "desc": "たおれた人をHP5割で起き上がらせる", "in_shop": true, "price": 300, "sort_order": 37 },
+  { "id": "magic_water", "name": "魔法の水", "icon": "💧", "type": "use", "mp": 30, "desc": "MPを30回復", "in_shop": true, "price": 25, "sort_order": 38 },
+  { "id": "book_fire", "name": "魔法書: ファイア", "icon": "📕", "type": "book", "spell": "fire", "desc": "炎の攻撃魔法を覚える", "in_shop": true, "price": 150, "sort_order": 39 },
+  { "id": "book_blizzard", "name": "魔法書: ブリザド", "icon": "📘", "type": "book", "spell": "blizzard", "desc": "氷の攻撃魔法を覚える", "in_shop": true, "price": 400, "sort_order": 40 },
+  { "id": "book_thunder", "name": "魔法書: サンダー", "icon": "📒", "type": "book", "spell": "thunder", "desc": "雷の攻撃魔法を覚える", "sell_price": 300, "sort_order": 41 },
+  { "id": "book_heal", "name": "魔法書: ヒール", "icon": "📗", "type": "book", "spell": "heal", "desc": "回復魔法を覚える", "in_shop": true, "price": 120, "sort_order": 42 },
+  { "id": "book_healall", "name": "魔法書: ヒールオール", "icon": "📙", "type": "book", "spell": "healall", "desc": "全員を回復する魔法を覚える", "sell_price": 500, "sort_order": 43 }
 ]

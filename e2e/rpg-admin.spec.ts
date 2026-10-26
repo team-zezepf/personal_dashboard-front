@@ -123,27 +123,28 @@ test(
     const shop = tab.getByRole('region', { name: '道具屋での見え方' });
     const name = '[E2E]特製回復薬';
 
-    await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材の一覧と、道具屋での見え方(回復薬〜魔法の鎧・いのちの羽の10)が出る', async () => {
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材・魔法書の一覧と、道具屋での見え方(回復薬〜魔法の鎧・いのちの羽・魔法の水・魔法書3つの14。front#383)が出る', async () => {
       await page.goto('/rpg/admin');
       await page.getByRole('tab', { name: '🎒 アイテム' }).click();
-      for (const group of ['回復の道具（2）', '武器（', '防具（', '素材（23）']) await expect(tab.getByText(group).first()).toBeVisible();
-      await expect(shop.locator('.shop-row')).toHaveCount(10);
+      for (const group of ['回復の道具（3）', '武器（', '防具（', '素材（23）', '魔法書（5）']) await expect(tab.getByText(group).first()).toBeVisible();
+      await expect(shop.locator('.shop-row')).toHaveCount(14);
       await expect(shop.locator('.shop-row').first()).toContainText('回復薬');
     });
 
     await step(
-      `「＋ 新しいアイテム」を押し、名前に「${name}」、回復量に 60、説明に「HPを60回復」を入れ、「道具屋で売る」にチェックして値段を 15 にする`,
+      `「＋ 新しいアイテム」を押し、名前に「${name}」、HPの回復量に 60、説明に「HPを60回復」を入れ、「道具屋で売る」にチェックして値段を 15 にする`,
       'チェックが「✅ 問題はありません」になり、道具屋での見え方のいちばん下に 15 G で並ぶ',
       async () => {
         await tab.getByRole('button', { name: '＋ 新しいアイテム' }).click();
         const props = tab.getByRole('complementary', { name: 'アイテム', exact: true });
         await props.getByLabel('名前', { exact: true }).fill(name);
-        await props.getByLabel('回復量').fill('60');
+        // 回復の道具の回復量は「HPの回復量」(MPの回復量と分けた。front#383)
+        await props.getByLabel('HPの回復量').fill('60');
         await props.getByLabel(/説明/).fill('HPを60回復');
         await props.getByLabel('道具屋で売る').check();
         await props.getByLabel(/値段/).fill('15');
         await expect(props.getByText('✅ 問題はありません')).toBeVisible();
-        await expect(shop.locator('.shop-row')).toHaveCount(11);
+        await expect(shop.locator('.shop-row')).toHaveCount(15);
         await expect(shop.locator('.shop-row').last()).toContainText(name);
         await expect(shop.locator('.shop-row').last()).toContainText('15 G');
       }
@@ -195,7 +196,7 @@ test(
       await tab.getByRole('button', { name: '🗑 このアイテムを消す' }).click();
       await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
       expect(confirmText).toContain('1人が持っています');
-      await expect(shop.locator('.shop-row')).toHaveCount(10);
+      await expect(shop.locator('.shop-row')).toHaveCount(14);
     });
 
     await step('RPG(/rpg)を開き直す', `持ち物に「${name}」がない`, async () => {

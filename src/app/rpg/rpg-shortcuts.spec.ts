@@ -16,7 +16,14 @@ describe('rpg-shortcuts(front#272)', () => {
   it('はじめは 1=回復薬・2=上回復薬・3〜5=なし。登録できるのは使う道具だけ', () => {
     expect(loadShortcuts(memoryStorage())).toEqual(['potion', 'hipotion', '', '', '']);
     expect(loadShortcuts(null)).toEqual(DEFAULT_SHORTCUTS);
-    expect(shortcutItems()).toEqual(['potion', 'hipotion']);
+    // MPを回復する道具(front#383)も登録できる
+    expect(shortcutItems()).toEqual(['potion', 'hipotion', 'magic_water']);
+  });
+
+  it('魔法(front#383)は「spell:」を付けて登録でき、知らない魔法は、はじめの設定にする', () => {
+    const storage = memoryStorage();
+    saveShortcuts(storage, ['spell:fire', 'spell:meteor', 'potion', 'spell:heal', '']);
+    expect(loadShortcuts(storage)).toEqual(['spell:fire', 'hipotion', 'potion', 'spell:heal', '']);
   });
 
   it('ブラウザに覚えた設定を読み直せる。知らない道具・装備・壊れた値は、はじめの設定にする', () => {

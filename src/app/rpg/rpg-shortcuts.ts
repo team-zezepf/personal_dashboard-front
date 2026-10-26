@@ -1,6 +1,7 @@
 import { ITEMS } from './rpg-data';
+import { spellOfShortcut } from './rpg-magic';
 
-// RPGのショートカットキー(front#272)。1〜5のキーそれぞれに、使う道具を1つ登録する。
+// RPGのショートカットキー(front#272)。1〜5のキーそれぞれに、使う道具か魔法(front#383。「spell:fire」のように登録する)を1つ登録する。
 // 設定はこの端末のブラウザに覚える(BGMの音量と同じ。ほかの端末には引き継がない)
 
 /** キーの数(1〜5) */
@@ -23,7 +24,7 @@ export function loadShortcuts(storage: Pick<Storage, 'getItem'> | null): Shortcu
     const usable = shortcutItems();
     return DEFAULT_SHORTCUTS.map((def, i) => {
       const id = saved[i];
-      return id === '' || (typeof id === 'string' && usable.includes(id)) ? id : def;
+      return id === '' || (typeof id === 'string' && (usable.includes(id) || !!spellOfShortcut(id))) ? id : def;
     });
   } catch {
     return [...DEFAULT_SHORTCUTS];

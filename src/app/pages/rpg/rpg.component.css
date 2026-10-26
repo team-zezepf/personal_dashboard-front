@@ -80,6 +80,39 @@
   opacity: 0.55;
 }
 
+/* 魔法(front#383)のショートカット。MPを青で出す */
+.chip.spell {
+  background: rgba(30, 58, 138, 0.78);
+}
+
+/* 選んでいる敵・仲間・自分(front#383)。左上と同じチップで、上のまんなか(ショートカットの下)に出す */
+.selection {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+  border-left: 4px solid #22c55e;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.selection .vitals-bar {
+  width: 64px;
+  height: 6px;
+}
+
+.selection.enemy {
+  border-left-color: #ef4444;
+}
+
+.selection.enemy .hp {
+  background: #ef4444;
+}
+
 .chip.test {
   font-weight: 700;
   background: rgba(239, 91, 91, 0.92);
@@ -654,7 +687,8 @@
   position: absolute;
   left: 12px;
   bottom: 12px;
-  width: 320px;
+  /* 魔法のボタン(front#383)が入るよう、少し広げた(レベル・振り分けていないポイントが大きくても1行に収まるように) */
+  width: 384px;
   background: rgba(17, 24, 39, 0.72);
   color: #fff;
   border-radius: 14px;
@@ -666,11 +700,12 @@
 .vitals-top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 6px;
 }
 
 .vitals-lv {
+  white-space: nowrap;
   background: #fff;
   color: #6076e0;
   font-weight: 800;
@@ -682,9 +717,11 @@
 .vitals-name {
   font-weight: 700;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .vitals-gold {
+  white-space: nowrap;
   margin-left: auto;
   margin-right: 2px;
   font-size: 12px;
@@ -761,6 +798,11 @@
 
 .vitals-bar .exp {
   background: #fbbf24;
+}
+
+/* MP(front#383) */
+.vitals-bar .mp {
+  background: #3b82f6;
 }
 
 .vitals-num {
@@ -989,7 +1031,7 @@
 /* 左下の自分の状態の右に、仲間のHP・持ち物を並べる */
 .party-hud {
   position: absolute;
-  left: 344px;
+  left: 408px;
   bottom: 12px;
   display: flex;
   gap: 6px;
@@ -998,6 +1040,9 @@
 }
 
 .party-hud .mate {
+  /* クリックすると、その仲間を選ぶ(front#383) */
+  pointer-events: auto;
+  cursor: pointer;
   width: 118px;
   background: rgba(17, 24, 39, 0.72);
   color: #fff;
@@ -1012,29 +1057,14 @@
   background: rgba(127, 29, 29, 0.8);
 }
 
-.mate-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
+.party-hud .mate.selected {
+  outline: 2px solid #22c55e;
 }
 
-.mate-top b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mate-hp {
-  margin: 2px 0 3px;
-}
-
-.party-hud .vitals-bar {
-  height: 6px;
-}
-
-.mate-items {
-  margin-top: 3px;
-  opacity: 0.9;
+/* 魔法の一覧(front#383)。行は道具屋の行(shop-row)を使い回し、MPだけ青で出す */
+.mp-cost {
+  margin-left: 8px;
+  color: #3b82f6;
 }
 
 /* たおれて待っているとき。画面は少し暗くするだけで、案内は右下に小さく出す */

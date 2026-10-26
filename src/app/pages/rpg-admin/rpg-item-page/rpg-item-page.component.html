@@ -160,19 +160,41 @@
           </div>
           <div class="grid2">
             <label class="field"><span>名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.item.name" (ngModelChange)="setName($event)" /></label>
-            @if (sel.item.type !== 'material') {
+            @if (hasStat(sel.item.type)) {
               <label class="field">
                 <span>{{ statLabels[sel.item.type] }}</span>
                 <input
                   type="number"
-                  [min]="limits.power[0]"
+                  [min]="sel.item.type === 'use' ? 0 : limits.power[0]"
                   [max]="sel.item.type === 'revive' ? 100 : limits.power[1]"
                   [ngModel]="sel.item.type === 'use' || sel.item.type === 'revive' ? sel.item.heal : sel.item.type === 'weapon' ? sel.item.atk : sel.item.def"
                   (ngModelChange)="setStat($event)"
                 />
               </label>
             }
+            @if (sel.item.type === 'book') {
+              <label class="field">
+                <span>覚える魔法</span>
+                <select [ngModel]="sel.item.spell" (ngModelChange)="setSpell($event)" aria-label="覚える魔法">
+                  @for (id of spellIds; track id) {
+                    <option [value]="id">{{ spells[id].icon }} {{ spells[id].name }}（MP{{ spells[id].mp }}）</option>
+                  }
+                </select>
+              </label>
+            }
           </div>
+          @if (sel.item.type === 'use') {
+            <div class="grid2">
+              <label class="field">
+                <span>MPの回復量</span>
+                <input type="number" min="0" [max]="limits.power[1]" [ngModel]="sel.item.mp ?? 0" (ngModelChange)="setMp($event)" aria-label="MPの回復量" />
+              </label>
+            </div>
+            <p class="hint">HP・MPのどちらか（または両方）を回復します。MPだけを回復する道具は、HPの回復量を 0 にします。</p>
+          }
+          @if (sel.item.type === 'book') {
+            <p class="hint">プレイヤーが使うと、その魔法を覚えます（魔法書はなくなります）。魔法の威力・MPはゲームの中で決まっていて、ここでは変えません。</p>
+          }
           <div class="field" role="group" aria-label="アイコン">
             <span>アイコン（絵文字）</span>
             <div class="icons">

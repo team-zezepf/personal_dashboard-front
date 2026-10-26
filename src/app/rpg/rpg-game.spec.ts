@@ -118,6 +118,9 @@ describe('RpgGame', () => {
         look: LOOK,
         quests: [],
         respawn: null,
+        // MP・覚えた魔法(front#383)。魔法ができる前のセーブデータ(MPなし)は、最大MPから始める
+        mp: 20,
+        spells: [],
         companions: []
       });
     });
@@ -810,13 +813,13 @@ describe('RpgGame', () => {
       game.loadSave(save({ area: 'cave1', x: 4, y: 5 }));
       knockOut();
       expect([game.area.id, game.player.x, game.player.y]).toEqual(['plain', 3, 5]);
-      expect(ev.messages).toContain('村にもどってきた。HPが全回復した');
+      expect(ev.messages).toContain('村にもどってきた。HP・MPが全回復した');
 
       game.loadSave(save({ area: 'cave1', x: 4, y: 5, respawn: { area: 'forest', x: 8, y: 9 } }));
       knockOut();
       expect([game.area.id, game.player.x, game.player.y]).toEqual(['forest', 8, 9]);
       expect(game.player.hp).toBe(game.maxHp());
-      expect(ev.messages).toContain('ふっかつ地点にもどってきた。HPが全回復した');
+      expect(ev.messages).toContain('ふっかつ地点にもどってきた。HP・MPが全回復した');
     });
 
     it('覚えた復活地点が通れなくなっていたら(エリアを作り直したときなど)、始まりの草原のセーブポイントのとなりに戻る', () => {
@@ -1496,8 +1499,8 @@ describe('RpgGame', () => {
 
       expect(game.companions.map((c) => [c.userId, c.hp])).toEqual([['3', 30], ['4', maxHpOf({ ...ZERO_STATS, atk: 3 })]]);
       expect(game.toSaveInput().companions).toEqual([
-        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0 },
-        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0 }
+        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [] },
+        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [] }
       ]);
     });
 
@@ -1719,6 +1722,276 @@ describe('RpgGame', () => {
       expect(game.buy('life_feather')).toBe(true);
       expect(game.buy('life_feather')).toBe(true);
       expect(game.player.inv['life_feather']).toBe(2);
+    });
+  });
+
+  describe('魔法・選ぶ(front#383)', () => {
+    // 動かず、近づかれても襲ってこない的(叩かれると気づく)。防御は10
+    const dummy = (patch: Partial<EnemyDef> = {}): EnemyDef => ({
+      ...DEFAULT_ENEMIES[0], id: 'dummy', name: 'かかし', hp: 9999, def: 10, atk: 1, sight: 0, speed: 0.001, ...patch
+    });
+    const mate = (userId: string): RpgCompanion => ({
+      userId, name: `仲間${userId}`, level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth',
+      items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, look: LOOK
+    });
+    // Lv3 の6ポイントを全部魔力に振った人。最大MP 44・攻撃魔法の威力 26・回復量 33・届く距離 約3.24マス
+    const MAGE = { stats: { ...ZERO_STATS, mag: 6 }, statPoints: 0 };
+    const ALL_SPELLS = ['fire', 'blizzard', 'thunder', 'heal', 'healall'];
+
+    afterEach(() => {
+      setEnemies(DEFAULT_ENEMIES);
+      vi.restoreAllMocks();
+    });
+
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    // プレイヤーを (2, 2) に立たせ、的を並べる
+    function field(enemies: [number, number][], partial: Partial<RpgSave> = {}): void {
+      game.loadSave(save({ area: 'plain', x: 2, y: 2, ...MAGE, spells: ALL_SPELLS, mp: 44, ...partial }));
+      setEnemies([...DEFAULT_ENEMIES, dummy()]);
+      game.loadMap(map('field', { enemies: enemies.map(([x, y]) => ({ type: 'dummy', x, y })) }));
+      Object.assign(game.player, { x: 2, y: 2 });
+    }
+
+    const enemyAt = (x: number, y: number) => game.enemies.find((e) => e.x === x && e.y === y)!;
+
+    it('MP・覚えた魔法を読み込み、保存用の形に入る。知らない魔法は使わず、魔法ができる前のセーブデータは最大MPから始める', () => {
+      game.loadSave(save({ ...MAGE, mp: 12, spells: ['heal', 'meteor', 'fire'] }));
+      expect(game.maxMp()).toBe(44);
+      expect(game.player.mp).toBe(12);
+      // 並びは魔法の一覧の順
+      expect(game.player.spells).toEqual(['fire', 'heal']);
+      expect(game.toSaveInput()).toEqual(expect.objectContaining({ mp: 12, spells: ['fire', 'heal'] }));
+
+      game.loadSave(save({ ...MAGE }));
+      expect(game.player.mp).toBe(44);
+      expect(game.player.spells).toEqual([]);
+    });
+
+    it('魔力を振ると、最大MPが増えた分だけ今のMPも増える', () => {
+      game.loadSave(save({ mp: 5 }));
+      game.allocate({ mag: 2 });
+      expect(game.maxMp()).toBe(28);
+      expect(game.player.mp).toBe(13);
+    });
+
+    it('魔法書を使うと魔法を覚えて魔法書がなくなる。覚えている魔法の書は使えず、道具屋でも買えない', () => {
+      game.loadSave(save({ gold: 1000, items: [{ itemId: 'book_fire', count: 2 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] }));
+
+      expect(game.useItem('book_fire')).toBe(true);
+      expect(game.player.spells).toEqual(['fire']);
+      expect(game.player.inv['book_fire']).toBe(1);
+      expect(ev.messages.at(-1)).toBe('魔法書: ファイアを読んだ。🔥 ファイアを覚えた！');
+
+      expect(game.useItem('book_fire')).toBe(false);
+      expect(game.player.inv['book_fire']).toBe(1);
+      expect(ev.messages.at(-1)).toBe('ファイアはもう覚えている');
+      expect(game.itemBlocker('book_fire', game.player)).toBe('もう覚えている');
+
+      // 覚えている・持っている魔法書は買えない。まだの書は1冊だけ買える
+      expect(game.buyableCount('book_fire')).toBe(0);
+      expect(game.buyableCount('book_blizzard')).toBe(1);
+      expect(game.buy('book_blizzard')).toBe(true);
+      expect(game.buyableCount('book_blizzard')).toBe(0);
+    });
+
+    it('攻撃魔法は選んでいる敵に飛んでいき、当たると魔力の威力でダメージを与えて気づかせる。MPが減る', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      field([[4, 2]]);
+      const e = enemyAt(4, 2);
+      game.select(e);
+
+      expect(game.castSpell('fire')).toBe(true);
+      expect(game.player.mp).toBe(40);
+      expect(ev.messages.at(-1)).toBe('🔥 ファイア！');
+      // 飛んでいる間はまだ当たらない
+      expect(e.hp).toBe(9999);
+      run(0.35);
+      // 26 - 防御10×0.3 = 23
+      expect(e.hp).toBe(9999 - 23);
+      expect(e.aggro).toBe(true);
+      expect(ev.sounds).toContain('attack_fire');
+    });
+
+    it('届く距離(魔力で3〜7マス)より遠い敵には撃てず、MPも減らない', () => {
+      field([[6, 2]]);
+      game.select(enemyAt(6, 2));
+      expect(game.spellRange()).toBeCloseTo(3 + (4 * 6) / 99);
+
+      expect(game.castSpell('fire')).toBe(false);
+      expect(game.player.mp).toBe(44);
+      expect(game.spellFx).toEqual([]);
+      expect(ev.messages.at(-1)).toBe('かかしは遠すぎて届かない');
+    });
+
+    it('敵を選んでいなければ、届く中でいちばん近い敵に撃つ。届く敵がいなければ撃たない', () => {
+      field([[5, 2], [4, 3]]);
+      expect(game.castSpell('fire')).toBe(true);
+      expect(game.spellFx[0].target).toBe(enemyAt(4, 3));
+
+      field([[9, 9]]);
+      expect(game.castSpell('fire')).toBe(false);
+      expect(ev.messages.at(-1)).toBe('届く敵がいない');
+    });
+
+    it('覚えていない魔法・MPが足りない魔法は使えない。使ったあと1秒は次の魔法を使えない', () => {
+      field([[4, 2]], { spells: ['fire'], mp: 3 });
+      expect(game.castSpell('heal')).toBe(false);
+      expect(ev.messages.at(-1)).toBe('ヒールをまだ覚えていない');
+      expect(game.castSpell('fire')).toBe(false);
+      expect(ev.messages.at(-1)).toBe('MPが足りない（ファイアはMP4）');
+
+      game.player.mp = 20;
+      expect(game.castSpell('fire')).toBe(true);
+      expect(game.castSpell('fire')).toBe(false);
+      expect(game.player.mp).toBe(16);
+      run(1.05);
+      expect(game.castSpell('fire')).toBe(true);
+    });
+
+    it('サンダーは、当たった敵のまわり(1.5マス)の敵にも当たる', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      field([[4, 2], [5, 2], [4, 4]]);
+      const [a, b, far] = [enemyAt(4, 2), enemyAt(5, 2), enemyAt(4, 4)];
+      game.select(a);
+      game.castSpell('thunder');
+      run(0.3);
+      // 26×0.8 - 3 = 17.8 → 18
+      expect([a.hp, b.hp, far.hp]).toEqual([9999 - 18, 9999 - 18, 9999]);
+    });
+
+    it('ブリザドが当たった敵は、少しの間 遅くなる', () => {
+      field([[4, 2]]);
+      const e = enemyAt(4, 2);
+      game.select(e);
+      game.castSpell('blizzard');
+      run(0.35);
+      expect(e.slow).toBeGreaterThan(2.5);
+      run(3);
+      expect(e.slow).toBe(0);
+    });
+
+    it('回復魔法は選んでいる仲間・自分に使う。敵を選んでいる・選んでいなければ自分。満タンなら使わない', () => {
+      field([[4, 2]]);
+      game.addCompanion(mate('3'));
+      const c = game.companions[0];
+      c.hp = 10;
+      game.player.hp = 20;
+
+      game.select(c);
+      expect(game.castSpell('heal')).toBe(true);
+      expect(c.hp).toBe(43);
+      expect(game.player.mp).toBe(39);
+      expect(ev.messages.at(-1)).toBe('💚 ヒール！ 仲間3のHPが回復した');
+
+      run(1.05);
+      game.select(enemyAt(4, 2));
+      game.castSpell('heal');
+      expect(game.player.hp).toBe(50);
+
+      run(1.05);
+      game.clearSelection();
+      const before = game.player.mp;
+      expect(game.castSpell('heal')).toBe(false);
+      expect(ev.messages.at(-1)).toBe('HPは満タンだ');
+      expect(game.player.mp).toBe(before);
+    });
+
+    it('ヒールオールは、選んでいる相手に関係なく、たおれていない全員を回復する', () => {
+      field([]);
+      game.addCompanion(mate('3'));
+      game.addCompanion(mate('4'));
+      const [a, b] = game.companions;
+      Object.assign(a, { hp: 10 });
+      Object.assign(b, { hp: 0, dead: true });
+      game.player.hp = 20;
+
+      expect(game.castSpell('healall')).toBe(true);
+      expect([game.player.hp, a.hp, b.hp]).toEqual([50, 43, 0]);
+    });
+
+    it('回復薬は選んでいる仲間に使う。MPを回復する道具は、仲間を選んでいても自分に使い、MPが満タンなら使わない', () => {
+      field([], { items: [{ itemId: 'potion', count: 1 }, { itemId: 'magic_water', count: 2 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] });
+      game.addCompanion(mate('3'));
+      const c = game.companions[0];
+      c.hp = 10;
+      game.select(c);
+
+      expect(game.useItem('potion')).toBe(true);
+      // 35 × 回復量の倍率(魔力6で1.12) = 39
+      expect(c.hp).toBe(49);
+
+      game.player.mp = 10;
+      expect(game.useItem('magic_water')).toBe(true);
+      expect(game.player.mp).toBe(40);
+      expect(ev.messages.at(-1)).toBe('魔法の水を使った。MPが30回復した');
+
+      game.player.mp = 44;
+      expect(game.useItem('magic_water')).toBe(false);
+      expect(game.player.inv['magic_water']).toBe(1);
+      expect(ev.messages.at(-1)).toBe('MPは満タンだ');
+    });
+
+    it('敵をクリックすると選んで近づいて殴る。仲間・自分をクリックすると選ぶだけで動かない。地面をクリックしても選んだまま', () => {
+      field([[6, 2]]);
+      game.addCompanion(mate('3'));
+      const c = game.companions[0];
+      const e = enemyAt(6, 2);
+      game.update(0);
+
+      game.click(...game.screenPositionOf(e));
+      expect(game.selected).toBe(e);
+      expect(game.player.target).toBe(e);
+
+      game.player.target = null;
+      game.player.path = [];
+      // 人は体のあたりをクリックする(足元は手前の人と重なることがある)
+      const body = (f: { x: number; y: number }): [number, number] => {
+        const [x, y] = game.screenPositionOf(f);
+        return [x, y - 30];
+      };
+      game.click(...body(c));
+      expect(game.selected).toBe(c);
+      expect(game.player.target).toBeNull();
+      expect(game.player.path).toEqual([]);
+
+      game.click(...body(game.player));
+      expect(game.selected).toBe(game.player);
+
+      clickTile(2, 6);
+      expect(game.selected).toBe(game.player);
+      expect(game.player.path.length).toBeGreaterThan(0);
+    });
+
+    it('選んでいた敵をたおす・エリアを移る・選んでいた仲間が抜けると、選択が外れる', () => {
+      field([[4, 2]]);
+      const e = enemyAt(4, 2);
+      e.hp = 1;
+      game.select(e);
+      game.castSpell('fire');
+      run(0.35);
+      expect(e.alive).toBe(false);
+      expect(game.selected).toBeNull();
+
+      game.addCompanion(mate('3'));
+      game.select(game.companions[0]);
+      game.removeCompanion('3');
+      expect(game.selected).toBeNull();
+
+      game.select(game.player);
+      game.loadMap(map('field'));
+      expect(game.selected).toBeNull();
+    });
+
+    it('MPは時間で少しずつ戻る', () => {
+      field([]);
+      game.player.mp = 0;
+      run(3);
+      // 戦っていないときは 1.5秒ごとに最大MPの4%(44 × 0.04 / 1.5 ≒ 1.17/秒)
+      expect(game.player.mp).toBeGreaterThanOrEqual(2);
+      expect(game.player.mp).toBeLessThanOrEqual(4);
     });
   });
 
