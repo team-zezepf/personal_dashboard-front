@@ -23,7 +23,7 @@
       }
       @for (s of shortcutChips(); track s.key) {
         @if (s.spell) {
-          <div class="chip shortcut spell" [class.empty]="s.empty"><span class="key">{{ s.key }}</span>{{ s.name }} <span class="chip-mp">MP{{ s.mp }}</span></div>
+          <div class="chip shortcut spell" [class.empty]="s.empty"><span class="key">{{ s.key }}</span>{{ s.name }} MP{{ s.mp }}</div>
         } @else {
           <div class="chip shortcut" [class.empty]="s.empty"><span class="key">{{ s.key }}</span>{{ s.name }} ×{{ s.count }}</div>
         }
@@ -32,12 +32,12 @@
 
     <!-- 選んでいる敵・仲間・自分(front#383)。選んだ相手に魔法・回復薬を使う -->
     @if (selection(); as sel) {
-      <div class="selection" [class.enemy]="sel.enemy" role="status" aria-label="選んでいる相手">
-        <span class="selection-name">{{ sel.enemy ? '🎯' : '💚' }} {{ sel.name }}</span>
-        <div class="selection-bar"><div [style.width.%]="sel.rate"></div></div>
-        <span class="selection-hp">{{ sel.hp }}/{{ sel.maxHp }}</span>
-        <span class="selection-hint">{{ sel.enemy ? '攻撃魔法の相手' : '回復の相手' }}</span>
-        <button type="button" class="selection-clear" aria-label="選択を外す" title="選択を外す（Esc）" (click)="clearSelection()">×</button>
+      <div class="chip selection" [class.enemy]="sel.enemy" role="status" aria-label="選んでいる相手">
+        <b>{{ sel.enemy ? '🎯' : '💚' }} {{ sel.name }}</b>
+        <div class="vitals-bar"><div class="hp" [style.width.%]="sel.rate"></div></div>
+        <span>{{ sel.hp }}/{{ sel.maxHp }}</span>
+        <small>{{ sel.enemy ? '攻撃魔法の相手' : '回復の相手' }}</small>
+        <button type="button" class="status-button" aria-label="選択を外す" title="選択を外す（Esc）" (click)="clearSelection()">×</button>
       </div>
     }
 
@@ -308,21 +308,21 @@
         <div class="modal-card spell-card" role="dialog" aria-label="魔法" (click)="$event.stopPropagation()">
           <div class="modal-head">
             <span>🔮 魔法</span>
-            <span class="spell-mp">MP {{ stats()?.mp }} / {{ stats()?.maxMp }}</span>
+            <span class="mp-cost">MP {{ stats()?.mp }} / {{ stats()?.maxMp }}</span>
             <button type="button" class="close-button" aria-label="閉じる" (click)="closeSpells()">×</button>
           </div>
           <p class="modal-sub">攻撃魔法は選んでいる敵（なければ近い敵）に、回復魔法は選んでいる仲間・自分（なければ自分）に使います。魔法書を使うと新しい魔法を覚えます。</p>
           @for (row of spellRows(); track row.id) {
-            <div class="spell-row" [class.locked]="!row.learned">
-              <span class="spell-icon">{{ row.icon }}</span>
-              <div class="spell-info">
-                <div class="spell-name">
+            <div class="shop-row">
+              <span class="shop-icon">{{ row.icon }}</span>
+              <div class="shop-info">
+                <div class="shop-name">
                   {{ row.name }}
-                  <span class="spell-kind" [class.heal]="row.kind === 'heal'">{{ row.kind === 'heal' ? '回復' : '攻撃' }}</span>
+                  <span class="equipped-chip">{{ row.kind === 'heal' ? '回復' : '攻撃' }}</span>
                 </div>
-                <div class="spell-desc">{{ row.learned ? row.desc : 'まだ覚えていない（魔法書で覚える）' }}</div>
+                <div class="shop-desc">{{ row.learned ? row.desc : 'まだ覚えていない（魔法書で覚える）' }}</div>
               </div>
-              <span class="spell-cost">MP {{ row.mp }}</span>
+              <span class="shop-price mp-cost">MP {{ row.mp }}</span>
               <button type="button" class="btn" [disabled]="!row.canUse" [attr.aria-label]="row.name + 'を使う'" (click)="castSpell(row.id)">使う</button>
             </div>
           }

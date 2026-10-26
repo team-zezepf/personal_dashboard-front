@@ -85,16 +85,9 @@
   background: rgba(30, 58, 138, 0.78);
 }
 
-.chip-mp {
-  margin-left: 4px;
-  color: #93c5fd;
-  font-weight: 700;
-}
-
-/* 選んでいる敵・仲間・自分(front#383)。上のまんなか */
+/* 選んでいる敵・仲間・自分(front#383)。左上と同じチップで、上のまんなか(ショートカットの下)に出す */
 .selection {
   position: absolute;
-  /* 左上のショートカットの下(ショートカットが多くても重ならないように) */
   top: 52px;
   left: 50%;
   transform: translateX(-50%);
@@ -102,67 +95,22 @@
   align-items: center;
   gap: 8px;
   min-width: 240px;
-  background: rgba(17, 24, 39, 0.78);
-  color: #fff;
-  border-radius: 10px;
   border-left: 4px solid #22c55e;
-  padding: 5px 8px 5px 10px;
-  font-size: 12px;
+  white-space: nowrap;
   z-index: 4;
+}
+
+.selection .vitals-bar {
+  width: 64px;
+  height: 6px;
 }
 
 .selection.enemy {
   border-left-color: #ef4444;
 }
 
-.selection-name {
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.selection-bar {
-  flex: 1;
-  min-width: 60px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.selection-bar > div {
-  height: 100%;
-  background: #22c55e;
-  transition: width 0.2s;
-}
-
-.selection.enemy .selection-bar > div {
+.selection.enemy .hp {
   background: #ef4444;
-}
-
-.selection-hp {
-  font-variant-numeric: tabular-nums;
-}
-
-.selection-hint {
-  color: #cbd5e1;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.selection-clear {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.selection-clear:hover {
-  background: rgba(255, 255, 255, 0.3);
 }
 
 .chip.test {
@@ -1113,94 +1061,10 @@
   outline: 2px solid #22c55e;
 }
 
-/* ===== 魔法の一覧(front#383) ===== */
-.spell-mp {
+/* 魔法の一覧(front#383)。行は道具屋の行(shop-row)を使い回し、MPだけ青で出す */
+.mp-cost {
   margin-left: 8px;
-  font-size: 12.5px;
-  font-weight: 700;
   color: #3b82f6;
-}
-
-.spell-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 0;
-  border-top: 1px solid var(--line);
-}
-
-.spell-row.locked {
-  opacity: 0.55;
-}
-
-.spell-icon {
-  width: 32px;
-  font-size: 22px;
-  text-align: center;
-}
-
-.spell-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.spell-name {
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.spell-kind {
-  margin-left: 6px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 10.5px;
-  font-weight: 700;
-  vertical-align: middle;
-}
-
-.spell-kind.heal {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.spell-desc {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.spell-cost {
-  min-width: 52px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #3b82f6;
-}
-
-.mate-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.mate-top b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mate-hp {
-  margin: 2px 0 3px;
-}
-
-.party-hud .vitals-bar {
-  height: 6px;
-}
-
-.mate-items {
-  margin-top: 3px;
-  opacity: 0.9;
 }
 
 /* たおれて待っているとき。画面は少し暗くするだけで、案内は右下に小さく出す */

@@ -1141,7 +1141,7 @@ test(
       await page.reload();
       await expect(mp).toHaveText('20 / 20');
       await openSpells();
-      await expect(spells.locator('.spell-row', { hasText: 'ファイア' })).toContainText('まだ覚えていない');
+      await expect(spells.locator('.shop-row', { hasText: 'ファイア' })).toContainText('まだ覚えていない');
       await expect(spells.getByRole('button', { name: 'ファイアを使う' })).toBeDisabled();
       await spells.getByRole('button', { name: '閉じる' }).click();
     });
