@@ -30,6 +30,10 @@ export interface RpgSave {
   // 連れている仲間(front#358)。集会場で呼んだほかのアカウント。最大3人
   party?: RpgCompanion[];
   updatedAt?: string | null;
+  // 今のMP(front#383 / api#181)。魔法ができる前のセーブデータは null(最大MPから始める)
+  mp?: number | null;
+  // 覚えた魔法のID(front#383)。魔法書を使うと増える
+  spells?: string[];
 }
 
 // 連れている仲間1人(front#358)。レベル・装備・持ち物などは、仲間のアカウントのセーブデータ
@@ -45,6 +49,9 @@ export interface RpgCompanion {
   stats: RpgStats;
   statPoints: number;
   look: RpgLook;
+  // MPと覚えた魔法(front#383)。今は仲間は魔法を使わないが、データは消さずに保存し直す
+  mp?: number | null;
+  spells?: string[];
 }
 
 // 保存するときにいっしょに送る仲間のデータ(front#358)。それぞれのアカウントのセーブデータに書かれる
@@ -361,7 +368,8 @@ export type RpgCraftInput = Omit<RpgCraft, 'id' | 'sortOrder' | 'updatedAt'> & {
 
 // RPGのアイテム(front#343 / api#163)。回復の道具・武器・防具・素材。マップ作成画面の「アイテム」タブで作る(合成の装備は含まない)
 // revive: たおれた人を起き上がらせる道具(front#358)。heal は起き上がるときのHPの割合(%)
-export type RpgItemType = 'use' | 'revive' | 'weapon' | 'armor' | 'material';
+// book: 魔法書(front#383)。使うと spell の魔法を覚え、なくなる
+export type RpgItemType = 'use' | 'revive' | 'weapon' | 'armor' | 'material' | 'book';
 
 export interface RpgItem {
   // アイテムのID(持ち物・装備のIDと同じ)
@@ -372,6 +380,10 @@ export interface RpgItem {
   type: RpgItemType;
   // 回復量(use)・攻撃力(weapon)・防御力(armor)。種類に関係ないものは null
   heal?: number | null;
+  // MPの回復量(use。front#383)。use は heal と mp のどちらかがある
+  mp?: number | null;
+  // 覚える魔法のID(book。front#383)
+  spell?: string | null;
   atk?: number | null;
   def?: number | null;
   desc?: string | null;

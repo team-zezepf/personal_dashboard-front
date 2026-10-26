@@ -43,11 +43,11 @@ const SAVE_FIELDS = `
   items { itemId count }
   area x y
   stats { hp atk def mag spd luk }
-  statPoints updatedAt
+  statPoints updatedAt mp spells
   look { ${LOOK_FIELDS} }
   quests { id state count }
   respawn { area x y }
-  party { userId name level exp hp weapon armor items { itemId count } stats { hp atk def mag spd luk } statPoints look { ${LOOK_FIELDS} } }
+  party { userId name level exp hp weapon armor items { itemId count } stats { hp atk def mag spd luk } statPoints look { ${LOOK_FIELDS} } mp spells }
 `;
 
 const HALL_FIELDS = `userId name level look { ${LOOK_FIELDS} } partyOf playing inMyParty`;
@@ -78,7 +78,7 @@ const SE_FIELDS = `id name filename size createdAt`;
 
 const CRAFT_FIELDS = `id name icon type power gold materials { itemId count } sortOrder updatedAt image`;
 
-const ITEM_FIELDS = `id name icon type heal atk def desc inShop price sellPrice sortOrder updatedAt image`;
+const ITEM_FIELDS = `id name icon type heal mp spell atk def desc inShop price sellPrice sortOrder updatedAt image`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 

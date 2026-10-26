@@ -1,6 +1,6 @@
 import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
-import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, RpgGame, iso } from './rpg-game';
+import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
@@ -102,6 +102,7 @@ export class RpgRenderer {
     if (!game.map.hasHeights) this.drawCursorTile();
     this.drawEntities();
     this.drawAttacks();
+    this.drawSpells();
     if (game.map.hasHeights) this.drawCursorTile();
     if (pal.fireflies) this.drawFireflies();
     // 看板(front#274)の上に、指している先のダンジョンの名前(front#333: 向きを決めた看板は、その向きの端)
@@ -463,11 +464,17 @@ export class RpgRenderer {
    */
   private drawCompanion(c: Companion, sx: number, sy: number): void {
     const ctx = this.ctx;
+    this.drawSelectRing(c, sx, sy);
     ctx.strokeStyle = c.dead ? 'rgba(96,165,250,0.4)' : 'rgba(96,165,250,0.95)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.ellipse(sx, sy, 17, 7, 0, 0, Math.PI * 2);
     ctx.stroke();
+    // 回復魔法・回復薬の光(front#383)。プレイヤーと同じ絵を、仲間のまわりに出す
+    const fx: PlayerFx[] = this.game.spellFx
+      .filter((f) => f.target === c && (f.spell === 'heal' || f.spell === 'healall'))
+      .map((f) => ({ kind: 'heal', t: f.t, seed: f.seed, big: f.spell === 'healall' }));
+    if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (c.dead) ctx.globalAlpha = 0.45;
     this.drawLook(sx + c.lunge * 7 * c.dir, sy, c.look, {
       dir: c.dir,
@@ -479,6 +486,8 @@ export class RpgRenderer {
       slash: c.lunge
     });
     ctx.globalAlpha = 1;
+    if (fx.length) drawPlayerFxFront(ctx, fx, sx, sy);
+    if (this.game.selected === c) this.drawSelectArrow(sx, sy - (c.dead ? 80 : 84), false);
     if (c.dead) {
       const left = Math.max(0, Math.ceil(c.downT));
       this.label(`${c.name}  ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, sx, sy - 62, 'rgba(185,28,28,0.85)');
@@ -881,6 +890,7 @@ export class RpgRenderer {
     const ctx = this.ctx;
     // レベルアップ・回復のエフェクト(front#335)。足元の輪・光の柱は体の後ろに描く
     const fx = this.game.playerFx;
+    this.drawSelectRing(p, sx, sy);
     if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (p.dead) ctx.globalAlpha = 0.45;
     this.drawLook(sx + p.lunge * 7 * p.dir, sy, p.look, {
@@ -894,6 +904,42 @@ export class RpgRenderer {
     });
     ctx.globalAlpha = 1;
     if (fx.length) drawPlayerFxFront(ctx, fx, sx, sy);
+    if (this.game.selected === p) this.drawSelectArrow(sx, sy - 64, false);
+  }
+
+  /**
+   * 選んでいる相手(front#383)の足元の輪。仲間・自分は緑、敵は赤(敵は狙っている輪と同じ所に描く)。
+   * マウスの下の仲間・自分は、選べることが分かるよう薄い緑の点線の輪
+   */
+  private drawSelectRing(f: Player | Companion, sx: number, sy: number): void {
+    const game = this.game;
+    const selected = game.selected === f;
+    if (!selected && game.hoverFighter !== f) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = selected ? `rgba(34,197,94,${0.75 + Math.sin(this.time * 6) * 0.25})` : 'rgba(34,197,94,0.6)';
+    ctx.lineWidth = selected ? 3 : 2;
+    if (!selected) ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 23, 10, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /** 選んでいる相手の頭の上の▼(front#383)。上下にゆれる */
+  private drawSelectArrow(x: number, y: number, enemy: boolean): void {
+    const ctx = this.ctx;
+    const top = y - 10 + Math.sin(this.time * 5) * 3;
+    ctx.fillStyle = enemy ? '#ef4444' : '#22c55e';
+    ctx.strokeStyle = 'rgba(17,24,39,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - 7, top);
+    ctx.lineTo(x + 7, top);
+    ctx.lineTo(x, top + 9);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
   }
 
   private drawEnemy(e: Enemy, sx: number, sy: number): void {
@@ -926,9 +972,22 @@ export class RpgRenderer {
       });
       ctx.restore();
     }
+    // ブリザド(front#383)で遅くなっている間は、体を青白くして雪の結晶を出す
+    if ((e.slow ?? 0) > 0) {
+      ctx.save();
+      ctx.fillStyle = `rgba(186,230,253,${0.3 + Math.sin(this.time * 4) * 0.08})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y - top / 2, 16 * ring, top / 2 + 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '13px "Segoe UI Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('❄️', x + 16 * ring, y - top + 4);
+      ctx.restore();
+    }
     if (def.boss) this.drawGuardBarrier(e, x, y, top);
     const hovered = game.hover === e;
     const barY = y - top;
+    if (game.selected === e) this.drawSelectArrow(sx, barY - 34, true);
     // ふりをしている化ける敵(front#270)・置物に擬態している敵(front#333)は、置物と同じように名前だけを出す
     const disguise = e.aggro ? null : e.disguise ? STATIC_NAMES[e.disguise.type] : disguiseOf(def);
     if (disguise) {
@@ -1043,6 +1102,49 @@ export class RpgRenderer {
         const py = s.y + Math.sin(a) * (s.ry * 0.8 + sp * q * 0.6) + 60 * q * q;
         ctx.beginPath(); ctx.moveTo(px, py - 5); ctx.lineTo(px + 4, py); ctx.lineTo(px, py + 5); ctx.lineTo(px - 3, py); ctx.closePath(); ctx.fill();
       }
+    }
+  }
+
+  /**
+   * 魔法の演出(front#383)。ファイア・ブリザドは撃った位置から相手へ光の玉が飛び、当たると敵の炎・水と同じ絵を出す。
+   * サンダーは相手の上に雷雲が出て、当たった敵全部に雷が落ちる。回復は人のまわりに描く(drawPlayer・drawCompanion)
+   */
+  private drawSpells(): void {
+    const ctx = this.ctx;
+    for (const fx of this.game.spellFx) {
+      if (fx.spell === 'heal' || fx.spell === 'healall') continue;
+      const { hitAt, duration } = SPELL_FX_SEC[fx.spell];
+      const [tx, ty] = this.at(fx.x, fx.y);
+      const frame = (attack: 'fire' | 'water' | 'thunder', k: number, x: number, y: number) =>
+        drawAttackEffect(ctx, { attack, k, time: this.time, ex: x, ey: y, tx: x, ty: y, dir: 1, s: 1, radiusPx: 0, radius: 0, hitK: 0 });
+      if (fx.spell === 'thunder') {
+        const k = 0.2 + 0.8 * Math.min(1, fx.t / duration);
+        const spots = fx.hit && fx.hits.length ? fx.hits.map((e) => this.at(e.x, e.y)) : [[tx, ty] as [number, number]];
+        for (const [x, y] of spots) frame('thunder', k, x, y);
+        continue;
+      }
+      const fire = fx.spell === 'fire';
+      if (fx.t < hitAt) {
+        // 飛んでいく光の玉と、その尾
+        const [fx0, fy0] = this.at(fx.fromX, fx.fromY);
+        for (let i = 3; i >= 0; i--) {
+          const q = Math.max(0, fx.t / hitAt - i * 0.08);
+          const x = fx0 + (tx - fx0) * q;
+          const y = fy0 + (ty - fy0) * q - 26 - Math.sin(q * Math.PI) * 26;
+          const r = (10 - i * 2) * (i ? 0.8 : 1);
+          const g = ctx.createRadialGradient(x, y, 1, x, y, r);
+          g.addColorStop(0, i ? 'rgba(255,255,255,0.5)' : '#ffffff');
+          g.addColorStop(0.45, fire ? 'rgba(251,146,60,0.9)' : 'rgba(125,211,252,0.9)');
+          g.addColorStop(1, fire ? 'rgba(239,68,68,0)' : 'rgba(59,130,246,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        continue;
+      }
+      const q = Math.min(1, (fx.t - hitAt) / (duration - hitAt));
+      frame(fire ? 'fire' : 'water', fire ? 0.35 + 0.55 * q : 0.45 + 0.55 * q, tx, ty);
     }
   }
 

@@ -30,6 +30,8 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }, ...extraItems],
       area: 'plain', x: 6, y: 7,
       stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3, quests: [],
+      // MP は最大(魔力0なので20)、覚えた魔法はなしに戻す(front#383。送らないと今のまま)
+      mp: 20, spells: [],
       // ふっかつ地点(front#337)も村の (6, 7) に戻す(送らないと今のまま)
       respawn: { area: 'plain', x: 6, y: 7 },
       look: {
@@ -61,6 +63,12 @@ async function savedRespawn(): Promise<{ area: string; x: number; y: number } | 
   });
   const body = (await res.json()) as { data: { rpgSave: { respawn: { area: string; x: number; y: number } | null } } };
   return body.data.rpgSave.respawn;
+}
+
+// キャンバスの中の、画面上の位置 [x, y] から dy だけ上をクリックする(位置は window.rpgTest から求める)
+async function clickCanvas(page: Page, position: [number, number], dy = 0): Promise<void> {
+  const box = (await page.getByLabel('RPGのゲーム画面').boundingBox())!;
+  await page.mouse.click(box.x + position[0], box.y + position[1] - dy);
 }
 
 // キャンバスの中の村人をクリックする(位置は画面が開発用のビルドのときだけ出す window.rpgTest から求める)
@@ -1088,6 +1096,136 @@ test(
       await expect(status.getByText('38G')).toBeVisible();
       await expect(items.getByText('×5')).toBeVisible();
       await expect(items.getByText('銅の剣')).toHaveCount(0);
+    });
+  }
+);
+
+test(
+  'E2E-29 RPGで、魔法書を読んで魔法を覚え、敵をクリックで選んで攻撃魔法を撃ち、自分を選んで回復魔法・魔法の水を使う(front#383)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'RPGのセーブデータを最初の状態(村・HP50・MP20・魔法なし)に戻し、魔法書: ファイア・魔法書: ヒール・魔法の水を1つずつ足してある',
+      '始まりの草原の村の (7, 5) に、近づいても襲ってこないスライム(HP22)がいる(E2E 用のマップのデータ)',
+      'この端末のブラウザに覚えたショートカットの設定を消してある'
+    ],
+    expected: [
+      '左下にMPのバー(20 / 20)と「🔮 魔法」ボタンがある。魔法の一覧では、まだ覚えていない魔法は押せない',
+      '持ち物の魔法書を使うと、ログに「…を覚えた！」と出て魔法書がなくなり、魔法の一覧でファイア・ヒールの「使う」を押せる(ブリザドは押せない)',
+      '歯車(設定)のショートカットで 3キーにファイア、4キーにヒールを選ぶと、左上に「3 🔥 ファイア MP4」「4 💚 ヒール MP5」が出る',
+      'いちばん近いスライムをクリックすると、画面の上のまんなかに「🎯 スライム」と出る。3キーを押すと、ログに「🔥 ファイア！」と出て MP が4減り、スライムのHPが減る(または たおれる)',
+      '自分をクリックすると「💚 あなた」に変わる。HPを20に減らして4キーを押すと、ログに「💚 ヒール！」と出てHPが35以上に戻り、MP が5減る',
+      'Esc を押すと選択が外れる。持ち物の魔法の水を使うと MP が 20(最大)に戻る',
+      '画面を読み込み直しても、覚えた魔法(ファイア・ヒール)は残っている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'book_fire', count: 1 }, { itemId: 'book_heal', count: 1 }, { itemId: 'magic_water', count: 1 }]);
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+    const spells = page.getByRole('dialog', { name: '魔法' });
+    const selection = page.getByRole('status', { name: '選んでいる相手' });
+    const chips = page.locator('.hud .chip.shortcut');
+    const mp = status.getByLabel('MP', { exact: true });
+    const mpValue = async () => Number((await mp.innerText()).split('/')[0]);
+    const hpValue = async () => Number((await status.locator('.vitals-num').first().innerText()).split('/')[0]);
+    const openSpells = async () => status.getByRole('button', { name: '🔮 魔法' }).click();
+
+    await step('RPG(/rpg)を開き、左下の「🔮 魔法」を押す', 'MP 20 / 20 が出て、魔法の一覧のファイアは「まだ覚えていない」で押せない', async () => {
+      await page.goto('/rpg');
+      await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
+      await page.reload();
+      await expect(mp).toHaveText('20 / 20');
+      await openSpells();
+      await expect(spells.locator('.spell-row', { hasText: 'ファイア' })).toContainText('まだ覚えていない');
+      await expect(spells.getByRole('button', { name: 'ファイアを使う' })).toBeDisabled();
+      await spells.getByRole('button', { name: '閉じる' }).click();
+    });
+
+    await step(
+      '持ち物の「魔法書: ファイア」「魔法書: ヒール」の「使う」を押し、「🔮 魔法」を開く',
+      'ログに「🔥 ファイアを覚えた！」「💚 ヒールを覚えた！」と出て魔法書がなくなり、ファイア・ヒールは使え、ブリザドは使えない',
+      async () => {
+        await items.getByRole('button', { name: '魔法書: ファイアを使う' }).click();
+        await expect(log.getByText('🔥 ファイアを覚えた！', { exact: false })).toBeVisible();
+        await items.getByRole('button', { name: '魔法書: ヒールを使う' }).click();
+        await expect(log.getByText('💚 ヒールを覚えた！', { exact: false })).toBeVisible();
+        await expect(items.getByText('魔法書')).toHaveCount(0);
+        await openSpells();
+        await expect(spells.getByRole('button', { name: 'ファイアを使う' })).toBeEnabled();
+        await expect(spells.getByRole('button', { name: 'ヒールを使う' })).toBeEnabled();
+        await expect(spells.getByRole('button', { name: 'ブリザドを使う' })).toBeDisabled();
+        await spells.getByRole('button', { name: '閉じる' }).click();
+      }
+    );
+
+    await step('歯車(設定)のショートカットで、3キーにファイア、4キーにヒールを選ぶ', '左上に「3 🔥 ファイア MP4」「4 💚 ヒール MP5」が出る', async () => {
+      await page.getByRole('button', { name: '設定' }).click();
+      const settings = page.getByRole('dialog', { name: '設定' });
+      await settings.getByLabel('3キーで使う道具').selectOption({ label: '🔥 ファイア（MP4）' });
+      await settings.getByLabel('4キーで使う道具').selectOption({ label: '💚 ヒール（MP5）' });
+      await expect(chips.nth(2)).toHaveText('3🔥 ファイア MP4');
+      await expect(chips.nth(3)).toHaveText('4💚 ヒール MP5');
+      await page.getByLabel('RPGのゲーム画面').click({ position: { x: 40, y: 200 } });
+      await expect(settings).toHaveCount(0);
+    });
+
+    await step(
+      'いちばん近いスライムをクリックし、3キーを押す',
+      '上のまんなかに「🎯 スライム」と出て、ログに「🔥 ファイア！」、MP が4減り、スライムのHPが22より減る(または たおれる)',
+      async () => {
+        await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+        const slime = await page.evaluate(() => (window as any).rpgTest.enemyPosition('slime') as [number, number]);
+        await clickCanvas(page, slime, 10);
+        await expect(selection).toContainText('🎯 スライム');
+        await page.keyboard.press('3');
+        await expect(log.getByText('🔥 ファイア！')).toBeVisible();
+        // 戦っている間も MP は3秒に1ずつ戻るので、16 か 17
+        expect(await mpValue()).toBeGreaterThanOrEqual(16);
+        expect(await mpValue()).toBeLessThanOrEqual(17);
+        await expect
+          .poll(() => page.evaluate(() => { const s = (window as any).rpgTest.selection(); return s === null || s.hp < 22; }))
+          .toBe(true);
+      }
+    );
+
+    await step(
+      'スライムとの戦いが終わってから自分をクリックし、HPを20に減らして4キーを押す',
+      '上のまんなかが「💚 あなた」に変わり、ログに「💚 ヒール！」と出てHPが35以上に戻り、MP が5減る',
+      async () => {
+        await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle()), { timeout: 20_000 }).toBe(true);
+        const me = await page.evaluate(() => (window as any).rpgTest.playerPosition() as [number, number]);
+        await clickCanvas(page, me, 30);
+        await expect(selection).toContainText('💚 あなた');
+        await page.evaluate(() => (window as any).rpgTest.hurtPlayer(20));
+        const before = await mpValue();
+        await page.keyboard.press('4');
+        await expect(log.getByText('💚 ヒール！')).toBeVisible();
+        await expect.poll(hpValue).toBeGreaterThanOrEqual(35);
+        expect(before - (await mpValue())).toBeGreaterThanOrEqual(4);
+        expect(before - (await mpValue())).toBeLessThanOrEqual(5);
+      }
+    );
+
+    await step('Esc を押し、持ち物の「魔法の水」の「使う」を押す', '選択が外れ、MP が 20 / 20 に戻る', async () => {
+      await page.keyboard.press('Escape');
+      await expect(selection).toHaveCount(0);
+      await items.getByRole('button', { name: '魔法の水を使う' }).click();
+      await expect(log.getByText('魔法の水を使った。MPが', { exact: false })).toBeVisible();
+      await expect(mp).toHaveText('20 / 20');
+    });
+
+    await step('画面を読み込み直し、「🔮 魔法」を開く', 'ファイア・ヒールは覚えたままで「使う」を押せる', async () => {
+      await page.reload();
+      await expect(mp).toHaveText('20 / 20');
+      await openSpells();
+      await expect(spells.getByRole('button', { name: 'ファイアを使う' })).toBeEnabled();
+      await expect(spells.getByRole('button', { name: 'ヒールを使う' })).toBeEnabled();
+      await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
     });
   }
 );
