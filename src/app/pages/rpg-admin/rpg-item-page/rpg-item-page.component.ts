@@ -4,7 +4,7 @@ import { Observable, concat, switchMap, toArray } from 'rxjs';
 import { RpgCraft, RpgEnemy, RpgItem, RpgItemInput, RpgItemType, RpgMap, RpgObjectDef, RpgPointShopItem } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
 import { STATIC_NAMES, StaticType, rpgItemImageUrl, sellPriceOf, setItems } from '../../../rpg/rpg-data';
-import { SPELLS, SPELL_IDS, SpellId, isSpellId } from '../../../rpg/rpg-magic';
+import { MAX_SPELL_LEVEL, SPELLS, SPELL_IDS, SpellId, isSpellId, levelRateOf, spellLabel } from '../../../rpg/rpg-magic';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
 
@@ -99,7 +99,7 @@ export function statOf(item: RpgItem): number | null {
 export function statText(item: RpgItem): string {
   // MPを回復する道具(front#383)は、HP・MPの回復量を並べる
   if (item.type === 'use') return [item.heal ? `HP +${item.heal}` : null, item.mp ? `MP +${item.mp}` : null].filter(Boolean).join('・') || 'HP +0';
-  if (item.type === 'book') return isSpellId(item.spell) ? `${SPELLS[item.spell].icon} ${SPELLS[item.spell].name}を覚える` : '覚える魔法なし';
+  if (item.type === 'book') return isSpellId(item.spell) ? `${SPELLS[item.spell].icon} ${spellLabel(item.spell, item.level ?? 1)}を覚える` : '覚える魔法なし';
   if (item.type === 'revive') return `HP${item.heal ?? 0}%で起き上がる`;
   if (item.type === 'weapon') return `攻撃 +${item.atk ?? 0}`;
   if (item.type === 'armor') return `防御 +${item.def ?? 0}`;
@@ -230,6 +230,8 @@ export class RpgItemPageComponent {
   readonly hasStat = hasStat;
   // 魔法書で覚える魔法(front#383)
   readonly spellIds = SPELL_IDS;
+  // 魔法書の LV(front#387)と、その倍率
+  readonly spellLevels = Array.from({ length: MAX_SPELL_LEVEL }, (_, i) => ({ level: i + 1, rate: levelRateOf(i + 1) }));
   readonly spells = SPELLS;
 
   readonly rows = signal<ItemRow[]>([]);
@@ -416,6 +418,7 @@ export class RpgItemPageComponent {
       i.heal = type === 'use' || type === 'revive' ? (i.heal ?? 50) : null;
       i.mp = type === 'use' ? (i.mp ?? null) : null;
       i.spell = type === 'book' ? (i.spell ?? 'fire') : null;
+      i.level = type === 'book' ? (i.level ?? 1) : null;
       i.atk = type === 'weapon' ? (i.atk ?? 10) : null;
       i.def = type === 'armor' ? (i.def ?? 5) : null;
       if (type === 'material') {
@@ -447,6 +450,13 @@ export class RpgItemPageComponent {
       if (i.type !== 'use') return;
       const n = v === null || v === '' ? 0 : clamp(Number(v), [0, ITEM_LIMITS.power[1]]);
       i.mp = n || null;
+    });
+  }
+
+  /** 魔法書の LV(front#387) */
+  setLevel(level: number | string): void {
+    this.update((i) => {
+      if (i.type === 'book') i.level = clamp(Number(level), [1, MAX_SPELL_LEVEL]);
     });
   }
 
@@ -669,6 +679,7 @@ export function toInput(row: ItemRow): RpgItemInput {
     heal: i.type === 'revive' ? (i.heal ?? null) : i.type === 'use' ? i.heal || null : null,
     mp: i.type === 'use' ? i.mp || null : null,
     spell: i.type === 'book' ? (i.spell ?? null) : null,
+    level: i.type === 'book' ? (i.level ?? 1) : null,
     atk: i.type === 'weapon' ? (i.atk ?? null) : null,
     def: i.type === 'armor' ? (i.def ?? null) : null,
     desc: i.desc?.trim() || null,

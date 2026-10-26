@@ -181,6 +181,15 @@
                   }
                 </select>
               </label>
+              <!-- 魔法書の LV(front#387) -->
+              <label class="field">
+                <span>LV</span>
+                <select [ngModel]="sel.item.level ?? 1" (ngModelChange)="setLevel($event)" aria-label="魔法書の LV">
+                  @for (l of spellLevels; track l.level) {
+                    <option [ngValue]="l.level">LV{{ l.level }}（×{{ l.rate }}）</option>
+                  }
+                </select>
+              </label>
             }
           </div>
           @if (sel.item.type === 'use') {
@@ -193,7 +202,7 @@
             <p class="hint">HP・MPのどちらか（または両方）を回復します。MPだけを回復する道具は、HPの回復量を 0 にします。</p>
           }
           @if (sel.item.type === 'book') {
-            <p class="hint">プレイヤーが使うと、その魔法を覚えます（魔法書はなくなります）。魔法の威力・MPはゲームの中で決まっていて、ここでは変えません。</p>
+            <p class="hint">プレイヤーが使うと、その魔法をこの LV で覚えます（魔法書はなくなります）。もう覚えている魔法は、書の LV のほうが高ければその LV に上がります。威力・回復量は LV が1上がるごとに +0.5倍。魔法の威力のもと・MPはゲームの中で決まっていて、ここでは変えません。</p>
           }
           <div class="field" role="group" aria-label="アイコン">
             <span>アイコン（絵文字）</span>

@@ -126,7 +126,7 @@ test(
     await step('RPGマップ作成(/rpg/admin)を開き、「🎒 アイテム」タブを押す', '回復の道具・武器・防具・素材・魔法書の一覧と、道具屋での見え方(回復薬〜魔法の鎧・いのちの羽・魔法の水・魔法書3つの14。front#383)が出る', async () => {
       await page.goto('/rpg/admin');
       await page.getByRole('tab', { name: '🎒 アイテム' }).click();
-      for (const group of ['回復の道具（3）', '武器（', '防具（', '素材（23）', '魔法書（5）']) await expect(tab.getByText(group).first()).toBeVisible();
+      for (const group of ['回復の道具（3）', '武器（', '防具（', '素材（23）', '魔法書（6）']) await expect(tab.getByText(group).first()).toBeVisible();
       await expect(shop.locator('.shop-row')).toHaveCount(14);
       await expect(shop.locator('.shop-row').first()).toContainText('回復薬');
     });

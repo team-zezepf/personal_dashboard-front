@@ -1,8 +1,8 @@
 import { RpgCompanion, RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
 import {
-  BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, besideSavePoint, buildAreaMap, centerSpot, edgeMiddle,
+  BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, DEFAULT_ITEMS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, besideSavePoint, buildAreaMap, centerSpot, edgeMiddle,
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
-  objectSettingsOf, objectTintOf, pickMimic, setCrafts, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
+  objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
 import { PLAYER_FX_SEC, RpgGame, RpgGameEvents } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
@@ -121,6 +121,7 @@ describe('RpgGame', () => {
         // MP・覚えた魔法(front#383)。魔法ができる前のセーブデータ(MPなし)は、最大MPから始める
         mp: 20,
         spells: [],
+        spellLevels: [],
         companions: []
       });
     });
@@ -1499,8 +1500,8 @@ describe('RpgGame', () => {
 
       expect(game.companions.map((c) => [c.userId, c.hp])).toEqual([['3', 30], ['4', maxHpOf({ ...ZERO_STATS, atk: 3 })]]);
       expect(game.toSaveInput().companions).toEqual([
-        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [] },
-        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [] }
+        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [], spellLevels: [] },
+        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [], spellLevels: [] }
       ]);
     });
 
@@ -1777,24 +1778,24 @@ describe('RpgGame', () => {
       expect(game.player.mp).toBe(13);
     });
 
-    it('魔法書を使うと魔法を覚えて魔法書がなくなる。覚えている魔法の書は使えず、道具屋でも買えない', () => {
+    it('魔法書を使うと魔法を覚えて魔法書がなくなる。同じ LV の書は使えない。覚えている魔法の書も道具屋で買える(front#387)', () => {
       game.loadSave(save({ gold: 1000, items: [{ itemId: 'book_fire', count: 2 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] }));
 
       expect(game.useItem('book_fire')).toBe(true);
       expect(game.player.spells).toEqual(['fire']);
+      expect(game.spellLevel('fire')).toBe(1);
       expect(game.player.inv['book_fire']).toBe(1);
-      expect(ev.messages.at(-1)).toBe('魔法書: ファイアを読んだ。🔥 ファイアを覚えた！');
+      expect(ev.messages.at(-1)).toBe('魔法書: ファイアを読んだ。🔥 ファイアを覚えた！（LV1）');
 
       expect(game.useItem('book_fire')).toBe(false);
       expect(game.player.inv['book_fire']).toBe(1);
-      expect(ev.messages.at(-1)).toBe('ファイアはもう覚えている');
+      expect(ev.messages.at(-1)).toBe('ファイアはもう LV1 で覚えている');
       expect(game.itemBlocker('book_fire', game.player)).toBe('もう覚えている');
 
-      // 覚えている・持っている魔法書は買えない。まだの書は1冊だけ買える
-      expect(game.buyableCount('book_fire')).toBe(0);
-      expect(game.buyableCount('book_blizzard')).toBe(1);
-      expect(game.buy('book_blizzard')).toBe(true);
-      expect(game.buyableCount('book_blizzard')).toBe(0);
+      // 覚えている・持っている魔法書も、合成の素材に使えるよう、ゴールドのある分だけ買える(150G × 6冊)
+      expect(game.buyableCount('book_fire')).toBe(6);
+      expect(game.buy('book_fire', 2)).toBe(true);
+      expect(game.player.inv['book_fire']).toBe(3);
     });
 
     it('攻撃魔法は選んでいる敵に飛んでいき、当たると魔力の威力でダメージを与えて気づかせる。MPが減る', () => {
@@ -1992,6 +1993,76 @@ describe('RpgGame', () => {
       // 戦っていないときは 1.5秒ごとに最大MPの4%(44 × 0.04 / 1.5 ≒ 1.17/秒)
       expect(game.player.mp).toBeGreaterThanOrEqual(2);
       expect(game.player.mp).toBeLessThanOrEqual(4);
+    });
+  });
+
+  describe('魔法のLV・魔法の書の合成(front#387)', () => {
+    const LV2_FIRE = { id: 'book_fire2', name: '魔法の書【炎 LV2】', icon: '📕', type: 'book' as const, spell: 'fire', level: 2, inShop: true, price: 500, sortOrder: 90 };
+    const HEALALL_BOOK = {
+      id: 'craft_healall', name: '魔法の書【全体回復 LV1】', icon: '📙', type: 'book' as const, power: 0, spell: 'healall', level: 1, gold: 300,
+      materials: [{ itemId: 'book_heal', count: 1 }, { itemId: 'spirit_light', count: 30 }], sortOrder: 9
+    };
+    beforeEach(() => {
+      setItems([...DEFAULT_ITEMS, LV2_FIRE]);
+      setCrafts([...DEFAULT_CRAFTS, HEALALL_BOOK]);
+    });
+    afterEach(() => {
+      setItems(DEFAULT_ITEMS);
+      setCrafts(DEFAULT_CRAFTS);
+      setEnemies(DEFAULT_ENEMIES);
+      vi.restoreAllMocks();
+    });
+
+    const books = (extra: { itemId: string; count: number }[]) => [...extra, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }];
+
+    it('LV の高い書を読むと、覚えている魔法の LV が上がる。低い書は読めない。LV は保存用の形に入り、読み直せる', () => {
+      game.loadSave(save({ spells: ['fire'], items: books([{ itemId: 'book_fire2', count: 1 }, { itemId: 'book_fire', count: 1 }]) }));
+      expect(game.useItem('book_fire2')).toBe(true);
+      expect(game.spellLevel('fire')).toBe(2);
+      expect(ev.messages.at(-1)).toBe('魔法の書【炎 LV2】を読んだ。🔥 ファイアが LV2 に上がった！');
+      expect(game.useItem('book_fire')).toBe(false);
+      expect(ev.messages.at(-1)).toBe('ファイアはもう LV2 で覚えている');
+      expect(game.toSaveInput().spellLevels).toEqual([{ id: 'fire', level: 2 }]);
+
+      // 覚えていない魔法の LV・範囲外の LV は使わない
+      game.loadSave(save({ spells: ['fire'], spellLevels: [{ id: 'fire', level: 9 }, { id: 'heal', level: 3 }] }));
+      expect([game.spellLevel('fire'), game.spellLevel('heal')]).toEqual([5, 0]);
+    });
+
+    it('攻撃魔法の威力・回復魔法の回復量は LV で増える(LV2 は ×1.5)', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      setEnemies([...DEFAULT_ENEMIES, { ...DEFAULT_ENEMIES[0], id: 'dummy', name: 'かかし', hp: 9999, def: 10, sight: 0, speed: 0.001 }]);
+      game.loadSave(save({ area: 'plain', x: 2, y: 2, stats: { ...ZERO_STATS, mag: 6 }, statPoints: 0, mp: 44, hp: 10, spells: ['fire', 'heal'], spellLevels: [{ id: 'fire', level: 2 }, { id: 'heal', level: 2 }] }));
+      game.loadMap(map('field', { enemies: [{ type: 'dummy', x: 4, y: 2 }] }));
+      Object.assign(game.player, { x: 2, y: 2 });
+      const e = game.enemies[0];
+      game.select(e);
+      expect(game.castSpell('fire')).toBe(true);
+      expect(ev.messages.at(-1)).toBe('🔥 ファイア LV2！');
+      for (let t = 0; t < 0.35; t += 0.05) game.update(0.05);
+      // 26 × 1.5 - 防御10×0.3 = 36
+      expect(e.hp).toBe(9999 - 36);
+
+      for (let t = 0; t < 1.05; t += 0.05) game.update(0.05);
+      game.clearSelection();
+      const before = game.player.hp;
+      game.castSpell('heal');
+      // 33 × 1.5 = 49.5 → 50(最大HP 50 まで)
+      expect(game.player.hp).toBe(Math.min(50, before + 50));
+    });
+
+    it('鍛冶屋で、魔法の書と素材とゴールドを払って魔法の書を作れ、読むとその魔法を覚える。持っている間は作れない', () => {
+      game.loadSave(save({ gold: 400, spells: ['heal'], items: books([{ itemId: 'book_heal', count: 1 }, { itemId: 'spirit_light', count: 30 }]) }));
+      const recipe = RECIPES.find((r) => r.result === 'craft_healall')!;
+      expect(ITEMS['craft_healall']).toMatchObject({ type: 'book', spell: 'healall', level: 1, desc: '鍛冶屋で合成' });
+      expect(game.canCraft(recipe)).toBe(true);
+
+      expect(game.craft('craft_healall')).toBe(true);
+      expect([game.player.gold, game.player.inv['book_heal'], game.player.inv['spirit_light'], game.player.inv['craft_healall']]).toEqual([100, 0, 0, 1]);
+      expect(game.canCraft(recipe)).toBe(false);
+
+      expect(game.useItem('craft_healall')).toBe(true);
+      expect(game.player.spells).toEqual(['heal', 'healall']);
     });
   });
 

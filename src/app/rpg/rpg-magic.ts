@@ -35,6 +35,13 @@ export const SPELL_IDS: SpellId[] = ['fire', 'blizzard', 'thunder', 'heal', 'hea
 
 export const isSpellId = (id: string | null | undefined): id is SpellId => !!id && Object.prototype.hasOwnProperty.call(SPELLS, id);
 
+/** 魔法のLV(front#387)。魔法の書で覚える・上がる。LV が上がるほど威力・回復量が増える(消費MP・届く距離は変わらない) */
+export const MAX_SPELL_LEVEL = 5;
+/** LV による威力・回復量の倍率。LV1 ×1.0 → LV が1上がるごとに +0.5 */
+export const levelRateOf = (level: number) => 1 + (Math.min(Math.max(Math.round(level), 1), MAX_SPELL_LEVEL) - 1) * 0.5;
+/** 魔法の名前に LV を付けた文字(例: 「ファイア LV2」) */
+export const spellLabel = (id: SpellId, level: number) => `${SPELLS[id].name} LV${level}`;
+
 /** 魔法を使ったあと、次の魔法を使えるまでの秒(通常攻撃とは別に数える) */
 export const SPELL_COOLDOWN = 1;
 

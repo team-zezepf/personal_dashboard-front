@@ -8,6 +8,7 @@ import { ITEMS, MATERIAL_IDS, POINT_SHOP_ICONS, isCraftItem, itemsVersion, rpgIt
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
 import { IMAGE_MAX_BYTES } from '../rpg-item-page/rpg-item-page.component';
+import { MAX_SPELL_LEVEL, SPELLS, SPELL_IDS, SpellId, isSpellId, levelRateOf, spellLabel } from '../../../rpg/rpg-magic';
 
 type CraftType = RpgCraft['type'];
 type Source = 'shop' | 'point' | 'craft' | 'other';
@@ -46,10 +47,21 @@ interface DropSource {
 // APIの値の範囲(api#134 の RpgCraftService と合わせる)
 export const CRAFT_LIMITS = { name: 20, materials: 4, power: [1, 999], gold: [0, 99_999], count: [1, 99] } as const;
 
-const ICONS = ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️', '🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨'];
+const ICONS = ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️', '🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨', '📕', '📘', '📗', '📙', '📒'];
 const SOURCE_LABELS: Record<Source, string> = { shop: '店', point: '交換', craft: '合成', other: '他' };
 
-const typeLabel = (t: CraftType) => (t === 'weapon' ? '攻撃' : '防御');
+const typeLabel = (t: CraftType) => (t === 'weapon' ? '攻撃' : t === 'armor' ? '防御' : '魔法の書');
+
+/** 一覧・鍛冶屋に出す強さの文字。魔法の書(front#387)は覚える魔法と LV */
+export function craftStatText(c: RpgCraft): string {
+  if (c.type === 'book') return isSpellId(c.spell) ? `${SPELLS[c.spell].icon} ${spellLabel(c.spell, c.level ?? 1)}` : '覚える魔法なし';
+  return `${typeLabel(c.type)}+${c.power}`;
+}
+
+/** 道具屋で買えるアイテムなら、その値段(front#387。魔法の書などを素材にするとき)。買えなければ null */
+export function shopPriceOf(id: string): number | null {
+  return ITEMS[id]?.price ?? null;
+}
 const clamp = (v: number, [min, max]: readonly [number, number]) => Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
 const cloneCraft = (c: RpgCraft): RpgCraft => ({ ...c, materials: c.materials.map((m) => ({ ...m })) });
 
@@ -70,7 +82,15 @@ export function problemsOf(c: RpgCraft, others: { name: string; power: number; g
   const ids = c.materials.map((m) => m.itemId);
   for (const id of new Set(ids.filter((id, i) => ids.indexOf(id) !== i))) out.push({ ng: true, text: `「${nameOf(id)}」が2回入っています。1つにまとめてください。` });
   for (const id of new Set(ids)) {
-    if (!dropsOf(id, enemies).length) out.push({ ng: true, text: `「${nameOf(id)}」を落とす敵がいないため、作れません。「敵」タブで落とす敵を決めてください。` });
+    // 道具屋で買えるアイテム(魔法の書など。front#387)・合成でできるものも素材にできる
+    if (!dropsOf(id, enemies).length && shopPriceOf(id) === null && !isCraftItem(id)) {
+      out.push({ ng: true, text: `「${nameOf(id)}」を落とす敵がいないため、作れません。「敵」タブで落とす敵を決めてください。` });
+    }
+  }
+  if (c.type === 'book') {
+    // 魔法の書(front#387)は強さを比べない
+    if (!isSpellId(c.spell)) out.push({ ng: true, text: '覚える魔法を選んでください。' });
+    return out;
   }
   const same = others.filter((g) => g.type === c.type);
   const better = same.filter((g) => g.gold !== null && g.power > c.power && g.gold < c.gold).sort((a, b) => (a.gold ?? 0) - (b.gold ?? 0))[0];
@@ -107,6 +127,12 @@ export class RpgCraftPageComponent {
   readonly typeLabel = typeLabel;
   readonly materialIds = MATERIAL_IDS;
   readonly items = ITEMS;
+  readonly statText = craftStatText;
+  readonly shopPriceOf = shopPriceOf;
+  // 魔法の書(front#387)の覚える魔法と LV
+  readonly spellIds = SPELL_IDS;
+  readonly spells = SPELLS;
+  readonly spellLevels = Array.from({ length: MAX_SPELL_LEVEL }, (_, i) => ({ level: i + 1, rate: levelRateOf(i + 1) }));
 
   readonly view = signal<'edit' | 'overview'>('edit');
   readonly rows = signal<CraftRow[]>([]);
@@ -129,6 +155,14 @@ export class RpgCraftPageComponent {
   readonly isDirty = computed(() => this.dirtyIds().size > 0 || this.orderChanged());
   readonly weapons = computed(() => this.rows().filter((r) => r.craft.type === 'weapon'));
   readonly armors = computed(() => this.rows().filter((r) => r.craft.type === 'armor'));
+  readonly books = computed(() => this.rows().filter((r) => r.craft.type === 'book'));
+
+  // 素材に選べるアイテム(front#387)。素材のあとに、回復の道具・復活の道具・魔法の書(道具屋で買えるものなど)を並べる
+  readonly materialOptions = computed(() => {
+    itemsVersion();
+    const others = Object.keys(ITEMS).filter((id) => ['use', 'revive', 'book'].includes(ITEMS[id].type) && !MATERIAL_IDS.includes(id));
+    return [...MATERIAL_IDS, ...others];
+  });
 
   // お店・ポイント交換などの装備(「アイテム」タブで作る。強さの比較に使う)。アイテムを保存したら作り直す(front#343)
   private readonly otherGear = computed(() => {
@@ -168,9 +202,11 @@ export class RpgCraftPageComponent {
     const rows = sel.craft.materials.map((m) => {
       const drops = dropsOf(m.itemId, this.enemies());
       const best = Math.max(0, ...drops.map((d) => d.rate));
-      const kills = best > 0 ? Math.ceil(m.count / best) : null;
+      // 道具屋で買える素材(front#387)は、倒す数に数えない
+      const shop = drops.length ? null : shopPriceOf(m.itemId);
+      const kills = best > 0 ? Math.ceil(m.count / best) : shop !== null ? 0 : null;
       total = kills === null || total === null ? null : total + kills;
-      return { ...m, drops, kills };
+      return { ...m, drops, kills, shop };
     });
     return { rows, total };
   });
@@ -305,8 +341,38 @@ export class RpgCraftPageComponent {
     this.markDirty(craft.id);
   }
 
+  /**
+   * 種類を変える。魔法の書(front#387)と装備のあいだは、まだ保存していない合成だけ変えられる(持ち方が違うため)。
+   * 魔法の書にすると覚える魔法・LV を決め、装備に戻すと攻撃力・防御力を決め直す
+   */
   setType(type: CraftType): void {
-    this.update((c) => (c.type = type));
+    const sel = this.selected();
+    if (!sel || (!sel.isNew && (sel.craft.type === 'book') !== (type === 'book'))) return;
+    this.update((c) => {
+      const wasBook = c.type === 'book';
+      c.type = type;
+      if (type === 'book' && !wasBook) Object.assign(c, { power: 0, spell: 'fire', level: 1, icon: '📕' });
+      if (type !== 'book' && wasBook) Object.assign(c, { power: 10, spell: null, level: null, icon: type === 'weapon' ? '🗡️' : '🛡️' });
+    });
+  }
+
+  /** 種類を変えられるか(魔法の書と装備のあいだは、まだ保存していない合成だけ) */
+  canSetType(row: CraftRow, type: CraftType): boolean {
+    return row.isNew || (row.craft.type === 'book') === (type === 'book');
+  }
+
+  /** 魔法の書の、覚える魔法(front#387) */
+  setSpell(id: string): void {
+    this.update((c) => {
+      if (c.type === 'book' && isSpellId(id)) c.spell = id as SpellId;
+    });
+  }
+
+  /** 魔法の書の LV(front#387) */
+  setLevel(level: number | string): void {
+    this.update((c) => {
+      if (c.type === 'book') c.level = clamp(Number(level), [1, MAX_SPELL_LEVEL]);
+    });
   }
 
   setName(name: string): void {
@@ -523,7 +589,10 @@ function toInput(row: CraftRow, sortOrder: number | null): RpgCraftInput {
     name: c.name.trim(),
     icon: c.icon,
     type: c.type,
-    power: c.power,
+    // 魔法の書(front#387)は攻撃力・防御力を持たず、覚える魔法と LV を送る
+    power: c.type === 'book' ? 0 : c.power,
+    spell: c.type === 'book' ? (c.spell ?? null) : null,
+    level: c.type === 'book' ? (c.level ?? 1) : null,
     gold: c.gold,
     materials: c.materials.map((m) => ({ itemId: m.itemId, count: m.count })),
     sortOrder,

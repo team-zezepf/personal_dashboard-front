@@ -1,5 +1,5 @@
 import { ZERO_STATS } from './rpg-data';
-import { SPELLS, SPELL_IDS, isSpellId, maxMpOf, spellHealOf, spellOfShortcut, spellPowerOf, spellRangeOf, spellShortcut } from './rpg-magic';
+import { SPELLS, SPELL_IDS, isSpellId, levelRateOf, maxMpOf, spellLabel, spellHealOf, spellOfShortcut, spellPowerOf, spellRangeOf, spellShortcut } from './rpg-magic';
 
 describe('rpg-magic(front#383)', () => {
   const mag = (n: number) => ({ ...ZERO_STATS, mag: n });
@@ -25,5 +25,12 @@ describe('rpg-magic(front#383)', () => {
     expect(spellOfShortcut('spell:thunder')).toBe('thunder');
     expect(spellOfShortcut('spell:meteor')).toBeNull();
     expect(spellOfShortcut('potion')).toBeNull();
+  });
+
+  it('魔法の LV(front#387)の倍率は LV1 ×1.0 から1つ上がるごとに +0.5。LV5 まで', () => {
+    expect([1, 2, 3, 4, 5].map(levelRateOf)).toEqual([1, 1.5, 2, 2.5, 3]);
+    expect(levelRateOf(9)).toBe(3);
+    expect(levelRateOf(0)).toBe(1);
+    expect(spellLabel('fire', 2)).toBe('ファイア LV2');
   });
 });

@@ -14,5 +14,7 @@
   { "id": "dragon_sword", "name": "竜牙の剣", "icon": "🔱", "type": "weapon", "power": 46, "gold": 1500,
     "materials": [{ "item_id": "dragon_scale", "count": 3 }, { "item_id": "raptor_fang", "count": 4 }, { "item_id": "dark_gem", "count": 1 }], "sort_order": 7 },
   { "id": "dragon_mail", "name": "竜鱗の鎧", "icon": "🛡️", "type": "armor", "power": 26, "gold": 1600,
-    "materials": [{ "item_id": "dragon_scale", "count": 4 }, { "item_id": "dark_gem", "count": 2 }, { "item_id": "mimic_tongue", "count": 1 }], "sort_order": 8 }
+    "materials": [{ "item_id": "dragon_scale", "count": 4 }, { "item_id": "dark_gem", "count": 2 }, { "item_id": "mimic_tongue", "count": 1 }], "sort_order": 8 },
+  { "id": "healall_book", "name": "魔法の書【全体回復 LV1】", "icon": "📙", "type": "book", "power": 0, "spell": "healall", "level": 1, "gold": 300,
+    "materials": [{ "item_id": "book_heal", "count": 1 }, { "item_id": "spirit_light", "count": 30 }], "sort_order": 9 }
 ]
