@@ -32,11 +32,11 @@
 
     <!-- 選んでいる敵・仲間・自分(front#383)。選んだ相手に魔法・回復薬を使う -->
     @if (selection(); as sel) {
-      <div class="chip selection" [class.enemy]="sel.enemy" role="status" aria-label="選んでいる相手">
-        <b>{{ sel.enemy ? '🎯' : '💚' }} {{ sel.name }}</b>
+      <div class="chip selection" role="status" aria-label="選んでいる相手">
+        <b>💚 {{ sel.name }}</b>
         <div class="vitals-bar"><div class="hp" [style.width.%]="sel.rate"></div></div>
         <span>{{ sel.hp }}/{{ sel.maxHp }}</span>
-        <small>{{ sel.enemy ? '攻撃魔法の相手' : '回復の相手' }}</small>
+        <small>回復の相手</small>
         <button type="button" class="status-button" aria-label="選択を外す" title="選択を外す（Esc）" (click)="clearSelection()">×</button>
       </div>
     }
@@ -436,7 +436,7 @@
       <section class="party-hud" aria-label="仲間の状態">
         @for (m of party(); track m.userId) {
           <!-- クリックすると、その仲間を選ぶ(front#383) -->
-          <div class="mate" [class.down]="m.dead" [class.selected]="selection()?.name === m.name && !selection()?.enemy" [attr.aria-label]="m.name" (click)="selectMate(m.userId)">
+          <div class="mate" [class.down]="m.dead" [class.selected]="selection()?.name === m.name" [attr.aria-label]="m.name" (click)="selectMate(m.userId)">
             <div class="mate-top"><b>{{ m.name }}</b><span>Lv {{ m.level }}</span></div>
             <div class="mate-hp">{{ m.dead ? 'たおれている ' + m.left : 'HP ' + m.hp + '/' + m.maxHp }}</div>
             <div class="vitals-bar"><div class="hp" [class.low]="m.hpRate <= 30" [style.width.%]="m.hpRate"></div></div>
