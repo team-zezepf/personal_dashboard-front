@@ -146,11 +146,12 @@ describe('アイテムタブ(front#343)', () => {
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
       expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ', spell: 'fire' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, level: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
       });
       // MPだけを回復する道具は、HPの回復量を送らない。魔法書は覚える魔法だけを送る(front#383)
       expect(toInput({ item: potion({ heal: 0, mp: 30 }), isNew: false })).toMatchObject({ heal: null, mp: 30, spell: null });
-      expect(toInput({ item: potion({ type: 'book', heal: 80, mp: 5, spell: 'heal' }), isNew: false })).toMatchObject({ heal: null, mp: null, spell: 'heal' });
+      expect(toInput({ item: potion({ type: 'book', heal: 80, mp: 5, spell: 'heal' }), isNew: false })).toMatchObject({ heal: null, mp: null, spell: 'heal', level: 1 });
+      expect(toInput({ item: potion({ type: 'book', spell: 'heal', level: 3 }), isNew: false }).level).toBe(3);
       // 画像(front#345)はファイル名のまま送る
       expect(toInput({ item: potion({ image: 'a.png' }), isNew: false }).image).toBe('a.png');
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
@@ -169,7 +170,9 @@ describe('アイテムタブ(front#343)', () => {
       expect(statText(potion({ heal: 80 }))).toBe('HP +80');
       expect(statText(potion({ heal: 0, mp: 30 }))).toBe('MP +30');
       expect(statText(potion({ heal: 20, mp: 20 }))).toBe('HP +20・MP +20');
-      expect(statText(potion({ type: 'book', spell: 'thunder' }))).toBe('⚡ サンダーを覚える');
+      expect(statText(potion({ type: 'book', spell: 'thunder' }))).toBe('⚡ サンダー LV1を覚える');
+      // 魔法書の LV(front#387)
+      expect(statText(potion({ type: 'book', spell: 'heal', level: 2 }))).toBe('💚 ヒール LV2を覚える');
     });
   });
 

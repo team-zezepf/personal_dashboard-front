@@ -34,6 +34,14 @@ export interface RpgSave {
   mp?: number | null;
   // 覚えた魔法のID(front#383)。魔法書を使うと増える
   spells?: string[];
+  // 覚えた魔法のLV(front#387 / api#183)。ない魔法は LV1
+  spellLevels?: RpgSpellLevel[];
+}
+
+// 覚えた魔法のLV(front#387)。LV は 1〜5
+export interface RpgSpellLevel {
+  id: string;
+  level: number;
 }
 
 // 連れている仲間1人(front#358)。レベル・装備・持ち物などは、仲間のアカウントのセーブデータ
@@ -49,9 +57,10 @@ export interface RpgCompanion {
   stats: RpgStats;
   statPoints: number;
   look: RpgLook;
-  // MPと覚えた魔法(front#383)。今は仲間は魔法を使わないが、データは消さずに保存し直す
+  // MPと覚えた魔法(front#383)・魔法のLV(front#387)。今は仲間は魔法を使わないが、データは消さずに保存し直す
   mp?: number | null;
   spells?: string[];
+  spellLevels?: RpgSpellLevel[];
 }
 
 // 保存するときにいっしょに送る仲間のデータ(front#358)。それぞれのアカウントのセーブデータに書かれる
@@ -350,9 +359,12 @@ export interface RpgCraft {
   name: string;
   // アイコン(絵文字)
   icon: string;
-  type: 'weapon' | 'armor';
+  // book: 魔法の書(front#387)。覚える魔法(spell)と LV(level)を持ち、攻撃力・防御力(power)は 0
+  type: 'weapon' | 'armor' | 'book';
   // 攻撃力(武器)・防御力(防具)
   power: number;
+  spell?: string | null;
+  level?: number | null;
   // 合成に払うゴールドと素材
   gold: number;
   materials: RpgItemCount[];
@@ -384,6 +396,8 @@ export interface RpgItem {
   mp?: number | null;
   // 覚える魔法のID(book。front#383)
   spell?: string | null;
+  // 魔法書の LV(front#387)。なければ 1
+  level?: number | null;
   atk?: number | null;
   def?: number | null;
   desc?: string | null;

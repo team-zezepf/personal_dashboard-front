@@ -4,6 +4,7 @@ import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgIt
 import { signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { objectTiles } from './rpg-house';
+import { SPELLS, isSpellId, spellLabel } from './rpg-magic';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
 export type ItemType = RpgItemType;
@@ -15,8 +16,9 @@ export interface ItemDef {
   heal?: number;
   // MPの回復量(使う道具。front#383)
   mp?: number;
-  // 覚える魔法のID(魔法書。front#383)
+  // 覚える魔法のID・LV(魔法書。front#383 / front#387)
   spell?: string;
+  level?: number;
   atk?: number;
   def?: number;
   // 道具屋での値段(ゴールド)。ポイント交換限定の品物は持たない
@@ -150,7 +152,8 @@ export function toItemDef(item: RpgItem): ItemDef {
     type: item.type,
     ...(item.type === 'use' || item.type === 'revive' ? { heal: item.heal ?? 0 } : {}),
     ...(item.type === 'use' && item.mp ? { mp: item.mp } : {}),
-    ...(item.type === 'book' && item.spell ? { spell: item.spell } : {}),
+    // 魔法書の LV(front#387)は、なければ 1
+    ...(item.type === 'book' && item.spell ? { spell: item.spell, level: item.level ?? 1 } : {}),
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
@@ -180,7 +183,8 @@ function rebuild(): void {
       name: c.name,
       icon: c.icon,
       type: c.type,
-      ...(c.type === 'weapon' ? { atk: c.power } : { def: c.power }),
+      // 合成でできる魔法の書(front#387)は、覚える魔法と LV を持つ
+      ...(c.type === 'book' ? { spell: c.spell ?? undefined, level: c.level ?? 1 } : c.type === 'weapon' ? { atk: c.power } : { def: c.power }),
       desc: '鍛冶屋で合成',
       ...(c.image ? { image: rpgItemImageUrl(c.image) } : {})
     };
@@ -217,6 +221,8 @@ export function swordColorOf(weapon: string): string {
 }
 
 export function itemStatLabel(item: ItemDef): string {
+  // 魔法の書(front#387)は、覚える魔法と LV
+  if (item.type === 'book') return isSpellId(item.spell) ? `${SPELLS[item.spell].icon} ${spellLabel(item.spell, item.level ?? 1)}を覚える` : '魔法の書';
   return item.atk ? `攻撃 +${item.atk}` : `防御 +${item.def ?? 0}`;
 }
 

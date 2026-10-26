@@ -1,6 +1,6 @@
 import { RpgCraft, RpgEnemy } from '../../../models/rpg.models';
 import { DEFAULT_ENEMIES } from '../../../rpg/rpg-enemy';
-import { dropsOf, problemsOf } from './rpg-craft-page.component';
+import { craftStatText, dropsOf, problemsOf } from './rpg-craft-page.component';
 
 const enemies = DEFAULT_ENEMIES as unknown as RpgEnemy[];
 
@@ -50,5 +50,18 @@ describe('合成タブのチェック(front#288)', () => {
       '「鋼の剣」（攻撃+32・420G）のほうが強くて安いため、作る意味が薄くなります。',
       '攻撃+30 の装備がほかにもあります。'
     ]);
+  });
+
+  it('魔法の書(front#387)は、覚える魔法がなければ保存できず、道具屋で買えるアイテム(魔法の書)を素材にでき、強さは比べない', () => {
+    const bookOf = (over: Partial<RpgCraft> = {}) => sword({
+      type: 'book', power: 0, spell: 'healall', level: 1, name: '魔法の書【全体回復 LV1】',
+      materials: [{ itemId: 'book_heal', count: 1 }, { itemId: 'spirit_light', count: 30 }], ...over
+    });
+    const book = bookOf();
+    const others = [{ name: '強い本', power: 99, gold: 1, type: 'book' as const }];
+    expect(problemsOf(book, others, enemies)).toEqual([]);
+    expect(problemsOf(bookOf({ spell: null }), [], enemies).filter((p) => p.ng).map((p) => p.text)).toEqual(['覚える魔法を選んでください。']);
+    expect(craftStatText(book)).toBe('✨ ヒールオール LV1');
+    expect(craftStatText(sword())).toBe('攻撃+30');
   });
 });

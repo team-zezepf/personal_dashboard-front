@@ -1,4 +1,4 @@
-import { RpgCompanion, RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgRespawn, RpgSave, RpgSaveInput } from '../models/rpg.models';
+import { RpgCompanion, RpgDungeon, RpgLook, RpgMap, RpgMapNpc, RpgQuest, RpgRespawn, RpgSave, RpgSaveInput, RpgSpellLevel } from '../models/rpg.models';
 import { QuestEntry, QuestLog, QuestMark, allQuests } from './rpg-quest';
 import {
   AreaExit,
@@ -52,7 +52,7 @@ import {
 import { DEFAULT_LOOK } from './rpg-look';
 import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
-import { SPELLS as MAGIC, SPELL_COOLDOWN, SPELL_IDS, SpellId, isSpellId, maxMpOf, spellHealOf, spellPowerOf, spellRangeOf } from './rpg-magic';
+import { SPELLS as MAGIC, MAX_SPELL_LEVEL, SPELL_COOLDOWN, SPELL_IDS, SpellId, isSpellId, levelRateOf, maxMpOf, spellHealOf, spellLabel, spellPowerOf, spellRangeOf } from './rpg-magic';
 
 export interface Mover {
   x: number;
@@ -167,6 +167,8 @@ export interface Player extends Mover {
   // 覚えた魔法(front#383)と、次の魔法を使えるまでの秒(通常攻撃とは別)
   spells: SpellId[];
   spellCd: number;
+  // 覚えた魔法のLV(front#387)。ない魔法は LV1
+  spellLevels: Partial<Record<SpellId, number>>;
 }
 
 /**
@@ -205,6 +207,7 @@ export interface Companion extends Mover {
   // MPと覚えた魔法(front#383)。今は仲間は魔法を使わないが、仲間のアカウントのデータとして保存し直す
   mp: number | null;
   spells: string[];
+  spellLevels: RpgSpellLevel[];
 }
 
 /** 敵と戦う人(プレイヤー・仲間。front#358) */
@@ -361,7 +364,7 @@ export class RpgGame {
     kind: 'player', x: 0, y: 0, z: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
     level: 1, exp: 0, hp: maxHpOf(ZERO_STATS), gold: 30, weapon: 'wood_sword', armor: 'cloth',
     inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, look: { ...DEFAULT_LOOK }, lastCombat: -99, regen: 0, dead: false,
-    downT: 0, mp: maxMpOf(ZERO_STATS), mpRegen: 0, spells: [], spellCd: 0
+    downT: 0, mp: maxMpOf(ZERO_STATS), mpRegen: 0, spells: [], spellCd: 0, spellLevels: {}
   };
   // 連れている仲間(front#358)
   companions: Companion[] = [];
@@ -551,6 +554,11 @@ export class RpgGame {
     p.hp = save.hp > 0 ? Math.min(save.hp, this.maxHp()) : this.maxHp();
     // MP・覚えた魔法(front#383)。魔法ができる前のセーブデータ(MPなし)・たおれたまま保存されていたら、MPは最大
     p.spells = SPELL_IDS.filter((id) => save.spells?.includes(id));
+    // 魔法のLV(front#387)。覚えていない魔法の LV は使わない
+    p.spellLevels = {};
+    for (const l of save.spellLevels ?? []) {
+      if (isSpellId(l.id) && p.spells.includes(l.id)) p.spellLevels[l.id] = Math.min(Math.max(Math.round(l.level), 1), MAX_SPELL_LEVEL);
+    }
     p.mp = save.mp == null || save.hp <= 0 ? this.maxMp() : Math.max(0, Math.min(save.mp, this.maxMp()));
     p.mpRegen = 0;
     p.spellCd = 0;
@@ -603,6 +611,8 @@ export class RpgGame {
       // MP・覚えた魔法(front#383)
       mp: Math.max(0, Math.floor(p.mp)),
       spells: [...p.spells],
+      // LV2 以上の魔法だけ送る(ない魔法は LV1)
+      spellLevels: p.spells.filter((id) => this.spellLevel(id) > 1).map((id) => ({ id, level: this.spellLevel(id) })),
       // 仲間のデータ(front#358)。それぞれのアカウントに書かれる
       companions: this.companions.map((c) => ({
         userId: c.userId,
@@ -615,7 +625,8 @@ export class RpgGame {
         stats: { ...c.stats },
         statPoints: c.statPoints,
         mp: c.mp,
-        spells: [...c.spells]
+        spells: [...c.spells],
+        spellLevels: c.spellLevels.map((l) => ({ ...l }))
       }))
     };
   }
@@ -644,7 +655,7 @@ export class RpgGame {
       hp: keepHp ? Math.min(rc.hp, max) : max, look: { ...DEFAULT_LOOK, ...rc.look },
       x: this.player.x, y: this.player.y, z: this.player.z, path: [], dir: 1, moving: false,
       target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0, lastCombat: -99, regen: 0, dead: false, downT: 0, help: null, reviving: 0, itemCd: 0,
-      mp: rc.mp ?? null, spells: [...(rc.spells ?? [])]
+      mp: rc.mp ?? null, spells: [...(rc.spells ?? [])], spellLevels: (rc.spellLevels ?? []).map((l) => ({ ...l }))
     };
   }
 
@@ -1137,26 +1148,44 @@ export class RpgGame {
 
   // ===== 魔法(front#383) =====
 
-  /** 魔法書の魔法を、もう覚えているか */
-  knowsBook(id: string): boolean {
-    const spell = ITEMS[id]?.spell;
-    return isSpellId(spell) && this.player.spells.includes(spell);
+  /** 覚えた魔法の LV(front#387)。覚えていなければ 0 */
+  spellLevel(id: SpellId): number {
+    return this.player.spells.includes(id) ? (this.player.spellLevels[id] ?? 1) : 0;
   }
 
-  /** 魔法書を使って魔法を覚える。魔法書はなくなる。もう覚えていれば使わない */
+  /** 魔法書の LV(front#387。なければ 1) */
+  bookLevel(id: string): number {
+    return ITEMS[id]?.level ?? 1;
+  }
+
+  /** 魔法書を読んでも意味がないか(その魔法を、書と同じかそれより高い LV でもう覚えている。front#387) */
+  knowsBook(id: string): boolean {
+    const spell = ITEMS[id]?.spell;
+    return isSpellId(spell) && this.spellLevel(spell) >= this.bookLevel(id);
+  }
+
+  /**
+   * 魔法書を使って魔法を覚える。魔法書はなくなる。
+   * 覚えている魔法は、書の LV のほうが高ければその LV に上がる(front#387)。同じか低ければ使わない
+   */
   private learnSpell(id: string): boolean {
     const item = ITEMS[id];
     const p = this.player;
     if (!item || item.type !== 'book' || !this.owned(id) || p.dead || !isSpellId(item.spell)) return false;
     const s = MAGIC[item.spell];
-    if (p.spells.includes(s.id)) {
-      this.events.log(`${s.name}はもう覚えている`);
+    const now = this.spellLevel(s.id);
+    const level = Math.min(this.bookLevel(id), MAX_SPELL_LEVEL);
+    if (now >= level) {
+      this.events.log(`${s.name}はもう LV${now} で覚えている`);
       return false;
     }
     p.inv[id]--;
     p.spells = SPELL_IDS.filter((sid) => sid === s.id || p.spells.includes(sid));
-    this.floatText(p.x, p.y, `${s.icon} ${s.name}`, '#c4b5fd', 16, -18);
-    this.events.log(`${item.name}を読んだ。${s.icon} ${s.name}を覚えた！`);
+    p.spellLevels[s.id] = level;
+    this.floatText(p.x, p.y, `${s.icon} ${spellLabel(s.id, level)}`, '#c4b5fd', 16, -18);
+    this.events.log(now
+      ? `${item.name}を読んだ。${s.icon} ${s.name}が LV${level} に上がった！`
+      : `${item.name}を読んだ。${s.icon} ${s.name}を覚えた！（LV${level}）`);
     this.events.sound?.('level_up');
     this.events.statsChanged();
     this.events.inventoryChanged();
@@ -1206,7 +1235,8 @@ export class RpgGame {
       this.events.log(`MPが足りない（${s.name}はMP${s.mp}）`);
       return false;
     }
-    let message = `${s.icon} ${s.name}！`;
+    const level = this.spellLevel(id);
+    let message = `${s.icon} ${level > 1 ? spellLabel(id, level) : s.name}！`;
     if (s.kind === 'attack') {
       const target = this.spellTarget();
       if (typeof target === 'string') {
@@ -1226,7 +1256,8 @@ export class RpgGame {
         this.events.log(s.all ? 'みんなHPは満タンだ' : targets[0].kind === 'player' ? 'HPは満タンだ' : `${targets[0].name}のHPは満タンだ`);
         return false;
       }
-      const amount = Math.round(spellHealOf(p.stats) * s.rate);
+      // 回復量は LV で増える(front#387)
+      const amount = Math.round(spellHealOf(p.stats) * s.rate * levelRateOf(level));
       for (const f of targets) {
         const before = f.hp;
         f.hp = Math.min(this.maxHpOf(f), f.hp + amount);
@@ -1292,7 +1323,8 @@ export class RpgGame {
     const s = MAGIC[spell];
     const p = this.player;
     const def = ENEMIES[e.type];
-    let dmg = Math.max(1, Math.round(spellPowerOf(p.stats) * s.rate - def.def * 0.3 + randi(-2, 2)));
+    // 威力は LV で増える(front#387)
+    let dmg = Math.max(1, Math.round(spellPowerOf(p.stats) * s.rate * levelRateOf(this.spellLevel(spell)) - def.def * 0.3 + randi(-2, 2)));
     // 守る敵(front#330)が生きている間は、魔法でもボスへのダメージが減る
     const guards = def.boss ? this.bossGuards() : 0;
     if (guards) dmg = Math.round(dmg * guardRateOf(guards));
@@ -1352,8 +1384,8 @@ export class RpgGame {
     if (!item || item.price === undefined) return 0;
     const can = item.price > 0 ? Math.floor(this.player.gold / item.price) : 1;
     if (item.type === 'use' || item.type === 'revive') return can;
-    // 魔法書(front#383)は、覚えている魔法の書・持っている書は買えない(間違えて買わないように)
-    if (item.type === 'book') return this.owned(id) || this.knowsBook(id) ? 0 : Math.min(can, 1);
+    // 魔法書(front#383)は、覚えている魔法の書も買える(合成の素材に使うため。front#387)。回復薬と同じく、いくつでも買える
+    if (item.type === 'book') return can;
     return this.owned(id) ? 0 : Math.min(can, 1);
   }
 

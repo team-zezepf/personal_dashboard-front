@@ -8,7 +8,7 @@ import { caseOf, expect, loginAsE2E, startSteps, test } from './support/evidence
 // level を上げると、そのレベルまでの分のステータスのポイント((level-1)×3)を、振り分けていない状態で持つ。
 // 見た目も最初の見た目(ショート・シャツ)に戻し、受けたクエストもなくす(front#239)。ふっかつ地点も村に戻す(front#337)。
 // ポイント交換で使う10ptも足しておく(交換で同じだけ減るので、実行のたびに増え続けない)
-async function resetRpg(level = 1, extraItems: { itemId: string; count: number }[] = []): Promise<void> {
+async function resetRpg(level = 1, extraItems: { itemId: string; count: number }[] = [], gold = 30): Promise<void> {
   const login = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -26,12 +26,12 @@ async function resetRpg(level = 1, extraItems: { itemId: string; count: number }
   };
   await graphql('mutation($input: RpgSaveInput!) { saveRpg(input: $input) { level } }', {
     input: {
-      level, exp: 0, hp: 50, gold: 30, weapon: 'wood_sword', armor: 'cloth',
+      level, exp: 0, hp: 50, gold, weapon: 'wood_sword', armor: 'cloth',
       items: [{ itemId: 'potion', count: 3 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }, ...extraItems],
       area: 'plain', x: 6, y: 7,
       stats: { hp: 0, atk: 0, def: 0, mag: 0, spd: 0, luk: 0 }, statPoints: (level - 1) * 3, quests: [],
       // MP は最大(魔力0なので20)、覚えた魔法はなしに戻す(front#383。送らないと今のまま)
-      mp: 20, spells: [],
+      mp: 20, spells: [], spellLevels: [],
       // ふっかつ地点(front#337)も村の (6, 7) に戻す(送らないと今のまま)
       respawn: { area: 'plain', x: 6, y: 7 },
       look: {
@@ -1166,8 +1166,8 @@ test(
     await step('歯車(設定)のショートカットで、3キーにファイア、4キーにヒールを選ぶ', '左上に「3 🔥 ファイア MP4」「4 💚 ヒール MP5」が出る', async () => {
       await page.getByRole('button', { name: '設定' }).click();
       const settings = page.getByRole('dialog', { name: '設定' });
-      await settings.getByLabel('3キーで使う道具').selectOption({ label: '🔥 ファイア（MP4）' });
-      await settings.getByLabel('4キーで使う道具').selectOption({ label: '💚 ヒール（MP5）' });
+      await settings.getByLabel('3キーで使う道具').selectOption({ label: '🔥 ファイア LV1（MP4）' });
+      await settings.getByLabel('4キーで使う道具').selectOption({ label: '💚 ヒール LV1（MP5）' });
       await expect(chips.nth(2)).toHaveText('3🔥 ファイア MP4');
       await expect(chips.nth(3)).toHaveText('4💚 ヒール MP5');
       await page.getByLabel('RPGのゲーム画面').click({ position: { x: 40, y: 200 } });
@@ -1227,6 +1227,84 @@ test(
       await expect(spells.getByRole('button', { name: 'ファイアを使う' })).toBeEnabled();
       await expect(spells.getByRole('button', { name: 'ヒールを使う' })).toBeEnabled();
       await page.evaluate(() => localStorage.removeItem('rpgShortcuts'));
+    });
+  }
+);
+
+test(
+  'E2E-30 RPGで、覚えている魔法の書も道具屋で買え、鍛冶屋で魔法の書【全体回復 LV1】を作って読むと、ヒールオールを LV1 で覚える(front#387)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'RPGのセーブデータを最初の状態に戻し、500G・魔法書: ヒール×1・精霊の光×30 を持たせてある',
+      'E2E 用のアイテム・合成(e2e/fixtures/rpg)に、魔法書: ヒール(道具屋 120G)と、合成「魔法の書【全体回復 LV1】」(魔法書: ヒール×1・精霊の光×30・300G)がある'
+    ],
+    expected: [
+      '持ち物の魔法書: ヒールを使うと、ヒールを LV1 で覚え、魔法書はなくなる',
+      '道具屋で、覚えている魔法書: ヒールに「覚えている（LV1）・合成の素材に使える」と出て、買える(380G・1冊になる)',
+      '鍛冶屋で、魔法の書【全体回復 LV1】の素材が「魔法書: ヒール 1/1」「精霊の光 30/30」になり、作ると 80G になって持ち物に入る。もう一度は作れない(持っている)',
+      '作った書を使うと、ログに「✨ ヒールオールを覚えた！（LV1）」と出て、魔法の一覧のヒールオールに LV1 が付き、使える'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetRpg(1, [{ itemId: 'book_heal', count: 1 }, { itemId: 'spirit_light', count: 30 }], 500);
+    await loginAsE2E(page, step);
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+    const shop = page.getByRole('dialog', { name: '道具屋' });
+    const smith = page.getByRole('dialog', { name: '鍛冶屋' });
+    const spells = page.getByRole('dialog', { name: '魔法' });
+    const talkTo = async (name: string, dialogOf: Locator) => {
+      await clickNpc(page, name);
+      const dialog = page.getByRole('dialog', { name: `${name}との会話` });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await expect(dialogOf).toBeVisible();
+    };
+
+    await step('RPG(/rpg)を開き、持ち物の「魔法書: ヒール」の「使う」を押す', 'ヒールを LV1 で覚え、魔法書: ヒールは持ち物からなくなる', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByText('500G')).toBeVisible();
+      await items.getByRole('button', { name: '魔法書: ヒールを使う' }).click();
+      await expect(log.getByText('💚 ヒールを覚えた！（LV1）', { exact: false })).toBeVisible();
+      await expect(items.getByText('魔法書: ヒール')).toHaveCount(0);
+    });
+
+    await step('「道具屋 ミナ」に話しかけ、魔法書: ヒールを1冊買う', '「覚えている（LV1）・合成の素材に使える」と出て買え、380G・魔法書: ヒール×1 になる', async () => {
+      await talkTo('道具屋 ミナ', shop);
+      const row = shop.locator('.shop-row', { hasText: '魔法書: ヒール' });
+      await expect(row).toContainText('覚えている（LV1）・合成の素材に使える');
+      await shop.getByRole('button', { name: '魔法書: ヒールを買う（120G）', exact: true }).click();
+      await expect(status.getByText('380G')).toBeVisible();
+      await shop.getByRole('button', { name: '閉じる' }).click();
+      await expect(items.locator('.inv-row', { hasText: '魔法書: ヒール' })).toContainText('×1');
+    });
+
+    await step(
+      '「鍛冶屋 ゴンゾウ」に話しかけ、魔法の書【全体回復 LV1】を作る',
+      '素材が「魔法書: ヒール 1/1」「精霊の光 30/30」で作れ、80G になって持ち物に入る。作ったあとは「持っている」で押せない',
+      async () => {
+        await talkTo('鍛冶屋 ゴンゾウ', smith);
+        await expect(smith.getByText('魔法書: ヒール 1/1')).toBeVisible();
+        await expect(smith.getByText('精霊の光 30/30')).toBeVisible();
+        await smith.getByRole('button', { name: '魔法の書【全体回復 LV1】を作る', exact: true }).click();
+        await expect(log.getByText('魔法の書【全体回復 LV1】を作った！（-300G）')).toBeVisible();
+        await expect(smith.getByRole('button', { name: '魔法の書【全体回復 LV1】を持っている', exact: true })).toBeDisabled();
+        await smith.getByRole('button', { name: '閉じる' }).click();
+        await expect(status.getByText('80G')).toBeVisible();
+      }
+    );
+
+    await step('持ち物の「魔法の書【全体回復 LV1】」の「使う」を押し、「🔮 魔法」を開く', 'ヒールオールを LV1 で覚え、魔法の一覧のヒールオールに LV1 が付いて使える', async () => {
+      await items.getByRole('button', { name: '魔法の書【全体回復 LV1】を使う' }).click();
+      await expect(log.getByText('✨ ヒールオールを覚えた！（LV1）', { exact: false })).toBeVisible();
+      await status.getByRole('button', { name: '🔮 魔法' }).click();
+      const row = spells.locator('.shop-row', { hasText: 'ヒールオール' });
+      await expect(row).toContainText('LV1');
+      await expect(spells.getByRole('button', { name: 'ヒールオールを使う' })).toBeEnabled();
     });
   }
 );

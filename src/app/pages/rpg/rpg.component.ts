@@ -40,7 +40,7 @@ import {
   walkSpeedOf
 } from '../../rpg/rpg-data';
 import { Fighter, MAX_PARTY, Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
-import { SPELLS, SPELL_IDS, isSpellId, maxMpOf, spellOfShortcut, spellRangeOf, spellShortcut } from '../../rpg/rpg-magic';
+import { SPELLS, SPELL_IDS, isSpellId, levelRateOf, maxMpOf, spellLabel, spellOfShortcut, spellRangeOf, spellShortcut } from '../../rpg/rpg-magic';
 import { RpgRenderer } from '../../rpg/rpg-render';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '../../rpg/rpg-cursor';
 
@@ -247,8 +247,10 @@ export class RpgPageComponent implements OnDestroy {
   readonly shortcutOptions = shortcutItems().map((id) => ({ id, icon: ITEMS[id].icon, name: ITEMS[id].name }));
   readonly shortcutSpells = computed(() => {
     this.version();
-    const learned = this.game?.player.spells ?? [];
-    return learned.map((id) => ({ id: spellShortcut(id), icon: SPELLS[id].icon, name: SPELLS[id].name, mp: SPELLS[id].mp }));
+    const game = this.game;
+    const learned = game?.player.spells ?? [];
+    // 魔法の名前には LV を付ける(front#387)
+    return learned.map((id) => ({ id: spellShortcut(id), icon: SPELLS[id].icon, name: spellLabel(id, game?.spellLevel(id) ?? 1), mp: SPELLS[id].mp }));
   });
 
   // ===== 魔法(front#383) =====
@@ -262,7 +264,10 @@ export class RpgPageComponent implements OnDestroy {
     return SPELL_IDS.map((id) => {
       const s = SPELLS[id];
       const learned = p.spells.includes(id);
-      return { id, icon: s.icon, name: s.name, mp: s.mp, kind: s.kind, desc: s.desc, learned, canUse: learned && p.mp >= s.mp && !p.dead };
+      // 覚えた魔法の LV(front#387)。LV2 以上は、威力・回復量の倍率も出す
+      const level = game.spellLevel(id);
+      const desc = learned && level > 1 ? `${s.desc}（${s.kind === 'heal' ? '回復量' : '威力'}×${levelRateOf(level)}）` : s.desc;
+      return { id, icon: s.icon, name: s.name, level, mp: s.mp, kind: s.kind, desc, learned, canUse: learned && p.mp >= s.mp && !p.dead };
     });
   });
   // 選んでいる仲間・自分(front#383)。回復をだれに使うか分かるよう、画面の上のまんなかに出す。毎フレーム変わるHPは、変わったときだけ入れ直す。
@@ -377,7 +382,9 @@ export class RpgPageComponent implements OnDestroy {
         if (s.spell) {
           const def = SPELLS[s.spell];
           const usable = !!p && p.spells.includes(s.spell) && p.mp >= def.mp;
-          return { key: s.key, spell: true, name: `${def.icon} ${def.name}`, count: 0, mp: def.mp, empty: !usable };
+          // LV2 以上は LV を付ける(front#387)
+          const level = this.game?.spellLevel(s.spell) ?? 0;
+          return { key: s.key, spell: true, name: `${def.icon} ${level > 1 ? spellLabel(s.spell, level) : def.name}`, count: 0, mp: def.mp, empty: !usable };
         }
         const count = inv[s.id] ?? 0;
         return { key: s.key, spell: false, name: ITEMS[s.id].name, count, mp: 0, empty: !count };
@@ -463,27 +470,27 @@ export class RpgPageComponent implements OnDestroy {
       return SHOP_ITEMS.map((id) => {
         const item = ITEMS[id];
         const price = item.price ?? 0;
-        // 回復薬・いのちの羽(front#358)はいくつでも買える。個数を選んで買う(front#379)
-        const consumable = item.type === 'use' || item.type === 'revive';
-        const has = !consumable && game.owned(id);
-        // 魔法書(front#383)は、覚えている魔法の書は買えない
+        // 回復薬・いのちの羽(front#358)・魔法書(front#387)はいくつでも買える。個数を選んで買う(front#379)
         const book = item.type === 'book';
-        const known = book && game.knowsBook(id);
+        const consumable = item.type === 'use' || item.type === 'revive' || book;
+        const has = !consumable && game.owned(id);
         const max = game.buyableCount(id);
         const value = pick(`buy:${id}`, max);
+        // 覚えている魔法の書(front#387)は「覚えている」と出す(合成の素材に使えるので買える)
+        const known = book && isSpellId(item.spell) && game.knowsBook(id) ? `覚えている（LV${game.spellLevel(item.spell)}）・合成の素材に使える。` : '';
         const spell = book && isSpellId(item.spell) ? SPELLS[item.spell] : null;
         return {
           id,
           icon: item.icon,
           image: item.image,
           name: item.name,
-          desc: consumable
-            ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）`
-            : book
-              ? `${item.desc ?? ''}${spell ? `（MP${spell.mp}）` : ''}`
+          desc: book
+            ? `${known || item.desc || ''}${spell ? `（MP${spell.mp}）` : ''}（${game.player.inv[id] ?? 0}冊持っている）`
+            : consumable
+              ? `${item.desc ?? ''}（${game.player.inv[id] ?? 0}個持っている）`
               : itemStatLabel(item),
           price: `${price} G`,
-          buttonLabel: known ? '覚えている' : has ? '持っている' : consumable ? `買う（${price * value}G）` : '買う',
+          buttonLabel: has ? '持っている' : consumable ? `買う（${price * value}G）` : '買う',
           disabled: max < 1,
           ...(consumable ? { qty: { value, max } } : {})
         };

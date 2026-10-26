@@ -25,7 +25,7 @@
           <button type="button" class="btn small" [disabled]="!selected()" (click)="copy()">⧉ 複製</button>
         </div>
         <div class="list-body">
-          @for (group of [{ label: '武器', rows: weapons() }, { label: '防具', rows: armors() }]; track group.label) {
+          @for (group of [{ label: '武器', rows: weapons() }, { label: '防具', rows: armors() }, { label: '魔法の書', rows: books() }]; track group.label) {
             <div class="group">{{ group.label }}（{{ group.rows.length }}）</div>
             @for (row of group.rows; track row.craft.id) {
               <div class="row-wrap" [class.active]="row.craft.id === selectedId()">
@@ -45,7 +45,7 @@
                       <span class="badge warn">注意</span>
                     }
                   </span>
-                  <span class="sub">{{ typeLabel(row.craft.type) }}+{{ row.craft.power }}・{{ row.craft.gold }}G・素材{{ row.craft.materials.length }}種</span>
+                  <span class="sub">{{ statText(row.craft) }}・{{ row.craft.gold }}G・素材{{ row.craft.materials.length }}種</span>
                 </span>
               </button>
               @if (row.craft.id === selectedId()) {
@@ -70,7 +70,7 @@
               <div class="smith-row" [class.me]="row.craft.id === selectedId()">
                 <span class="smith-icon"><app-rpg-item-icon [icon]="row.craft.icon" [image]="imageOf(row.craft)" /></span>
                 <div>
-                  <div class="nm">{{ row.craft.name || '（名前なし）' }} <span class="st">{{ typeLabel(row.craft.type) }} +{{ row.craft.power }}</span></div>
+                  <div class="nm">{{ row.craft.name || '（名前なし）' }} <span class="st">{{ statText(row.craft) }}</span></div>
                   <div class="mats">
                     @for (m of row.craft.materials; track $index) {
                       <span class="material-chip"><app-rpg-item-icon [icon]="itemIcon(m.itemId)" [image]="itemImage(m.itemId)" /> {{ itemName(m.itemId) }} 0/{{ m.count }}</span>
@@ -98,6 +98,9 @@
                     @if (s.drops.length) {
                       <td>{{ dropsText(s.itemId) }}</td>
                       <td class="num">約{{ s.kills }}体</td>
+                    } @else if (s.shop !== null) {
+                      <!-- 道具屋で買える素材(front#387) -->
+                      <td colspan="2">道具屋で買う（{{ s.shop }}G）</td>
                     } @else {
                       <td class="ng" colspan="2">落とす敵がいません（作れない）</td>
                     }
@@ -114,13 +117,15 @@
             </p>
           </section>
 
-          <section class="card" aria-label="強さの並び">
-            <h3>
-              {{ sel.craft.type === 'weapon' ? '武器' : '防具' }}の強さの並び
-              <span class="legend"><span><span class="src shop">店</span>お店</span><span><span class="src point">交換</span>ポイント交換</span><span><span class="src craft">合成</span>鍛冶屋</span><span><span class="src other">他</span>そのほか</span></span>
-            </h3>
-            <ng-container *ngTemplateOutlet="ladderTpl; context: { type: sel.craft.type, me: sel.craft.id }" />
-          </section>
+          @if (sel.craft.type !== 'book') {
+            <section class="card" aria-label="強さの並び">
+              <h3>
+                {{ sel.craft.type === 'weapon' ? '武器' : '防具' }}の強さの並び
+                <span class="legend"><span><span class="src shop">店</span>お店</span><span><span class="src point">交換</span>ポイント交換</span><span><span class="src craft">合成</span>鍛冶屋</span><span><span class="src other">他</span>そのほか</span></span>
+              </h3>
+              <ng-container *ngTemplateOutlet="ladderTpl; context: { type: sel.craft.type, me: sel.craft.id }" />
+            </section>
+          }
         }
       </main>
 
@@ -132,14 +137,39 @@
             <div class="field" role="group" aria-label="種類">
               <span>種類</span>
               <div class="chips">
-                <button type="button" class="chip" [class.active]="sel.craft.type === 'weapon'" [attr.aria-pressed]="sel.craft.type === 'weapon'" (click)="setType('weapon')">🗡️ 武器</button>
-                <button type="button" class="chip" [class.active]="sel.craft.type === 'armor'" [attr.aria-pressed]="sel.craft.type === 'armor'" (click)="setType('armor')">🛡️ 防具</button>
+                <button type="button" class="chip" [class.active]="sel.craft.type === 'weapon'" [attr.aria-pressed]="sel.craft.type === 'weapon'" [disabled]="!canSetType(sel, 'weapon')" (click)="setType('weapon')">🗡️ 武器</button>
+                <button type="button" class="chip" [class.active]="sel.craft.type === 'armor'" [attr.aria-pressed]="sel.craft.type === 'armor'" [disabled]="!canSetType(sel, 'armor')" (click)="setType('armor')">🛡️ 防具</button>
+                <!-- 魔法の書(front#387) -->
+                <button type="button" class="chip" [class.active]="sel.craft.type === 'book'" [attr.aria-pressed]="sel.craft.type === 'book'" [disabled]="!canSetType(sel, 'book')" (click)="setType('book')">📕 魔法の書</button>
               </div>
             </div>
             <div class="grid2">
               <label class="field"><span>名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.craft.name" (ngModelChange)="setName($event)" /></label>
-              <label class="field"><span>{{ typeLabel(sel.craft.type) }}力</span><input type="number" [min]="limits.power[0]" [max]="limits.power[1]" [ngModel]="sel.craft.power" (ngModelChange)="setPower($event)" /></label>
+              @if (sel.craft.type !== 'book') {
+                <label class="field"><span>{{ typeLabel(sel.craft.type) }}力</span><input type="number" [min]="limits.power[0]" [max]="limits.power[1]" [ngModel]="sel.craft.power" (ngModelChange)="setPower($event)" /></label>
+              }
             </div>
+            @if (sel.craft.type === 'book') {
+              <div class="grid2">
+                <label class="field">
+                  <span>覚える魔法</span>
+                  <select aria-label="覚える魔法" [ngModel]="sel.craft.spell" (ngModelChange)="setSpell($event)">
+                    @for (id of spellIds; track id) {
+                      <option [value]="id">{{ spells[id].icon }} {{ spells[id].name }}（MP{{ spells[id].mp }}）</option>
+                    }
+                  </select>
+                </label>
+                <label class="field">
+                  <span>LV</span>
+                  <select aria-label="魔法の書の LV" [ngModel]="sel.craft.level ?? 1" (ngModelChange)="setLevel($event)">
+                    @for (l of spellLevels; track l.level) {
+                      <option [ngValue]="l.level">LV{{ l.level }}（×{{ l.rate }}）</option>
+                    }
+                  </select>
+                </label>
+              </div>
+              <p class="hint">作った魔法の書を使うと、その魔法をこの LV で覚えます。持っている間は作れません（読んだら、また作れます）。保存したあとは、武器・防具に変えられません。</p>
+            }
             <div class="field" role="group" aria-label="アイコン">
               <span>アイコン（絵文字）</span>
               <div class="icons">
@@ -170,8 +200,9 @@
             @for (m of sel.craft.materials; track $index; let i = $index) {
               <div class="mat-row">
                 <select [attr.aria-label]="'素材' + (i + 1)" [ngModel]="m.itemId" (ngModelChange)="setMaterial(i, $event)">
-                  @for (id of materialIds; track id) {
-                    <option [value]="id">{{ itemIcon(id) }} {{ itemName(id) }}{{ hasDrops(id) ? '' : '（落とす敵なし）' }}</option>
+                  <!-- 素材のほか、道具屋で買えるアイテム(魔法の書など。front#387)も選べる -->
+                  @for (id of materialOptions(); track id) {
+                    <option [value]="id">{{ itemIcon(id) }} {{ itemName(id) }}{{ hasDrops(id) ? '' : shopPriceOf(id) !== null ? '（道具屋）' : '（落とす敵なし）' }}</option>
                   }
                 </select>
                 <input type="number" [attr.aria-label]="'素材' + (i + 1) + 'の個数'" [min]="limits.count[0]" [max]="limits.count[1]" [ngModel]="m.count" (ngModelChange)="setCount(i, $event)" />
@@ -179,6 +210,8 @@
                 <span class="mat-from">
                   @if (hasDrops(m.itemId)) {
                     落とす敵: {{ dropsText(m.itemId) }}
+                  } @else if (shopPriceOf(m.itemId) !== null) {
+                    道具屋で買える（{{ shopPriceOf(m.itemId) }}G）
                   } @else {
                     <span class="ng">落とす敵がいません</span>
                   }

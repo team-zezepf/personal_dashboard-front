@@ -318,6 +318,10 @@
               <div class="shop-info">
                 <div class="shop-name">
                   {{ row.name }}
+                  <!-- 覚えた魔法の LV(front#387) -->
+                  @if (row.learned) {
+                    <span class="equipped-chip">LV{{ row.level }}</span>
+                  }
                   <span class="equipped-chip">{{ row.kind === 'heal' ? '回復' : '攻撃' }}</span>
                 </div>
                 <div class="shop-desc">{{ row.learned ? row.desc : 'まだ覚えていない（魔法書で覚える）' }}</div>
