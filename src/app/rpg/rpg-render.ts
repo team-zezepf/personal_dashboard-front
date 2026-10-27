@@ -1,6 +1,6 @@
 import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
-import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, iso } from './rpg-game';
+import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
@@ -1192,5 +1192,55 @@ export class RpgRenderer {
       const [mx, my] = this.at(m.target.x, m.target.y);
       drawPlayerFxText(ctx, [m.fx], mx, my);
     }
+    // 回復してもらった仲間の「ありがとう」(front#398)
+    for (const b of this.game.thanks) {
+      // 回復から少しあけて出す(front#400)
+      if (b.t < 0 || b.target.dead || !this.game.companions.includes(b.target)) continue;
+      const [bx, by] = this.at(b.target.x, b.target.y);
+      this.drawThanks(b, bx, by);
+    }
+  }
+
+  /**
+   * 「ありがとう♡」の吹き出し(front#398)。頭の右上に、白い角丸としっぽ。
+   * ぽんと大きくなって出て、ふわふわ揺れながら少し上がり、最後に薄くなって消える
+   */
+  private drawThanks(b: ThanksBubble, sx: number, sy: number): void {
+    const ctx = this.ctx;
+    const t = b.t;
+    const pop = t < 0.18 ? (t / 0.18) * 1.15 : t < 0.3 ? 1.15 - ((t - 0.18) / 0.12) * 0.15 : 1;
+    const a = t > THANKS_SEC - 0.35 ? Math.max(0, (THANKS_SEC - t) / 0.35) : 1;
+    const text = 'ありがとう♡';
+    ctx.save();
+    ctx.globalAlpha = a;
+    // しっぽの先(頭の右上)を中心に大きくする
+    ctx.translate(sx + 10, sy - 74 - Math.min(t, THANKS_SEC) * 6);
+    ctx.scale(pop, pop);
+    ctx.font = 'bold 13px "Yu Gothic", Meiryo, sans-serif';
+    const w = ctx.measureText(text).width + 18;
+    const h = 24;
+    const bx = 2;
+    const by = -14 - h + Math.sin(t * 9) * 1.5;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#f472b6';
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, w, h, 12);
+    ctx.fill();
+    ctx.stroke();
+    // しっぽ(本体との境目は白で塗って線を消す)
+    ctx.beginPath();
+    ctx.moveTo(bx + 10, by + h - 1);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(bx + 20, by + h - 1);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillRect(bx + 11, by + h - 3, 8, 3);
+    ctx.fillStyle = '#ec4899';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
+    ctx.restore();
   }
 }

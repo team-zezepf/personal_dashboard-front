@@ -249,6 +249,18 @@ export interface PlayerFx {
 export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1 };
 
 /**
+ * ほかの人に回復してもらった仲間が出す「ありがとう」の吹き出し(front#398)。
+ * t は出てからの秒。回復の光と重ならないよう、回復から THANKS_DELAY 秒あけて出す(front#400。それまでは t が負)
+ */
+export interface ThanksBubble {
+  target: Companion;
+  t: number;
+}
+
+export const THANKS_SEC = 1.6;
+export const THANKS_DELAY = 0.5;
+
+/**
  * 魔法の演出(front#383)。攻撃魔法は撃った位置から相手へ飛び(サンダーは相手の上に雷雲)、hitAt 秒で当たる。
  * 回復魔法は相手のまわりに回復の光を出す(プレイヤーは PlayerFx で出す)
  */
@@ -408,6 +420,8 @@ export class RpgGame {
   spellFx: SpellFx[] = [];
   // 仲間のまわりのエフェクト(front#391)
   mateFx: MateFx[] = [];
+  // 回復してもらった仲間の「ありがとう」の吹き出し(front#398)
+  thanks: ThanksBubble[] = [];
   // 選んでいる敵・仲間・自分(front#383)と、マウスの下にいる仲間・自分
   selected: Selection | null = null;
   hoverFighter: Fighter | null = null;
@@ -713,6 +727,7 @@ export class RpgGame {
     if (this.hoverFighter === c) this.hoverFighter = null;
     for (const e of this.enemies) if (e.foe === c) e.foe = null;
     for (const m of this.companions) if (m.help === c) m.help = null;
+    this.thanks = this.thanks.filter((b) => b.target !== c);
     this.events.statsChanged();
     this.events.inventoryChanged();
     return c;
@@ -811,6 +826,7 @@ export class RpgGame {
     this.floats.length = 0;
     this.particles.length = 0;
     this.playerFx.length = 0;
+    this.thanks = [];
     this.drops = [];
     this.clickMarker = null;
     this.hover = null;
@@ -1153,8 +1169,10 @@ export class RpgGame {
     const item = ITEMS[id];
     const by = user === target ? '' : `${this.nameOf(user)}が`;
     const to = target.kind === 'player' ? '' : `${target.name}に`;
+    let healed = false;
     if (item.type === 'revive') {
       this.revive(target, item.heal ?? 50);
+      healed = true;
       this.events.log(`${by}${to}${item.name}を使った！ ${this.nameOf(target)}が起き上がった`);
     } else {
       const got: string[] = [];
@@ -1163,6 +1181,7 @@ export class RpgGame {
         target.hp = Math.min(this.maxHpOf(target), target.hp + Math.round(item.heal * healRateOf(user.stats)));
         this.floatText(target.x, target.y, `+${target.hp - before}`, '#4ade80', 17);
         got.push(`HPが${target.hp - before}`);
+        healed = target.hp > before;
       }
       // MPの回復(front#383)。仲間は魔法を使わないので、プレイヤーのときだけ
       if (item.mp && target.kind === 'player') {
@@ -1177,6 +1196,7 @@ export class RpgGame {
     // 回復のエフェクト(front#335)はプレイヤーのまわり、仲間のときは仲間のまわり(front#383)に出す。効果音はだれのときも鳴らす
     if (target.kind === 'player') this.addPlayerFx('heal', item.type === 'revive' || (item.heal ?? 0) >= 100);
     else this.addMateFx(target, 'heal', item.type === 'revive');
+    if (healed) this.thank(user, target);
     this.events.sound?.('heal');
     this.events.statsChanged();
   }
@@ -1321,7 +1341,10 @@ export class RpgGame {
     for (const f of targets) {
       const before = f.hp;
       f.hp = Math.min(this.maxHpOf(f), f.hp + amount);
-      if (f.hp > before) this.floatText(f.x, f.y, `+${f.hp - before}`, '#4ade80', 17);
+      if (f.hp > before) {
+        this.floatText(f.x, f.y, `+${f.hp - before}`, '#4ade80', 17);
+        this.thank(user, f);
+      }
       if (f.kind === 'player') this.addPlayerFx('heal', !!s.all);
       else this.addMateFx(f, 'heal', !!s.all);
     }
@@ -1335,6 +1358,13 @@ export class RpgGame {
     if (f.kind === 'player') return this.spellLevel(id);
     if (!f.spells.includes(id)) return 0;
     return Math.min(Math.max(f.spellLevels.find((l) => l.id === id)?.level ?? 1, 1), MAX_SPELL_LEVEL);
+  }
+
+  /** ほかの人(プレイヤー・ほかの仲間)に回復してもらった仲間が「ありがとう」の吹き出しを出す(front#398)。出ていれば出し直す */
+  private thank(user: Fighter, target: Fighter): void {
+    if (target.kind !== 'mate' || user === target) return;
+    this.thanks = this.thanks.filter((b) => b.target !== target);
+    this.thanks.push({ target, t: -THANKS_DELAY });
   }
 
   /** 仲間のまわりにエフェクト(回復・レベルアップ)を出す(front#391)。同じ種類が出ていれば、始めからやり直す */
@@ -1976,6 +2006,8 @@ export class RpgGame {
     this.updateSpellFx(dt);
     for (const m of this.mateFx) m.fx.t += dt;
     if (this.mateFx.some((m) => m.fx.t > PLAYER_FX_SEC[m.fx.kind])) this.mateFx = this.mateFx.filter((m) => m.fx.t <= PLAYER_FX_SEC[m.fx.kind]);
+    for (const b of this.thanks) b.t += dt;
+    if (this.thanks.some((b) => b.t > THANKS_SEC)) this.thanks = this.thanks.filter((b) => b.t <= THANKS_SEC);
     for (const f of this.floats) f.t += dt;
     while (this.floats.length && this.floats[0].t > 1.1) this.floats.shift();
     for (const p of this.particles) {

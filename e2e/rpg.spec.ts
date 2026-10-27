@@ -1389,3 +1389,71 @@ test(
     });
   }
 );
+
+test(
+  'E2E-33 RPGで、仲間を選んで回復薬を使うと、仲間の頭の上に「ありがとう♡」の吹き出しが出て、少しすると消える(front#398)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態で、回復薬を持っている。パーティは空',
+      '仲間の役のアカウント(E2E仲間)は、まだRPGを遊んでいない'
+    ],
+    expected: [
+      '集会場で E2E仲間を呼べる',
+      'E2E仲間のHPを30に減らし(自分で回復薬を使う3割より上)、E2E仲間をクリックして回復薬を使うと、ログに「あなたがE2E仲間に回復薬を使った。」と出て、少しあとに(約0.5秒。front#400) E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
+      '2秒ほどすると吹き出しが消える'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'potion', count: 1 }]);
+    resetParty();
+    const hall = page.getByRole('dialog', { name: '集会場' });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+    const thanks = () => page.evaluate(() => (window as any).rpgTest.thanks() as string[]);
+
+    await step('RPG(/rpg)を開き、集会場で E2E仲間を招待して呼び、集会場を閉じる', '「E2E仲間が仲間になった！」と出る', async () => {
+      await page.goto('/rpg');
+      await clickNpc(page, '集会場の受付 リン');
+      const dialog = page.getByRole('dialog', { name: '集会場の受付 リンとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await hall.getByRole('button', { name: '✉ 招待メールを送る' }).click();
+      await hall.getByLabel('招待するメールアドレス').fill(E2E_MATE_ACCOUNT.email);
+      await hall.getByRole('button', { name: '送る' }).click();
+      await expect(hall.getByText('集会場に登録しました！', { exact: false })).toBeVisible();
+      await hall.getByRole('button', { name: 'もどる' }).click();
+      await hall.getByRole('button', { name: '🤝 仲間を呼ぶ' }).click();
+      await hall.getByRole('button', { name: 'E2E仲間を呼ぶ' }).click();
+      await expect(hall.getByText('E2E仲間が仲間になった！')).toBeVisible();
+      await hall.getByRole('button', { name: '閉じる' }).click();
+      await expect(hall).toHaveCount(0);
+    });
+
+    await step(
+      'E2E仲間のHPを30に減らし、E2E仲間をクリックして、持ち物の「回復薬」の「使う」を押す',
+      'ログに「あなたがE2E仲間に回復薬を使った。」と出て、少しあとに(約0.5秒。front#400) E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
+      async () => {
+        await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+        // 仲間が歩き終わってからクリックする
+        await page.waitForTimeout(800);
+        await page.evaluate(() => (window as any).rpgTest.hurtMate(30));
+        const mate = await page.evaluate(() => (window as any).rpgTest.matePosition() as [number, number]);
+        await clickCanvas(page, mate, 30);
+        await expect(page.getByRole('status', { name: '選んでいる相手' })).toContainText('E2E仲間');
+        await items.getByRole('button', { name: '回復薬を使う' }).click();
+        await expect(log.getByText('あなたがE2E仲間に回復薬を使った。', { exact: false })).toBeVisible();
+        expect(await thanks()).toEqual(['E2E仲間']);
+        // 回復から0.5秒あけて出る(front#400)。吹き出しがぽんと出終わったところを写す
+        await page.waitForTimeout(900);
+      }
+    );
+
+    await step('2秒待つ', '吹き出しが消える', async () => {
+      await expect.poll(thanks, { timeout: 3_000 }).toEqual([]);
+    });
+  }
+);
