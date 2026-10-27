@@ -228,7 +228,9 @@ test(
       await expect(status.getByText('30G')).toBeVisible();
       await expect(jelly).toContainText('×6');
       await expect(jelly).toContainText('素材');
-      await expect(jelly.getByRole('button')).toHaveCount(0);
+      // 使う・装備するボタンはない(捨てる 🗑 はある。front#391)
+      await expect(jelly.getByRole('button', { name: /を使う|を装備する/ })).toHaveCount(0);
+      await expect(jelly.getByRole('button', { name: 'スライムゼリーを捨てる' })).toBeVisible();
     });
 
     await step('鍛冶屋 ゴンゾウに話しかけ、セリフを進める', '鍛冶屋が開き、ゼリーの服は「作る」を押せ、牙の剣は押せない', async () => {
@@ -724,7 +726,7 @@ test(
 // ===== 集会場・仲間(front#358) =====
 
 type SandboxUser = { id: number; email: string };
-type SandboxSave = { user_id: number; level: number; exp: number; items: { item_id: string; count: number }[]; party?: number[] };
+type SandboxSave = { user_id: number; level: number; exp: number; items: { item_id: string; count: number }[]; party?: number[]; spells?: string[] };
 
 const readJson = <T>(file: string): T => JSON.parse(readFileSync(path.join(SANDBOX_DATA_DIR, file), 'utf8')) as T;
 const writeJson = (file: string, data: unknown) => writeFileSync(path.join(SANDBOX_DATA_DIR, file), JSON.stringify(data, null, 2), 'utf8');
@@ -929,7 +931,7 @@ test(
     });
 
     await step('村に戻ったら、集会場の「仲間を呼ぶ」を開く', 'E2E仲間をまた呼べる', async () => {
-      await expect(log.getByText(/にもどってきた。HPが全回復した/)).toBeVisible({ timeout: 10_000 });
+      await expect(log.getByText(/にもどってきた。HP・MPが全回復した/)).toBeVisible({ timeout: 10_000 });
       await openHall();
       await expect(hall.getByRole('button', { name: 'E2E仲間を呼ぶ' })).toBeEnabled();
     });
@@ -1305,6 +1307,85 @@ test(
       const row = spells.locator('.shop-row', { hasText: 'ヒールオール' });
       await expect(row).toContainText('LV1');
       await expect(spells.getByRole('button', { name: 'ヒールオールを使う' })).toBeEnabled();
+    });
+  }
+);
+
+test(
+  'E2E-32 RPGで、持ち物を捨てると、近くの仲間が5秒後に拾いに来る。魔法書なら読んで魔法を覚え、開き直しても仲間のデータに残る(front#391)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態(回復薬×3)で、魔法書: ファイアを1冊持っている。パーティは空',
+      '仲間の役のアカウント(E2E仲間)は、集会場に登録しておらず、まだRPGを遊んでいない(魔法を覚えていない)'
+    ],
+    expected: [
+      '集会場で E2E仲間を呼ぶと、右の欄の仲間に「MP 20/20・魔法: なし」と出る',
+      '持ち物の回復薬の「🗑」を押すと「回復薬を捨てる」画面が開き、＋で2個にして「捨てる」を押すと、ログに「回復薬を2個捨てた」と出て、持ち物が×1になる',
+      '5秒ほどたつと、ログに「E2E仲間が回復薬×2を拾った」と出て、仲間の持ち物の回復薬が 3 → 5 になる(まだ遊んでいないアカウントは回復薬×3を持っている)',
+      '魔法書: ファイアを捨てると、E2E仲間が拾って「E2E仲間が魔法書: ファイアを読んで、🔥 ファイアを覚えた！（LV1）」と出て、仲間の欄の魔法が「🔥ファイア LV1」になる(書は仲間の持ち物に残らない)',
+      '画面を開き直すと、E2E仲間のアカウントのセーブデータに 回復薬×5 とファイアが入っている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg(1, [{ itemId: 'book_fire', count: 1 }]);
+    resetParty();
+    const hall = page.getByRole('dialog', { name: '集会場' });
+    const party = page.getByRole('region', { name: '仲間', exact: true });
+    const items = page.getByRole('region', { name: '持ち物' });
+    const log = page.getByRole('region', { name: 'ログ' });
+    const discard = page.getByRole('dialog', { name: '捨てる' });
+
+    await step('RPG(/rpg)を開き、集会場で E2E仲間を招待して呼ぶ', '右の欄の仲間に「MP 20/20・魔法: なし」と出る', async () => {
+      await page.goto('/rpg');
+      await clickNpc(page, '集会場の受付 リン');
+      const dialog = page.getByRole('dialog', { name: '集会場の受付 リンとの会話' });
+      await dialog.waitFor();
+      for (let i = 0; i < 5 && (await dialog.isVisible()); i++) await dialog.click();
+      await hall.getByRole('button', { name: '✉ 招待メールを送る' }).click();
+      await hall.getByLabel('招待するメールアドレス').fill(E2E_MATE_ACCOUNT.email);
+      await hall.getByRole('button', { name: '送る' }).click();
+      await expect(hall.getByText('集会場に登録しました！', { exact: false })).toBeVisible();
+      await hall.getByRole('button', { name: 'もどる' }).click();
+      await hall.getByRole('button', { name: '🤝 仲間を呼ぶ' }).click();
+      await hall.getByRole('button', { name: 'E2E仲間を呼ぶ' }).click();
+      await expect(hall.getByText('E2E仲間が仲間になった！')).toBeVisible();
+      await hall.getByRole('button', { name: '閉じる' }).click();
+      await expect(party.getByText('MP 20/20・魔法: なし', { exact: false })).toBeVisible();
+    });
+
+    await step('持ち物の回復薬の「🗑」を押し、＋で2個にして「捨てる」を押す', 'ログに「回復薬を2個捨てた」と出て、持ち物の回復薬が×1になる', async () => {
+      await items.getByRole('button', { name: '回復薬を捨てる' }).click();
+      await expect(discard).toContainText('回復薬を捨てる');
+      await discard.getByRole('button', { name: '捨てる数をふやす' }).click();
+      await expect(discard.getByLabel('捨てる数', { exact: true })).toHaveText('2');
+      await discard.getByRole('button', { name: '捨てる', exact: true }).click();
+      await expect(log.getByText('回復薬を2個捨てた')).toBeVisible();
+      await expect(items.locator('.inv-row', { hasText: '回復薬' })).toContainText('×1');
+    });
+
+    await step('5秒ほど待つ', 'ログに「E2E仲間が回復薬×2を拾った」と出て、仲間の持ち物の回復薬が×5になる(はじめの×3＋拾った×2)', async () => {
+      await expect(party.getByText('回復薬×3')).toBeVisible();
+      await expect(log.getByText('E2E仲間が回復薬×2を拾った')).toBeVisible({ timeout: 15_000 });
+      await expect(party.getByText('回復薬×5')).toBeVisible();
+    });
+
+    await step('持ち物の「魔法書: ファイア」の「🗑」を押して捨て、5秒ほど待つ', 'E2E仲間が読んでファイアを覚え、仲間の欄の魔法が「🔥ファイア LV1」になる', async () => {
+      await items.getByRole('button', { name: '魔法書: ファイアを捨てる' }).click();
+      await discard.getByRole('button', { name: '捨てる', exact: true }).click();
+      await expect(log.getByText('E2E仲間が魔法書: ファイアを読んで、🔥 ファイアを覚えた！（LV1）')).toBeVisible({ timeout: 15_000 });
+      await expect(party.getByText('魔法: 🔥ファイア LV1', { exact: false })).toBeVisible();
+      await expect(party.getByText('魔法書: ファイア')).toHaveCount(0);
+    });
+
+    await step('画面を読み込み直す', 'E2E仲間のアカウントのセーブデータに 回復薬×5 とファイアが入っている', async () => {
+      await page.reload();
+      await expect(party.getByText('回復薬×5')).toBeVisible();
+      await expect.poll(() => mateSave()?.spells ?? []).toContain('fire');
+      expect(mateSave()?.items).toContainEqual({ item_id: 'potion', count: 5 });
     });
   }
 );

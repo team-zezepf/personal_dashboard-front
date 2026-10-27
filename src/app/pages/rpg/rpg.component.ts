@@ -158,9 +158,14 @@ export class RpgPageComponent implements OnDestroy {
         armor: ITEMS[c.armor]?.name ?? '',
         potions: count('use'),
         feathers: count('revive'),
+        // 持ち物は全部出す(拾った武器・魔法書・素材など。front#391)。装備中のものは上の行に出しているので除く
         items: Object.entries(c.inv)
-          .filter(([id, n]) => n > 0 && (ITEMS[id]?.type === 'use' || ITEMS[id]?.type === 'revive'))
-          .map(([id, n]) => ({ id, icon: ITEMS[id].icon, image: ITEMS[id].image, name: ITEMS[id].name, count: n }))
+          .filter(([id, n]) => n > 0 && ITEMS[id] && id !== c.weapon && id !== c.armor)
+          .map(([id, n]) => ({ id, icon: ITEMS[id].icon, image: ITEMS[id].image, name: ITEMS[id].name, count: n })),
+        // MPと覚えた魔法(front#391)
+        mp: Math.floor(Math.max(0, c.mp)),
+        maxMp: maxMpOf(c.stats),
+        spells: SPELL_IDS.filter((id) => game.levelOf(c, id) > 0).map((id) => `${SPELLS[id].icon}${spellLabel(id, game.levelOf(c, id))}`).join('・')
       };
     });
   });
@@ -175,6 +180,17 @@ export class RpgPageComponent implements OnDestroy {
   });
   readonly maxParty = MAX_PARTY;
   readonly hallPageSize = HALL_PAGE_SIZE;
+
+  // 捨てる道具と個数(front#391)
+  readonly discardTarget = signal<{ id: string; qty: number } | null>(null);
+  readonly discardView = computed(() => {
+    this.version();
+    const t = this.discardTarget();
+    const game = this.game;
+    if (!t || !game || !ITEMS[t.id]) return null;
+    const max = game.discardableCount(t.id);
+    return { id: t.id, icon: ITEMS[t.id].icon, name: ITEMS[t.id].name, qty: Math.min(Math.max(t.qty, 1), Math.max(max, 1)), max };
+  });
 
   // 道具を誰に使うか選んでいる(front#358)。選ぶ道具のID
   readonly itemTarget = signal<string | null>(null);
@@ -413,7 +429,9 @@ export class RpgPageComponent implements OnDestroy {
           // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
           material: item.type === 'material',
           count: game.player.inv[id],
-          equipped: game.player.weapon === id || game.player.armor === id
+          equipped: game.player.weapon === id || game.player.armor === id,
+          // 捨てられる(装備中でない。front#391)
+          discardable: game.discardableCount(id) > 0
         };
       });
   });
@@ -831,7 +849,7 @@ export class RpgPageComponent implements OnDestroy {
     }
     if (event.key === 'Escape') {
       // 開いているものがなければ、選んでいる相手を外す(front#383)
-      const open = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen();
+      const open = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen() || !!this.discardTarget();
       if (!open) this.clearSelection();
       this.talking.set(null);
       this.closeShop();
@@ -840,7 +858,32 @@ export class RpgPageComponent implements OnDestroy {
       this.closeHall();
       this.closeItemTarget();
       this.closeSpells();
+      this.closeDiscard();
     }
+  }
+
+  // ===== 捨てる(front#391) =====
+
+  openDiscard(id: string): void {
+    this.discardTarget.set({ id, qty: 1 });
+    this.syncLock();
+  }
+
+  changeDiscardQty(delta: number): void {
+    const v = this.discardView();
+    if (v) this.discardTarget.set({ id: v.id, qty: Math.min(Math.max(v.qty + delta, 1), v.max) });
+  }
+
+  confirmDiscard(): void {
+    const v = this.discardView();
+    if (!v) return;
+    this.closeDiscard();
+    this.game?.discard(v.id, v.qty);
+  }
+
+  closeDiscard(): void {
+    this.discardTarget.set(null);
+    this.syncLock();
   }
 
   // ===== 選ぶ・魔法(front#383) =====
@@ -951,7 +994,7 @@ export class RpgPageComponent implements OnDestroy {
 
   // 会話・お店を開いている間は、ゲーム画面をクリックしても動かない
   private syncLock(): void {
-    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen();
+    if (this.game) this.game.locked = !!this.talking() || !!this.shopMode() || this.statusOpen() || !!this.lookDraft() || !!this.hallMode() || !!this.itemTarget() || this.spellsOpen() || !!this.discardTarget();
   }
 
   // ===== 見た目 =====

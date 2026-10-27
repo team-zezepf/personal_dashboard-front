@@ -204,10 +204,20 @@ export interface Companion extends Mover {
   reviving: number;
   // 次に道具を使えるまでの秒
   itemCd: number;
-  // MPと覚えた魔法(front#383)。今は仲間は魔法を使わないが、仲間のアカウントのデータとして保存し直す
-  mp: number | null;
+  // MP・覚えた魔法とLV(front#383 / front#387)。仲間も戦闘中に魔法を使う(front#391)。保存すると仲間のアカウントに書かれる
+  mp: number;
+  mpRegen: number;
+  spellCd: number;
   spells: string[];
   spellLevels: RpgSpellLevel[];
+  // 拾いに行く落ちたアイテム(front#391)
+  pick: Drop | null;
+}
+
+/** 仲間のまわりのエフェクト(front#391)。回復の光・レベルアップの光をプレイヤーと同じ絵で出す */
+export interface MateFx {
+  target: Companion;
+  fx: PlayerFx;
 }
 
 /** 敵と戦う人(プレイヤー・仲間。front#358) */
@@ -244,6 +254,8 @@ export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, hea
  */
 export interface SpellFx {
   spell: SpellId;
+  // 魔法を使った人(プレイヤー・仲間。front#391)。威力はこの人の魔力と魔法の LV で決まる
+  caster: Fighter;
   t: number;
   fromX: number;
   fromY: number;
@@ -318,6 +330,25 @@ export const DOWN_SEC = 60;
 const RETARGET_SEC = 2;
 // 仲間が回復薬を使う、HPの割合
 const LOW_HP_RATE = 0.3;
+// 仲間が落ちたアイテムに気づく、落ちてからの秒と距離(マス)(front#391)
+export const MATE_PICK_DELAY = 5;
+export const MATE_PICK_RANGE = 4;
+
+/**
+ * 仲間(bot)のレベルアップで、ポイントを振る項目(front#391)。今の振り分けの割合に近づくように選ぶ
+ * (魔力6・HP3 なら、魔力に2/3・HPに1/3)。まだ何も振っていなければランダム。運は上限を超えない
+ */
+export function mateStatToRaise(stats: Stats, random: () => number = Math.random): StatKey {
+  const keys = STAT_KEYS.filter((k) => k !== 'luk' || stats.luk < MAX_LUCK);
+  const total = keys.reduce((n, k) => n + stats[k], 0);
+  if (total <= 0) return keys[Math.floor(random() * keys.length)];
+  let r = random() * total;
+  for (const k of keys) {
+    r -= stats[k];
+    if (r < 0) return k;
+  }
+  return keys.find((k) => stats[k] > 0) ?? keys[0];
+}
 // 仲間がいのちの羽で起こすのにかかる秒(そばで起こしている様子が見えるように)
 export const REVIVE_SEC = 1.5;
 const FADE_MS = 380;
@@ -375,6 +406,8 @@ export class RpgGame {
   readonly playerFx: PlayerFx[] = [];
   // 魔法の演出(front#383)
   spellFx: SpellFx[] = [];
+  // 仲間のまわりのエフェクト(front#391)
+  mateFx: MateFx[] = [];
   // 選んでいる敵・仲間・自分(front#383)と、マウスの下にいる仲間・自分
   selected: Selection | null = null;
   hoverFighter: Fighter | null = null;
@@ -624,7 +657,7 @@ export class RpgGame {
         items: Object.entries(c.inv).filter(([, count]) => count > 0).map(([itemId, count]) => ({ itemId, count })),
         stats: { ...c.stats },
         statPoints: c.statPoints,
-        mp: c.mp,
+        mp: Math.max(0, Math.floor(c.mp)),
         spells: [...c.spells],
         spellLevels: c.spellLevels.map((l) => ({ ...l }))
       }))
@@ -655,7 +688,9 @@ export class RpgGame {
       hp: keepHp ? Math.min(rc.hp, max) : max, look: { ...DEFAULT_LOOK, ...rc.look },
       x: this.player.x, y: this.player.y, z: this.player.z, path: [], dir: 1, moving: false,
       target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0, lastCombat: -99, regen: 0, dead: false, downT: 0, help: null, reviving: 0, itemCd: 0,
-      mp: rc.mp ?? null, spells: [...(rc.spells ?? [])], spellLevels: (rc.spellLevels ?? []).map((l) => ({ ...l }))
+      // MP(front#391)。呼んだとき・魔法ができる前のデータは最大MP
+      mp: keepHp && rc.mp != null ? Math.min(rc.mp, maxMpOf(stats)) : maxMpOf(stats), mpRegen: 0, spellCd: 0,
+      spells: [...(rc.spells ?? [])], spellLevels: (rc.spellLevels ?? []).map((l) => ({ ...l })), pick: null
     };
   }
 
@@ -1141,7 +1176,7 @@ export class RpgGame {
     }
     // 回復のエフェクト(front#335)はプレイヤーのまわり、仲間のときは仲間のまわり(front#383)に出す。効果音はだれのときも鳴らす
     if (target.kind === 'player') this.addPlayerFx('heal', item.type === 'revive' || (item.heal ?? 0) >= 100);
-    else this.addHealFx(target, item.type === 'revive' ? 'healall' : 'heal');
+    else this.addMateFx(target, 'heal', item.type === 'revive');
     this.events.sound?.('heal');
     this.events.statsChanged();
   }
@@ -1243,9 +1278,7 @@ export class RpgGame {
         this.events.log(target);
         return false;
       }
-      this.faceTo(p, target);
-      this.spellFx.push({ spell: id, t: 0, fromX: p.x, fromY: p.y, target, x: target.x, y: target.y, hit: false, hits: [], seed: Math.random() * 1000 });
-      p.lastCombat = this.time;
+      this.castAttack(p, id, target);
     } else {
       const targets = s.all ? this.fighters().filter((f) => !f.dead) : [this.healTarget()];
       if (targets[0].dead) {
@@ -1256,33 +1289,58 @@ export class RpgGame {
         this.events.log(s.all ? 'みんなHPは満タンだ' : targets[0].kind === 'player' ? 'HPは満タンだ' : `${targets[0].name}のHPは満タンだ`);
         return false;
       }
-      // 回復量は LV で増える(front#387)
-      const amount = Math.round(spellHealOf(p.stats) * s.rate * levelRateOf(level));
-      for (const f of targets) {
-        const before = f.hp;
-        f.hp = Math.min(this.maxHpOf(f), f.hp + amount);
-        if (f.hp > before) this.floatText(f.x, f.y, `+${f.hp - before}`, '#4ade80', 17);
-        if (f.kind === 'player') this.addPlayerFx('heal', !!s.all);
-        else this.addHealFx(f, id);
-      }
-      this.events.sound?.('heal');
-      if (!s.all && targets[0] !== p) {
-        this.faceTo(p, targets[0]);
-        message += ` ${this.nameOf(targets[0])}のHPが回復した`;
-      }
+      this.castHeal(p, id, targets);
+      if (!s.all && targets[0] !== p) message += ` ${this.nameOf(targets[0])}のHPが回復した`;
     }
-    p.mp -= s.mp;
-    p.spellCd = SPELL_COOLDOWN;
-    p.lunge = 0.6;
     this.events.log(message);
     this.events.statsChanged();
     this.events.dirty();
     return true;
   }
 
-  /** 仲間のまわりに回復の光を出す(front#383)。プレイヤーは PlayerFx で出す */
-  private addHealFx(f: Companion, spell: SpellId): void {
-    this.spellFx.push({ spell, t: 0, fromX: f.x, fromY: f.y, target: f, x: f.x, y: f.y, hit: true, hits: [], seed: Math.random() * 1000 });
+  /** 魔法を使った人(user)の MP を減らし、次の魔法を使えるまでの秒を決める */
+  private spendSpell(user: Fighter, id: SpellId): void {
+    user.mp -= MAGIC[id].mp;
+    user.spellCd = SPELL_COOLDOWN;
+    user.lunge = 0.6;
+  }
+
+  /** user が攻撃魔法を target に撃つ(プレイヤー・仲間。front#391)。当たるのは飛んでいったあと(updateSpellFx) */
+  private castAttack(user: Fighter, id: SpellId, target: Enemy): void {
+    this.faceTo(user, target);
+    this.spellFx.push({ spell: id, caster: user, t: 0, fromX: user.x, fromY: user.y, target, x: target.x, y: target.y, hit: false, hits: [], seed: Math.random() * 1000 });
+    user.lastCombat = this.time;
+    this.spendSpell(user, id);
+  }
+
+  /** user が回復魔法を targets に使う(プレイヤー・仲間。front#391)。回復量は user の魔力と魔法の LV で決まる */
+  private castHeal(user: Fighter, id: SpellId, targets: Fighter[]): void {
+    const s = MAGIC[id];
+    // 回復量は LV で増える(front#387)
+    const amount = Math.round(spellHealOf(user.stats) * s.rate * levelRateOf(this.levelOf(user, id)));
+    for (const f of targets) {
+      const before = f.hp;
+      f.hp = Math.min(this.maxHpOf(f), f.hp + amount);
+      if (f.hp > before) this.floatText(f.x, f.y, `+${f.hp - before}`, '#4ade80', 17);
+      if (f.kind === 'player') this.addPlayerFx('heal', !!s.all);
+      else this.addMateFx(f, 'heal', !!s.all);
+    }
+    this.events.sound?.('heal');
+    if (targets.length === 1 && targets[0] !== user) this.faceTo(user, targets[0]);
+    this.spendSpell(user, id);
+  }
+
+  /** プレイヤー・仲間が覚えている魔法の LV(覚えていなければ 0) */
+  levelOf(f: Fighter, id: SpellId): number {
+    if (f.kind === 'player') return this.spellLevel(id);
+    if (!f.spells.includes(id)) return 0;
+    return Math.min(Math.max(f.spellLevels.find((l) => l.id === id)?.level ?? 1, 1), MAX_SPELL_LEVEL);
+  }
+
+  /** 仲間のまわりにエフェクト(回復・レベルアップ)を出す(front#391)。同じ種類が出ていれば、始めからやり直す */
+  private addMateFx(c: Companion, kind: PlayerFx['kind'], big = false): void {
+    this.mateFx = this.mateFx.filter((m) => !(m.target === c && m.fx.kind === kind));
+    this.mateFx.push({ target: c, fx: { kind, t: 0, seed: Math.random() * 1000, big } });
   }
 
   /** 魔法の演出を進め、攻撃魔法が当たる時になったら敵にダメージを与える */
@@ -1315,16 +1373,16 @@ export class RpgGame {
       : main ? [main] : [];
     // 効果音は、敵の同じ種類の攻撃(炎・水・雷)の音を使う
     this.events.sound?.(`attack_${fx.spell === 'blizzard' ? 'water' : fx.spell}`);
-    for (const e of fx.hits) this.spellDamage(e, fx.spell);
+    for (const e of fx.hits) this.spellDamage(e, fx.spell, fx.caster);
   }
 
-  /** 攻撃魔法のダメージ。敵の防御は通常攻撃の半分だけ効き、会心はない */
-  private spellDamage(e: Enemy, spell: SpellId): void {
+  /** 攻撃魔法のダメージ。敵の防御は通常攻撃の半分だけ効き、会心はない。威力は撃った人(caster)の魔力と魔法の LV で決まる */
+  private spellDamage(e: Enemy, spell: SpellId, caster: Fighter = this.player): void {
     const s = MAGIC[spell];
-    const p = this.player;
+    const p = caster;
     const def = ENEMIES[e.type];
     // 威力は LV で増える(front#387)
-    let dmg = Math.max(1, Math.round(spellPowerOf(p.stats) * s.rate * levelRateOf(this.spellLevel(spell)) - def.def * 0.3 + randi(-2, 2)));
+    let dmg = Math.max(1, Math.round(spellPowerOf(p.stats) * s.rate * levelRateOf(this.levelOf(caster, spell)) - def.def * 0.3 + randi(-2, 2)));
     // 守る敵(front#330)が生きている間は、魔法でもボスへのダメージが減る
     const guards = def.boss ? this.bossGuards() : 0;
     if (guards) dmg = Math.round(dmg * guardRateOf(guards));
@@ -1604,6 +1662,57 @@ export class RpgGame {
     return drop;
   }
 
+  // ===== 捨てる・仲間が拾う(front#391) =====
+
+  /** 捨てられる最大の数。装備中は0、武器・防具は1つずつ */
+  discardableCount(id: string): number {
+    const item = ITEMS[id];
+    if (!item || !this.owned(id) || this.isEquipped(id)) return 0;
+    return item.type === 'weapon' || item.type === 'armor' ? 1 : this.player.inv[id];
+  }
+
+  /** 持ち物を count 個捨てる。プレイヤーのとなりのマスにまとめて落ちる(敵が落としたアイテムと同じで、拾い直せる) */
+  discard(id: string, count = 1): boolean {
+    const p = this.player;
+    if (p.dead || !Number.isInteger(count) || count < 1 || count > this.discardableCount(id)) return false;
+    const drop = this.dropItem(id, count, Math.round(p.x), Math.round(p.y), true);
+    if (!drop) return false;
+    p.inv[id] -= count;
+    this.events.log(count > 1 ? `${ITEMS[id].name}を${count}個捨てた` : `${ITEMS[id].name}を捨てた`);
+    this.events.inventoryChanged();
+    this.events.dirty();
+    return true;
+  }
+
+  /**
+   * 仲間が落ちたアイテムを拾う。魔法書は、その魔法をまだ覚えていない(または書の LV のほうが高い)なら1冊読んで覚える。
+   * 残りは仲間の持ち物に入る(保存すると仲間のアカウントに書かれる)
+   */
+  private matePickUp(c: Companion, d: Drop): void {
+    this.drops = this.drops.filter((o) => o !== d);
+    c.pick = null;
+    const item = ITEMS[d.id];
+    let count = d.count;
+    if (item.type === 'book' && isSpellId(item.spell) && this.levelOf(c, item.spell) < this.bookLevel(d.id)) {
+      const s = MAGIC[item.spell];
+      const level = Math.min(this.bookLevel(d.id), MAX_SPELL_LEVEL);
+      if (!c.spells.includes(s.id)) c.spells.push(s.id);
+      c.spellLevels = [...c.spellLevels.filter((l) => l.id !== s.id), { id: s.id, level }];
+      count--;
+      this.floatText(c.x, c.y, `${s.icon} ${spellLabel(s.id, level)}`, '#c4b5fd', 15, -18);
+      this.events.log(`${c.name}が${item.name}を読んで、${s.icon} ${s.name}を覚えた！（LV${level}）`);
+      this.events.sound?.('level_up');
+    }
+    if (count > 0) {
+      c.inv[d.id] = (c.inv[d.id] ?? 0) + count;
+      const name = `${item.name}${count > 1 ? `×${count}` : ''}`;
+      this.floatText(d.x, d.y, name, '#fde68a', 14, -10);
+      this.events.log(`${c.name}が${name}を拾った`);
+    }
+    this.events.inventoryChanged();
+    this.events.dirty();
+  }
+
   /** 落ちたアイテムを拾って、持ち物に入れる */
   private pickUp(d: Drop): void {
     const p = this.player;
@@ -1715,16 +1824,20 @@ export class RpgGame {
       c.exp -= nextExpOf(c.level);
       c.level++;
       for (let i = 0; i < STAT_POINTS_PER_LEVEL; i++) {
-        const keys = STAT_KEYS.filter((k) => k !== 'luk' || c.stats.luk < MAX_LUCK);
-        const key = keys[Math.floor(Math.random() * keys.length)];
+        const key = mateStatToRaise(c.stats);
         c.stats[key]++;
         got[key] = (got[key] ?? 0) + 1;
       }
     }
     if (c.level === before) return;
-    if (!c.dead) c.hp = this.maxHpOf(c);
+    if (!c.dead) {
+      c.hp = this.maxHpOf(c);
+      c.mp = maxMpOf(c.stats);
+    }
     const text = STAT_KEYS.filter((k) => got[k]).map((k) => `${STAT_SHORT[k]}+${got[k]}`).join('・');
-    this.floatText(c.x, c.y, 'LEVEL UP!', '#ffd54a', 15, -26);
+    // プレイヤーと同じレベルアップの光・「LEVEL UP!」の文字・効果音(front#391)
+    this.addMateFx(c, 'level');
+    this.events.sound?.('level_up');
     this.events.log(`${c.name}がレベル${c.level}になった！（${text}）`);
   }
 
@@ -1861,6 +1974,8 @@ export class RpgGame {
     this.updateBreakables(dt);
     this.updateDrops(dt);
     this.updateSpellFx(dt);
+    for (const m of this.mateFx) m.fx.t += dt;
+    if (this.mateFx.some((m) => m.fx.t > PLAYER_FX_SEC[m.fx.kind])) this.mateFx = this.mateFx.filter((m) => m.fx.t <= PLAYER_FX_SEC[m.fx.kind]);
     for (const f of this.floats) f.t += dt;
     while (this.floats.length && this.floats[0].t > 1.1) this.floats.shift();
     for (const p of this.particles) {
@@ -1984,15 +2099,18 @@ export class RpgGame {
   private updateCompanion(c: Companion, dt: number): void {
     c.atkCd -= dt;
     c.itemCd -= dt;
+    c.spellCd = Math.max(0, c.spellCd - dt);
     c.lunge = Math.max(0, c.lunge - dt * 5);
     c.hurt = Math.max(0, c.hurt - dt);
     if (c.dead) return;
     const p = this.player;
     const party = this.fighters();
+    this.regenFighterMp(c, dt);
 
-    // 1) 回復薬
+    // 1) 回復魔法(front#391)。2人以上が5割を切ればヒールオール、だれかが3割を切ればヒール。使えなければ回復薬
+    const healed = c.spellCd <= 0 && this.mateHealSpell(c, party);
     const heal = this.healItemOf(c);
-    if (heal && c.itemCd <= 0) {
+    if (!healed && heal && c.itemCd <= 0) {
       const low = party
         .filter((f) => !f.dead && f.hp < this.maxHpOf(f) * LOW_HP_RATE)
         .sort((a, b) => a.hp / this.maxHpOf(a) - b.hp / this.maxHpOf(b))[0];
@@ -2048,15 +2166,39 @@ export class RpgGame {
         .sort((a, b) => cheb(a.x, a.y, c.x, c.y) - cheb(b.x, b.y, c.x, c.y))[0] ?? null;
     }
     const t = c.target;
+    if (t) c.pick = null;
+    // 落ちたアイテムを拾いに行く(front#391)。戦っていないときだけ
+    const drop = t || p.dead ? null : this.matePickTarget(c);
     if (t) {
-      if (cheb(c.x, c.y, t.x, t.y) <= ATTACK_RANGE) {
+      // 魔法(front#391)。魔力が攻撃より高ければ魔法優先、そうでなければ通常攻撃優先
+      const spell = this.mateAttackSpell(c, t);
+      const inRange = !!spell && Math.hypot(t.x - c.x, t.y - c.y) <= spellRangeOf(c.stats);
+      const magicFirst = c.stats.mag > c.stats.atk;
+      if (spell && inRange && (magicFirst || spell === 'thunder')) {
+        // 届く距離まで来たら止まって撃つ(サンダーは、通常攻撃優先でも敵がかたまっていれば撃つ)
+        c.path = [];
+        this.faceTo(c, t);
+        if (c.spellCd <= 0) this.castAttack(c, spell, t);
+      } else if (cheb(c.x, c.y, t.x, t.y) <= ATTACK_RANGE) {
         c.path = [];
         this.faceTo(c, t);
         if (c.atkCd <= 0) this.playerAttack(t, c);
       } else {
         c.repath -= dt;
         if (c.repath <= 0 || !c.path.length) {
-          this.pathNear(c, Math.round(t.x), Math.round(t.y));
+          const reachable = this.pathNear(c, Math.round(t.x), Math.round(t.y));
+          c.repath = 0.35;
+          // 殴れない(近づけない)敵には、届けば攻撃魔法を撃つ
+          if (!reachable && spell && inRange && c.spellCd <= 0) this.castAttack(c, spell, t);
+        }
+      }
+    } else if (drop) {
+      if (Math.round(c.x) === drop.x && Math.round(c.y) === drop.y && !c.path.length) {
+        this.matePickUp(c, drop);
+      } else {
+        c.repath -= dt;
+        if (c.repath <= 0 || !c.path.length) {
+          if (!this.pathTo(c, drop.x, drop.y)) c.pick = null;
           c.repath = 0.35;
         }
       }
@@ -2083,6 +2225,68 @@ export class RpgGame {
         c.hp = Math.min(this.maxHpOf(c), c.hp + Math.max(1, Math.round(this.maxHpOf(c) * 0.03)));
       }
     }
+  }
+
+  /** MPは時間で少しずつ戻る(front#383 / front#391)。戦っていないときは1.5秒ごとに最大MPの4%、戦っている間は3秒に1 */
+  private regenFighterMp(f: Fighter, dt: number): boolean {
+    const max = maxMpOf(f.stats);
+    if (f.mp >= max) {
+      f.mpRegen = 0;
+      return false;
+    }
+    f.mpRegen += (this.time - f.lastCombat > 4 ? (max * 0.04) / 1.5 : 1 / 3) * dt;
+    if (f.mpRegen < 1) return false;
+    const n = Math.floor(f.mpRegen);
+    f.mpRegen -= n;
+    f.mp = Math.min(max, f.mp + n);
+    return true;
+  }
+
+  /** 仲間が使える魔法か(覚えていて、MPが足りる) */
+  private mateCan(c: Companion, id: SpellId): boolean {
+    return this.levelOf(c, id) > 0 && c.mp >= MAGIC[id].mp;
+  }
+
+  /** 仲間が撃つ攻撃魔法(front#391)。狙った敵のまわりに3体以上いればサンダー、そうでなければファイア → ブリザド。使えなければ null */
+  private mateAttackSpell(c: Companion, t: Enemy): SpellId | null {
+    const radius = MAGIC.thunder.radius ?? 1.5;
+    const cluster = this.enemies.filter((e) => e.alive && !this.hiding(e) && Math.hypot(e.x - t.x, e.y - t.y) <= radius).length;
+    if (cluster >= 3 && this.mateCan(c, 'thunder')) return 'thunder';
+    if (this.mateCan(c, 'fire')) return 'fire';
+    if (this.mateCan(c, 'blizzard')) return 'blizzard';
+    return null;
+  }
+
+  /** 仲間の回復魔法(front#391)。使ったら true */
+  private mateHealSpell(c: Companion, party: Fighter[]): boolean {
+    const alive = party.filter((f) => !f.dead);
+    const rate = (f: Fighter) => f.hp / this.maxHpOf(f);
+    if (alive.filter((f) => rate(f) < 0.5).length >= 2 && this.mateCan(c, 'healall')) {
+      this.castHeal(c, 'healall', alive);
+      this.events.log(`${c.name}の${MAGIC.healall.icon} ${MAGIC.healall.name}！`);
+      return true;
+    }
+    const low = alive.filter((f) => rate(f) < LOW_HP_RATE).sort((a, b) => rate(a) - rate(b))[0];
+    if (low && this.mateCan(c, 'heal')) {
+      this.castHeal(c, 'heal', [low]);
+      this.events.log(`${c.name}の${MAGIC.heal.icon} ${MAGIC.heal.name}！ ${this.nameOf(low)}のHPが回復した`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 仲間が拾いに行く落ちたアイテム(front#391)。落ちてから5秒たち、仲間から4マス以内、プレイヤーから8マスより近いもの。
+   * ほかの仲間が向かっているものは選ばない。今向かっているものがあれば、なくなるまでそれ
+   */
+  private matePickTarget(c: Companion): Drop | null {
+    if (c.pick && this.drops.includes(c.pick)) return c.pick;
+    const p = this.player;
+    const taken = new Set(this.companions.filter((o) => o !== c).map((o) => o.pick));
+    c.pick = this.drops
+      .filter((d) => d.t >= MATE_PICK_DELAY && cheb(d.x, d.y, c.x, c.y) <= MATE_PICK_RANGE && cheb(d.x, d.y, p.x, p.y) < LEASH && !taken.has(d))
+      .sort((a, b) => cheb(a.x, a.y, c.x, c.y) - cheb(b.x, b.y, c.x, c.y))[0] ?? null;
+    return c.pick;
   }
 
   private stepCompanion(c: Companion, dt: number, rate: number): void {
