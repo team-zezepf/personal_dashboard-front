@@ -390,6 +390,14 @@ describe('RpgGame', () => {
       expect(ev.messages).toContain('精霊の森にやってきた');
     });
 
+    it('エリアだけのベースがあればそれを使い、なければダンジョンのベースを使う(front#401)', () => {
+      const forest = MAPS.find((m) => m.id === 'forest')!;
+      game.loadMap({ ...forest, theme: 'tower' });
+      expect(game.theme).toBe(THEMES['tower']);
+      game.loadMap({ ...forest, theme: null });
+      expect(game.theme).toBe(THEMES['forest']);
+    });
+
     it('行き先にこちらへ戻るつながりがなければ、進んできた向きの反対側の端(左上の端)の真ん中に着く(front#337)', () => {
       game.dispose();
       game = new RpgGame(ev, MAPS.map((m) => (m.id === 'forest' ? { ...m, links: [] } : m)), DUNGEONS);

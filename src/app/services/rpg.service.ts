@@ -44,7 +44,7 @@ const MAP_FIELDS = `
   }
   enemies { type x y }
   links { dx dy to }
-  sortOrder updatedAt bgmId
+  sortOrder updatedAt bgmId theme
 `;
 
 const DUNGEON_FIELDS = `id name theme bgmId sortOrder updatedAt`;

@@ -15,12 +15,13 @@
     <div class="toolbar">
       <div class="page-tabs" role="tablist">
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
+        <!-- ベース(旧「見た目」)はマップの右隣(front#401) -->
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'theme'" [attr.aria-selected]="page() === 'theme'" (click)="page.set('theme')">🎨 ベース</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'theme'" [attr.aria-selected]="page() === 'theme'" (click)="page.set('theme')">🎨 見た目</button>
       </div>
       @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme') {
       <span class="sep"></span>
@@ -105,12 +106,13 @@
       (dirtyChange)="objectDirty.set($event)"
     />
 
-    <!-- 見た目タブ(front#389)。ダンジョンの見た目を作る・直す。ほかのタブに移っても編集中の内容を残す -->
+    <!-- ベースタブ(旧「見た目」。front#389 / front#401)。ダンジョン・エリアのベースを作る・直す。ほかのタブに移っても編集中の内容を残す -->
     @if (rpgThemes().length) {
       <app-rpg-theme-page
         [style.display]="page() === 'theme' ? null : 'none'"
         [themes]="rpgThemes()"
         [dungeons]="dungeons()"
+        [maps]="maps()"
         (saved)="onThemesSaved($event)"
         (dirtyChange)="themeDirty.set($event)"
       />
@@ -339,10 +341,10 @@
               <span>名前</span>
               <input type="text" maxlength="30" [ngModel]="dungeon.name" (ngModelChange)="editDungeon(dungeon, { name: $event })" />
             </label>
-            <!-- 見た目とデフォルトBGMを横に並べる(front#381) -->
+            <!-- ベースとデフォルトBGMを横に並べる(front#381) -->
             <div class="row2">
               <label class="field">
-                <span>見た目</span>
+                <span>ベース</span>
                 <select [ngModel]="dungeon.theme" (ngModelChange)="editDungeon(dungeon, { theme: $event })">
                   @for (t of themes(); track t.id) {
                     <option [value]="t.id">{{ t.label }}</option>
@@ -431,6 +433,17 @@
                   <input type="number" [min]="sizeRange.min" [max]="sizeRange.max" [ngModel]="map.height" (change)="changeSize(map.width, $any($event.target).value)" />
                 </label>
               </div>
+              <!-- エリアだけで使うベース(front#401) -->
+              <label class="field">
+                <span>ベース</span>
+                <select [ngModel]="map.theme ?? ''" (ngModelChange)="setAreaTheme($event)">
+                  <option value="">（ダンジョンのベース）</option>
+                  @for (t of themes(); track t.id) {
+                    <option [value]="t.id">{{ t.label }}</option>
+                  }
+                </select>
+              </label>
+              <p class="muted small">このエリアだけで使うベースです。「（ダンジョンのベース）」なら、ダンジョンのベースを使います。</p>
               <!-- エリアだけで流す曲(front#304) -->
               <label class="field">
                 <span>BGM</span>
@@ -552,7 +565,7 @@
         <h2>新しいダンジョン</h2>
         <label class="field"><span>名前</span><input type="text" maxlength="30" [(ngModel)]="newDungeon.name" /></label>
         <label class="field">
-          <span>見た目</span>
+          <span>ベース</span>
           <select [(ngModel)]="newDungeon.theme">
             @for (t of themes(); track t.id) {
               <option [value]="t.id">{{ t.label }}</option>

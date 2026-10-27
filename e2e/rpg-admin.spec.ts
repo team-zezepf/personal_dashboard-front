@@ -488,12 +488,12 @@ test(
 );
 
 test(
-  'E2E-28 ダンジョンの推奨レベルをなくし、マップ作成画面では見た目とデフォルトBGMが並び、ゲームのエリア名にも出ない(front#381)',
+  'E2E-28 ダンジョンの推奨レベルをなくし、マップ作成画面ではベースとデフォルトBGMが並び、ゲームのエリア名にも出ない(front#381)',
   caseOf({
-    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: 見た目 草原)'],
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: ベース 草原)'],
     expected: [
-      'マップ作成画面の「🏰 ダンジョン」の設定に「推奨レベル」の欄がなく、「見た目」と「デフォルトBGM」が横に並ぶ',
-      '「＋ 新しいダンジョン」の画面にも「推奨レベル」の欄がなく、「見た目」がある',
+      'マップ作成画面の「🏰 ダンジョン」の設定に「推奨レベル」の欄がなく、「ベース」と「デフォルトBGM」が横に並ぶ',
+      '「＋ 新しいダンジョン」の画面にも「推奨レベル」の欄がなく、「ベース」がある',
       'ゲーム(/rpg)でエリアに入ったときのタイトルは、ダンジョン名だけで「推奨 Lv」は出ない'
     ]
   }),
@@ -503,11 +503,11 @@ test(
     await loginAsE2E(page, step, true);
     const settings = page.getByRole('region', { name: 'ダンジョンの設定' });
 
-    await step('RPGマップ作成(/rpg/admin)を開き、「🏰 ダンジョン」の設定を見る', '「推奨レベル」の欄がなく、「見た目」(草原)と「デフォルトBGM」が同じ高さに横に並ぶ', async () => {
+    await step('RPGマップ作成(/rpg/admin)を開き、「🏰 ダンジョン」の設定を見る', '「推奨レベル」の欄がなく、「ベース」(草原)と「デフォルトBGM」が同じ高さに横に並ぶ', async () => {
       await page.goto('/rpg/admin');
       await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
       await expect(settings.getByText('推奨レベル')).toHaveCount(0);
-      const look = settings.getByLabel('見た目');
+      const look = settings.getByLabel('ベース');
       const bgm = settings.getByLabel('デフォルトBGM');
       await expect(look.locator('option:checked')).toHaveText('草原');
       const [a, b] = [(await look.boundingBox())!, (await bgm.boundingBox())!];
@@ -515,10 +515,10 @@ test(
       expect(b.x).toBeGreaterThan(a.x);
     });
 
-    await step('「＋ 新しいダンジョン」を押し、作らずに「やめる」を押す', '「推奨レベル」の欄がなく、「見た目」がある。やめると閉じる', async () => {
+    await step('「＋ 新しいダンジョン」を押し、作らずに「やめる」を押す', '「推奨レベル」の欄がなく、「ベース」がある。やめると閉じる', async () => {
       await page.getByRole('button', { name: '＋ 新しいダンジョン' }).click();
       const dialog = page.getByRole('dialog', { name: '新しいダンジョン' });
-      await expect(dialog.getByLabel('見た目')).toBeVisible();
+      await expect(dialog.getByLabel('ベース')).toBeVisible();
       await expect(dialog.getByText('推奨レベル')).toHaveCount(0);
       await dialog.getByRole('button', { name: 'やめる' }).click();
       await expect(dialog).toBeHidden();
@@ -533,14 +533,14 @@ test(
 );
 
 test(
-  'E2E-31 RPGマップ作成の「見た目」タブで、見た目を複製して名前と装飾を変えて保存すると、ダンジョンの見た目に選べ、使っていなければ消せる(front#389)',
+  'E2E-31 RPGマップ作成の「ベース」タブで、ベースを複製して名前と装飾を変えて保存すると、ダンジョンのベースに選べ、使っていなければ消せる(front#389)',
   caseOf({
-    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンの見た目を何も保存していない(最初の4つ)'],
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンのベースを何も保存していない(最初の4つ)'],
     expected: [
-      '「🎨 見た目」タブに 草原・森・谷・塔 が並び、プレビューが出る。谷の装飾は「装飾2」で、色は赤(#ff5a1f)',
-      '最初からある見た目(草原)は「🗑 消す」を押せない',
-      '谷を選んで「＋ 新しい見た目」を押すと「谷のコピー」ができる。名前を「[E2E]雪原」、装飾を「装飾3」にすると濃さの欄が出る',
-      '「見た目を保存する」を押すと「見た目を保存しました」と出て、ダンジョンの設定の「見た目」の選ぶ欄に「[E2E]雪原」が増える',
+      '「🎨 ベース」タブに 草原・森・谷・塔 が並び、プレビューが出る。谷の装飾は「装飾2」で、色は赤(#ff5a1f)',
+      '最初からあるベース(草原)は「🗑 消す」を押せない',
+      '谷を選んで「＋ 新しいベース」を押すと「谷のコピー」ができる。名前を「[E2E]雪原」、装飾を「装飾3」にすると濃さの欄が出る',
+      '「ベースを保存する」を押すと「ベースを保存しました」と出て、ダンジョンの設定の「ベース」の選ぶ欄に「[E2E]雪原」が増える',
       'どのダンジョンでも使っていない「[E2E]雪原」は消せ、選ぶ欄からもなくなる'
     ]
   }),
@@ -549,15 +549,15 @@ test(
     await resetAdminRpgSave();
     await loginAsE2E(page, step, true);
     const tab = page.locator('app-rpg-theme-page');
-    const list = tab.getByRole('complementary', { name: '見た目の一覧' });
-    const props = tab.getByRole('complementary', { name: '見た目の項目' });
+    const list = tab.getByRole('complementary', { name: 'ベースの一覧' });
+    const props = tab.getByRole('complementary', { name: 'ベースの項目' });
     const name = '[E2E]雪原';
 
-    await step('RPGマップ作成(/rpg/admin)を開き、「🎨 見た目」タブを押して「谷」を選ぶ', '草原・森・谷・塔が並び、プレビューが出る。谷の装飾は「装飾2」・赤', async () => {
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎨 ベース」タブを押して「谷」を選ぶ', '草原・森・谷・塔が並び、プレビューが出る。谷の装飾は「装飾2」・赤', async () => {
       await page.goto('/rpg/admin');
-      await page.getByRole('tab', { name: '🎨 見た目' }).click();
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
       for (const label of ['草原', '森', '谷', '塔']) await expect(list.getByRole('button', { name: new RegExp(`^${label}`) })).toBeVisible();
-      await expect(tab.getByLabel('見た目のプレビュー')).toBeVisible();
+      await expect(tab.getByLabel('ベースのプレビュー')).toBeVisible();
       await expect(tab.getByRole('button', { name: '🗑 消す' })).toBeDisabled();
       await list.getByRole('button', { name: /^谷/ }).click();
       await expect(props.getByLabel('装飾', { exact: true })).toHaveValue('fireflies');
@@ -565,32 +565,133 @@ test(
       await expect(props.getByLabel('装飾の色')).toHaveValue('#ff5a1f');
     });
 
-    await step(`「＋ 新しい見た目」を押し、名前を「${name}」、装飾を「装飾3」にする`, '「谷のコピー」ができ、装飾3にすると濃さの欄が出る', async () => {
-      await tab.getByRole('button', { name: '＋ 新しい見た目' }).click();
-      await expect(props.getByLabel('見た目の名前')).toHaveValue('谷のコピー');
-      await props.getByLabel('見た目の名前').fill(name);
+    await step(`「＋ 新しいベース」を押し、名前を「${name}」、装飾を「装飾3」にする`, '「谷のコピー」ができ、装飾3にすると濃さの欄が出る', async () => {
+      await tab.getByRole('button', { name: '＋ 新しいベース' }).click();
+      await expect(props.getByLabel('ベースの名前')).toHaveValue('谷のコピー');
+      await props.getByLabel('ベースの名前').fill(name);
       await props.getByLabel('装飾', { exact: true }).selectOption('vignette');
       await expect(props.getByLabel('装飾の濃さ')).toBeVisible();
       await expect(list.getByRole('button', { name })).toBeVisible();
     });
 
-    await step('「見た目を保存する」を押し、「🗺️ マップ」タブのダンジョンの設定を見る', '「見た目を保存しました」と出て、ダンジョンの見た目の選ぶ欄に増える', async () => {
-      await tab.getByRole('button', { name: '見た目を保存する' }).click();
-      await expect(tab.getByRole('status')).toHaveText('見た目を保存しました');
+    await step('「ベースを保存する」を押し、「🗺️ マップ」タブのダンジョンの設定を見る', '「ベースを保存しました」と出て、ダンジョンのベースの選ぶ欄に増える', async () => {
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
       await page.getByRole('tab', { name: '🗺️ マップ' }).click();
       await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
-      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('見た目');
+      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('ベース');
       await expect(look.locator('option', { hasText: name })).toHaveCount(1);
     });
 
-    await step(`「🎨 見た目」タブに戻り、「${name}」を選んで「🗑 消す」を押す`, '「消しました」と出て、ダンジョンの見た目の選ぶ欄からもなくなる', async () => {
-      await page.getByRole('tab', { name: '🎨 見た目' }).click();
+    await step(`「🎨 ベース」タブに戻り、「${name}」を選んで「🗑 消す」を押す`, '「消しました」と出て、ダンジョンのベースの選ぶ欄からもなくなる', async () => {
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
       await list.getByRole('button', { name }).click();
       await tab.getByRole('button', { name: '🗑 消す' }).click();
       await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
       await page.getByRole('tab', { name: '🗺️ マップ' }).click();
-      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('見た目');
+      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('ベース');
       await expect(look.locator('option', { hasText: name })).toHaveCount(0);
+    });
+  }
+);
+
+// 管理者のアカウントで、保存してある村のエリアのベース(front#401)を API から読む。なければ null
+async function savedVillageTheme(): Promise<string | null> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgMaps { id theme } }' })
+  });
+  const body = (await res.json()) as { data: { rpgMaps: { id: string; theme: string | null }[] } };
+  return body.data.rpgMaps.find((m) => m.id === 'plain')!.theme ?? null;
+}
+
+test(
+  'E2E-34 RPGマップ作成で「見た目」が「ベース」になってマップの右隣に並び、エリアごとにダンジョンと別のベースを選べ、使っているベースは消せない(front#401)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている',
+      'E2E 用の RPG データ(始まりの草原 ／ はじまりの村。どちらもベースは草原)。ベースは何も保存していない(最初の4つ)'
+    ],
+    expected: [
+      '上のタブが「🗺️ マップ」「🎨 ベース」「🎵 BGM・効果音」…の順に並ぶ(「見た目」のタブはない)',
+      '「🎨 ベース」で草原を選んで「＋ 新しいベース」を押し、名前を「[E2E]花畑」にして「ベースを保存する」を押すと「ベースを保存しました」と出る',
+      '「🗺️ マップ」の「エリアの設定」に「ベース」の欄があり、最初は「（ダンジョンのベース）」。「[E2E]花畑」を選んで「保存する」を押すと「保存しました。ゲームに反映されます」と出て、API でも村のベースが「[E2E]花畑」になっている。ダンジョンのベースは「草原」のまま',
+      '「🎨 ベース」で「[E2E]花畑」を選ぶと、一覧に「1つのエリアで使用」、「このベースを使っているダンジョン・エリア」に「🗺️ 始まりの草原／はじまりの村」と出て、「🗑 消す」を押せない',
+      '(あと片づけ)エリアのベースを「（ダンジョンのベース）」に戻して保存すると、API でもエリアのベースがなくなり、「[E2E]花畑」を消せる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-theme-page');
+    const list = tab.getByRole('complementary', { name: 'ベースの一覧' });
+    const props = tab.getByRole('complementary', { name: 'ベースの項目' });
+    const area = page.getByRole('region', { name: 'エリアの設定' });
+    const areaBase = area.getByRole('combobox', { name: 'ベース', exact: true });
+    const name = '[E2E]花畑';
+
+    await step('RPGマップ作成(/rpg/admin)を開き、上のタブの並びを見る', '「🗺️ マップ」「🎨 ベース」「🎵 BGM・効果音」…の順に並び、「見た目」のタブはない', async () => {
+      await page.goto('/rpg/admin');
+      const tabs = page.getByRole('tablist').first().getByRole('tab');
+      await expect(tabs.nth(0)).toHaveText('🗺️ マップ');
+      await expect(tabs.nth(1)).toHaveText('🎨 ベース');
+      await expect(tabs.nth(2)).toHaveText('🎵 BGM・効果音');
+      await expect(page.getByRole('tab', { name: /見た目/ })).toHaveCount(0);
+    });
+
+    await step(`「🎨 ベース」で草原を選んで「＋ 新しいベース」を押し、名前を「${name}」にして「ベースを保存する」を押す`, '「ベースを保存しました」と出る', async () => {
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await list.getByRole('button', { name: /^草原/ }).click();
+      await tab.getByRole('button', { name: '＋ 新しいベース' }).click();
+      await props.getByLabel('ベースの名前').fill(name);
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
+    });
+
+    await step(
+      `「🗺️ マップ」の「🗺️ エリア」で、エリアの設定の「ベース」を「${name}」にして「保存する」を押す`,
+      '最初は「（ダンジョンのベース）」。保存すると「保存しました。ゲームに反映されます」と出て、API でも村のベースが変わる。ダンジョンのベースは「草原」のまま',
+      async () => {
+        await page.getByRole('tab', { name: '🗺️ マップ' }).click();
+        await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+        await expect(areaBase).toHaveValue('');
+        await areaBase.selectOption({ label: name });
+        await page.getByRole('button', { name: '保存する' }).click();
+        await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+        expect(await savedVillageTheme()).toMatch(/^theme\d+$/);
+        await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+        await expect(page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('ベース').locator('option:checked')).toHaveText('草原');
+        await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+      }
+    );
+
+    await step(`「🎨 ベース」で「${name}」を選ぶ`, '一覧に「1つのエリアで使用」、使っているところに「🗺️ 始まりの草原／はじまりの村」と出て、「🗑 消す」を押せない', async () => {
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      const row = list.getByRole('button', { name });
+      await row.click();
+      await expect(row).toContainText('1つのエリアで使用');
+      await expect(tab.getByRole('region', { name: 'このベースを使っているダンジョン・エリア' })).toContainText('🗺️ 始まりの草原／はじまりの村');
+      await expect(tab.getByRole('button', { name: '🗑 消す' })).toBeDisabled();
+    });
+
+    await step('(あと片づけ)エリアのベースを「（ダンジョンのベース）」に戻して保存し、「🎨 ベース」で消す', 'API でもエリアのベースがなくなり、消すと「消しました」と出る', async () => {
+      await page.getByRole('tab', { name: '🗺️ マップ' }).click();
+      await areaBase.selectOption({ label: '（ダンジョンのベース）' });
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+      expect(await savedVillageTheme()).toBeNull();
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await tab.getByRole('button', { name: '🗑 消す' }).click();
+      await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
     });
   }
 );

@@ -21,14 +21,14 @@ const NO_EVENTS: RpgGameEvents = {
 
 // APIの値の範囲(api#185 の RpgThemeService と合わせる)
 export const THEME_LIMITS = { name: 20, liquidName: 10, sway: [0, 10], treeScale: [0.5, 2] } as const;
-// 最初からある見た目は消せない(api#185 の RpgThemeService.LOCKED と同じ)
+// 最初からあるベースは消せない(api#185 の RpgThemeService.LOCKED と同じ)
 export const LOCKED_THEMES = ['plain', 'forest', 'valley', 'tower'];
 
 // 色を何色持つか(編集欄の並び)
 type ColorListKey = 'sky' | 'grass' | 'path' | 'edge' | 'stone' | 'brick' | 'flowers' | 'leaves' | 'rock';
 type ColorKey = 'sand' | 'grout' | 'mortar' | 'liquid' | 'trunk';
 
-// 一覧に出す見た目(保存した見た目と、まだ保存していない新しい見た目)
+// 一覧に出すベース(保存したベースと、まだ保存していない新しいベース)
 interface ThemeRow {
   theme: RpgTheme;
   isNew: boolean;
@@ -48,10 +48,10 @@ const PREVIEW_OBJECTS: RpgMapObject[] = [
   { type: 'rock', x: 3, y: 7, torch: false }
 ];
 
-/** 見た目の問題(front#389)。名前がない・長すぎるは保存できない */
+/** ベースの問題(front#389)。名前がない・長すぎるは保存できない */
 export function themeProblems(t: RpgTheme): string[] {
   const out: string[] = [];
-  if (!t.name.trim() || t.name.trim().length > THEME_LIMITS.name) out.push(`見た目の名前は1〜${THEME_LIMITS.name}文字にしてください。`);
+  if (!t.name.trim() || t.name.trim().length > THEME_LIMITS.name) out.push(`ベースの名前は1〜${THEME_LIMITS.name}文字にしてください。`);
   if (!t.liquidName.trim() || t.liquidName.trim().length > THEME_LIMITS.liquidName) out.push(`水のマスの呼び名は1〜${THEME_LIMITS.liquidName}文字にしてください。`);
   return out;
 }
@@ -65,8 +65,8 @@ export function toThemeInput(row: ThemeRow): RpgThemeInput {
 const cloneTheme = (t: RpgTheme): RpgTheme => JSON.parse(JSON.stringify(t)) as RpgTheme;
 
 /**
- * マップ作成画面の「見た目」タブ(front#389)。ダンジョンの見た目(空・地面・水・木・岩の色と装飾)を作る・直す・消す。
- * 保存すると、ゲーム・マップ作成画面の見た目(THEMES)を入れ替え、saved で知らせる
+ * マップ作成画面の「ベース」タブ(旧「見た目」。front#389 / front#401)。ダンジョン・エリアのベース(空・地面・水・木・岩の色と装飾)を作る・直す・消す。
+ * 保存すると、ゲーム・マップ作成画面のベース(THEMES)を入れ替え、saved で知らせる
  */
 @Component({
   selector: 'app-rpg-theme-page',
@@ -80,6 +80,8 @@ export class RpgThemePageComponent implements OnDestroy {
 
   readonly themes = input.required<RpgTheme[]>();
   readonly dungeons = input.required<RpgDungeon[]>();
+  // エリアだけのベース(front#401)も「使っている」に入れる
+  readonly maps = input<RpgMap[]>([]);
   readonly saved = output<RpgTheme[]>();
   readonly dirtyChange = output<boolean>();
 
@@ -146,9 +148,23 @@ export class RpgThemePageComponent implements OnDestroy {
 
   // ===== 表示 =====
 
-  /** その見た目を使っているダンジョンの名前 */
+  /** そのベースを使っているダンジョンの名前 */
   usesOf(id: string): string[] {
     return this.dungeons().filter((d) => d.theme === id).map((d) => d.name);
+  }
+
+  /** そのベースを使っているエリア(front#401)。「ダンジョン／エリア」の形 */
+  areaUsesOf(id: string): string[] {
+    const name = new Map(this.dungeons().map((d) => [d.id, d.name]));
+    return this.maps().filter((m) => m.theme === id).map((m) => `${name.get(m.dungeonId) ?? ''}／${m.name}`);
+  }
+
+  /** 一覧に出す、使っている数(front#401)。なければ「使っていない」 */
+  usesLabel(id: string): string {
+    const d = this.usesOf(id).length;
+    const a = this.areaUsesOf(id).length;
+    if (!d && !a) return '使っていない';
+    return [d ? `${d}つのダンジョン` : '', a ? `${a}つのエリア` : ''].filter((s) => s).join('・') + 'で使用';
   }
 
   problemsOf(t: RpgTheme): string[] {
@@ -158,8 +174,8 @@ export class RpgThemePageComponent implements OnDestroy {
   /** 消せない理由(なければ null) */
   deleteBlocker(row: ThemeRow): string | null {
     if (row.isNew) return null;
-    if (LOCKED_THEMES.includes(row.theme.id)) return '最初からある見た目は消せません';
-    const uses = this.usesOf(row.theme.id);
+    if (LOCKED_THEMES.includes(row.theme.id)) return '最初からあるベースは消せません';
+    const uses = [...this.usesOf(row.theme.id), ...this.areaUsesOf(row.theme.id)];
     return uses.length ? `${uses.join('・')}で使っているため消せません` : null;
   }
 
@@ -242,7 +258,7 @@ export class RpgThemePageComponent implements OnDestroy {
 
   // ===== 追加・削除・保存 =====
 
-  /** 選んでいる見た目を複製して、新しい見た目を作る */
+  /** 選んでいるベースを複製して、新しいベースを作る */
   add(): void {
     const base = this.selected()?.theme ?? this.rows()[0]?.theme;
     if (!base) return;
@@ -289,13 +305,13 @@ export class RpgThemePageComponent implements OnDestroy {
     this.select(this.rows()[Math.max(0, index - 1)]?.theme.id ?? '');
   }
 
-  /** 変えた見た目をまとめて保存する */
+  /** 変えたベースをまとめて保存する */
   save(): void {
     if (!this.isDirty() || this.saving()) return;
     const targets = this.rows().filter((r) => this.dirtyIds().has(r.theme.id));
     const bad = targets.filter((r) => themeProblems(r.theme).length);
     if (bad.length) {
-      this.flash(`⛔ がある見た目は保存できません（${bad.map((r) => r.theme.name || '名前なし').join('・')}）`);
+      this.flash(`⛔ があるベースは保存できません（${bad.map((r) => r.theme.name || '名前なし').join('・')}）`);
       this.select(bad[0].theme.id);
       return;
     }
@@ -304,7 +320,7 @@ export class RpgThemePageComponent implements OnDestroy {
       .pipe(toArray())
       .subscribe({
         next: (savedList) => {
-          // 新しい見た目は、APIが決めたIDに置き換える
+          // 新しいベースは、APIが決めたIDに置き換える
           const selected = this.selectedId();
           let nextSelected = selected;
           this.rows.update((list) =>
@@ -322,7 +338,7 @@ export class RpgThemePageComponent implements OnDestroy {
           this.dirtyChange.emit(false);
           this.saving.set(false);
           this.publish();
-          this.flash('見た目を保存しました');
+          this.flash('ベースを保存しました');
         },
         error: (err: Error) => {
           this.saving.set(false);
@@ -363,7 +379,7 @@ export class RpgThemePageComponent implements OnDestroy {
     if (cv && cv.clientWidth && sel) {
       this.previewGame ??= this.previewGameFor();
       const game = this.previewGame;
-      // 編集中の見た目(保存前)で描く。変わったときだけ作り直す
+      // 編集中のベース(保存前)で描く。変わったときだけ作り直す
       const key = JSON.stringify(sel.theme);
       if (key !== this.previewKey) {
         game.theme = toThemeDef(sel.theme);
