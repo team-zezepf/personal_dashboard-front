@@ -1,0 +1,190 @@
+<div class="theme-page">
+  <div class="subbar">
+    <span class="title">🎨 ダンジョンの見た目</span>
+    <span class="spacer"></span>
+    @if (message()) {
+      <span class="message" role="status">{{ message() }}</span>
+    }
+    @if (isDirty()) {
+      <span class="dirty">● 保存していない変更があります</span>
+    }
+    <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
+      {{ saving() ? '保存中…' : '見た目を保存する' }}
+    </button>
+  </div>
+
+  <div class="workspace">
+    <!-- 左: 見た目の一覧 -->
+    <aside class="list" aria-label="見た目の一覧">
+      <div class="list-head">
+        <button type="button" class="btn small" [disabled]="!selected()" (click)="add()">＋ 新しい見た目</button>
+        <button
+          type="button"
+          class="btn small danger"
+          [disabled]="!selected() || !!(selected() && deleteBlocker(selected()!))"
+          [title]="selected() ? (deleteBlocker(selected()!) ?? '') : ''"
+          (click)="delete()"
+        >
+          🗑 消す
+        </button>
+      </div>
+      <div class="list-body">
+        @for (row of rows(); track row.theme.id) {
+          <button type="button" class="row" [class.active]="row.theme.id === selectedId()" [attr.aria-pressed]="row.theme.id === selectedId()" (click)="select(row.theme.id)">
+            <span class="sw" [style.background]="swatch(row.theme)"></span>
+            <span class="row-text">
+              <span class="name">
+                {{ row.theme.name || '（名前なし）' }}
+                @if (row.isNew) {
+                  <span class="badge new">新しい</span>
+                } @else if (dirtyIds().has(row.theme.id)) {
+                  <span class="dot" title="保存していない変更があります">●</span>
+                }
+              </span>
+              <span class="sub">{{ usesOf(row.theme.id).length ? usesOf(row.theme.id).length + 'つのダンジョンで使用' : '使っていない' }}</span>
+            </span>
+          </button>
+        }
+      </div>
+    </aside>
+
+    <!-- まんなか: プレビュー・使っているダンジョン -->
+    <main class="stage">
+      <section class="card" aria-label="プレビュー">
+        <h3>プレビュー <span class="sub">右の欄で変えると、すぐここに出ます（保存するまでゲームには出ません）</span></h3>
+        <canvas #preview class="preview" aria-label="見た目のプレビュー"></canvas>
+      </section>
+      @if (selected(); as sel) {
+        <section class="card" aria-label="この見た目を使っているダンジョン">
+          <h3>この見た目を使っているダンジョン</h3>
+          @for (name of usesOf(sel.theme.id); track name) {
+            <div class="use">🏰 {{ name }}</div>
+          } @empty {
+            <p class="hint">どのダンジョンでも使っていません。</p>
+          }
+        </section>
+      }
+    </main>
+
+    <!-- 右: 編集欄 -->
+    <aside class="props" aria-label="見た目の項目">
+      @if (selected(); as sel) {
+        <div class="section">
+          <h2>名前</h2>
+          <label class="f"><span>見た目の名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.theme.name" (ngModelChange)="setName($event)" /></label>
+          <label class="f"><span>水のマスの呼び名</span><input type="text" [maxlength]="limits.liquidName" [ngModel]="sel.theme.liquidName" (ngModelChange)="setLiquidName($event)" /></label>
+        </div>
+
+        @for (g of colorGroups; track g.title) {
+          <div class="section">
+            <h2>{{ g.title }}</h2>
+            @for (r of g.rows; track r.key) {
+              <div class="f" role="group" [attr.aria-label]="r.label">
+                <span>{{ r.label }}</span>
+                @for (i of indexes(r.count); track $index) {
+                  <input type="color" [attr.aria-label]="r.label + (i === null ? '' : ' ' + (i + 1))" [value]="colorAt(sel.theme, r.key, i)" (input)="setColor(r.key, i, $any($event.target).value)" />
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <div class="section">
+          <h2>水のマス（{{ sel.theme.liquidName }}）</h2>
+          <div class="f"><span>色</span><input type="color" aria-label="水のマスの色" [value]="sel.theme.liquid" (input)="setColor('liquid', null, $any($event.target).value)" /></div>
+          <label class="f">
+            <span>明るさのゆらぎ</span>
+            <input type="range" [min]="limits.sway[0]" [max]="limits.sway[1]" [value]="sel.theme.liquidSway" (input)="setSway($any($event.target).value)" aria-label="明るさのゆらぎ" />
+            <span class="val">{{ sel.theme.liquidSway }}</span>
+          </label>
+          <div class="f">
+            <span>波の光</span>
+            <input type="checkbox" aria-label="波の光を出す" [checked]="!!sel.theme.wave" (change)="setWave($any($event.target).checked)" />
+            @if (sel.theme.wave) {
+              <input type="color" aria-label="波の光の色" [value]="sel.theme.wave" (input)="setWave(true, $any($event.target).value)" />
+            }
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>草の上の飾り</h2>
+          <label class="f">
+            <span>種類</span>
+            <select aria-label="草の上の飾り" [ngModel]="sel.theme.flower" (ngModelChange)="setFlower($event)">
+              @for (k of flowers; track k) {
+                <option [value]="k">{{ flowerLabels[k] }}</option>
+              }
+            </select>
+          </label>
+          <div class="f" role="group" aria-label="飾りの色">
+            <span>色（3色）</span>
+            @for (i of indexes(3); track $index) {
+              <input type="color" [attr.aria-label]="'飾りの色 ' + (i! + 1)" [value]="colorAt(sel.theme, 'flowers', i)" (input)="setColor('flowers', i, $any($event.target).value)" />
+            }
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>木・岩</h2>
+          <div class="f"><span>幹</span><input type="color" aria-label="幹の色" [value]="sel.theme.trunk" (input)="setColor('trunk', null, $any($event.target).value)" /></div>
+          <div class="f" role="group" aria-label="葉の色">
+            <span>葉（3色）</span>
+            @for (i of indexes(3); track $index) {
+              <input type="color" [attr.aria-label]="'葉の色 ' + (i! + 1)" [value]="colorAt(sel.theme, 'leaves', i)" (input)="setColor('leaves', i, $any($event.target).value)" />
+            }
+          </div>
+          <label class="f">
+            <span>木の大きさ</span>
+            <input type="range" step="0.05" [min]="limits.treeScale[0]" [max]="limits.treeScale[1]" [value]="sel.theme.treeScale" (input)="setTreeScale($any($event.target).value)" aria-label="木の大きさ" />
+            <span class="val">×{{ sel.theme.treeScale }}</span>
+          </label>
+          <div class="f" role="group" aria-label="岩の色">
+            <span>岩（暗・明）</span>
+            @for (i of indexes(2); track $index) {
+              <input type="color" [attr.aria-label]="'岩の色 ' + (i! + 1)" [value]="colorAt(sel.theme, 'rock', i)" (input)="setColor('rock', i, $any($event.target).value)" />
+            }
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>装飾</h2>
+          <div class="f">
+            <span>装飾</span>
+            <select aria-label="装飾" [ngModel]="sel.theme.effect.kind" (ngModelChange)="setEffectKind($event)">
+              @for (k of effectKinds; track k) {
+                <option [value]="k">{{ effectLabels[k] }}</option>
+              }
+            </select>
+            @if (sel.theme.effect.kind !== 'none') {
+              <input type="color" aria-label="装飾の色" [value]="sel.theme.effect.color" (input)="setEffectColor($any($event.target).value)" />
+            }
+          </div>
+          @if (sel.theme.effect.kind === 'vignette') {
+            <label class="f">
+              <span>濃さ</span>
+              <input type="range" min="0" max="1" step="0.05" [value]="sel.theme.effect.alpha" (input)="setEffectAlpha($any($event.target).value)" aria-label="装飾の濃さ" />
+              <span class="val">{{ sel.theme.effect.alpha }}</span>
+            </label>
+          }
+          <p class="hint">装飾1は空に星、装飾2は画面に舞う粒（赤にすると火の粉に見える）、装飾3は画面の外側を選んだ色で暗くします。選べるのは1つだけです。</p>
+        </div>
+
+        <div class="section" aria-label="チェック">
+          @for (p of problemsOf(sel.theme); track p) {
+            <div class="check ng">⛔ {{ p }}</div>
+          } @empty {
+            <div class="check ok">✅ 問題はありません</div>
+          }
+          <p class="hint">
+            @if (deleteBlocker(sel); as reason) {
+              {{ reason }}。
+            }
+            保存するまで、ゲームには反映しません。
+          </p>
+        </div>
+      } @else {
+        <p class="hint">左の一覧から見た目を選んでください。</p>
+      }
+    </aside>
+  </div>
+</div>

@@ -531,3 +531,66 @@ test(
     });
   }
 );
+
+test(
+  'E2E-31 RPGマップ作成の「見た目」タブで、見た目を複製して名前と装飾を変えて保存すると、ダンジョンの見た目に選べ、使っていなければ消せる(front#389)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンの見た目を何も保存していない(最初の4つ)'],
+    expected: [
+      '「🎨 見た目」タブに 草原・森・谷・塔 が並び、プレビューが出る。谷の装飾は「装飾2」で、色は赤(#ff5a1f)',
+      '最初からある見た目(草原)は「🗑 消す」を押せない',
+      '谷を選んで「＋ 新しい見た目」を押すと「谷のコピー」ができる。名前を「[E2E]雪原」、装飾を「装飾3」にすると濃さの欄が出る',
+      '「見た目を保存する」を押すと「見た目を保存しました」と出て、ダンジョンの設定の「見た目」の選ぶ欄に「[E2E]雪原」が増える',
+      'どのダンジョンでも使っていない「[E2E]雪原」は消せ、選ぶ欄からもなくなる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-theme-page');
+    const list = tab.getByRole('complementary', { name: '見た目の一覧' });
+    const props = tab.getByRole('complementary', { name: '見た目の項目' });
+    const name = '[E2E]雪原';
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎨 見た目」タブを押して「谷」を選ぶ', '草原・森・谷・塔が並び、プレビューが出る。谷の装飾は「装飾2」・赤', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎨 見た目' }).click();
+      for (const label of ['草原', '森', '谷', '塔']) await expect(list.getByRole('button', { name: new RegExp(`^${label}`) })).toBeVisible();
+      await expect(tab.getByLabel('見た目のプレビュー')).toBeVisible();
+      await expect(tab.getByRole('button', { name: '🗑 消す' })).toBeDisabled();
+      await list.getByRole('button', { name: /^谷/ }).click();
+      await expect(props.getByLabel('装飾', { exact: true })).toHaveValue('fireflies');
+      await expect(props.getByLabel('装飾', { exact: true }).locator('option:checked')).toHaveText('装飾2');
+      await expect(props.getByLabel('装飾の色')).toHaveValue('#ff5a1f');
+    });
+
+    await step(`「＋ 新しい見た目」を押し、名前を「${name}」、装飾を「装飾3」にする`, '「谷のコピー」ができ、装飾3にすると濃さの欄が出る', async () => {
+      await tab.getByRole('button', { name: '＋ 新しい見た目' }).click();
+      await expect(props.getByLabel('見た目の名前')).toHaveValue('谷のコピー');
+      await props.getByLabel('見た目の名前').fill(name);
+      await props.getByLabel('装飾', { exact: true }).selectOption('vignette');
+      await expect(props.getByLabel('装飾の濃さ')).toBeVisible();
+      await expect(list.getByRole('button', { name })).toBeVisible();
+    });
+
+    await step('「見た目を保存する」を押し、「🗺️ マップ」タブのダンジョンの設定を見る', '「見た目を保存しました」と出て、ダンジョンの見た目の選ぶ欄に増える', async () => {
+      await tab.getByRole('button', { name: '見た目を保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('見た目を保存しました');
+      await page.getByRole('tab', { name: '🗺️ マップ' }).click();
+      await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('見た目');
+      await expect(look.locator('option', { hasText: name })).toHaveCount(1);
+    });
+
+    await step(`「🎨 見た目」タブに戻り、「${name}」を選んで「🗑 消す」を押す`, '「消しました」と出て、ダンジョンの見た目の選ぶ欄からもなくなる', async () => {
+      await page.getByRole('tab', { name: '🎨 見た目' }).click();
+      await list.getByRole('button', { name }).click();
+      await tab.getByRole('button', { name: '🗑 消す' }).click();
+      await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
+      await page.getByRole('tab', { name: '🗺️ マップ' }).click();
+      const look = page.getByRole('region', { name: 'ダンジョンの設定' }).getByLabel('見た目');
+      await expect(look.locator('option', { hasText: name })).toHaveCount(0);
+    });
+  }
+);
