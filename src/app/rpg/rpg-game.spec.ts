@@ -2111,7 +2111,7 @@ describe('RpgGame', () => {
       expect(game.discard('copper_sword')).toBe(false);
     });
 
-    it('仲間は、落ちてから5秒たったアイテムに気づいて歩いて拾い、自分の持ち物に入れる。5秒より前は拾わない', () => {
+    it('仲間は、落ちてから3秒たったアイテムに気づいて歩いて拾い、自分の持ち物に入れる。3秒より前は拾わない', () => {
       withMate();
       game.discard('potion', 3);
       run(MATE_PICK_DELAY - 0.5);

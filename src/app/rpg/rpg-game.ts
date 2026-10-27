@@ -331,7 +331,7 @@ const RETARGET_SEC = 2;
 // 仲間が回復薬を使う、HPの割合
 const LOW_HP_RATE = 0.3;
 // 仲間が落ちたアイテムに気づく、落ちてからの秒と距離(マス)(front#391)
-export const MATE_PICK_DELAY = 5;
+export const MATE_PICK_DELAY = 3;
 export const MATE_PICK_RANGE = 4;
 
 /**
@@ -2276,7 +2276,7 @@ export class RpgGame {
   }
 
   /**
-   * 仲間が拾いに行く落ちたアイテム(front#391)。落ちてから5秒たち、仲間から4マス以内、プレイヤーから8マスより近いもの。
+   * 仲間が拾いに行く落ちたアイテム(front#391)。落ちてから3秒たち(front#395)、仲間から4マス以内、プレイヤーから8マスより近いもの。
    * ほかの仲間が向かっているものは選ばない。今向かっているものがあれば、なくなるまでそれ
    */
   private matePickTarget(c: Companion): Drop | null {
