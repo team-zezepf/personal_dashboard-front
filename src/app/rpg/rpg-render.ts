@@ -1194,7 +1194,8 @@ export class RpgRenderer {
     }
     // 回復してもらった仲間の「ありがとう」(front#398)
     for (const b of this.game.thanks) {
-      if (b.target.dead || !this.game.companions.includes(b.target)) continue;
+      // 回復から少しあけて出す(front#400)
+      if (b.t < 0 || b.target.dead || !this.game.companions.includes(b.target)) continue;
       const [bx, by] = this.at(b.target.x, b.target.y);
       this.drawThanks(b, bx, by);
     }

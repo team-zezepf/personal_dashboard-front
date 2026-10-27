@@ -1401,7 +1401,7 @@ test(
     ],
     expected: [
       '集会場で E2E仲間を呼べる',
-      'E2E仲間のHPを30に減らし(自分で回復薬を使う3割より上)、E2E仲間をクリックして回復薬を使うと、ログに「あなたがE2E仲間に回復薬を使った。」と出て、E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
+      'E2E仲間のHPを30に減らし(自分で回復薬を使う3割より上)、E2E仲間をクリックして回復薬を使うと、ログに「あなたがE2E仲間に回復薬を使った。」と出て、少しあとに(約0.5秒。front#400) E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
       '2秒ほどすると吹き出しが消える'
     ]
   }),
@@ -1435,7 +1435,7 @@ test(
 
     await step(
       'E2E仲間のHPを30に減らし、E2E仲間をクリックして、持ち物の「回復薬」の「使う」を押す',
-      'ログに「あなたがE2E仲間に回復薬を使った。」と出て、E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
+      'ログに「あなたがE2E仲間に回復薬を使った。」と出て、少しあとに(約0.5秒。front#400) E2E仲間の頭の右上に「ありがとう♡」の吹き出しが出る',
       async () => {
         await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
         // 仲間が歩き終わってからクリックする
@@ -1447,8 +1447,8 @@ test(
         await items.getByRole('button', { name: '回復薬を使う' }).click();
         await expect(log.getByText('あなたがE2E仲間に回復薬を使った。', { exact: false })).toBeVisible();
         expect(await thanks()).toEqual(['E2E仲間']);
-        // 吹き出しがぽんと出終わったところを写す
-        await page.waitForTimeout(400);
+        // 回復から0.5秒あけて出る(front#400)。吹き出しがぽんと出終わったところを写す
+        await page.waitForTimeout(900);
       }
     );
 

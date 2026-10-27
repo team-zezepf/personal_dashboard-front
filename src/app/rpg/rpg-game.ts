@@ -248,13 +248,17 @@ export interface PlayerFx {
 /** エフェクトの長さ(秒) */
 export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1 };
 
-/** ほかの人に回復してもらった仲間が出す「ありがとう」の吹き出し(front#398)。t は出てからの秒 */
+/**
+ * ほかの人に回復してもらった仲間が出す「ありがとう」の吹き出し(front#398)。
+ * t は出てからの秒。回復の光と重ならないよう、回復から THANKS_DELAY 秒あけて出す(front#400。それまでは t が負)
+ */
 export interface ThanksBubble {
   target: Companion;
   t: number;
 }
 
 export const THANKS_SEC = 1.6;
+export const THANKS_DELAY = 0.5;
 
 /**
  * 魔法の演出(front#383)。攻撃魔法は撃った位置から相手へ飛び(サンダーは相手の上に雷雲)、hitAt 秒で当たる。
@@ -1360,7 +1364,7 @@ export class RpgGame {
   private thank(user: Fighter, target: Fighter): void {
     if (target.kind !== 'mate' || user === target) return;
     this.thanks = this.thanks.filter((b) => b.target !== target);
-    this.thanks.push({ target, t: 0 });
+    this.thanks.push({ target, t: -THANKS_DELAY });
   }
 
   /** 仲間のまわりにエフェクト(回復・レベルアップ)を出す(front#391)。同じ種類が出ていれば、始めからやり直す */

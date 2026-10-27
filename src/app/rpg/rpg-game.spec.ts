@@ -4,7 +4,7 @@ import {
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
-import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_SEC, mateStatToRaise } from './rpg-game';
+import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_DELAY, THANKS_SEC, mateStatToRaise } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
@@ -1956,10 +1956,14 @@ describe('RpgGame', () => {
       // 続けて回復薬を使うと、同じ仲間の吹き出しは出し直す
       run(0.5);
       game.useItem('potion');
-      expect(game.thanks).toEqual([{ target: a, t: 0 }]);
+      expect(game.thanks).toEqual([{ target: a, t: -THANKS_DELAY }]);
 
-      // 消える
-      run(THANKS_SEC + 0.1);
+      // 回復から0.5秒あけて出て(front#400。それまでは t が負で描かない)、出てから1.6秒で消える
+      run(THANKS_DELAY);
+      expect(game.thanks[0].t).toBeGreaterThanOrEqual(0);
+      run(THANKS_SEC - 0.1);
+      expect(game.thanks.map((t) => t.target)).toEqual([a]);
+      run(0.2);
       expect(game.thanks).toEqual([]);
 
       // ヒールオールでは、HPが増えた仲間だけ
