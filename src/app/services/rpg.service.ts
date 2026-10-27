@@ -319,6 +319,18 @@ export class RpgService {
     return this.graphql.mutation<{ moveRpgAreas: RpgMap[] }>(mutation, { dungeonId, moves }).pipe(map((res) => res.moveRpgAreas));
   }
 
+  // エリアを1つ消す(front#396 / api#187)。ほかのエリアから、このエリアへの端のつながりも取り除かれる
+  deleteArea(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgArea($id: ID!) { deleteRpgArea(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgArea: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgArea));
+  }
+
+  // ダンジョンと、その中のエリアをすべて消す(front#396 / api#187)
+  deleteDungeon(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgDungeon($id: ID!) { deleteRpgDungeon(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgDungeon: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgDungeon));
+  }
+
   // ===== ダンジョン(front#234 / api#96) =====
 
   getDungeons(): Observable<RpgDungeon[]> {
