@@ -4,7 +4,7 @@ import {
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
-import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, mateStatToRaise } from './rpg-game';
+import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_SEC, mateStatToRaise } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
@@ -1935,6 +1935,45 @@ describe('RpgGame', () => {
       expect(ev.messages.at(-1)).toBe('MPは満タンだ');
     });
 
+    it('仲間を回復すると「ありがとう」の吹き出しが出て、しばらくすると消える。自分の回復・満タンで回復しなかった仲間には出ない(front#398)', () => {
+      field([], { items: [{ itemId: 'potion', count: 2 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] });
+      game.addCompanion(mate('3'));
+      game.addCompanion(mate('4'));
+      const [a, b] = game.companions;
+
+      // 自分を回復しても出ない
+      game.player.hp = 20;
+      game.castSpell('heal');
+      expect(game.thanks).toEqual([]);
+
+      // 回復魔法で仲間を回復
+      run(1.05);
+      a.hp = 10;
+      game.select(a);
+      game.castSpell('heal');
+      expect(game.thanks.map((t) => t.target)).toEqual([a]);
+
+      // 続けて回復薬を使うと、同じ仲間の吹き出しは出し直す
+      run(0.5);
+      game.useItem('potion');
+      expect(game.thanks).toEqual([{ target: a, t: 0 }]);
+
+      // 消える
+      run(THANKS_SEC + 0.1);
+      expect(game.thanks).toEqual([]);
+
+      // ヒールオールでは、HPが増えた仲間だけ
+      a.hp = 10;
+      game.player.hp = 20;
+      game.castSpell('healall');
+      expect(game.thanks.map((t) => t.target)).toEqual([a]);
+      expect(game.thanks.some((t) => t.target === b)).toBe(false);
+
+      // 抜けた仲間の吹き出しは消す
+      game.removeCompanion(a.userId);
+      expect(game.thanks).toEqual([]);
+    });
+
     it('敵をクリックすると選んで近づいて殴る。仲間・自分をクリックすると選ぶだけで動かない。地面をクリックしても選んだまま', () => {
       field([[6, 2]]);
       game.addCompanion(mate('3'));
@@ -2204,6 +2243,21 @@ describe('RpgGame', () => {
       game.update(0.05);
       expect(ev.messages.at(-1)).toBe('リーリエの✨ ヒールオール！');
       expect([game.player.hp, c.hp]).toEqual([44, 44]);
+    });
+
+    it('仲間が自分を回復しても「ありがとう」は出ない。仲間がプレイヤーを回復しても出ない(front#398)', () => {
+      withMate(mate({ stats: { ...ZERO_STATS, mag: 3 }, spells: ['heal'] }), []);
+      const c = game.companions[0];
+      c.hp = 10;
+      game.update(0.05);
+      expect(c.hp).toBeGreaterThan(10);
+      expect(game.thanks).toEqual([]);
+
+      run(1.1);
+      game.player.hp = 10;
+      game.update(0.05);
+      expect(game.player.hp).toBeGreaterThan(10);
+      expect(game.thanks).toEqual([]);
     });
 
     it('仲間(bot)のレベルアップは、今の振り分けの割合に近づくように振り、レベルアップの光と効果音を出す', () => {

@@ -1422,6 +1422,17 @@ export class RpgPageComponent implements OnDestroy {
       hurtPlayer: (hp: number): void => {
         if (this.game) this.game.player.hp = Math.max(1, hp);
       },
+      // 最初の仲間のHPを減らす・足元の画面上の位置(回復して「ありがとう」を見るため。front#398)
+      hurtMate: (hp: number): void => {
+        const c = this.game?.companions[0];
+        if (c) c.hp = Math.max(1, hp);
+      },
+      matePosition: (): [number, number] | null => {
+        const c = this.game?.companions[0];
+        return c && this.game ? this.game.screenPositionOf(c) : null;
+      },
+      // 「ありがとう」の吹き出しを出している仲間の名前(front#398)
+      thanks: (): string[] => this.game?.thanks.map((b) => b.target.name) ?? [],
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl
