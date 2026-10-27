@@ -474,9 +474,8 @@ export class RpgRenderer {
     ctx.ellipse(sx, sy, 17, 7, 0, 0, Math.PI * 2);
     ctx.stroke();
     // 回復魔法・回復薬の光(front#383)。プレイヤーと同じ絵を、仲間のまわりに出す
-    const fx: PlayerFx[] = this.game.spellFx
-      .filter((f) => f.target === c && (f.spell === 'heal' || f.spell === 'healall'))
-      .map((f) => ({ kind: 'heal', t: f.t, seed: f.seed, big: f.spell === 'healall' }));
+    // 回復・レベルアップの光(front#383 / front#391)。プレイヤーと同じ絵を、仲間のまわりに出す
+    const fx: PlayerFx[] = this.game.mateFx.filter((m) => m.target === c).map((m) => m.fx);
     if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (c.dead) ctx.globalAlpha = 0.45;
     this.drawLook(sx + c.lunge * 7 * c.dir, sy, c.look, {
@@ -1186,6 +1185,12 @@ export class RpgRenderer {
     if (this.game.playerFx.length && !this.game.hidePlayer) {
       const [px, py] = this.at(p.x, p.y);
       drawPlayerFxText(ctx, this.game.playerFx, px, py);
+    }
+    // 仲間のレベルアップの「LEVEL UP!」(front#391)
+    for (const m of this.game.mateFx) {
+      if (m.fx.kind !== 'level') continue;
+      const [mx, my] = this.at(m.target.x, m.target.y);
+      drawPlayerFxText(ctx, [m.fx], mx, my);
     }
   }
 }

@@ -4,7 +4,7 @@ import {
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
-import { PLAYER_FX_SEC, RpgGame, RpgGameEvents } from './rpg-game';
+import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, mateStatToRaise } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
@@ -1500,8 +1500,8 @@ describe('RpgGame', () => {
 
       expect(game.companions.map((c) => [c.userId, c.hp])).toEqual([['3', 30], ['4', maxHpOf({ ...ZERO_STATS, atk: 3 })]]);
       expect(game.toSaveInput().companions).toEqual([
-        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [], spellLevels: [] },
-        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: null, spells: [], spellLevels: [] }
+        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [] },
+        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [] }
       ]);
     });
 
@@ -2063,6 +2063,167 @@ describe('RpgGame', () => {
 
       expect(game.useItem('craft_healall')).toBe(true);
       expect(game.player.spells).toEqual(['heal', 'healall']);
+    });
+  });
+
+  describe('捨てる・仲間が拾う・仲間の魔法・仲間のレベルアップ(front#391)', () => {
+    // 近づいても襲ってこず、動かない的(防御0)
+    const dummy = (patch: Partial<EnemyDef> = {}): EnemyDef => ({
+      ...DEFAULT_ENEMIES[0], id: 'dummy', name: 'かかし', hp: 9999, def: 0, atk: 1, sight: 0, speed: 0.001, ...patch
+    });
+    const mate = (partial: Partial<RpgCompanion> = {}): RpgCompanion => ({
+      userId: '3', name: 'リーリエ', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth',
+      items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, look: LOOK, ...partial
+    });
+
+    afterEach(() => {
+      setEnemies(DEFAULT_ENEMIES);
+      vi.restoreAllMocks();
+    });
+
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    // 敵のいない 12×12 の草原。プレイヤーは (6, 6)、仲間はそのとなり
+    function withMate(m: RpgCompanion = mate(), items = [{ itemId: 'potion', count: 5 }, { itemId: 'iron_sword', count: 1 }, { itemId: 'book_fire', count: 2 }]): void {
+      game.loadSave(save({ area: 'plain', x: 6, y: 6, items: [...items, { itemId: 'copper_sword', count: 1 }, { itemId: 'cloth', count: 1 }] }));
+      game.loadMap(map('field'));
+      Object.assign(game.player, { x: 6, y: 6, path: [] });
+      game.addCompanion(m);
+      Object.assign(game.companions[0], { x: 5, y: 6, path: [] });
+    }
+
+    it('持ち物を個数を選んで捨てると、となりのマスにまとめて落ちる。装備中は捨てられず、武器・防具は1つずつ', () => {
+      withMate();
+      expect(game.discardableCount('potion')).toBe(5);
+      expect(game.discardableCount('iron_sword')).toBe(1);
+      expect(game.discardableCount('copper_sword')).toBe(0);
+
+      expect(game.discard('potion', 3)).toBe(true);
+      expect(game.player.inv['potion']).toBe(2);
+      expect(game.drops).toHaveLength(1);
+      expect(game.drops[0]).toMatchObject({ id: 'potion', count: 3 });
+      expect([game.drops[0].x, game.drops[0].y]).not.toEqual([6, 6]);
+      expect(ev.messages.at(-1)).toBe('回復薬を3個捨てた');
+
+      expect(game.discard('potion', 3)).toBe(false);
+      expect(game.discard('copper_sword')).toBe(false);
+    });
+
+    it('仲間は、落ちてから5秒たったアイテムに気づいて歩いて拾い、自分の持ち物に入れる。5秒より前は拾わない', () => {
+      withMate();
+      game.discard('potion', 3);
+      run(MATE_PICK_DELAY - 0.5);
+      expect(game.drops).toHaveLength(1);
+      expect(game.companions[0].inv['potion']).toBeUndefined();
+
+      run(3);
+      expect(game.drops).toHaveLength(0);
+      expect(game.companions[0].inv['potion']).toBe(3);
+      expect(ev.messages).toContain('リーリエが回復薬×3を拾った');
+      // 保存すると仲間のアカウントの持ち物に入る
+      expect(game.toSaveInput().companions![0].items).toContainEqual({ itemId: 'potion', count: 3 });
+    });
+
+    it('仲間から4マスより遠いアイテム・プレイヤーから8マス以上離れたアイテムは拾わない', () => {
+      withMate();
+      game.dropItem('potion', 1, 0, 0);
+      game.dropItem('iron_sword', 1, 11, 11);
+      run(8);
+      expect(game.drops).toHaveLength(2);
+      expect(game.companions[0].inv['potion']).toBeUndefined();
+    });
+
+    it('敵と戦っている間は拾いに行かない', () => {
+      setEnemies([...DEFAULT_ENEMIES, dummy()]);
+      withMate();
+      game.loadMap(map('field', { enemies: [{ type: 'dummy', x: 9, y: 6 }] }));
+      Object.assign(game.companions[0], { x: 5, y: 6, path: [] });
+      game.companions[0].target = game.enemies[0];
+      game.dropItem('potion', 2, 4, 6);
+      game.drops[0].t = MATE_PICK_DELAY;
+      game.update(0.05);
+      expect(game.companions[0].pick).toBeNull();
+      expect(game.drops).toHaveLength(1);
+    });
+
+    it('仲間は魔法書を拾ったとき、その魔法を覚えていなければ1冊読んで覚え、残りは持ち物に入れる', () => {
+      withMate();
+      game.discard('book_fire', 2);
+      run(MATE_PICK_DELAY + 3);
+      const c = game.companions[0];
+      expect(c.spells).toEqual(['fire']);
+      expect(game.levelOf(c, 'fire')).toBe(1);
+      expect(c.inv['book_fire']).toBe(1);
+      expect(ev.messages).toContain('リーリエが魔法書: ファイアを読んで、🔥 ファイアを覚えた！（LV1）');
+      expect(game.toSaveInput().companions![0]).toMatchObject({ spells: ['fire'], spellLevels: [{ id: 'fire', level: 1 }] });
+    });
+
+    it('魔力が攻撃より高い仲間(魔法優先)は、届く距離から攻撃魔法を撃つ。通常攻撃優先の仲間は撃たずに殴りに行く', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      setEnemies([...DEFAULT_ENEMIES, dummy()]);
+      const mage = mate({ stats: { ...ZERO_STATS, mag: 3 }, spells: ['fire'] });
+      withMate(mage, []);
+      game.loadMap(map('field', { enemies: [{ type: 'dummy', x: 8, y: 6 }] }));
+      Object.assign(game.player, { x: 6, y: 6 });
+      Object.assign(game.companions[0], { x: 5, y: 6, path: [] });
+      // 敵がプレイヤーを狙っていれば、仲間はその敵と戦う(プレイヤーは殴りに行かない)
+      const e = game.enemies[0];
+      Object.assign(e, { aggro: true, foe: game.player, retarget: 99 });
+      run(0.6);
+      const c = game.companions[0];
+      // 威力 8 + 魔力3×3 = 17
+      expect(e.hp).toBe(9999 - 17);
+      expect(c.mp).toBeLessThan(32);
+
+      const fighter = mate({ stats: { ...ZERO_STATS, atk: 3 }, spells: ['fire'] });
+      withMate(fighter, []);
+      game.loadMap(map('field', { enemies: [{ type: 'dummy', x: 7, y: 6 }] }));
+      Object.assign(game.player, { x: 6, y: 6 });
+      Object.assign(game.companions[0], { x: 5, y: 6, path: [] });
+      Object.assign(game.enemies[0], { aggro: true, foe: game.player, retarget: 99 });
+      run(0.6);
+      expect(game.spellFx).toEqual([]);
+      expect(game.companions[0].mp).toBe(20);
+    });
+
+    it('仲間は、だれかのHPが3割を切ればヒール、2人以上が5割を切ればヒールオールを、回復薬より先に使う', () => {
+      withMate(mate({ stats: { ...ZERO_STATS, mag: 3 }, spells: ['heal', 'healall'], items: [{ itemId: 'potion', count: 3 }] }), []);
+      const c = game.companions[0];
+      game.player.hp = 10;
+      game.update(0.05);
+      // 回復量 15 + 魔力3×3 = 24
+      expect(game.player.hp).toBe(34);
+      expect(c.inv['potion']).toBe(3);
+      expect(ev.messages.at(-1)).toBe('リーリエの💚 ヒール！ あなたのHPが回復した');
+
+      run(1.1);
+      game.player.hp = 20;
+      c.hp = 20;
+      game.update(0.05);
+      expect(ev.messages.at(-1)).toBe('リーリエの✨ ヒールオール！');
+      expect([game.player.hp, c.hp]).toEqual([44, 44]);
+    });
+
+    it('仲間(bot)のレベルアップは、今の振り分けの割合に近づくように振り、レベルアップの光と効果音を出す', () => {
+      // 魔力6・HP3: 項目の順(HP・攻撃・防御・魔力…)に、乱数が 0〜1/3 なら HP、1/3〜1 なら魔力。攻撃には振らない
+      const stats = { ...ZERO_STATS, mag: 6, hp: 3 };
+      expect(mateStatToRaise(stats, () => 0.1)).toBe('hp');
+      expect(mateStatToRaise(stats, () => 0.5)).toBe('mag');
+      expect(mateStatToRaise(stats, () => 0.9)).toBe('mag');
+      // まだ何も振っていなければランダム(6項目を等しく)
+      expect(mateStatToRaise({ ...ZERO_STATS }, () => 0.99)).toBe('luk');
+      // 運は上限なら選ばない
+      expect(mateStatToRaise({ ...ZERO_STATS, luk: 99 }, () => 0.99)).not.toBe('luk');
+
+      withMate(mate({ stats: { ...ZERO_STATS, mag: 3 } }), []);
+      const c = game.companions[0];
+      (game as unknown as { gainCompanionExp(c: unknown, exp: number): void }).gainCompanionExp(c, 999);
+      expect(c.stats.atk).toBe(0);
+      expect(c.stats.mag).toBeGreaterThan(3);
+      expect(game.mateFx.some((m) => m.target === c && m.fx.kind === 'level')).toBe(true);
+      expect(ev.sounds).toContain('level_up');
     });
   });
 

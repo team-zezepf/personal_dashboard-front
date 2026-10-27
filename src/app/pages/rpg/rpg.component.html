@@ -283,6 +283,27 @@
       </div>
     }
 
+    <!-- 持ち物を捨てる(front#391)。個数を選ぶ -->
+    @if (discardView(); as d) {
+      <div class="modal" (click)="closeDiscard()">
+        <div class="modal-card target-card" role="dialog" aria-label="捨てる" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <span>🗑 {{ d.icon }} {{ d.name }}を捨てる</span>
+            <button type="button" class="close-button" aria-label="閉じる" (click)="closeDiscard()">×</button>
+          </div>
+          <p class="modal-sub">足元に落ちます。60秒たつと消えます。近くに仲間がいれば、5秒たつと拾いに来ます。</p>
+          <div class="status-actions">
+            <div class="stepper">
+              <button type="button" [disabled]="d.qty <= 1" aria-label="捨てる数をへらす" (click)="changeDiscardQty(-1)">－</button>
+              <span aria-label="捨てる数">{{ d.qty }}</span>
+              <button type="button" [disabled]="d.qty >= d.max" aria-label="捨てる数をふやす" (click)="changeDiscardQty(1)">＋</button>
+            </div>
+            <button type="button" class="btn" (click)="confirmDiscard()">捨てる</button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- 道具を誰に使うか選ぶ(front#358) -->
     @if (itemTarget(); as id) {
       <div class="modal" (click)="closeItemTarget()">
@@ -511,6 +532,10 @@
             } @else {
               <button type="button" class="btn ghost" [attr.aria-label]="item.name + 'を装備する'" (click)="equip(item.id)">装備する</button>
             }
+            <!-- 捨てる(front#391)。装備中のものは捨てられない -->
+            @if (item.discardable) {
+              <button type="button" class="btn ghost small" [attr.aria-label]="item.name + 'を捨てる'" title="捨てる" (click)="openDiscard(item.id)">🗑</button>
+            }
           </div>
         }
       </section>
@@ -529,6 +554,8 @@
               <button type="button" class="btn ghost" [attr.aria-label]="m.name + 'と別れる'" (click)="dismiss(m.userId)">別れる</button>
             </div>
             <div class="party-meta">攻撃 {{ m.atk }}・防御 {{ m.def }}・{{ m.weapon }}／{{ m.armor }}</div>
+            <!-- MPと覚えた魔法(front#391) -->
+            <div class="party-meta">MP {{ m.mp }}/{{ m.maxMp }}・魔法: {{ m.spells || 'なし' }}</div>
             <div class="party-items">
               持ち物:
               @for (it of m.items; track it.id) {
