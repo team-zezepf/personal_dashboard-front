@@ -4,30 +4,7 @@ import { Observable, catchError, forkJoin, map, of, tap, throwError } from 'rxjs
 import { environment } from '../../environments/environment';
 import { GraphQLService } from './graphql.service';
 import { AuthService } from './auth.service';
-import {
-  RpgAreaMove,
-  RpgBgm,
-  RpgCraft,
-  RpgObjectDef,
-  RpgObjectDefInput,
-  RpgCraftInput,
-  RpgItem,
-  RpgItemInput,
-  RpgDungeon,
-  RpgDungeonInput,
-  RpgEnemy,
-  RpgEnemyInput,
-  RpgExchangeResult,
-  RpgHallMember,
-  RpgItemCount,
-  RpgMap,
-  RpgMapInput,
-  RpgPointShopItem,
-  RpgSave,
-  RpgSaveInput,
-  RpgSe,
-  RpgSeSlot
-} from '../models/rpg.models';
+import { RpgAreaMove, RpgBgm, RpgCraft, RpgCraftInput, RpgDungeon, RpgDungeonInput, RpgEnemy, RpgEnemyInput, RpgExchangeResult, RpgHallMember, RpgItem, RpgItemCount, RpgItemInput, RpgMap, RpgMapInput, RpgObjectDef, RpgObjectDefInput, RpgPointShopItem, RpgSave, RpgSaveInput, RpgSe, RpgSeSlot, RpgTheme, RpgThemeInput } from '../models/rpg.models';
 
 // BGMの音楽ファイルの大きさの上限(APIと合わせる)
 export const RPG_BGM_MAX_BYTES = 10 * 1024 * 1024;
@@ -75,6 +52,12 @@ const DUNGEON_FIELDS = `id name theme bgmId sortOrder updatedAt`;
 const BGM_FIELDS = `id name filename size createdAt`;
 
 const SE_FIELDS = `id name filename size createdAt`;
+
+// ダンジョンの見た目(front#389 / api#185)
+const THEME_FIELDS = `
+  id name liquidName sky grass path sand edge stone grout brick mortar liquid liquidSway wave
+  flower flowers trunk leaves treeScale rock effect { kind color alpha } sortOrder updatedAt
+`;
 
 const CRAFT_FIELDS = `id name icon type power spell level gold materials { itemId count } sortOrder updatedAt image`;
 
@@ -228,6 +211,23 @@ export class RpgService {
   }
 
   // ===== 合成の装備とレシピ(front#288) =====
+
+  // ===== ダンジョンの見た目(front#389) =====
+
+  getThemes(): Observable<RpgTheme[]> {
+    const query = `query GetRpgThemes { rpgThemes { ${THEME_FIELDS} } }`;
+    return this.graphql.query<{ rpgThemes: RpgTheme[] }>(query).pipe(map((res) => res.rpgThemes));
+  }
+
+  saveTheme(input: RpgThemeInput): Observable<RpgTheme> {
+    const mutation = `mutation SaveRpgTheme($input: RpgThemeInput!) { saveRpgTheme(input: $input) { ${THEME_FIELDS} } }`;
+    return this.graphql.mutation<{ saveRpgTheme: RpgTheme }>(mutation, { input }).pipe(map((res) => res.saveRpgTheme));
+  }
+
+  deleteTheme(id: string): Observable<boolean> {
+    const mutation = `mutation DeleteRpgTheme($id: ID!) { deleteRpgTheme(id: $id) }`;
+    return this.graphql.mutation<{ deleteRpgTheme: boolean }>(mutation, { id }).pipe(map((res) => res.deleteRpgTheme));
+  }
 
   getCrafts(): Observable<RpgCraft[]> {
     const query = `query GetRpgCrafts { rpgCrafts { ${CRAFT_FIELDS} } }`;

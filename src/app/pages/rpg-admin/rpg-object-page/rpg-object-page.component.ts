@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgDungeon, RpgMap, RpgMapObject, RpgObjectDef } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { ITEMS, OBJECT_DEF_TYPES, STATIC_NAMES, StaticType, THEMES, isBreakable, setObjectDefs } from '../../../rpg/rpg-data';
+import { ITEMS, OBJECT_DEF_TYPES, STATIC_NAMES, StaticType, THEME_LIST, isBreakable, setObjectDefs, themesVersion } from '../../../rpg/rpg-data';
 import { ENEMIES } from '../../../rpg/rpg-enemy';
 import { RpgGame, RpgGameEvents, iso } from '../../../rpg/rpg-game';
 import { RpgRenderer } from '../../../rpg/rpg-render';
@@ -45,7 +45,11 @@ export class RpgObjectPageComponent implements OnDestroy {
   readonly dirtyChange = output<boolean>();
 
   readonly types = OBJECT_DEF_TYPES;
-  readonly themes = Object.entries(THEMES).map(([id, t]) => ({ id, label: t.label }));
+  // 見本の背景の見た目(front#389 で「見た目」タブから増やせる)
+  readonly themes = computed(() => {
+    themesVersion();
+    return [...THEME_LIST];
+  });
   readonly selected = signal<StaticType>(OBJECT_DEF_TYPES[0]);
   readonly previewTheme = signal('plain');
   readonly saving = signal(false);

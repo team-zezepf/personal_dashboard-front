@@ -21,6 +21,8 @@ import {
   RECIPES,
   setCrafts,
   setItems,
+  setThemes,
+  DEFAULT_THEMES,
   setObjectDefs,
   SHOP_ITEMS,
   STAT_DEFS,
@@ -567,6 +569,8 @@ export class RpgPageComponent implements OnDestroy {
     const crafts$ = this.rpgService.getCrafts().pipe(catchError(() => of(DEFAULT_CRAFTS as RpgCraft[])));
     // 置物の種類ごとのデフォルト(front#333)が読めなければ、何も決めていない置物で遊べるようにする
     const objectDefs$ = this.rpgService.getObjectDefs().pipe(catchError(() => of([] as RpgObjectDef[])));
+    // ダンジョンの見た目(front#389)が読めなければ、最初の4つで遊べるようにする
+    const themes$ = this.rpgService.getThemes().pipe(catchError(() => of(DEFAULT_THEMES)));
     forkJoin({
       maps: this.rpgService.getMaps(),
       dungeons: this.rpgService.getDungeons(),
@@ -575,10 +579,12 @@ export class RpgPageComponent implements OnDestroy {
       enemies: enemies$,
       items: items$,
       crafts: crafts$,
-      objectDefs: objectDefs$
+      objectDefs: objectDefs$,
+      themes: themes$
     }).subscribe({
-      next: ({ maps, dungeons, save, bgms, enemies, items, crafts, objectDefs }) => {
+      next: ({ maps, dungeons, save, bgms, enemies, items, crafts, objectDefs, themes }) => {
         this.bgms = bgms;
+        setThemes(themes);
         setEnemies(enemies);
         setItems(items);
         setCrafts(crafts);

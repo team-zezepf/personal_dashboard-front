@@ -20,8 +20,9 @@
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
         <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
+        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'theme'" [attr.aria-selected]="page() === 'theme'" (click)="page.set('theme')">🎨 見た目</button>
       </div>
-      @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object') {
+      @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme') {
       <span class="sep"></span>
       <label class="toolbar-label">
         ダンジョン
@@ -103,6 +104,17 @@
       (saved)="onObjectDefsSaved($event)"
       (dirtyChange)="objectDirty.set($event)"
     />
+
+    <!-- 見た目タブ(front#389)。ダンジョンの見た目を作る・直す。ほかのタブに移っても編集中の内容を残す -->
+    @if (rpgThemes().length) {
+      <app-rpg-theme-page
+        [style.display]="page() === 'theme' ? null : 'none'"
+        [themes]="rpgThemes()"
+        [dungeons]="dungeons()"
+        (saved)="onThemesSaved($event)"
+        (dirtyChange)="themeDirty.set($event)"
+      />
+    }
 
     @if (page() === 'bgm') {
       <div class="bgm-page">
@@ -332,7 +344,7 @@
               <label class="field">
                 <span>見た目</span>
                 <select [ngModel]="dungeon.theme" (ngModelChange)="editDungeon(dungeon, { theme: $event })">
-                  @for (t of themes; track t.id) {
+                  @for (t of themes(); track t.id) {
                     <option [value]="t.id">{{ t.label }}</option>
                   }
                 </select>
@@ -542,7 +554,7 @@
         <label class="field">
           <span>見た目</span>
           <select [(ngModel)]="newDungeon.theme">
-            @for (t of themes; track t.id) {
+            @for (t of themes(); track t.id) {
               <option [value]="t.id">{{ t.label }}</option>
             }
           </select>

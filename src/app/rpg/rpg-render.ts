@@ -1,4 +1,4 @@
-import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
@@ -71,10 +71,11 @@ export class RpgRenderer {
     sky.addColorStop(1, pal.sky[1]);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
-    if (pal.stars) {
+    // 装飾1: 星(front#389。色は見た目で決める)
+    if (pal.effect.kind === 'stars') {
       for (const s of this.stars) {
         ctx.globalAlpha = 0.5 + Math.sin(this.time * 2 + s.ph) * 0.4;
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = pal.effect.color;
         ctx.beginPath();
         ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
         ctx.fill();
@@ -104,7 +105,8 @@ export class RpgRenderer {
     this.drawAttacks();
     this.drawSpells();
     if (game.map.hasHeights) this.drawCursorTile();
-    if (pal.fireflies) this.drawFireflies();
+    // 装飾2: ホタル(front#389。赤にすると火の粉に見える)
+    if (pal.effect.kind === 'fireflies') this.drawFireflies(pal.effect.color);
     // 看板(front#274)の上に、指している先のダンジョンの名前(front#333: 向きを決めた看板は、その向きの端)
     for (const o of game.map.statics) {
       const sign = o.type === 'sign';
@@ -120,10 +122,11 @@ export class RpgRenderer {
     ctx.restore();
     this.shift = [0, 0];
 
-    if (pal.vignette) {
+    // 装飾3: 周りを暗く(front#389。色と濃さは見た目で決める)
+    if (pal.effect.kind === 'vignette') {
       const v = ctx.createRadialGradient(w / 2, h / 2 + 20, 120, w / 2, h / 2 + 20, Math.max(w, h) * 0.7);
       v.addColorStop(0, 'rgba(0,0,0,0)');
-      v.addColorStop(1, pal.vignette);
+      v.addColorStop(1, hexToRgba(pal.effect.color, pal.effect.alpha));
       ctx.fillStyle = v;
       ctx.fillRect(0, 0, w, h);
     }
@@ -1019,13 +1022,13 @@ export class RpgRenderer {
     }
   }
 
-  private drawFireflies(): void {
+  private drawFireflies(color: string): void {
     const ctx = this.ctx;
     const { w, h } = this.game.map;
     for (const f of this.fireflies) {
       const [sx, sy] = iso(f.x * w + Math.sin(this.time * 0.5 + f.ph) * 0.6, f.y * h + Math.cos(this.time * 0.4 + f.ph) * 0.6);
       ctx.globalAlpha = 0.45 + Math.sin(this.time * 3 + f.ph) * 0.45;
-      ctx.fillStyle = '#e6ffb3';
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(sx, sy - 30 - Math.sin(this.time + f.ph) * 12, 2.2, 0, Math.PI * 2);
       ctx.fill();

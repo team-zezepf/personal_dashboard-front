@@ -353,6 +353,44 @@ export interface RpgEnemy {
 export type RpgEnemyInput = Omit<RpgEnemy, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder?: number | null; expectedUpdatedAt?: string | null };
 
 // 鍛冶屋で合成してできる装備とレシピ(front#288 / api#134)。管理画面の「合成」タブで作る
+// ダンジョンの見た目(front#389 / api#185)。描き方はフロントが持ち、APIは色などの値を保存する。色は #rrggbb
+export interface RpgTheme {
+  id: string;
+  name: string;
+  // 水のマスの呼び名(水・泉・溶岩・闇など)
+  liquidName: string;
+  // 空(上・下)・草(3色)・道(2色)・砂・段差の側面(左・右)
+  sky: string[];
+  grass: string[];
+  path: string[];
+  sand: string;
+  edge: string[];
+  // 石畳の石(3色)・目地、レンガ(3色)・目地
+  stone: string[];
+  grout: string;
+  brick: string[];
+  mortar: string;
+  // 水のマスの色・明るさのゆらぎ(0〜10)・波の光の色(null なら波を出さない)
+  liquid: string;
+  liquidSway: number;
+  wave: string | null;
+  // 草の上の飾り(flower 花 / glow 光る粒 / tuft 草の房 / crack ひび割れ)と色(3色)
+  flower: string;
+  flowers: string[];
+  // 木の幹・葉(3色)・大きさ(0.5〜2)、岩(暗い・明るい)
+  trunk: string;
+  leaves: string[];
+  treeScale: number;
+  rock: string[];
+  // 装飾(1つだけ)。none なし / stars 装飾1 / fireflies 装飾2 / vignette 装飾3。alpha は装飾3の濃さ
+  effect: { kind: string; color: string; alpha: number };
+  sortOrder: number;
+  updatedAt?: string | null;
+}
+
+// id が null なら新しい見た目として追加する。sortOrder が null なら今の順番のまま(新しければ最後)
+export type RpgThemeInput = Omit<RpgTheme, 'id' | 'sortOrder' | 'updatedAt'> & { id: string | null; sortOrder: number | null };
+
 export interface RpgCraft {
   // 装備のID(持ち物・装備のIDと同じ)
   id: string;

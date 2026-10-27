@@ -14,7 +14,8 @@ import { SANDBOX_DATA_DIR } from './env';
 const FILES = ['rpg_dungeons.json', 'rpg_maps.json', 'rpg_enemies.json', 'rpg_crafts.json', 'rpg_items.json'];
 // テストの間は空にするファイル。E2E のアカウントのセーブデータは各テストが API で作り直す。
 // 置物のデフォルト(rpg_objects.json)も、sandbox で中身に sandbox のアイテムを入れていると ID がぶつかるので、何も決めていない状態にする
-const EMPTY_FILES = ['rpg_saves.json', 'rpg_objects.json'];
+// ダンジョンの見た目(rpg_themes.json。front#389)も、何も保存していない状態(最初の4つ)にする
+const EMPTY_FILES = ['rpg_saves.json', 'rpg_objects.json', 'rpg_themes.json'];
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures', 'rpg');
 // 退避先。退避したファイルと、元のファイルがなかったものは manifest に記録し、戻すときに消す
 const BACKUP_DIR = path.join(SANDBOX_DATA_DIR, '.e2e-rpg-backup');

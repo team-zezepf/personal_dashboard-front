@@ -1,6 +1,6 @@
 // RPG(front#215)の定義データ。マップの見た目はフロントが持つ。アイテム(api#163)・敵・合成の装備は、APIから読んで入れ替える。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgMap, RpgMapObject, RpgObjectDef } from '../models/rpg.models';
+import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgMap, RpgMapObject, RpgObjectDef, RpgTheme } from '../models/rpg.models';
 import { signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { objectTiles } from './rpg-house';
@@ -473,6 +473,14 @@ export function staticDepth(o: StaticObj): number {
   return Math.max(...objectTiles(o).map(([x, y]) => x + y));
 }
 
+/** 見た目の装飾(front#389)。none なし / stars 装飾1(星) / fireflies 装飾2(ホタル) / vignette 装飾3(周りを暗く) */
+export type ThemeEffectKind = 'none' | 'stars' | 'fireflies' | 'vignette';
+export const THEME_EFFECT_KINDS: ThemeEffectKind[] = ['none', 'stars', 'fireflies', 'vignette'];
+export const THEME_EFFECT_LABELS: Record<ThemeEffectKind, string> = { none: 'なし', stars: '装飾1', fireflies: '装飾2', vignette: '装飾3' };
+export type ThemeFlower = 'flower' | 'glow' | 'tuft' | 'crack';
+export const THEME_FLOWERS: ThemeFlower[] = ['flower', 'glow', 'tuft', 'crack'];
+export const THEME_FLOWER_LABELS: Record<ThemeFlower, string> = { flower: '花', glow: '光る粒', tuft: '草の房', crack: 'ひび割れ' };
+
 export interface ThemeDef {
   label: string;
   // 水の地面の呼び名(マップ作成画面のパレット)
@@ -486,54 +494,119 @@ export interface ThemeDef {
   brick: { brick: [string, string, string]; mortar: string };
   liquid: (x: number, y: number, time: number) => string;
   wave: string | null;
-  flower: 'flower' | 'glow' | 'tuft' | 'crack';
+  flower: ThemeFlower;
   flowers: string[];
   edge: [string, string];
   tree: { trunk: string; leaves: [string, string, string]; scale: number };
   rock: [string, string];
-  vignette?: string;
-  stars?: boolean;
-  fireflies?: boolean;
+  // 装飾(front#389)。1つだけ
+  effect: { kind: ThemeEffectKind; color: string; alpha: number };
 }
 
-const waterColor = (hue: number, light: number, amp: number) => (x: number, y: number, time: number) =>
-  `hsl(${hue}, 78%, ${light + Math.sin(time * 2 + x * 0.8 + y * 0.5) * amp}%)`;
-const GREEN_TREE: ThemeDef['tree'] = { trunk: '#8a5a35', leaves: ['#3f9b48', '#46a851', '#5cbf64'], scale: 1 };
-
-export const THEMES: Record<string, ThemeDef> = {
-  plain: {
-    label: '草原', liquidName: '水',
-    sky: ['#8fd0f5', '#d6f2fd'], grass: ['#8fd16a', '#88cb63', '#95d771'], path: ['#ead6a8', '#e4cf9f'], sand: '#f2e5b8',
-    tile: { stone: ['#dcd7ca', '#d2ccbd', '#e3dfd3'], grout: '#aaa392' }, brick: { brick: ['#c96a4c', '#bd5f43', '#d07455'], mortar: '#ead9bf' },
-    liquid: waterColor(200, 56, 4), wave: 'rgba(255,255,255,0.45)',
-    flower: 'flower', flowers: ['#ff7eb6', '#fff176', '#ffffff'], edge: ['#a0754d', '#7f5a3a'],
-    tree: GREEN_TREE, rock: ['#9aa3ad', '#b7bec6']
+/**
+ * 最初の見た目(api#185 の default_themes.json と同じ)。APIから読めないとき・まだ読んでいないときに使う。
+ * 見た目はマップ作成画面の「見た目」タブで作る・直す(front#389)。setThemes で入れ替える
+ */
+export const DEFAULT_THEMES: RpgTheme[] = [
+  {
+    id: 'plain', name: '草原', liquidName: '水',
+    sky: ['#8fd0f5', '#d6f2fd'], grass: ['#8fd16a', '#88cb63', '#95d771'], path: ['#ead6a8', '#e4cf9f'], sand: '#f2e5b8', edge: ['#a0754d', '#7f5a3a'],
+    stone: ['#dcd7ca', '#d2ccbd', '#e3dfd3'], grout: '#aaa392', brick: ['#c96a4c', '#bd5f43', '#d07455'], mortar: '#ead9bf',
+    liquid: '#37ace6', liquidSway: 4, wave: '#ffffff', flower: 'flower', flowers: ['#ff7eb6', '#fff176', '#ffffff'],
+    trunk: '#8a5a35', leaves: ['#3f9b48', '#46a851', '#5cbf64'], treeScale: 1, rock: ['#9aa3ad', '#b7bec6'],
+    effect: { kind: 'none', color: '#ffffff', alpha: 0.5 }, sortOrder: 1
   },
-  forest: {
-    label: '森', liquidName: '泉',
-    sky: ['#123c3a', '#2f7d6d'], grass: ['#5fae73', '#58a66c', '#64b679'], path: ['#c9b48a', '#c2ad82'], sand: '#8fc89a',
-    tile: { stone: ['#9db2a0', '#93a895', '#a7bba9'], grout: '#5f8a66' }, brick: { brick: ['#8e6c55', '#83624c', '#977560'], mortar: '#8fb47f' },
-    liquid: waterColor(178, 58, 5), wave: 'rgba(220,255,255,0.7)',
-    flower: 'glow', flowers: ['#b4f8ff', '#e9d5ff', '#fdffb6'], edge: ['#6b4f33', '#57402a'],
-    tree: { trunk: '#5b3a29', leaves: ['#1f7a5c', '#23896a', '#36a882'], scale: 1.25 }, rock: ['#7d8a86', '#9aa8a3'],
-    vignette: 'rgba(5,40,35,0.45)', fireflies: true
+  {
+    id: 'forest', name: '森', liquidName: '泉',
+    sky: ['#123c3a', '#2f7d6d'], grass: ['#5fae73', '#58a66c', '#64b679'], path: ['#c9b48a', '#c2ad82'], sand: '#8fc89a', edge: ['#6b4f33', '#57402a'],
+    stone: ['#9db2a0', '#93a895', '#a7bba9'], grout: '#5f8a66', brick: ['#8e6c55', '#83624c', '#977560'], mortar: '#8fb47f',
+    liquid: '#40e7e2', liquidSway: 5, wave: '#dcffff', flower: 'glow', flowers: ['#b4f8ff', '#e9d5ff', '#fdffb6'],
+    trunk: '#5b3a29', leaves: ['#1f7a5c', '#23896a', '#36a882'], treeScale: 1.25, rock: ['#7d8a86', '#9aa8a3'],
+    effect: { kind: 'fireflies', color: '#e6ffb3', alpha: 0.5 }, sortOrder: 2
   },
-  valley: {
-    label: '谷', liquidName: '溶岩',
-    sky: ['#f59e5b', '#fde2b6'], grass: ['#c9a46c', '#c19c63', '#d0ab74'], path: ['#a98457', '#a27d50'], sand: '#6b4a32',
-    tile: { stone: ['#dcb98d', '#d2ae82', '#e3c398'], grout: '#9a7550' }, brick: { brick: ['#a4512f', '#97492a', '#ae5a36'], mortar: '#d6b588' },
-    liquid: (x, y, time) => `hsl(${18 + Math.sin(time * 2 + x + y) * 8}, 95%, ${50 + Math.sin(time * 3 + x * 0.7 + y * 0.4) * 6}%)`,
-    wave: 'rgba(255,230,120,0.8)', flower: 'tuft', flowers: ['#7a9a3a', '#8fb045', '#6b8a30'], edge: ['#7c4f2c', '#5f3b20'],
-    tree: GREEN_TREE, rock: ['#8a5a3c', '#a97450']
+  {
+    id: 'valley', name: '谷', liquidName: '溶岩',
+    sky: ['#f59e5b', '#fde2b6'], grass: ['#c9a46c', '#c19c63', '#d0ab74'], path: ['#a98457', '#a27d50'], sand: '#6b4a32', edge: ['#7c4f2c', '#5f3b20'],
+    stone: ['#dcb98d', '#d2ae82', '#e3c398'], grout: '#9a7550', brick: ['#a4512f', '#97492a', '#ae5a36'], mortar: '#d6b588',
+    liquid: '#f94f06', liquidSway: 6, wave: '#ffe678', flower: 'tuft', flowers: ['#7a9a3a', '#8fb045', '#6b8a30'],
+    trunk: '#8a5a35', leaves: ['#3f9b48', '#46a851', '#5cbf64'], treeScale: 1, rock: ['#8a5a3c', '#a97450'],
+    effect: { kind: 'fireflies', color: '#ff5a1f', alpha: 0.5 }, sortOrder: 3
   },
-  tower: {
-    label: '塔', liquidName: '闇',
-    sky: ['#0b0820', '#2a2255'], grass: ['#5b5770', '#56526a', '#615c77'], path: ['#8b1e3f', '#7d1a38'], sand: '#4a4660',
-    tile: { stone: ['#4d4869', '#46415f', '#554f72'], grout: '#25222f' }, brick: { brick: ['#5e2c42', '#55283b', '#68324a'], mortar: '#25222f' },
-    liquid: () => '#000', wave: null, flower: 'crack', flowers: ['#3f3b52'], edge: ['#2a2738', '#1f1d2b'],
-    tree: GREEN_TREE, rock: ['#4b4763', '#625d7d'], vignette: 'rgba(8,4,25,0.7)', stars: true
+  {
+    id: 'tower', name: '塔', liquidName: '闇',
+    sky: ['#0b0820', '#2a2255'], grass: ['#5b5770', '#56526a', '#615c77'], path: ['#8b1e3f', '#7d1a38'], sand: '#4a4660', edge: ['#2a2738', '#1f1d2b'],
+    stone: ['#4d4869', '#46415f', '#554f72'], grout: '#25222f', brick: ['#5e2c42', '#55283b', '#68324a'], mortar: '#25222f',
+    liquid: '#000000', liquidSway: 0, wave: null, flower: 'crack', flowers: ['#3f3b52', '#3f3b52', '#3f3b52'],
+    trunk: '#8a5a35', leaves: ['#3f9b48', '#46a851', '#5cbf64'], treeScale: 1, rock: ['#4b4763', '#625d7d'],
+    effect: { kind: 'stars', color: '#ffffff', alpha: 0.5 }, sortOrder: 4
   }
-};
+];
+
+/** #rrggbb を HSL(色相 0〜360、彩度・明るさ 0〜100)にする */
+export function hexToHsl(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, Math.round(l * 100)];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [Math.round(h * 60), Math.round(s * 100), Math.round(l * 100)];
+}
+
+/** #rrggbb を、透明度 alpha の rgba() にする */
+export function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+/** APIの見た目を、描画で使う形にする。水のマスは、色の明るさを sway(%) だけ時間・場所でゆらす */
+export function toThemeDef(t: RpgTheme): ThemeDef {
+  const [h, s, l] = hexToHsl(t.liquid);
+  const sway = t.liquidSway;
+  const pick = <N extends number>(list: string[], n: N, fallback: string) => Array.from({ length: n }, (_, i) => list[i] ?? list[0] ?? fallback);
+  const kind = (THEME_EFFECT_KINDS as string[]).includes(t.effect?.kind) ? (t.effect.kind as ThemeEffectKind) : 'none';
+  return {
+    label: t.name,
+    liquidName: t.liquidName,
+    sky: pick(t.sky, 2, '#8fd0f5') as [string, string],
+    grass: pick(t.grass, 3, '#8fd16a') as [string, string, string],
+    path: pick(t.path, 2, '#ead6a8') as [string, string],
+    sand: t.sand,
+    tile: { stone: pick(t.stone, 3, '#dcd7ca') as [string, string, string], grout: t.grout },
+    brick: { brick: pick(t.brick, 3, '#c96a4c') as [string, string, string], mortar: t.mortar },
+    liquid: sway > 0 ? (x, y, time) => `hsl(${h}, ${s}%, ${l + Math.sin(time * 2 + x * 0.8 + y * 0.5) * sway}%)` : () => t.liquid,
+    wave: t.wave ? hexToRgba(t.wave, 0.55) : null,
+    flower: (THEME_FLOWERS as string[]).includes(t.flower) ? (t.flower as ThemeFlower) : 'flower',
+    flowers: pick(t.flowers, 3, '#ffffff'),
+    edge: pick(t.edge, 2, '#a0754d') as [string, string],
+    tree: { trunk: t.trunk, leaves: pick(t.leaves, 3, '#46a851') as [string, string, string], scale: t.treeScale },
+    rock: pick(t.rock, 2, '#9aa3ad') as [string, string],
+    effect: { kind, color: t.effect?.color ?? '#ffffff', alpha: t.effect?.alpha ?? 0.5 }
+  };
+}
+
+/** 見た目(id ごと)。setThemes で中身を入れ替える(使っている所はそのまま新しい中身を使える) */
+export const THEMES: Record<string, ThemeDef> = {};
+/** 見た目の並び(選ぶ欄に出す順)。setThemes で入れ替える */
+export const THEME_LIST: { id: string; label: string }[] = [];
+/** 見た目を入れ替えるたびに増える。選ぶ欄は、これを見て作り直す */
+export const themesVersion = signal(0);
+
+/** 見た目を入れ替える(front#389)。ゲーム・マップ作成画面がAPIから読んだもので呼ぶ */
+export function setThemes(list: RpgTheme[]): void {
+  for (const id of Object.keys(THEMES)) delete THEMES[id];
+  const sorted = [...list].sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const t of sorted) THEMES[t.id] = toThemeDef(t);
+  // 草原がなくても困らないよう、最初の草原を残す
+  if (!THEMES['plain']) THEMES['plain'] = toThemeDef(DEFAULT_THEMES[0]);
+  THEME_LIST.splice(0, THEME_LIST.length, ...sorted.map((t) => ({ id: t.id, label: t.name })));
+  themesVersion.update((v) => v + 1);
+}
+
+setThemes(DEFAULT_THEMES);
 
 export const themeOf = (theme: string): ThemeDef => THEMES[theme] ?? THEMES['plain'];
 
