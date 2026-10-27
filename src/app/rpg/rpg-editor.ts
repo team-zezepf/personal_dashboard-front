@@ -228,7 +228,9 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     })),
     enemies: map.enemies.map((e) => ({ ...e })),
     links: (map.links ?? []).map((l) => ({ dx: l.dx, dy: l.dy, to: l.to })),
-    bgmId: map.bgmId ?? null
+    bgmId: map.bgmId ?? null,
+    // エリアだけのベース(front#401)
+    theme: map.theme ?? null
   };
 }
 

@@ -803,7 +803,8 @@ export class RpgGame {
   loadMap(area: RpgMap): void {
     this.area = area;
     this.dungeon = this.dungeonOf(area);
-    this.theme = themeOf(this.dungeon.theme);
+    // エリアだけのベースがあればそれ、なければダンジョンのベース(front#401)
+    this.theme = themeOf(area.theme || this.dungeon.theme);
     this.map = buildAreaMap(area);
     this.npcs = area.npcs.map((n) => ({
       ...n, kind: 'npc', path: [], dir: 1, moving: false, z: this.map.heightAt(n.x, n.y)

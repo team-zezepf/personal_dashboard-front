@@ -1,6 +1,6 @@
 <div class="theme-page">
   <div class="subbar">
-    <span class="title">🎨 ダンジョンの見た目</span>
+    <span class="title">🎨 ベース</span>
     <span class="spacer"></span>
     @if (message()) {
       <span class="message" role="status">{{ message() }}</span>
@@ -9,15 +9,15 @@
       <span class="dirty">● 保存していない変更があります</span>
     }
     <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
-      {{ saving() ? '保存中…' : '見た目を保存する' }}
+      {{ saving() ? '保存中…' : 'ベースを保存する' }}
     </button>
   </div>
 
   <div class="workspace">
-    <!-- 左: 見た目の一覧 -->
-    <aside class="list" aria-label="見た目の一覧">
+    <!-- 左: ベースの一覧 -->
+    <aside class="list" aria-label="ベースの一覧">
       <div class="list-head">
-        <button type="button" class="btn small" [disabled]="!selected()" (click)="add()">＋ 新しい見た目</button>
+        <button type="button" class="btn small" [disabled]="!selected()" (click)="add()">＋ 新しいベース</button>
         <button
           type="button"
           class="btn small danger"
@@ -41,37 +41,41 @@
                   <span class="dot" title="保存していない変更があります">●</span>
                 }
               </span>
-              <span class="sub">{{ usesOf(row.theme.id).length ? usesOf(row.theme.id).length + 'つのダンジョンで使用' : '使っていない' }}</span>
+              <span class="sub">{{ usesLabel(row.theme.id) }}</span>
             </span>
           </button>
         }
       </div>
     </aside>
 
-    <!-- まんなか: プレビュー・使っているダンジョン -->
+    <!-- まんなか: プレビュー・使っているダンジョン・エリア -->
     <main class="stage">
       <section class="card" aria-label="プレビュー">
         <h3>プレビュー <span class="sub">右の欄で変えると、すぐここに出ます（保存するまでゲームには出ません）</span></h3>
-        <canvas #preview class="preview" aria-label="見た目のプレビュー"></canvas>
+        <canvas #preview class="preview" aria-label="ベースのプレビュー"></canvas>
       </section>
       @if (selected(); as sel) {
-        <section class="card" aria-label="この見た目を使っているダンジョン">
-          <h3>この見た目を使っているダンジョン</h3>
+        <section class="card" aria-label="このベースを使っているダンジョン・エリア">
+          <h3>このベースを使っているダンジョン・エリア</h3>
           @for (name of usesOf(sel.theme.id); track name) {
             <div class="use">🏰 {{ name }}</div>
-          } @empty {
-            <p class="hint">どのダンジョンでも使っていません。</p>
+          }
+          @for (name of areaUsesOf(sel.theme.id); track name) {
+            <div class="use">🗺️ {{ name }}</div>
+          }
+          @if (!usesOf(sel.theme.id).length && !areaUsesOf(sel.theme.id).length) {
+            <p class="hint">どのダンジョン・エリアでも使っていません。</p>
           }
         </section>
       }
     </main>
 
     <!-- 右: 編集欄 -->
-    <aside class="props" aria-label="見た目の項目">
+    <aside class="props" aria-label="ベースの項目">
       @if (selected(); as sel) {
         <div class="section">
           <h2>名前</h2>
-          <label class="f"><span>見た目の名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.theme.name" (ngModelChange)="setName($event)" /></label>
+          <label class="f"><span>ベースの名前</span><input type="text" [maxlength]="limits.name" [ngModel]="sel.theme.name" (ngModelChange)="setName($event)" /></label>
           <label class="f"><span>水のマスの呼び名</span><input type="text" [maxlength]="limits.liquidName" [ngModel]="sel.theme.liquidName" (ngModelChange)="setLiquidName($event)" /></label>
         </div>
 
@@ -183,7 +187,7 @@
           </p>
         </div>
       } @else {
-        <p class="hint">左の一覧から見た目を選んでください。</p>
+        <p class="hint">左の一覧からベースを選んでください。</p>
       }
     </aside>
   </div>

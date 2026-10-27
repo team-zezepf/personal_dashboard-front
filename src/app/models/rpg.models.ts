@@ -159,7 +159,7 @@ export type RpgSaveInput = Omit<RpgSave, 'updatedAt' | 'party'> & {
   leaving?: boolean;
 };
 
-// RPGのダンジョン(front#234 / api#96)。名前・見た目・BGMを持つ、エリアのまとまり(推奨レベルは front#381 で廃止)
+// RPGのダンジョン(front#234 / api#96)。名前・ベース(旧「見た目」。front#401)・BGMを持つ、エリアのまとまり(推奨レベルは front#381 で廃止)
 export interface RpgDungeon {
   id: string;
   name: string;
@@ -296,6 +296,8 @@ export interface RpgMap {
   updatedAt?: string | null;
   // このエリアにいる間だけ流す曲(RpgBgm の id。front#304)。なければダンジョンの曲
   bgmId?: string | null;
+  // このエリアだけで使うベース(RpgTheme の id。front#401)。なければダンジョンのベース
+  theme?: string | null;
 }
 
 // RPGの敵(front#229 / api#94)。マップ作成画面の「敵」タブで作る。絵の描き方・攻撃の動きは rpg/rpg-enemy.ts

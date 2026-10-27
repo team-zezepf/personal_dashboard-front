@@ -213,7 +213,8 @@ export class RpgAdminPageComponent implements OnDestroy {
   });
   readonly currentTheme = computed(() => {
     this.version();
-    return themeOf(this.currentDungeon()?.theme ?? 'plain');
+    // エリアだけのベースがあればそれ(front#401)
+    return themeOf(this.editor?.map.theme || this.currentDungeon()?.theme || 'plain');
   });
   // エリアの配置: 今のダンジョンのエリアのまわりを1マスずつ広げたマス目
   readonly layout = computed<{ columns: number; cells: LayoutCell[] }>(() => {
@@ -796,6 +797,15 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (!map) return;
     this.editor?.checkpoint();
     map.bgmId = bgmId || null;
+    this.markDirty();
+  }
+
+  /** エリアだけのベース(front#401)。空ならダンジョンのベース */
+  setAreaTheme(theme: string): void {
+    const map = this.editor?.map;
+    if (!map) return;
+    this.editor?.checkpoint();
+    map.theme = theme || null;
     this.markDirty();
   }
 
