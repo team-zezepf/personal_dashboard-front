@@ -415,11 +415,12 @@ function frontHair(L: RpgLook, y0: number, f: number, d: number): Path2D {
     p.lineTo(-10, Y(-33.8));
     p.quadraticCurveTo(-12.6, Y(-33.8), -13, Y(-30.5));
   } else if (top === 'point') {
-    // とんがり: 両側からゆるやかに下がり、まん中で合わさる幅の広い「く」の字の前髪
-    p.quadraticCurveTo(12.5, Y(-35), 9.5 + s, Y(-36.4));
-    p.quadraticCurveTo(4.5 + s, Y(-35.4), 0.3 + s, Y(-31.6));
-    p.quadraticCurveTo(-3.9 + s, Y(-35.4), -8.9 + s, Y(-36.4));
-    p.quadraticCurveTo(-12.5, Y(-35), -13, Y(-30.5));
+    // とんがり: 両側からゆるやかに下がり、まん中で合わさる幅の広い「く」の字の前髪。
+    // とがった先は両目のあいだまで下げる(front#393。目は y0-28.5 の左右4にあり、先はそのあいだなのでかからない)
+    p.quadraticCurveTo(12.5, Y(-34.4), 9.5 + s, Y(-35.6));
+    p.quadraticCurveTo(4.5 + s, Y(-34.4), 0.3 + s, Y(-29.6));
+    p.quadraticCurveTo(-3.9 + s, Y(-34.4), -8.9 + s, Y(-35.6));
+    p.quadraticCurveTo(-12.5, Y(-34.4), -13, Y(-30.5));
   } else {
     // まん中分け: おでこが少し見える
     p.quadraticCurveTo(8.5 + s, Y(-32.5), 1.2 + s, Y(-39.5));
