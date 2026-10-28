@@ -1,4 +1,5 @@
-import { areaDropMoves, signLinesOf } from './rpg-data';
+import { RpgMap } from '../models/rpg.models';
+import { areaDropMoves, buildAreaMap, heightFromChar, heightToChar, signLinesOf } from './rpg-data';
 import { blankMap } from './rpg-editor';
 
 // エリアの配置(front#301)。d1 に「村(0, 0)・丘(1, 0)・湖(0, 1)」、d2 に「塔(5, 5)」
@@ -46,5 +47,26 @@ describe('areaDropMoves', () => {
   it('ほかのダンジョンのエリアは、入れ替え・接する相手にならない', () => {
     expect(areaDropMoves(maps, village, 5, 4)).toBeNull();
     expect(areaDropMoves(maps, village, 5, 5)).toBeNull();
+  });
+});
+
+describe('地面の高さ −5〜5段(front#412)', () => {
+  it('0〜5は数字、マイナスは a〜e(a=−1 … e=−5)で読み書きする。範囲の外・知らない文字は収める・0段にする', () => {
+    expect(['0', '5', 'a', 'e', '6', 'f', '-', undefined].map(heightFromChar)).toEqual([0, 5, -1, -5, 5, 0, 0, 0]);
+    expect([0, 5, -1, -5, 7, -9].map(heightToChar)).toEqual(['0', '5', 'a', 'e', '5', 'e']);
+  });
+
+  it('土台の段は、いちばん低い段(0段より低いマスがなければ0)', () => {
+    const map = (heights: string[]) => buildAreaMap({
+      id: 'm', name: 'm', dungeonId: 'd', gridX: 0, gridY: 0, width: 3, height: 2, ground: ['ggg', 'ggg'], heights,
+      objects: [], npcs: [], enemies: [], links: [], sortOrder: 0
+    } as RpgMap);
+    expect(map(['000', '000']).hasHeights).toBe(false);
+    expect(map(['012', '000']).base).toBe(0);
+    const pit = map(['0ab', '50c']);
+    expect([pit.hasHeights, pit.base, pit.heightAt(1, 0), pit.heightAt(0, 1)]).toEqual([true, -3, -1, 5]);
+    // 差が1段までなら登り降りできる(マイナスでも同じ)
+    expect(pit.canStep(1, 0, 2, 0)).toBe(true);
+    expect(pit.canStep(0, 0, 0, 1)).toBe(false);
   });
 });

@@ -977,11 +977,11 @@ export class RpgGame {
           const y = s - x;
           const [cx, cy] = iso(x, y);
           const lift = map.heightAt(x, y) * HZ;
-          // 上の面のひし形と、その下の側面を合わせた六角形の中か
+          // 上の面のひし形と、その下の側面(土台の段まで。front#412)を合わせた六角形の中か
           const dx = Math.abs(wx - cx) / (TW / 2);
           if (dx > 1) continue;
           const top = cy - lift - (TH / 2) * (1 - dx);
-          const bottom = cy + (TH / 2) * (1 - dx);
+          const bottom = cy - map.base * HZ + (TH / 2) * (1 - dx);
           if (wy >= top && wy <= bottom) return [x, y];
         }
       }

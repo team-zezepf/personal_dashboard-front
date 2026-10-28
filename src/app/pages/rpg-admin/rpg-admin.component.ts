@@ -1528,7 +1528,11 @@ export class RpgAdminPageComponent implements OnDestroy {
       ctx.fillStyle = 'rgba(17,24,39,0.75)';
       for (let y = 0; y < map.height; y++) {
         for (let x = 0; x < map.width; x++) {
-          if (editor.groundAt(x, y) !== 'v') ctx.fillText(String(area.heightAt(x, y)), ...top(x, y));
+          // マイナスの段は「−1」のように出す(front#412)
+          if (editor.groundAt(x, y) !== 'v') {
+            const h = area.heightAt(x, y);
+            ctx.fillText(h < 0 ? `−${-h}` : String(h), ...top(x, y));
+          }
         }
       }
     }

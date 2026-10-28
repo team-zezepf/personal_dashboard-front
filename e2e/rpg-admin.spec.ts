@@ -695,3 +695,92 @@ test(
     });
   }
 );
+
+// 管理者のアカウントで、保存してある村のエリアの地面の高さ(front#412)を API から読む
+async function savedVillageHeights(): Promise<string[]> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgMaps { id heights } }' })
+  });
+  const body = (await res.json()) as { data: { rpgMaps: { id: string; heights: string[] }[] } };
+  return body.data.rpgMaps.find((m) => m.id === 'plain')!.heights;
+}
+
+test(
+  'E2E-35 RPGマップ作成の「高さ」で、＋3段〜−3段・リセットの道具で今の高さから上げ下げでき、−5〜5段(マイナスは a〜e)で保存される(front#412)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(はじまりの村は、すべて0段)'],
+    expected: [
+      'パレットの「高さ」に「＋3段」「＋2段」「＋1段」「リセット」「−1段」「−2段」「−3段」が縦に並び、ボタンの高さは「地面」の道具の2/3くらい',
+      '筆を3×3にして「−2段」で (11, 26) を1回、「＋3段」で (20, 26) を2回クリックすると(上限の5段で止まる)、保存したとき API の高さが (10〜12, 25〜27) は b(−2段)、(19〜21, 25〜27) は 5 になる',
+      '(あと片づけ)「リセット」で戻して保存すると、API の高さはすべて0に戻る'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const palette = page.locator('aside.palette');
+    const tools = palette.locator('.items.height-list .item');
+    const brush = (n: '1マス' | '3×3') => palette.getByRole('button', { name: n, exact: true }).click();
+    const tool = (label: string) => palette.getByRole('button', { name: label }).click();
+    const save = async () => {
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+    };
+
+    await step('RPGマップ作成(/rpg/admin)を開き、パレットの「高さ」を押す', '＋3段〜−3段・リセットの7つが縦に並び、ボタンの高さは「地面」の道具の2/3くらい', async () => {
+      await page.goto('/rpg/admin');
+      await expect(palette.locator('.item').first()).toBeVisible();
+      const groundItem = (await palette.locator('.item').first().boundingBox())!;
+      await palette.getByRole('button', { name: '高さ', exact: true }).click();
+      await expect(tools).toHaveText([/＋3段/, /＋2段/, /＋1段/, /リセット/, /−1段/, /−2段/, /−3段/]);
+      const boxes = await Promise.all([0, 1].map(async (i) => (await tools.nth(i).boundingBox())!));
+      // 縦に並ぶ
+      expect(boxes[1].y).toBeGreaterThan(boxes[0].y + boxes[0].height - 1);
+      expect(Math.abs(boxes[1].x - boxes[0].x)).toBeLessThan(2);
+      // 地面の道具の 2/3 くらい(0.55〜0.8倍)
+      expect(boxes[0].height / groundItem.height).toBeGreaterThan(0.55);
+      expect(boxes[0].height / groundItem.height).toBeLessThan(0.8);
+    });
+
+    await step('筆を3×3にして「−2段」で (11, 26) を1回、「＋3段」で (20, 26) を2回クリックし、「保存する」を押す', 'API の高さが (10〜12, 25〜27) は b(−2段)、(19〜21, 25〜27) は 5(上限)になる', async () => {
+      await brush('3×3');
+      await tool('−2段');
+      await clickTile(page, 11, 26);
+      await tool('＋3段');
+      await clickTile(page, 20, 26);
+      await clickTile(page, 20, 26);
+      await save();
+      const heights = await savedVillageHeights();
+      for (const y of [25, 26, 27]) {
+        expect(heights[y].slice(10, 13)).toBe('bbb');
+        expect(heights[y].slice(19, 22)).toBe('555');
+      }
+      expect(heights[24].slice(10, 13)).toBe('000');
+    });
+
+    await step('「高さを数字で表示」を入れ、くぼみと高台の間でホイールを回して拡大する', '(画面で見る)くぼみのまわりに壁が見え、数字は −2 / 5 と出る', async () => {
+      await page.getByLabel('高さを数字で表示').check();
+      const [sx, sy] = (await page.evaluate(() => (window as any).rpgAdminTest.tilePosition(15, 26))) as [number, number];
+      const box = (await page.getByLabel('マップ', { exact: true }).boundingBox())!;
+      await page.mouse.move(box.x + sx, box.y + sy);
+      for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -200);
+    });
+
+    await step('(あと片づけ)「リセット」で (11, 26)・(20, 26) をクリックし、「保存する」を押す', 'API の高さがすべて0に戻る', async () => {
+      await page.getByLabel('高さを数字で表示').uncheck();
+      await tool('リセット');
+      await clickTile(page, 11, 26);
+      await clickTile(page, 20, 26);
+      await save();
+      expect((await savedVillageHeights()).every((row) => /^0+$/.test(row))).toBe(true);
+    });
+  }
+);

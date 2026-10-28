@@ -451,6 +451,26 @@ textarea {
   gap: 2px;
 }
 
+/* 高さの道具(＋3段〜−3段・リセット。front#412)は縦に並べ、ほかの道具の2/3くらいの高さにする */
+.items.height-list {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
+.item.compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.item.compact .item-icon {
+  font-size: 14px;
+  line-height: 14px;
+}
+
 .enemy-item {
   display: flex;
   align-items: center;

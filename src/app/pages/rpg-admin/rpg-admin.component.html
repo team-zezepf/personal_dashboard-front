@@ -251,7 +251,8 @@
           @if ((groups.area.length || groups.dungeon.length) && groups.other.length) {
             <div class="item-group">その他</div>
           }
-          <div class="items" [class.enemy-list]="tab() === 'enemy'">
+          <!-- 高さの道具は縦に並べる(front#412) -->
+          <div class="items" [class.enemy-list]="tab() === 'enemy'" [class.height-list]="tab() === 'height'">
             @for (item of groups.other; track item.id) {
               <ng-container *ngTemplateOutlet="paletteItem; context: { $implicit: item }" />
             }
@@ -273,7 +274,7 @@
                 </span>
               </button>
             } @else {
-              <button type="button" class="item" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
+              <button type="button" class="item" [class.compact]="item.tool.kind === 'height'" [class.active]="tool().id === item.id && tool().tool.kind === item.tool.kind" [title]="itemLabel(item)" (click)="pickTool(item)">
                 @if (item.icon) {
                   <span class="item-icon">{{ item.icon }}</span>
                 } @else {
