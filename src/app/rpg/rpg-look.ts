@@ -199,9 +199,11 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   if (pose.sword) drawSword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1');
 
   // 後ろ髪(髪のふちは服より細く)
-  const back = backHair(L, y0, d);
-  if (back) fillShaded(c, back, L.hairColor, [-20, y0 - 50, 20, y0], 0.14, 0.5);
-  hairTies(c, L, y0, d);
+  inHairSpace(c, d, () => {
+    const back = backHair(L, y0, d);
+    if (back) fillShaded(c, back, L.hairColor, [-20, y0 - 50, 20, y0], 0.14, 0.5);
+    hairTies(c, L, y0, d);
+  });
 
   // 体の後ろの腕 → 服 → 手前の腕
   drawArms(c, L, hands.filter((h) => h.back), cc, y0);
@@ -222,21 +224,23 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
     c.fillStyle = 'rgba(255,255,255,0.5)';
     c.beginPath(); c.ellipse(-4, y0 - 38, 4, 2, -0.4, 0, Math.PI * 2); c.fill();
   } else {
-    const fr = frontHair(L, y0, f, d);
-    fillShaded(c, fr, L.hairColor, [-15, y0 - 50, 15, y0 - 15], 0.14, 0.5);
-    // ツヤ: 頭の丸みにそって白い帯を入れる(前髪の中だけ)
-    c.save();
-    c.clip(fr);
-    c.strokeStyle = 'rgba(255,255,255,0.38)';
-    c.lineWidth = 1.8;
-    c.lineCap = 'round';
-    c.beginPath(); c.arc(-1 + f * 0.3, y0 - 33, 9.2, Math.PI * 1.13, Math.PI * 1.6); c.stroke();
-    c.restore();
+    inHairSpace(c, d, () => {
+      const fr = frontHair(L, y0, f, d);
+      fillShaded(c, fr, L.hairColor, [-15, y0 - 50, 15, y0 - 15], 0.14, 0.5);
+      // ツヤ: 頭の丸みにそって白い帯を入れる(前髪の中だけ)
+      c.save();
+      c.clip(fr);
+      c.strokeStyle = 'rgba(255,255,255,0.38)';
+      c.lineWidth = 1.8;
+      c.lineCap = 'round';
+      c.beginPath(); c.arc(-1 + f * 0.3, y0 - 33, 9.2, Math.PI * 1.13, Math.PI * 1.6); c.stroke();
+      c.restore();
+    });
   }
 
   drawFace(c, L, y0, f);
   // 三つ編みは肩から前へ垂らすので、体・顔の手前に描く
-  if (hairBackOf(L) === 'braid') drawBraid(c, L, y0, d);
+  if (hairBackOf(L) === 'braid') inHairSpace(c, d, () => drawBraid(c, L, y0, d));
 
   if (pose.slash && pose.slash > 0) {
     c.strokeStyle = `rgba(255,255,255,${pose.slash})`;
@@ -251,6 +255,19 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
 const HEAD_RY = 12;
 const HEAD_RX_FRONT = 10.6;
 const HEAD_RX_BACK = 9.2;
+
+// 髪は丸い頭(横幅 12)に合わせて描いてあるので、顔幅に合わせて横に縮めて描く(front#407)。
+// 頭は向いている側が少し広いので、縮める中心も向いている側へ少し寄せる
+const HAIR_SX = 0.88;
+function inHairSpace(c: CanvasRenderingContext2D, d: number, draw: () => void): void {
+  const cx = d * (HEAD_RX_FRONT - HEAD_RX_BACK) / 2;
+  c.save();
+  c.translate(cx, 0);
+  c.scale(HAIR_SX, 1);
+  c.translate(-cx, 0);
+  draw();
+  c.restore();
+}
 function headPath(y0: number, d: number): Path2D {
   const p = new Path2D();
   const cy = y0 - 31;
