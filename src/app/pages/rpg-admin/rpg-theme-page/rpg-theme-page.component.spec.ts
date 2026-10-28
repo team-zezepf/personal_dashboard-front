@@ -19,4 +19,9 @@ describe('ベースタブのチェック・保存の形(front#389)', () => {
     expect(input.effect).toEqual(plain.effect);
     expect(toThemeInput({ theme: plain, isNew: false }).id).toBe('plain');
   });
+
+  it('水のマスの段差の側面(front#415)は、選んだ2色ならそのまま、自動なら null で送る', () => {
+    expect(toThemeInput({ theme: { ...plain, liquidEdge: ['#123456', '#654321'] }, isNew: false }).liquidEdge).toEqual(['#123456', '#654321']);
+    expect(toThemeInput({ theme: { ...plain, liquidEdge: null }, isNew: false }).liquidEdge).toBeNull();
+  });
 });

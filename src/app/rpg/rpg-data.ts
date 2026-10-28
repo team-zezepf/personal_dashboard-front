@@ -515,6 +515,8 @@ export interface ThemeDef {
   flower: ThemeFlower;
   flowers: string[];
   edge: [string, string];
+  // 水のマス自身の段差の側面(左の面・右の面。front#415)
+  liquidEdge: [string, string];
   tree: { trunk: string; leaves: [string, string, string]; scale: number };
   rock: [string, string];
   // 装飾(front#389)。1つだけ
@@ -580,6 +582,22 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+/** #rrggbb の明るさを factor 倍にする */
+function darken(hex: string, factor: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * factor).toString(16).padStart(2, '0')).join('');
+}
+
+/** 水のマスの段差の側面を「水の色に合わせる」(自動)ときの2色(左の面・右の面。front#415)。水の色を暗くする */
+export function autoLiquidEdge(liquid: string): [string, string] {
+  return [darken(liquid, 0.78), darken(liquid, 0.62)];
+}
+
+/** 水のマスの段差の側面(front#415)。選んだ2色があればそれ、なければ自動 */
+export function liquidEdgeOf(t: Pick<RpgTheme, 'liquid' | 'liquidEdge'>): [string, string] {
+  return t.liquidEdge?.length === 2 ? [t.liquidEdge[0], t.liquidEdge[1]] : autoLiquidEdge(t.liquid);
+}
+
 /** APIの見た目を、描画で使う形にする。水のマスは、色の明るさを sway(%) だけ時間・場所でゆらす */
 export function toThemeDef(t: RpgTheme): ThemeDef {
   const [h, s, l] = hexToHsl(t.liquid);
@@ -600,6 +618,7 @@ export function toThemeDef(t: RpgTheme): ThemeDef {
     flower: (THEME_FLOWERS as string[]).includes(t.flower) ? (t.flower as ThemeFlower) : 'flower',
     flowers: pick(t.flowers, 3, '#ffffff'),
     edge: pick(t.edge, 2, '#a0754d') as [string, string],
+    liquidEdge: liquidEdgeOf(t),
     tree: { trunk: t.trunk, leaves: pick(t.leaves, 3, '#46a851') as [string, string, string], scale: t.treeScale },
     rock: pick(t.rock, 2, '#9aa3ad') as [string, string],
     effect: { kind, color: t.effect?.color ?? '#ffffff', alpha: t.effect?.alpha ?? 0.5 }

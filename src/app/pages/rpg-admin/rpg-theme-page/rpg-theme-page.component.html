@@ -108,6 +108,17 @@
               <input type="color" aria-label="波の光の色" [value]="sel.theme.wave" (input)="setWave(true, $any($event.target).value)" />
             }
           </div>
+          <!-- 水のマス自身の段差の側面(front#415)。オンなら水の色を暗くした色 -->
+          <div class="f" role="group" aria-label="水のマスの段差の側面">
+            <span>段差の側面</span>
+            <label class="auto">
+              <input type="checkbox" [checked]="!sel.theme.liquidEdge" (change)="setLiquidEdgeAuto($any($event.target).checked)" />水の色に合わせる
+            </label>
+            @for (i of [0, 1]; track i) {
+              <input type="color" [attr.aria-label]="'水のマスの段差の側面 ' + (i + 1)" [value]="liquidEdgeColors(sel.theme)[i]" [disabled]="!sel.theme.liquidEdge" (input)="setLiquidEdge(i, $any($event.target).value)" />
+            }
+          </div>
+          <p class="hint">「水の色に合わせる」がオンのときは、水の色を暗くした2色（左の面・右の面）で描きます。オフにすると2色を選べます。</p>
         </div>
 
         <div class="section">

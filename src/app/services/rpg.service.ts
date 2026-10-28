@@ -55,7 +55,7 @@ const SE_FIELDS = `id name filename size createdAt`;
 
 // ダンジョンの見た目(front#389 / api#185)
 const THEME_FIELDS = `
-  id name liquidName sky grass path sand edge stone grout brick mortar liquid liquidSway wave
+  id name liquidName sky grass path sand edge stone grout brick mortar liquid liquidSway wave liquidEdge
   flower flowers trunk leaves treeScale rock effect { kind color alpha } sortOrder updatedAt
 `;
 

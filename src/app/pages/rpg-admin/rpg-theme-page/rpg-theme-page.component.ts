@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgDungeon, RpgMap, RpgMapObject, RpgTheme, RpgThemeInput } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_FLOWERS, THEME_FLOWER_LABELS, setThemes, toThemeDef } from '../../../rpg/rpg-data';
+import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_FLOWERS, THEME_FLOWER_LABELS, liquidEdgeOf, setThemes, toThemeDef } from '../../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../../rpg/rpg-game';
 import { RpgRenderer } from '../../../rpg/rpg-render';
 
@@ -39,7 +39,8 @@ interface ThemeRow {
  * g 草 / f 花 / p 道 / s 砂 / w 水 / t 石畳 / r レンガ
  */
 const PREVIEW_GROUND = ['ggggggggg', 'gfggppggg', 'ggpppgwwg', 'gpptpgwwg', 'gpttrgggg', 'ggtrrgsgg', 'gggggssgf', 'gfgggggfg', 'ggggggggg'];
-const PREVIEW_HEIGHTS = ['110000000', '100000000', '000000000', '000000000', '000000000', '000000000', '000000000', '000000000', '000000000'];
+// 水の手前の列(y=3)は1段くぼませ、水のマスの段差の側面(front#415)が見えるようにする
+const PREVIEW_HEIGHTS = ['110000000', '100000000', '000000000', '000000aa0', '000000000', '000000000', '000000000', '000000000', '000000000'];
 const PREVIEW_OBJECTS: RpgMapObject[] = [
   { type: 'tree', x: 1, y: 6, torch: false },
   { type: 'tree', x: 7, y: 1, torch: false },
@@ -232,6 +233,24 @@ export class RpgThemePageComponent implements OnDestroy {
   /** 波の光(なしにすると波を出さない) */
   setWave(on: boolean, color?: string): void {
     this.update((t) => (t.wave = on ? (color ?? t.wave ?? '#ffffff') : null));
+  }
+
+  /** 水のマスの段差の側面の2色(front#415)。自動なら水の色を暗くした色 */
+  liquidEdgeColors(t: RpgTheme): [string, string] {
+    return liquidEdgeOf(t);
+  }
+
+  /** 水のマスの段差の側面を「水の色に合わせる」(自動)にする・やめる。やめたときは、今の自動の色から選び始める */
+  setLiquidEdgeAuto(auto: boolean): void {
+    this.update((t) => (t.liquidEdge = auto ? null : liquidEdgeOf(t)));
+  }
+
+  setLiquidEdge(i: number, color: string): void {
+    this.update((t) => {
+      const colors = liquidEdgeOf(t);
+      colors[i] = color;
+      t.liquidEdge = colors;
+    });
   }
 
   setFlower(kind: string): void {
