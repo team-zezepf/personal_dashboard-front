@@ -106,7 +106,7 @@ export class CalendarComponent {
 
   // 表示用(繰り返し予定を実日付に展開したもの)。編集・削除は常に元の予定(マスター)に対して行う
   readonly schedules = this.dashboardService.scheduleOccurrences;
-  readonly viewMode = signal<'month' | 'week'>('month');
+  readonly viewMode = signal<'month' | 'week'>('week');
 
   // Currently viewed year and month (0-indexed)
   readonly viewYear = signal<number>(new Date().getFullYear());

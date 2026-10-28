@@ -12,6 +12,12 @@ function today(): string {
 const selectedDayPanel = (page: Page) =>
   page.locator('article', { has: page.getByRole('heading', { name: '選択日の予定' }) });
 
+// カレンダーは週表示で開くので、月表示に切り替えてから今日の日付マスを押す
+async function openTodayInMonthView(page: Page, date: string) {
+  await page.locator('.calendar-view-button', { hasText: '月表示' }).click();
+  await page.locator(`[data-date="${date}"]`).click();
+}
+
 test(
   'E2E-03 カレンダーで予定を登録すると保存され、読み込み直しても残っている。削除すると消える',
   caseOf({
@@ -31,8 +37,8 @@ test(
 
     await loginAsE2E(page, step);
 
-    await step(`カレンダーで今日(${date})を選ぶ`, '選んだ日の予定の一覧が表示される', async () => {
-      await page.locator(`[data-date="${date}"]`).click();
+    await step(`カレンダーを「月表示」に切り替え、今日(${date})を選ぶ`, '選んだ日の予定の一覧が表示される', async () => {
+      await openTodayInMonthView(page, date);
       await expect(selectedDayPanel(page)).toBeVisible();
     }, { focus: () => selectedDayPanel(page) });
 
@@ -52,9 +58,9 @@ test(
       await expect(page.getByText('保存完了')).toBeVisible({ timeout: 15_000 });
     });
 
-    await step('画面を読み込み直し、もう一度今日を選ぶ', '登録した予定が残っている', async () => {
+    await step('画面を読み込み直し、「月表示」に切り替えて今日を選ぶ', '登録した予定が残っている', async () => {
       await page.reload();
-      await page.locator(`[data-date="${date}"]`).click();
+      await openTodayInMonthView(page, date);
       await expect(event()).toBeVisible();
     }, { focus: () => selectedDayPanel(page) });
 
@@ -64,9 +70,9 @@ test(
       await expect(page.getByText('保存完了')).toBeVisible({ timeout: 15_000 });
     }, { focus: () => selectedDayPanel(page) });
 
-    await step('画面を読み込み直し、もう一度今日を選ぶ', '削除した予定は出ない', async () => {
+    await step('画面を読み込み直し、「月表示」に切り替えて今日を選ぶ', '削除した予定は出ない', async () => {
       await page.reload();
-      await page.locator(`[data-date="${date}"]`).click();
+      await openTodayInMonthView(page, date);
       await expect(selectedDayPanel(page)).toBeVisible();
       await expect(event()).toHaveCount(0);
     }, { focus: () => selectedDayPanel(page) });
