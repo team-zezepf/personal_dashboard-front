@@ -1,5 +1,5 @@
 import { BgmAudio } from './rpg-bgm';
-import { SE_SLOTS, SePlayer, loadSeSettings } from './rpg-se';
+import { SE_GROUP_LABELS, SE_SLOTS, SePlayer, loadSeSettings, windowSound } from './rpg-se';
 
 class FakeAudio implements BgmAudio {
   src = '';
@@ -48,14 +48,37 @@ describe('SePlayer(front#278)', () => {
     player.setSounds(new Map([['hit_flesh', '/rpg-se/slash.wav'], ['attack_fire', '/rpg-se/fire.ogg']]));
   });
 
-  it('場面は、叩いたものの素材5つ(front#282)と、敵の攻撃11種類(魔法陣 front#327)と、レベルアップ・回復(front#335)', () => {
+  it('場面は、叩いたものの素材5つ(front#282)と、敵の攻撃11種類(魔法陣 front#327)と、レベルアップ・回復(front#335)・アイテムを拾う・ウィンドウを開く・閉じる(front#419)', () => {
     expect(SE_SLOTS.map((s) => s.slot)).toEqual([
       'hit_flesh', 'hit_soft', 'hit_stone', 'hit_wood', 'hit_grass', 'attack_tackle', 'attack_claw', 'attack_bite', 'attack_jump', 'attack_fire',
-      'attack_water', 'attack_wind', 'attack_thunder', 'attack_dark', 'attack_shockwave', 'attack_circle', 'level_up', 'heal'
+      'attack_water', 'attack_wind', 'attack_thunder', 'attack_dark', 'attack_shockwave', 'attack_circle', 'level_up', 'heal',
+      'item_pick', 'ui_open', 'ui_close'
     ]);
-    expect(SE_SLOTS.filter((s) => s.group === 'player').map((s) => s.label)).toEqual(['⭐ レベルアップ', '💚 回復する']);
+    expect(SE_SLOTS.filter((s) => s.group === 'player').map((s) => s.label)).toEqual(['⭐ レベルアップ', '💚 回復する', '🎒 アイテムを拾う']);
+    expect(SE_SLOTS.filter((s) => s.group === 'ui').map((s) => s.label)).toEqual(['📂 ウィンドウを開く', '📁 ウィンドウを閉じる']);
+    expect(SE_GROUP_LABELS.ui).toBe('操作');
     expect(SE_SLOTS[0].label).toBe('🐾 生き物を叩く');
     expect(SE_SLOTS[9].label).toContain('炎');
+  });
+
+  it('開いているウィンドウが変わったときの操作音(front#419)。開けば「開く」、閉じれば「閉じる」、別のウィンドウへ移れば「開く」', () => {
+    expect(windowSound([], [])).toBeNull();
+    expect(windowSound([], ['settings'])).toBe('ui_open');
+    expect(windowSound(['settings'], [])).toBe('ui_close');
+    expect(windowSound(['status'], ['status'])).toBeNull();
+    // ステータスの上に「捨てる」を開く・閉じる
+    expect(windowSound(['status'], ['status', 'discard'])).toBe('ui_open');
+    expect(windowSound(['status', 'discard'], ['status'])).toBe('ui_close');
+    // 別のウィンドウへ移る
+    expect(windowSound(['status'], ['look'])).toBe('ui_open');
+  });
+
+  it('鳴らした場面を、新しい順に覚える(20個まで)', () => {
+    player.unlock();
+    player.play('hit_flesh');
+    player.play('attack_fire');
+    player.play('heal');
+    expect(player.history).toEqual(['attack_fire', 'hit_flesh']);
   });
 
   it('画面をクリックするまでは鳴らさない。クリックしたあとは、選んだ音を1回だけ鳴らす', () => {

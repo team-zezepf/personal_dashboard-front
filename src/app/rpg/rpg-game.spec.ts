@@ -899,6 +899,8 @@ describe('RpgGame', () => {
       expect(game.drops).toEqual([]);
       expect(game.player.inv['potion']).toBe(before + 2);
       expect(ev.messages.at(-1)).toBe('回復薬×2を拾った');
+      // 拾う効果音(front#419)
+      expect(ev.sounds.at(-1)).toBe('item_pick');
     });
 
     it('近くのマスがふさがっていれば、空いているマスに落とし、ほかのアイテムとも重ならない', () => {
