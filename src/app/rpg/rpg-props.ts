@@ -699,3 +699,114 @@ export function drawSavePoint(c: CanvasRenderingContext2D, cx: number, cy: numbe
   poly(c, [[cx, gy - 12], [cx + 7, gy], [cx, gy + 10]], shade(gem, 0.75));
   poly(c, [[cx, gy - 12], [cx - 3, gy - 1], [cx, gy + 5]], 'rgba(255, 255, 255, 0.55)');
 }
+
+// ===== 海の置物(front#421) =====
+
+/**
+ * サンゴ。根元から枝分かれして上へ伸びる、壊れない飾り。
+ * 色合い: 明るい色 = 枝の先、暗い色 = 根元(枝は根元から先へ、だんだん明るくなる)
+ */
+export function drawCoral(c: CanvasRenderingContext2D, cx: number, cy: number, tint?: Tint | null): void {
+  const tip = tint?.m ?? '#f472b6';
+  const root = tint?.d ?? '#be185d';
+  shadow(c, cx, cy + 1, 13, 5, 0.18);
+  c.lineCap = 'round';
+  const branch = (x: number, y: number, len: number, ang: number, depth: number, seed: number): void => {
+    const nx = x + Math.cos(ang) * len;
+    const ny = y + Math.sin(ang) * len;
+    c.strokeStyle = mix(root, tip, 1 - depth / 4);
+    c.lineWidth = 1.2 + depth * 1.1;
+    c.beginPath(); c.moveTo(x, y); c.lineTo(nx, ny); c.stroke();
+    if (depth > 1) {
+      const spread = 0.38 + rnd(seed) * 0.25;
+      branch(nx, ny, len * 0.74, ang - spread, depth - 1, seed * 2 + 1);
+      branch(nx, ny, len * 0.74, ang + spread, depth - 1, seed * 2 + 2);
+    } else {
+      // 枝の先の丸いつぶ
+      c.fillStyle = mix(tip, '#ffffff', 0.35);
+      c.beginPath(); c.arc(nx, ny, 1.6, 0, Math.PI * 2); c.fill();
+    }
+  };
+  branch(cx - 4, cy - 1, 8, -Math.PI / 2 - 0.35, 3, 3);
+  branch(cx + 3, cy, 10, -Math.PI / 2 + 0.2, 4, 7);
+  // 根元の岩
+  c.fillStyle = mix(root, '#3f3f46', 0.5);
+  c.beginPath(); c.ellipse(cx, cy - 1, 8, 3.4, 0, 0, Math.PI * 2); c.fill();
+}
+
+/**
+ * 海藻。3本の長い葉が、時間でゆらゆら揺れる。壊れる置物(草むらと同じく1回で壊れる)。
+ * 色合い: 明るい色 = 葉の先、暗い色 = 根元
+ */
+export function drawKelp(c: CanvasRenderingContext2D, cx: number, cy: number, time: number, tint?: Tint | null): void {
+  const tip = tint?.m ?? '#3fae6a';
+  const root = tint?.d ?? '#1f6b40';
+  shadow(c, cx, cy + 1, 11, 4.5, 0.15);
+  for (const [dx, len, ph] of [[-5, 26, 0], [5, 23, 1.7], [0, 32, 3.1]] as const) {
+    const g = c.createLinearGradient(0, cy, 0, cy - len);
+    g.addColorStop(0, root);
+    g.addColorStop(1, tip);
+    c.fillStyle = g;
+    // 左のふち・右のふちを、根元から先へたどる(先へいくほど大きく揺れる)
+    const pts: Pt[] = [];
+    const n = 7;
+    for (let i = 0; i <= n; i++) {
+      const k = i / n;
+      const sway = Math.sin(time * 1.8 + ph + k * 2.4) * 4 * k;
+      pts.push([cx + dx + sway, cy - k * len]);
+    }
+    const w = (k: number) => 2.6 * Math.sin(Math.PI * Math.min(1, k * 1.15 + 0.08));
+    c.beginPath();
+    pts.forEach(([x, y], i) => (i ? c.lineTo(x - w(i / n), y) : c.moveTo(x - w(0), y)));
+    for (let i = n; i >= 0; i--) c.lineTo(pts[i][0] + w(i / n), pts[i][1]);
+    c.closePath();
+    c.fill();
+  }
+}
+
+/**
+ * 大きな貝(二枚貝)。少し口を開けて、中に真珠が見える。壊れる置物(つぼと同じく中身を入れられる)。
+ * hits: 叩いた回数(ひびが入る)。色合い: 明るい色 = 貝がら、暗い色 = すじ
+ */
+export function drawShell(c: CanvasRenderingContext2D, cx: number, cy: number, hits: number, tint?: Tint | null): void {
+  const body = tint?.m ?? '#fbcfe8';
+  const rib = tint?.d ?? '#db8fb5';
+  shadow(c, cx, cy + 1, 14, 5.5, 0.2);
+  // 下の貝がら
+  c.fillStyle = shade(body, 0.85);
+  c.beginPath(); c.ellipse(cx, cy - 3, 13, 5.5, 0, 0, Math.PI * 2); c.fill();
+  // 真珠
+  const pg = c.createRadialGradient(cx - 1.5, cy - 7, 0.5, cx, cy - 6, 4);
+  pg.addColorStop(0, '#ffffff');
+  pg.addColorStop(1, '#cbd5e1');
+  c.fillStyle = pg;
+  c.beginPath(); c.arc(cx, cy - 6, 3.4, 0, Math.PI * 2); c.fill();
+  // 上の貝がら(扇の形)
+  const top = cy - 22;
+  const g = c.createLinearGradient(0, top, 0, cy - 5);
+  g.addColorStop(0, mix(body, '#ffffff', 0.35));
+  g.addColorStop(1, body);
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(cx - 13, cy - 6);
+  c.quadraticCurveTo(cx - 14, top + 2, cx, top);
+  c.quadraticCurveTo(cx + 14, top + 2, cx + 13, cy - 6);
+  c.quadraticCurveTo(cx, cy - 10, cx - 13, cy - 6);
+  c.closePath();
+  c.fill();
+  // すじ(根元の1点から扇形に)
+  c.strokeStyle = rib;
+  c.lineWidth = 1.1;
+  for (let i = -3; i <= 3; i++) {
+    c.beginPath();
+    c.moveTo(cx + i * 1.2, cy - 8);
+    c.quadraticCurveTo(cx + i * 3.4, top + 4 + Math.abs(i) * 1.5, cx + i * 3.6, top + 2 + Math.abs(i) * 2.2);
+    c.stroke();
+  }
+  // 叩いた回数だけひび
+  if (hits > 0) {
+    c.strokeStyle = 'rgba(31,41,55,0.7)';
+    c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(cx - 4, top + 4); c.lineTo(cx - 1, top + 9); c.lineTo(cx - 4, top + 13); c.stroke();
+  }
+}

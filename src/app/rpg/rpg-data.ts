@@ -302,17 +302,20 @@ export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, V
 export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor' | 'wall'
-  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket' | 'save_point';
+  | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket' | 'save_point'
+  // 海の置物(front#421)
+  | 'coral' | 'kelp' | 'shell';
 export const STATIC_TYPES: StaticType[] = [
-  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket', 'save_point'
+  'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket', 'save_point',
+  'coral', 'kelp', 'shell'
 ];
 
-// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)、木のおけ(front#321)。ほかの置物は壊れない
-export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1, bucket: 1 };
+// 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)、木のおけ(front#321)、海藻・大きな貝(front#421)。ほかの置物は壊れない
+export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1, bucket: 1, kelp: 1, shell: 2 };
 export const isBreakable = (type: string): boolean => !!BREAK_HITS[type as StaticType];
 // 叩いたときの音の素材(front#282)。叩ける(壊れる)置物ごと
 export const OBJECT_HIT_MATERIAL: Partial<Record<StaticType, 'stone' | 'wood' | 'grass'>> = {
-  grass: 'grass', fern: 'grass', rock: 'stone', crystal: 'stone', armor: 'stone', pot: 'stone', bones: 'stone', chest: 'wood', barrel: 'wood', bucket: 'wood'
+  grass: 'grass', fern: 'grass', rock: 'stone', crystal: 'stone', armor: 'stone', pot: 'stone', bones: 'stone', chest: 'wood', barrel: 'wood', bucket: 'wood', kelp: 'grass', shell: 'stone'
 };
 // 中身が消えて(アイテムを取る・敵を倒す・中身なしは壊れて)から、元に戻るまでの秒数
 export const BREAK_RESPAWN_SEC = 10;
@@ -321,7 +324,8 @@ export const SAVE_POINT = 'save_point';
 export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
   barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板',
-  bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ', save_point: 'セーブポイント'
+  bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ', save_point: 'セーブポイント',
+  coral: 'サンゴ', kelp: '海藻', shell: '大きな貝'
 };
 
 export interface StaticObj {
@@ -387,6 +391,8 @@ export const DEFAULT_TINTS: Partial<Record<StaticType, { m: string; d: string }>
   pot: { m: '#c8693a', d: '#8f4322' }, bones: { m: '#efeadb', d: '#7c7363' }, bookshelf: { m: '#7a4b25', d: '#5e3a1c' },
   candle: { m: '#71717a', d: '#3f3f46' }, grave: { m: '#9ca3af', d: '#6b7280' }, bars: { m: '#6b6880', d: '#1f1d2b' },
   shackle: { m: '#6b6880', d: '#1f1d2b' }, bucket: { m: '#966131', d: '#3f3f46' },
+  // 海の置物(front#421)。サンゴ・海藻は 明るい色 = 先、暗い色 = 根元。大きな貝は 明るい色 = 貝がら、暗い色 = すじ
+  coral: { m: '#f472b6', d: '#be185d' }, kelp: { m: '#3fae6a', d: '#1f6b40' }, shell: { m: '#fbcfe8', d: '#db8fb5' },
   // セーブポイント(front#337)。明るい色 = 光る石、暗い色 = 台座
   save_point: { m: '#8b5cf6', d: '#9ca3af' }
 };
@@ -491,10 +497,10 @@ export function staticDepth(o: StaticObj): number {
   return Math.max(...objectTiles(o).map(([x, y]) => x + y));
 }
 
-/** 見た目の装飾(front#389)。none なし / stars 装飾1(星) / fireflies 装飾2(ホタル) / vignette 装飾3(周りを暗く) */
-export type ThemeEffectKind = 'none' | 'stars' | 'fireflies' | 'vignette';
-export const THEME_EFFECT_KINDS: ThemeEffectKind[] = ['none', 'stars', 'fireflies', 'vignette'];
-export const THEME_EFFECT_LABELS: Record<ThemeEffectKind, string> = { none: 'なし', stars: '装飾1', fireflies: '装飾2', vignette: '装飾3' };
+/** 見た目の装飾(front#389)。none なし / stars 装飾1(星) / fireflies 装飾2(ホタル) / vignette 装飾3(周りを暗く) / bubbles 装飾4(泡。front#421) */
+export type ThemeEffectKind = 'none' | 'stars' | 'fireflies' | 'vignette' | 'bubbles';
+export const THEME_EFFECT_KINDS: ThemeEffectKind[] = ['none', 'stars', 'fireflies', 'vignette', 'bubbles'];
+export const THEME_EFFECT_LABELS: Record<ThemeEffectKind, string> = { none: 'なし', stars: '装飾1', fireflies: '装飾2', vignette: '装飾3', bubbles: '装飾4' };
 export type ThemeFlower = 'flower' | 'glow' | 'tuft' | 'crack';
 export const THEME_FLOWERS: ThemeFlower[] = ['flower', 'glow', 'tuft', 'crack'];
 export const THEME_FLOWER_LABELS: Record<ThemeFlower, string> = { flower: '花', glow: '光る粒', tuft: '草の房', crack: 'ひび割れ' };
@@ -559,6 +565,14 @@ export const DEFAULT_THEMES: RpgTheme[] = [
     liquid: '#000000', liquidSway: 0, wave: null, flower: 'crack', flowers: ['#3f3b52', '#3f3b52', '#3f3b52'],
     trunk: '#8a5a35', leaves: ['#3f9b48', '#46a851', '#5cbf64'], treeScale: 1, rock: ['#4b4763', '#625d7d'],
     effect: { kind: 'stars', color: '#ffffff', alpha: 0.5 }, sortOrder: 4
+  },
+  {
+    id: 'sea', name: '海', liquidName: '海',
+    sky: ['#0e5e8f', '#7fd3f2'], grass: ['#e9dcb0', '#e3d4a5', '#efe3bb'], path: ['#cdb98a', '#c6b282'], sand: '#f7f0d8', edge: ['#c9b07a', '#b39a66'],
+    stone: ['#cfe3e6', '#c3d9dd', '#d9ecee'], grout: '#7fa8b0', brick: ['#5f9ea8', '#56939d', '#69a8b2'], mortar: '#d9ecee',
+    liquid: '#1e88c8', liquidSway: 5, wave: '#e6fbff', flower: 'glow', flowers: ['#fdf6e3', '#a5f3fc', '#fbcfe8'],
+    trunk: '#9c7a4f', leaves: ['#2fa37a', '#33b086', '#45c495'], treeScale: 1, rock: ['#7c8b94', '#9fb0b9'],
+    effect: { kind: 'bubbles', color: '#e6fbff', alpha: 0.55 }, sortOrder: 5
   }
 ];
 

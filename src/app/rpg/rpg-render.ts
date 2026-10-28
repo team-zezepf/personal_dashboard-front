@@ -5,7 +5,7 @@ import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawGrave, drawPot, drawSavePoint, drawShackle, drawSign, relTint, tintOf } from './rpg-props';
+import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawCoral, drawGrave, drawKelp, drawPot, drawSavePoint, drawShackle, drawShell, drawSign, relTint, tintOf } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -46,6 +46,8 @@ export class RpgRenderer {
   private readonly guardWas = new WeakMap<Enemy, boolean>();
   // 割れている障壁(画面上の中心・大きさと、割れた時刻)
   private shatters: { x: number; y: number; rx: number; ry: number; t: number }[] = [];
+  // 装飾4: 泡(front#421)。位置は画面に対する割合(0〜1)、大きさ・のぼる速さ(画面の高さに対する割合/秒)はばらばら
+  private readonly bubbles = Array.from({ length: 36 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 3 + 1.5, v: Math.random() * 0.05 + 0.03 }));
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
   // 家の形・向きごとの部品(front#236。毎回求めないよう、覚えておく)
   private readonly houses = new Map<string, { pieces: HousePiece[]; ridge: number; door: { at: readonly [number, number]; normal: readonly [number, number] } }>();
@@ -130,6 +132,8 @@ export class RpgRenderer {
       ctx.fillStyle = v;
       ctx.fillRect(0, 0, w, h);
     }
+    // 装飾4: 泡(front#421。色と濃さは見た目で決める)。画面の下から、左右にゆれながらゆっくりのぼる
+    if (pal.effect.kind === 'bubbles') this.drawBubbles(w, h, pal.effect.color, pal.effect.alpha);
   }
 
   // マップ上の位置(cx, cy)が画面に映るか。margin はその位置から絵がはみ出す大きさ。
@@ -610,6 +614,10 @@ export class RpgRenderer {
       case 'bucket': return drawBucket(this.ctx, sx, sy, t);
       // セーブポイント(front#337)
       case 'save_point': return drawSavePoint(this.ctx, sx, sy, this.time, t);
+      // 海の置物(front#421)
+      case 'coral': return drawCoral(this.ctx, sx, sy, t);
+      case 'kelp': return drawKelp(this.ctx, sx, sy, this.time, t);
+      case 'shell': return drawShell(this.ctx, sx, sy, o.hits ?? 0, t);
       case 'sign': {
         // 看板(front#274)は、決めた向き(front#333)か、いちばん近いほかのダンジョンへの端を指す。行き先のダンジョンの色の帯は自動のときだけ
         const ptr = signPointing(this.game.maps, this.game.area, o);
@@ -1023,6 +1031,24 @@ export class RpgRenderer {
         radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, radius: def.radius, hitK: hitAt / duration
       });
     }
+  }
+
+  private drawBubbles(w: number, h: number, color: string, alpha: number): void {
+    const ctx = this.ctx;
+    ctx.lineWidth = 1.2;
+    for (const b of this.bubbles) {
+      const k = (((b.y - this.time * b.v) % 1) + 1) % 1;
+      const x = b.x * w + Math.sin(this.time * 1.3 + b.ph) * 6;
+      const y = k * (h + 20) - 10;
+      // 画面の上に近づくほど薄くする
+      ctx.globalAlpha = alpha * Math.min(1, k * 3);
+      ctx.strokeStyle = color;
+      ctx.beginPath(); ctx.arc(x, y, b.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.globalAlpha *= 0.8;
+      ctx.beginPath(); ctx.arc(x - b.r * 0.35, y - b.r * 0.35, b.r * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   private drawFireflies(color: string): void {

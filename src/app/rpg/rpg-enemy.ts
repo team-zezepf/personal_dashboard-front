@@ -8,7 +8,9 @@ import { drawArmor, drawChest, mix, shade } from './rpg-props';
  */
 
 export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'ghost' | 'knight' | 'lord' | 'bat' | 'skeleton' | 'plant' | 'dragon' | 'mimic' | 'livingarmor' | 'rabbit' | 'bee' | 'cerberus' | 'rat'
-  | 'grimoire' | 'shade' | 'wardcrystal' | 'gargoyle';
+  | 'grimoire' | 'shade' | 'wardcrystal' | 'gargoyle'
+  // 海の敵(front#421)
+  | 'crab' | 'jellyfish' | 'fishman' | 'kraken';
 export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave' | 'circle';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
@@ -19,7 +21,9 @@ export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['bat', 'コウモリ'], ['skeleton', 'ガイコツ'], ['plant', 'ひとくいそう'], ['dragon', 'ドラゴン'],
   ['mimic', 'ミミック'], ['livingarmor', 'リビングアーマー'], ['rabbit', 'うさぎ'], ['bee', 'はち'], ['cerberus', 'ケルベロス'], ['rat', 'ネズミ'],
   // 闇の魔導士の取り巻きとガーゴイル(front#329)
-  ['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル']
+  ['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル'],
+  // 海の敵(front#421)
+  ['crab', 'カニ'], ['jellyfish', 'クラゲ'], ['fishman', '魚人'], ['kraken', 'イカ']
 ];
 
 export interface AttackSpec {
@@ -126,18 +130,20 @@ setEnemies(DEFAULT_ENEMIES);
 const HIT_HEIGHT: Record<EnemyShape, number> = {
   slime: 28, mushroom: 36, wisp: 46, raptor: 40, golem: 62, ghost: 50, knight: 56, lord: 92, bat: 46, skeleton: 48, plant: 50, dragon: 68,
   mimic: 30, livingarmor: 56, rabbit: 44, bee: 46, cerberus: 62, rat: 26,
-  grimoire: 60, shade: 72, wardcrystal: 62, gargoyle: 72
+  grimoire: 60, shade: 72, wardcrystal: 62, gargoyle: 72,
+  crab: 32, jellyfish: 50, fishman: 52, kraken: 84
 };
 const RING: Record<EnemyShape, number> = {
   slime: 1, mushroom: 1, wisp: 1, raptor: 1.2, golem: 1.5, ghost: 1, knight: 1, lord: 1.2, bat: 0.9, skeleton: 1, plant: 1.1, dragon: 1.6,
   mimic: 1.1, livingarmor: 1, rabbit: 1, bee: 0.8, cerberus: 1.5, rat: 0.9,
-  grimoire: 0.9, shade: 1, wardcrystal: 1, gargoyle: 1.3
+  grimoire: 0.9, shade: 1, wardcrystal: 1, gargoyle: 1.3,
+  crab: 1.3, jellyfish: 0.9, fishman: 1, kraken: 1.8
 };
 
 export const hitHeightOf = (def: EnemyDef) => HIT_HEIGHT[def.shape] * def.size;
 export const ringSizeOf = (def: EnemyDef) => RING[def.shape] * def.size;
 // 横に長い形を「敵」タブの見本の枠に収めるための縮め方
-export const thumbFitOf = (def: EnemyDef) => (def.shape === 'dragon' ? 0.72 : 1);
+export const thumbFitOf = (def: EnemyDef) => (def.shape === 'dragon' ? 0.72 : def.shape === 'kraken' ? 0.8 : 1);
 
 /**
  * 一覧の見本(敵タブの一覧・体の形、マップ作成のパレット。front#310)。足元を下のほうに置き、大きさに合わせて縮める。
@@ -165,7 +171,8 @@ const HIT_MATERIAL_IDS = HIT_MATERIALS.map(([id]) => id);
 const SHAPE_MATERIAL: Record<EnemyShape, HitMaterial> = {
   slime: 'soft', mushroom: 'flesh', wisp: 'flesh', raptor: 'flesh', golem: 'stone', ghost: 'flesh', knight: 'stone', lord: 'flesh',
   bat: 'flesh', skeleton: 'stone', plant: 'flesh', dragon: 'flesh', mimic: 'wood', livingarmor: 'stone', rabbit: 'flesh', bee: 'flesh', cerberus: 'flesh', rat: 'flesh',
-  grimoire: 'soft', shade: 'soft', wardcrystal: 'stone', gargoyle: 'stone'
+  grimoire: 'soft', shade: 'soft', wardcrystal: 'stone', gargoyle: 'stone',
+  crab: 'stone', jellyfish: 'soft', fishman: 'flesh', kraken: 'soft'
 };
 export const shapeMaterialOf = (shape: EnemyShape): HitMaterial => SHAPE_MATERIAL[shape];
 /** 叩いたときの音の素材。「敵」タブで選んでいればそれ、なければ体の形から */
@@ -305,6 +312,10 @@ export function drawEnemyBody(c: CanvasRenderingContext2D, def: EnemyDef, pose: 
       break;
     case 'wardcrystal': top = drawWardCrystal(c, def, pose); break;
     case 'gargoyle': top = drawGargoyle(c, def, pose); break;
+    case 'crab': top = drawCrab(c, def, pose); break;
+    case 'jellyfish': top = drawJellyfish(c, def, pose); break;
+    case 'fishman': top = drawFishman(c, def, pose); break;
+    case 'kraken': top = drawKraken(c, def, pose); break;
   }
   if (def.glow) drawGlow(c, HIT_HEIGHT[def.shape], pose.time, true);
   c.restore();
@@ -2107,4 +2118,275 @@ function drawShockwave(c: CanvasRenderingContext2D, k: number, time: number, x: 
     c.beginPath(); c.arc(0, 0, r * q, 0, Math.PI * 2); c.stroke();
   }
   c.restore();
+}
+
+// ===== 海の敵(front#421) =====
+
+// カニ。横に長いこうらと、大きなハサミ2つ。歩くと足を細かく動かし、襲ってくるときはハサミを振り上げる
+function drawCrab(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const bob = p.moving ? Math.abs(Math.sin(t * 14)) * 1.2 : Math.sin(t * 2) * 0.4;
+  const lunge = (p.lunge ?? 0) * 7;
+  const body = p.flash ? '#fff' : def.color;
+  const dark = p.flash ? '#fff' : def.dark;
+  shadow(c, 18, 6);
+  c.save();
+  c.translate(d * lunge, 0);
+  // 足(左右に3本ずつ)
+  c.strokeStyle = dark;
+  c.lineWidth = 2;
+  c.lineCap = 'round';
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < 3; i++) {
+      const wig = p.moving ? Math.sin(t * 16 + i * 2 + (s > 0 ? Math.PI : 0)) * 2 : 0;
+      c.beginPath();
+      c.moveTo(s * 9, -7 - bob + i * 1.5);
+      c.quadraticCurveTo(s * 17, -12 - bob + i * 2, s * (18 + i * 1.5), wig * 0.4);
+      c.stroke();
+    }
+  }
+  // ハサミ(襲ってくるときは高く振り上げ、開け閉めする)
+  const raise = p.aggro ? 6 + Math.sin(t * 8) * 2 : 0;
+  const snap = Math.abs(Math.sin(t * (p.aggro ? 9 : 2))) * 0.5;
+  for (const s of [-1, 1]) {
+    const hx = s * 18;
+    const hy = -17 - bob - raise;
+    c.strokeStyle = body;
+    c.lineWidth = 3;
+    c.beginPath(); c.moveTo(s * 10, -11 - bob); c.lineTo(hx, hy + 3); c.stroke();
+    c.save();
+    c.translate(hx, hy);
+    c.rotate(s * -0.3);
+    c.fillStyle = body;
+    c.beginPath(); c.ellipse(0, 0, 6.5, 5, 0, 0, Math.PI * 2); c.fill();
+    // はさみの刃(上・下)
+    c.fillStyle = dark;
+    c.beginPath(); c.moveTo(0, -2); c.lineTo(s * 9, -6 - snap * 5); c.lineTo(s * 4, -1); c.closePath(); c.fill();
+    c.fillStyle = body;
+    c.beginPath(); c.moveTo(0, 1); c.lineTo(s * 9, -1 + snap * 2); c.lineTo(s * 3, 3); c.closePath(); c.fill();
+    c.restore();
+  }
+  // こうら
+  const g = c.createRadialGradient(-3, -14 - bob, 2, 0, -10 - bob, 16);
+  g.addColorStop(0, p.flash ? '#fff' : mix(def.color, '#ffffff', 0.3));
+  g.addColorStop(1, dark);
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(0, -10 - bob, 13, 8, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.25)';
+  c.beginPath(); c.ellipse(-4, -14 - bob, 4, 2, -0.3, 0, Math.PI * 2); c.fill();
+  // 飛び出した目
+  c.strokeStyle = dark;
+  c.lineWidth = 1.6;
+  for (const s of [-1, 1]) {
+    c.beginPath(); c.moveTo(s * 4, -16 - bob); c.lineTo(s * 5 + d, -22 - bob); c.stroke();
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(s * 5 + d, -23 - bob, 2.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = p.aggro ? '#dc2626' : '#1f2937';
+    c.beginPath(); c.arc(s * 5 + d * 1.6, -23 - bob, 1.3, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  return 30 + raise;
+}
+
+// クラゲ。半透明のかさがふわふわ上下し、長い足がゆらめく。襲ってくるときは体がぴりぴり光る
+function drawJellyfish(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const fl = Math.sin(t * 2.4) * 4;
+  const pulse = Math.sin(t * 4.8) * 0.08;
+  const cy = -34 + fl;
+  const lunge = p.lunge ?? 0;
+  const dark = p.flash ? '#fff' : def.dark;
+  shadow(c, 10, 3.5, 0.12);
+  c.save();
+  c.translate(d * lunge * 8, 0);
+  // 足
+  c.strokeStyle = hexA(dark, 0.75);
+  c.lineCap = 'round';
+  for (let i = -3; i <= 3; i++) {
+    c.lineWidth = i % 2 ? 1.2 : 2;
+    c.beginPath();
+    c.moveTo(i * 3.2, cy + 2);
+    for (let k = 1; k <= 6; k++) c.lineTo(i * 3.2 + Math.sin(t * 3.5 + k * 0.9 + i) * (1 + k * 0.5), cy + 2 + k * 4.2);
+    c.stroke();
+  }
+  // かさ(半透明)
+  const rx = 14 * (1 + pulse);
+  const ry = 13 * (1 - pulse);
+  const g = c.createRadialGradient(-4, cy - ry * 0.6, 1, 0, cy - ry * 0.3, rx * 1.2);
+  g.addColorStop(0, p.flash ? '#fff' : hexA(mixHex(def.color, '#ffffff', 0.6), 0.95));
+  g.addColorStop(1, p.flash ? '#fff' : hexA(def.color, 0.75));
+  c.fillStyle = g;
+  c.beginPath();
+  c.ellipse(0, cy, rx, ry, 0, Math.PI, 0);
+  c.quadraticCurveTo(rx * 0.5, cy + 4, 0, cy + 2);
+  c.quadraticCurveTo(-rx * 0.5, cy + 4, -rx, cy);
+  c.fill();
+  c.strokeStyle = hexA(dark, 0.6);
+  c.lineWidth = 1;
+  c.stroke();
+  // 目
+  eyes(c, d * 2, cy - 5, 4, 1.6, 2.2, p.aggro ? '#dc2626' : '#1f2937');
+  // しびれの光(襲ってくるとき)
+  if (p.aggro && Math.sin(t * 11) > 0.4) {
+    c.strokeStyle = '#fde047';
+    c.lineWidth = 1.6;
+    for (const s of [-1, 1]) {
+      c.beginPath();
+      c.moveTo(s * (rx + 2), cy - 6); c.lineTo(s * (rx + 6), cy - 2); c.lineTo(s * (rx + 3), cy); c.lineTo(s * (rx + 8), cy + 5);
+      c.stroke();
+    }
+  }
+  c.restore();
+  return 50 - fl;
+}
+
+// 魚人(サハギン)。うろこの体に魚の頭、背びれ、三叉の槍を持って二本足で歩く
+function drawFishman(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const step = p.moving ? Math.sin(t * 10) : 0;
+  const bob = p.moving ? Math.abs(Math.sin(t * 10)) * 1.2 : Math.sin(t * 2) * 0.5;
+  const lunge = p.lunge ?? 0;
+  const body = p.flash ? '#fff' : def.color;
+  const dark = p.flash ? '#fff' : def.dark;
+  const belly = p.flash ? '#fff' : mix(def.color, '#ffffff', 0.55);
+  shadow(c, 13, 4.5);
+  c.save();
+  c.translate(d * lunge * 6, 0);
+  // 足
+  c.strokeStyle = dark;
+  c.lineWidth = 4;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(-4, -14); c.lineTo(-5 - step * 3, 0);
+  c.moveTo(4, -14); c.lineTo(5 + step * 3, 0);
+  c.stroke();
+  // 槍(前の手)。突くときは前へ倒す
+  const hx = d * 9;
+  const hy = -24 - bob;
+  c.save();
+  c.translate(hx, hy);
+  c.rotate(d * (0.15 + lunge * 1.1));
+  c.strokeStyle = p.flash ? '#fff' : '#8b6b3e';
+  c.lineWidth = 2;
+  c.beginPath(); c.moveTo(0, 14); c.lineTo(0, -26); c.stroke();
+  c.strokeStyle = p.flash ? '#fff' : '#cbd5e1';
+  c.lineWidth = 1.6;
+  c.beginPath();
+  c.moveTo(-4, -26); c.lineTo(-4, -32); c.moveTo(0, -26); c.lineTo(0, -35); c.moveTo(4, -26); c.lineTo(4, -32);
+  c.moveTo(-4, -26); c.lineTo(4, -26);
+  c.stroke();
+  c.restore();
+  // 背びれ
+  poly(c, [[-d * 3, -40 - bob], [-d * 10, -48 - bob], [-d * 12, -34 - bob], [-d * 7, -30 - bob]], dark);
+  // 胴(うろこ)
+  const g = c.createLinearGradient(-9, 0, 9, 0);
+  g.addColorStop(0, body);
+  g.addColorStop(1, dark);
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(0, -22 - bob, 9.5, 11, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = belly;
+  c.beginPath(); c.ellipse(d * 2, -20 - bob, 5, 8, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = hexA(dark, 0.5);
+  c.lineWidth = 0.8;
+  for (let i = 0; i < 3; i++) {
+    c.beginPath(); c.arc(-d * 4, -27 - bob + i * 5, 2.4, 0.2, Math.PI - 0.2); c.stroke();
+  }
+  // 腕(槍を持つ手)
+  c.strokeStyle = body;
+  c.lineWidth = 3.4;
+  c.beginPath(); c.moveTo(d * 5, -27 - bob); c.lineTo(hx, hy); c.stroke();
+  // 頭(魚の顔: 前に突き出た口)
+  c.fillStyle = body;
+  c.beginPath(); c.ellipse(d * 2, -38 - bob, 9, 7.5, d * 0.15, 0, Math.PI * 2); c.fill();
+  c.fillStyle = belly;
+  c.beginPath(); c.ellipse(d * 7, -35 - bob, 4, 2.6, 0, 0, Math.PI * 2); c.fill();
+  // えら
+  c.strokeStyle = dark;
+  c.lineWidth = 1;
+  c.beginPath(); c.arc(-d * 2, -37 - bob, 3.5, -0.8, 0.8); c.stroke();
+  // 目(大きくて丸い)
+  c.fillStyle = '#fef9c3';
+  c.beginPath(); c.arc(d * 5, -41 - bob, 3, 0, Math.PI * 2); c.fill();
+  c.fillStyle = p.aggro ? '#dc2626' : '#1f2937';
+  c.beginPath(); c.arc(d * 5.6, -41 - bob, 1.6, 0, Math.PI * 2); c.fill();
+  c.restore();
+  return 50;
+}
+
+// イカ(クラーケン)。とがった頭(ひれつき)の下に大きな目、10本の足がうねる。ボス向けの大きな形
+function drawKraken(c: CanvasRenderingContext2D, def: EnemyDef, p: EnemyPose): number {
+  const t = p.time + (p.seed ?? 0);
+  const d = p.dir;
+  const bob = Math.sin(t * 1.6) * 2;
+  const lunge = p.lunge ?? 0;
+  const body = p.flash ? '#fff' : def.color;
+  const dark = p.flash ? '#fff' : def.dark;
+  shadow(c, 26, 9, 0.22);
+  c.save();
+  c.translate(d * lunge * 6, 0);
+  // 足(地面をはうように左右へ広がる。いちばん外の2本は長く、襲うときに持ち上げる)
+  c.lineCap = 'round';
+  for (let i = 0; i < 10; i++) {
+    const s = i % 2 ? 1 : -1;
+    const k = Math.floor(i / 2);
+    const long = k === 4;
+    const reach = long ? 34 : 14 + k * 4.5;
+    const lift = long && p.aggro ? 18 + Math.sin(t * 5) * 6 : 0;
+    c.strokeStyle = k % 2 ? dark : body;
+    c.lineWidth = long ? 4 : 5 - k * 0.5;
+    c.beginPath();
+    c.moveTo(s * (4 + k), -14 - bob);
+    for (let j = 1; j <= 6; j++) {
+      const q = j / 6;
+      const wave = Math.sin(t * 3 + j * 0.9 + i) * 3 * q;
+      c.lineTo(s * (4 + k + reach * q) + wave, -14 - bob + q * (12 + k * 1.5) - lift * Math.sin(q * Math.PI) + wave * 0.4);
+    }
+    c.stroke();
+  }
+  // 胴(とがった頭)
+  const g = c.createLinearGradient(-16, 0, 16, 0);
+  g.addColorStop(0, p.flash ? '#fff' : mix(def.color, '#ffffff', 0.2));
+  g.addColorStop(1, dark);
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(0, -78 - bob);
+  c.quadraticCurveTo(20, -50 - bob, 15, -18 - bob);
+  c.lineTo(-15, -18 - bob);
+  c.quadraticCurveTo(-20, -50 - bob, 0, -78 - bob);
+  c.fill();
+  // ひれ
+  poly(c, [[-7, -70 - bob], [-21, -66 - bob], [-12, -54 - bob]], dark);
+  poly(c, [[7, -70 - bob], [21, -66 - bob], [12, -54 - bob]], dark);
+  // 斑点
+  c.fillStyle = p.flash ? '#fff' : hexA(mixHex(def.color, '#ffffff', 0.5), 0.7);
+  for (const [x, y] of [[-5, -52], [6, -44], [-2, -36], [8, -60], [-8, -40]]) {
+    c.beginPath(); c.arc(x, y - bob, 1.8, 0, Math.PI * 2); c.fill();
+  }
+  // 目(横長の黒目。襲ってくるときは赤く光る)
+  for (const s of [-1, 1]) {
+    c.fillStyle = '#fef08a';
+    c.beginPath(); c.ellipse(s * 7 + d * 1.5, -26 - bob, 5, 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = p.aggro ? '#dc2626' : '#111827';
+    c.fillRect(s * 7 + d * 2 - 3, -27 - bob, 6, 2);
+  }
+  c.restore();
+  return 82;
+}
+
+// #rrggbb を、透明度 a の rgba() にする
+function hexA(hex: string, a: number): string {
+  if (!hex.startsWith('#')) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+// 2つの #rrggbb を t の割合で混ぜて、#rrggbb で返す(hexA に渡せるように)
+function mixHex(a: string, b: string, t: number): string {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (sh: number) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+  return '#' + [16, 8, 0].map((sh) => ch(sh).toString(16).padStart(2, '0')).join('');
 }

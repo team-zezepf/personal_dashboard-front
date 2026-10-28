@@ -104,7 +104,7 @@ describe('rpg-enemy', () => {
   });
 
   it('魔導書・影・結晶・ガーゴイルの形を選べ、どの状態・向きでも描ける。結晶は動かず攻撃せず、ガーゴイルは石像にばける(front#329)', () => {
-    expect(ENEMY_SHAPES.slice(18)).toEqual([['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル']]);
+    expect(ENEMY_SHAPES.slice(18, 22)).toEqual([['grimoire', '魔導書'], ['shade', '影'], ['wardcrystal', '結晶'], ['gargoyle', 'ガーゴイル']]);
     expect(['grimoire', 'shadow', 'wardcrystal', 'gargoyle'].map((id) => [ENEMIES[id].shape, ENEMIES[id].material])).toEqual([
       ['grimoire', 'cursed_page'], ['shade', 'shadow_shard'], ['wardcrystal', 'dark_crystal'], ['gargoyle', 'gargoyle_wing']
     ]);
@@ -121,6 +121,24 @@ describe('rpg-enemy', () => {
     }
     // 影の分身は、魔導士より背が低い(冠・角・杖がない)
     expect(drawEnemyBody(c, ENEMIES['shadow'], { dir: 1, time: 0 }) / ENEMIES['shadow'].size).toBeLessThan(drawEnemyBody(c, ENEMIES['darklord'], { dir: 1, time: 0 }) / ENEMIES['darklord'].size);
+  });
+
+  it('カニ・クラゲ・魚人・イカの形を選べ、どの状態・向きでも描ける。叩いた音はカニが岩・クラゲとイカが柔らかいもの(front#421)', () => {
+    expect(ENEMY_SHAPES.slice(22)).toEqual([['crab', 'カニ'], ['jellyfish', 'クラゲ'], ['fishman', '魚人'], ['kraken', 'イカ']]);
+    const sea = (['crab', 'jellyfish', 'fishman', 'kraken'] as const).map((shape) => ({ ...ENEMIES['slime'], id: shape, shape, color: '#38bdf8', dark: '#0369a1' }));
+    expect(sea.map((e) => hitMaterialOf(e))).toEqual(['stone', 'soft', 'flesh', 'soft']);
+    expect(sea.map((e) => disguiseOf(e))).toEqual([null, null, null, null]);
+    expect(sea.some(isPassive)).toBe(false);
+    const c = new Proxy({}, { get: (_t, key) => (key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({ addColorStop: () => undefined }) : () => undefined), set: () => true }) as unknown as CanvasRenderingContext2D;
+    for (const e of sea) {
+      for (const dir of [1, -1]) {
+        for (const pose of [{}, { moving: true }, { aggro: true }, { aggro: true, lunge: 0.6 }, { flash: true }]) {
+          expect(drawEnemyBody(c, e, { dir, time: 1.3, ...pose })).toBeGreaterThan(0);
+        }
+      }
+    }
+    // イカ(クラーケン)はボス向けの大きな形で、カニより背が高い
+    expect(drawEnemyBody(c, sea[3], { dir: 1, time: 0 })).toBeGreaterThan(drawEnemyBody(c, sea[0], { dir: 1, time: 0 }));
   });
 
   it('守る敵の数ごとの、ボスに与えるダメージの割合。最初の敵では闇の水晶だけが守る(front#330)', () => {
