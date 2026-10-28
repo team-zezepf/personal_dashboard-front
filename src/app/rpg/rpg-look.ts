@@ -245,17 +245,28 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   }
 }
 
-// 頭の輪郭(front#372)。後ろ側は丸のまま、向いている側(d)は あご → ほっぺ を少し外へふくらませて丸に戻す
+// 頭の輪郭。頭のてっぺん〜耳のあたりは丸く、ほっぺから下はすぼめて あご にする(front#405)。
+// あごは向いている側(d)へ少し寄せ、向いている側のほっぺは少しふっくらさせて向きが分かるようにする(front#372)
 function headPath(y0: number, d: number): Path2D {
   const p = new Path2D();
   const cy = y0 - 31;
-  // 後ろ側の半円を描く向き(右を向いているときは、上 → 左 → 下)
+  const r = 12;
+  // 丸からすぼめ始める高さ(中心から下へ)と、そこでの横幅
+  const sy = 1.5;
+  const sx = Math.sqrt(r * r - sy * sy);
+  // あご(少し丸みを残す)
+  const chinX = d * 1.6;
+  const chinY = cy + 13;
+  // 後ろ側の弧を描く向き(右を向いているときは、上 → 左 → 下)
   const backward = d > 0;
-  p.moveTo(0, cy - 12);
-  p.arc(0, cy, 12, -Math.PI / 2, Math.PI / 2, backward);
-  p.bezierCurveTo(d * 4, cy + 12.4, d * 10.6, cy + 10.4, d * 12.5, cy + 5);
-  p.bezierCurveTo(d * 13.2, cy + 2, d * 12.3, cy - 1.5, d * 11.6, cy - 3.1);
-  p.arc(0, cy, 12, Math.atan2(-3.1, d * 11.6), -Math.PI / 2, backward);
+  p.moveTo(0, cy - r);
+  p.arc(0, cy, r, -Math.PI / 2, Math.atan2(sy, -d * sx), backward);
+  // 後ろ側: ほっぺ → あご
+  p.bezierCurveTo(-d * sx, cy + 7, -d * 6.5, cy + 11.4, chinX - d * 1.6, chinY - 0.2);
+  p.quadraticCurveTo(chinX, chinY + 0.3, chinX + d * 1.6, chinY - 0.4);
+  // 向いている側: あご → ほっぺ(少しふっくら)
+  p.bezierCurveTo(d * 8, cy + 11.2, d * (sx + 0.7), cy + 7.5, d * sx, cy + sy);
+  p.arc(0, cy, r, Math.atan2(sy, d * sx), -Math.PI / 2, backward);
   p.closePath();
   return p;
 }
@@ -525,10 +536,10 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     for (const x0 of ex) { c.beginPath(); c.arc(x0, ey, 3.7, 0, Math.PI * 2); c.stroke(); }
     c.beginPath(); c.moveTo(ex[0] + 3.7, ey - 0.5); c.lineTo(ex[1] - 3.7, ey - 0.5); c.stroke();
   }
-  // ほっぺ(front#369 で少し小さく)
+  // ほっぺ(front#369 で少し小さく。front#405 で輪郭をすぼめたので、少し内側・上に寄せる)
   c.fillStyle = 'rgba(255,120,120,0.35)';
-  c.beginPath(); c.ellipse(-7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(-6.5 + f, y0 - 23.5, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(6.5 + f, y0 - 23.5, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
   // 口(front#368 で全体的に小さく)
   const mx = f;
   const my = y0 - 22;
