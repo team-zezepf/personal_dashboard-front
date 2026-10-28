@@ -169,13 +169,13 @@ export class RpgRenderer {
     return [cx, cy - this.game.map.heightAt(Math.round(x), Math.round(y)) * HZ];
   }
 
-  // 0段のマスを先に描く。高いマスは、手前のものを隠せるよう置物・人・敵と一緒に奥から順に描く(drawEntities)
+  // 土台の段(いちばん低い段。front#412)のマスを先に描く。それより高いマスは、手前のものを隠せるよう置物・人・敵と一緒に奥から順に描く(drawEntities)
   private drawGround(): void {
     const { map, area } = this.game;
     for (let s = 0; s < map.w + map.h - 1; s++) {
       for (let x = 0; x < map.w; x++) {
         const y = s - x;
-        if (y < 0 || y >= map.h || map.heights[y][x] > 0) continue;
+        if (y < 0 || y >= map.h || map.heights[y][x] !== map.base) continue;
         this.drawTile(x, y);
       }
     }
@@ -215,17 +215,19 @@ export class RpgRenderer {
     }
   }
 
-  // 1マス分の地面。高いマスは、上の面と手前の2つの側面(土台)を描く
+  // 1マス分の地面。土台の段より高いマスは、上の面と手前の2つの側面(土台)を描く
   private drawTile(x: number, y: number): void {
     const ctx = this.ctx;
     const map = this.game.map;
     const pal = this.game.theme;
     const g = map.ground[y][x];
     if (g === G.VOID) return;
-    const lift = map.heights[y][x] * HZ;
+    const h = map.heights[y][x];
+    // 側面は土台の段(いちばん低い段)まで描く。マイナスの段のまわりに壁が見える(front#412)
+    const lift = (h - map.base) * HZ;
     const [cx, cy0] = iso(x, y);
-    const cy = cy0 - lift;
-    if (!this.onScreen(cx, cy0, TW + lift)) return;
+    const cy = cy0 - h * HZ;
+    if (!this.onScreen(cx, cy0 - map.base * HZ, TW + lift)) return;
     // 手前の側面。島のふち(手前が「なし」)なら、さらに下まで伸ばす
     const left = lift + (map.isVoid(x, y + 1) ? 22 : 0);
     const right = lift + (map.isVoid(x + 1, y) ? 22 : 0);
@@ -257,9 +259,9 @@ export class RpgRenderer {
     if (g === G.TILE) this.drawStoneTile(cx, cy, x, y);
     else if (g === G.BRICK) this.drawBrick(cx, cy, x, y);
     this.diamond(cx, cy);
-    // 高いマスほど、上の面を少し明るくする
-    if (lift > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${(lift / HZ) * 0.06})`;
+    // 高いマスほど上の面を少し明るく、低いマス(マイナスの段。front#412)ほど少し暗くする
+    if (h !== 0) {
+      ctx.fillStyle = h > 0 ? `rgba(255,255,255,${h * 0.06})` : `rgba(0,0,0,${-h * 0.06})`;
       ctx.fill();
     }
     ctx.strokeStyle = 'rgba(0,0,0,0.06)';
@@ -434,7 +436,7 @@ export class RpgRenderer {
     for (let s = 0; s < rows.length; s++) {
       for (let x = 0; x < map.w; x++) {
         const y = s - x;
-        if (y < 0 || y >= map.h || map.heights[y][x] === 0) continue;
+        if (y < 0 || y >= map.h || map.heights[y][x] === map.base) continue;
         this.drawTile(x, y);
       }
       for (const o of rows[s]) this.drawEntity(o);

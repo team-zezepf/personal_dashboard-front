@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, MAX_HEIGHT, SAVE_POINT, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { ENEMIES, SAVE_POINT, heightFromChar, heightToChar, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -8,7 +8,8 @@ import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 export type EditorTool =
   | { kind: 'ground'; ground: string }
   // 地面の高さ(front#225)。up・down は1段ずつ、set は決まった高さにする
-  | { kind: 'height'; op: 'up' | 'down' | 'set'; value?: number }
+  // add: 今の高さから value 段足し引きする / set: value 段にする(front#412)
+  | { kind: 'height'; op: 'add' | 'set'; value: number }
   | { kind: 'object'; type: StaticType; roof?: string; torch?: boolean }
   | { kind: 'enemy'; type: string }
   | { kind: 'npc' }
@@ -47,12 +48,16 @@ export const PALETTE: PaletteTab[] = [
   },
   {
     id: 'height', label: '高さ',
-    hint: 'クリック・ドラッグしたマスの高さを変えます（0〜3段）。となりとの差が1段までなら登り降りでき、2段以上は崖になって通れません。',
+    hint: 'クリック・ドラッグしたマスの高さを、今の高さから上げ下げします（−5〜5段）。「リセット」は0段に戻します。となりとの差が1段までなら登り降りでき、2段以上は崖になって通れません。',
+    // ＋3段〜−3段・リセット(front#412)。縦に並べる
     items: [
-      { id: 'up', label: '高くする', icon: '⬆️', tool: { kind: 'height', op: 'up' } },
-      { id: 'down', label: '低くする', icon: '⬇️', tool: { kind: 'height', op: 'down' } },
-      { id: 'h0', label: '0段にする', icon: '▭', tool: { kind: 'height', op: 'set', value: 0 } },
-      { id: 'h2', label: '2段にする', icon: '▤', tool: { kind: 'height', op: 'set', value: 2 } }
+      { id: 'h+3', label: '＋3段', icon: '⏫', tool: { kind: 'height', op: 'add', value: 3 } },
+      { id: 'h+2', label: '＋2段', icon: '⏫', tool: { kind: 'height', op: 'add', value: 2 } },
+      { id: 'h+1', label: '＋1段', icon: '⬆️', tool: { kind: 'height', op: 'add', value: 1 } },
+      { id: 'h0', label: 'リセット', icon: '▭', tool: { kind: 'height', op: 'set', value: 0 } },
+      { id: 'h-1', label: '−1段', icon: '⬇️', tool: { kind: 'height', op: 'add', value: -1 } },
+      { id: 'h-2', label: '−2段', icon: '⏬', tool: { kind: 'height', op: 'add', value: -2 } },
+      { id: 'h-3', label: '−3段', icon: '⏬', tool: { kind: 'height', op: 'add', value: -3 } }
     ]
   },
   {
@@ -362,13 +367,13 @@ export class RpgMapEditor {
   }
 
   heightAt(x: number, y: number): number {
-    return Number(this.map.heights?.[y]?.[x] ?? 0) || 0;
+    return heightFromChar(this.map.heights?.[y]?.[x]);
   }
 
   private setHeight(x: number, y: number, value: number): void {
     if (!this.map.heights) this.map.heights = flatHeights(this.map.width, this.map.height);
     const row = this.map.heights[y];
-    this.map.heights[y] = row.slice(0, x) + String(Math.min(MAX_HEIGHT, Math.max(0, value))) + row.slice(x + 1);
+    this.map.heights[y] = row.slice(0, x) + heightToChar(value) + row.slice(x + 1);
   }
 
   private setGround(x: number, y: number, ground: string): void {
@@ -484,14 +489,14 @@ export class RpgMapEditor {
         }
         return null;
       case 'height':
-        // ドラッグで同じマスを何度もなぞっても、1回のドラッグでは1段ずつしか変えない
+        // ドラッグで同じマスを何度もなぞっても、1回のドラッグでは1回分しか変えない
         if (first) this.heightPainted.clear();
         for (const [tx, ty] of this.brushTiles(tool, x, y, brush)) {
           const key = ty * this.map.width + tx;
           if (this.heightPainted.has(key)) continue;
           this.heightPainted.add(key);
           const h = this.heightAt(tx, ty);
-          this.setHeight(tx, ty, tool.op === 'up' ? h + 1 : tool.op === 'down' ? h - 1 : (tool.value ?? 0));
+          this.setHeight(tx, ty, tool.op === 'add' ? h + tool.value : tool.value);
         }
         return null;
       case 'object': {

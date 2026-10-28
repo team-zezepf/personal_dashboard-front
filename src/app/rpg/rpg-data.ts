@@ -275,9 +275,27 @@ export type { EnemyDef } from './rpg-enemy';
 // ここには、データの文字・種類が何を表すかと、見た目(テーマ)ごとの色を置く
 export const TW = 64;
 export const TH = 32;
-// 地面の高さ(front#225)。1段の画面上の高さ(マスの縦の4分の1)と、いちばん高い段
+// 地面の高さ(front#225)。1段の画面上の高さ(マスの縦の4分の1)と、いちばん高い段・いちばん低い段(front#412)
 export const HZ = 8;
-export const MAX_HEIGHT = 3;
+export const MAX_HEIGHT = 5;
+export const MIN_HEIGHT = -5;
+// マイナスの段は a〜e(a=−1 … e=−5)の1文字で持つ(front#412)
+const MINUS_HEIGHTS = 'abcde';
+
+/** 高さの1文字を段にする。知らない文字は0段 */
+export function heightFromChar(c: string | undefined): number {
+  if (!c) return 0;
+  const minus = MINUS_HEIGHTS.indexOf(c);
+  if (minus >= 0) return -(minus + 1);
+  const v = Number(c);
+  return Number.isInteger(v) ? Math.min(MAX_HEIGHT, Math.max(0, v)) : 0;
+}
+
+/** 段を高さの1文字にする(−5〜5段に収める) */
+export function heightToChar(v: number): string {
+  const h = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, Math.round(v)));
+  return h >= 0 ? String(h) : MINUS_HEIGHTS[-h - 1];
+}
 export const G = { GRASS: 0, FLOWER: 1, PATH: 2, WATER: 3, BRIDGE: 4, SAND: 5, VOID: 6, TILE: 7, BRICK: 8 } as const;
 
 // マップのデータの地面の文字(g:草 f:花 p:道 w:水 b:橋 s:砂 v:なし t:タイル r:レンガ)
@@ -770,10 +788,12 @@ export function signExit(maps: readonly RpgMap[], area: RpgMap, x: number, y: nu
 /** 1エリア分の地面・地面の高さ・通れないマス・置物。マップのデータから作る */
 export class AreaMap {
   readonly ground: number[][];
-  // 地面の高さ(0〜3段)。段差のないマップはすべて0
+  // 地面の高さ(−5〜5段。front#412)。段差のないマップはすべて0
   readonly heights: number[][];
-  // 1マスでも高いマスがあるか(なければ段差の計算・描き分けをしない)
+  // 1マスでも0段でないマスがあるか(なければ段差の計算・描き分けをしない)
   readonly hasHeights: boolean;
+  // 土台の段(いちばん低い段。0段より低いマスがなければ0)。側面はこの段まで描く(front#412)
+  readonly base: number;
   readonly solid: boolean[][];
   readonly statics: StaticObj[];
 
@@ -781,7 +801,8 @@ export class AreaMap {
     this.ground = ground;
     this.statics = statics;
     this.heights = heights ?? Array.from({ length: h }, () => Array<number>(w).fill(0));
-    this.hasHeights = this.heights.some((row) => row.some((v) => v > 0));
+    this.hasHeights = this.heights.some((row) => row.some((v) => v !== 0));
+    this.base = Math.min(0, ...this.heights.map((row) => Math.min(0, ...row)));
     this.solid = Array.from({ length: h }, () => Array<boolean>(w).fill(false));
     for (const o of statics) {
       // 火山は大きいので、まわり1マスも通れない。家は占めるマスがすべて通れない
@@ -844,7 +865,7 @@ export function buildAreaMap(map: RpgMap): AreaMap {
     }));
   // 高さがない・知らない文字は0段
   const heights = Array.from({ length: map.height }, (_, y) =>
-    Array.from({ length: map.width }, (_, x) => Math.min(MAX_HEIGHT, Math.max(0, Number(map.heights?.[y]?.[x] ?? 0) || 0)))
+    Array.from({ length: map.width }, (_, x) => heightFromChar(map.heights?.[y]?.[x]))
   );
   const area = new AreaMap(map.width, map.height, ground, statics, heights);
   for (const n of map.npcs) if (area.inMap(n.x, n.y)) area.solid[n.y][n.x] = true;

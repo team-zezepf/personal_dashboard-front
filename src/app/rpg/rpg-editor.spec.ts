@@ -99,19 +99,31 @@ describe('RpgMapEditor', () => {
     expect(toMapInput(editor.map).objects[1]).toMatchObject({ showMessage: true, lines: ['古い木だ。'] });
   });
 
-  it('高さを変えられる。1回のドラッグでは同じマスを1段ずつしか変えず、0〜3段に収める', () => {
-    editor.apply({ kind: 'height', op: 'up' }, 2, 2, true, 3);
-    editor.apply({ kind: 'height', op: 'up' }, 2, 2, false, 3);
+  it('高さを足し引きできる。1回のドラッグでは同じマスを1回分しか変えず、−5〜5段に収める。マイナスは a〜e で持つ(front#412)', () => {
+    editor.apply({ kind: 'height', op: 'add', value: 1 }, 2, 2, true, 3);
+    editor.apply({ kind: 'height', op: 'add', value: 1 }, 2, 2, false, 3);
     expect(editor.map.heights[1].slice(1, 4)).toBe('111');
     expect(editor.map.heights[3].slice(1, 4)).toBe('111');
 
-    for (let i = 0; i < 5; i++) editor.apply({ kind: 'height', op: 'up' }, 2, 2, true);
-    expect(editor.heightAt(2, 2)).toBe(3);
+    // ＋3段を3回で 1 → 4 → 5(上限)
+    for (let i = 0; i < 3; i++) editor.apply({ kind: 'height', op: 'add', value: 3 }, 2, 2, true);
+    expect(editor.heightAt(2, 2)).toBe(5);
+    // リセットで0段、−2段・−3段で −5(下限)
     editor.apply({ kind: 'height', op: 'set', value: 0 }, 2, 2, true);
-    editor.apply({ kind: 'height', op: 'down' }, 2, 2, true);
     expect(editor.heightAt(2, 2)).toBe(0);
-    editor.apply({ kind: 'height', op: 'set', value: 2 }, 5, 5, true);
+    editor.apply({ kind: 'height', op: 'add', value: -2 }, 2, 2, true);
+    expect(editor.heightAt(2, 2)).toBe(-2);
+    expect(toMapInput(editor.map).heights[2][2]).toBe('b');
+    editor.apply({ kind: 'height', op: 'add', value: -3 }, 2, 2, true);
+    editor.apply({ kind: 'height', op: 'add', value: -3 }, 2, 2, true);
+    expect(editor.heightAt(2, 2)).toBe(-5);
+    expect(toMapInput(editor.map).heights[2][2]).toBe('e');
+    editor.apply({ kind: 'height', op: 'add', value: 2 }, 5, 5, true);
     expect(toMapInput(editor.map).heights[5][5]).toBe('2');
+  });
+
+  it('高さの道具は ＋3段・＋2段・＋1段・リセット・−1段・−2段・−3段 の順に並ぶ(front#412)', () => {
+    expect(PALETTE.find((t) => t.id === 'height')!.items.map((i) => i.label)).toEqual(['＋3段', '＋2段', '＋1段', 'リセット', '−1段', '−2段', '−3段']);
   });
 
   it('置物は同じマスのものと置き換わり、敵は空いている通れるマスにだけ置ける', () => {
@@ -428,7 +440,7 @@ describe('RpgMapEditor', () => {
       expect(selectsPlaced({ kind: 'enemy', type: 'slime' })).toBe(true);
       expect(selectsPlaced({ kind: 'select' })).toBe(true);
       expect(selectsPlaced({ kind: 'ground', ground: 'g' })).toBe(false);
-      expect(selectsPlaced({ kind: 'height', op: 'up' })).toBe(false);
+      expect(selectsPlaced({ kind: 'height', op: 'add', value: 1 })).toBe(false);
       expect(selectsPlaced({ kind: 'erase' })).toBe(false);
       expect(SELECT_ITEM.tool.kind).toBe('select');
     });
