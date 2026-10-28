@@ -234,19 +234,24 @@ export interface FloatText {
 }
 
 /**
- * プレイヤーのまわりのエフェクト(front#335)。レベルアップは金色の光の輪・柱・星、回復は緑の光の輪・「＋」の粒。
+ * プレイヤーのまわりのエフェクト(front#335)。レベルアップは金色の光の輪・柱・星、回復(回復薬)は緑の光の輪・「＋」の粒。
+ * 回復魔法(front#409)は、使った人の足元に魔法陣(cast)、回復する人には上から光の柱が降りて緑の輪・〇の粒(magic)。
  * 粒の位置は seed から決める(描くたびに同じ位置になる)
  */
 export interface PlayerFx {
-  kind: 'level' | 'heal';
+  kind: 'level' | 'heal' | 'magic' | 'cast';
+  // 出てからの秒。負の間はまだ出ていない(ヒールオールで、全員に少しずつずらして届ける)
   t: number;
   seed: number;
-  // 回復量が多い(上回復薬など)ときは粒を増やす
+  // 回復量が多い(上回復薬など)・ヒールオールのときは粒を増やす(魔法陣は大きくする)
   big?: boolean;
 }
 
 /** エフェクトの長さ(秒) */
-export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1 };
+export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1, magic: 1.35, cast: 0.85 };
+
+/** ヒールオールで、回復の光を1人ずつずらす秒数(front#409) */
+export const HEAL_ALL_STAGGER = 0.06;
 
 /**
  * ほかの人に回復してもらった仲間が出す「ありがとう」の吹き出し(front#398)。
@@ -1339,16 +1344,17 @@ export class RpgGame {
     const s = MAGIC[id];
     // 回復量は LV で増える(front#387)
     const amount = Math.round(spellHealOf(user.stats) * s.rate * levelRateOf(this.levelOf(user, id)));
-    for (const f of targets) {
+    // 使った人の足元に魔法陣(front#409)
+    this.addFx(user, 'cast', !!s.all);
+    targets.forEach((f, i) => {
       const before = f.hp;
       f.hp = Math.min(this.maxHpOf(f), f.hp + amount);
       if (f.hp > before) {
         this.floatText(f.x, f.y, `+${f.hp - before}`, '#4ade80', 17);
         this.thank(user, f);
       }
-      if (f.kind === 'player') this.addPlayerFx('heal', !!s.all);
-      else this.addMateFx(f, 'heal', !!s.all);
-    }
+      this.addFx(f, 'magic', !!s.all, s.all ? i * HEAL_ALL_STAGGER : 0);
+    });
     this.events.sound?.('heal');
     if (targets.length === 1 && targets[0] !== user) this.faceTo(user, targets[0]);
     this.spendSpell(user, id);
@@ -1369,9 +1375,15 @@ export class RpgGame {
   }
 
   /** 仲間のまわりにエフェクト(回復・レベルアップ)を出す(front#391)。同じ種類が出ていれば、始めからやり直す */
-  private addMateFx(c: Companion, kind: PlayerFx['kind'], big = false): void {
+  private addMateFx(c: Companion, kind: PlayerFx['kind'], big = false, delay = 0): void {
     this.mateFx = this.mateFx.filter((m) => !(m.target === c && m.fx.kind === kind));
-    this.mateFx.push({ target: c, fx: { kind, t: 0, seed: Math.random() * 1000, big } });
+    this.mateFx.push({ target: c, fx: { kind, t: delay ? -delay : 0, seed: Math.random() * 1000, big } });
+  }
+
+  /** プレイヤー・仲間のまわりにエフェクトを出す。delay 秒あとから出す */
+  private addFx(f: Fighter, kind: PlayerFx['kind'], big = false, delay = 0): void {
+    if (f.kind === 'player') this.addPlayerFx(kind, big, delay);
+    else this.addMateFx(f, kind, big, delay);
   }
 
   /** 魔法の演出を進め、攻撃魔法が当たる時になったら敵にダメージを与える */
@@ -1553,10 +1565,10 @@ export class RpgGame {
   }
 
   /** プレイヤーのまわりのエフェクト(front#335)を始める。同じ種類が出ていれば、始めからやり直す */
-  private addPlayerFx(kind: PlayerFx['kind'], big = false): void {
+  private addPlayerFx(kind: PlayerFx['kind'], big = false, delay = 0): void {
     const i = this.playerFx.findIndex((f) => f.kind === kind);
     if (i >= 0) this.playerFx.splice(i, 1);
-    this.playerFx.push({ kind, t: 0, seed: Math.random() * 1000, big });
+    this.playerFx.push({ kind, t: delay ? -delay : 0, seed: Math.random() * 1000, big });
   }
 
   /** プレイヤー・仲間(front#358)が敵を1回叩く */

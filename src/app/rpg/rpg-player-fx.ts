@@ -1,7 +1,7 @@
 import { PLAYER_FX_SEC, PlayerFx } from './rpg-game';
 
 // プレイヤーのまわりのエフェクト(front#335)を描く。(x, y) はプレイヤーの足元の画面上の位置。
-// 足元の光の輪・光の柱はプレイヤーの後ろ(back)、光る体・星・「＋」の粒は手前(front)、「LEVEL UP!」の文字はいちばん上(text)に描く
+// 足元の光の輪・光の柱・魔法陣はプレイヤーの後ろ(back)、光る体・星・「＋」や〇の粒は手前(front)、「LEVEL UP!」の文字はいちばん上(text)に描く
 
 const easeOut = (k: number) => 1 - Math.pow(1 - k, 3);
 
@@ -67,18 +67,177 @@ export function drawPlayerFxBack(ctx: CanvasRenderingContext2D, list: readonly P
         ctx.fillStyle = `rgba(255,255,240,${0.6 * a})`;
         ctx.fillRect(x - w * 0.18, y - h * 0.95, w * 0.36, h * 0.95);
       }
-    } else {
-      ring(ctx, x, y, f.t / 0.6, '110,240,150', 46);
-      ring(ctx, x, y, (f.t - 0.15) / 0.6, '190,255,210', 32);
+    } else if (f.kind === 'heal') {
+      healRings(ctx, x, y, f.t);
+    } else if (f.kind === 'magic') {
+      healBeam(ctx, x, y, f.t / 0.75);
+      healRings(ctx, x, y, f.t - BEAM_LEAD);
+    } else if (f.kind === 'cast') {
+      const k = f.t / PLAYER_FX_SEC.cast;
+      const r = f.big ? 44 : 28;
+      magicCircle(ctx, x, y, r * (0.6 + 0.4 * easeOut(clamp01(k / 0.25))), fade(k, 0.18, 0.65), f.t * 2.2);
     }
   }
   ctx.restore();
+}
+
+// ---- 回復魔法(front#409) ----
+// 回復する人に光の柱が降りてから(BEAM_LEAD 秒)、緑の輪・〇の粒を出す
+const BEAM_LEAD = 0.22;
+const clamp01 = (k: number) => Math.max(0, Math.min(1, k));
+// 0 → 1 → 0 と、ふわっと出て消える値(inK まで出て、outK から消える)
+function fade(k: number, inK: number, outK: number): number {
+  if (k <= 0 || k >= 1) return 0;
+  if (k < inK) return k / inK;
+  return k > outK ? 1 - (k - outK) / (1 - outK) : 1;
+}
+
+/** 回復の足元の緑の輪(回復薬・回復魔法) */
+function healRings(ctx: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  ring(ctx, x, y, t / 0.6, '110,240,150', 46);
+  ring(ctx, x, y, (t - 0.15) / 0.6, '190,255,210', 32);
+}
+
+/** 体がやわらかい緑に光る(t は出てからの秒) */
+function healGlow(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, peak: number): void {
+  const gk = t / 0.7;
+  if (gk <= 0 || gk >= 1) return;
+  const a = (gk < 0.2 ? gk / 0.2 : 1 - (gk - 0.2) / 0.8) * peak;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, y - 32, 2, x, y - 32, 34);
+  g.addColorStop(0, `rgba(110,240,150,${a})`);
+  g.addColorStop(1, 'rgba(110,240,150,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 32, 22, 34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** やわらかい緑の光の玉(〇の粒) */
+function glowDot(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, a: number): void {
+  if (r <= 0 || a <= 0) return;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(240,255,245,${a})`);
+  g.addColorStop(0.4, `rgba(74,222,128,${a * 0.8})`);
+  g.addColorStop(1, 'rgba(74,222,128,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** 上から降りてくる光の柱。k は 0〜1 */
+function healBeam(ctx: CanvasRenderingContext2D, x: number, y: number, k: number): void {
+  if (k <= 0 || k >= 1) return;
+  const top = y - 160;
+  const bottom = top + (y - top) * easeOut(clamp01(k / 0.35));
+  const a = fade(k, 0.1, 0.45);
+  const w = 15 * (1 - k * 0.4);
+  const g = ctx.createLinearGradient(0, top, 0, bottom);
+  g.addColorStop(0, 'rgba(187,247,208,0)');
+  g.addColorStop(0.5, `rgba(134,239,172,${0.45 * a})`);
+  g.addColorStop(1, `rgba(220,255,230,${0.8 * a})`);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.6, top);
+  ctx.lineTo(x + w * 0.6, top);
+  ctx.lineTo(x + w, bottom);
+  ctx.ellipse(x, bottom, w, w * 0.42, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fill();
+  // 柱の芯
+  ctx.fillStyle = `rgba(255,255,250,${0.55 * a})`;
+  ctx.fillRect(x - w * 0.15, top, w * 0.3, bottom - top);
+  ctx.restore();
+}
+
+/** 足元の魔法陣(床に寝た楕円)。二重の輪・回る六芒星・まわりの粒 */
+function magicCircle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, a: number, spin: number): void {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, 0.42);
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, `rgba(134,239,172,${0.35 * a})`);
+  g.addColorStop(1, 'rgba(134,239,172,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = `rgba(187,247,208,${0.95 * a})`;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2); ctx.stroke();
+  ctx.rotate(spin);
+  ctx.lineWidth = 1.4;
+  for (const off of [0, Math.PI / 3]) {
+    ctx.beginPath();
+    for (let i = 0; i <= 3; i++) {
+      const an = off + (i * Math.PI * 2) / 3 - Math.PI / 2;
+      const px = Math.cos(an) * r * 0.8;
+      const py = Math.sin(an) * r * 0.8;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle = `rgba(240,255,244,${a})`;
+  for (let i = 0; i < 12; i++) {
+    const an = (i / 12) * Math.PI * 2;
+    ctx.beginPath(); ctx.arc(Math.cos(an) * r * 0.9, Math.sin(an) * r * 0.9, 1.3, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** 回復魔法の手前側。magic: 体が光り、〇の粒が上がる / cast: 体がうっすら光り、魔法陣から光の粒が立ちのぼる */
+function drawMagicFront(ctx: CanvasRenderingContext2D, f: PlayerFx, x: number, y: number): void {
+  if (f.t < 0) return;
+  if (f.kind === 'cast') {
+    healGlow(ctx, x, y, f.t, 0.35);
+    const rr = f.big ? 40 : 24;
+    for (let i = 0; i < 10; i++) {
+      const tt = f.t - rand(f.seed, i, 0) * 0.4;
+      const q = tt / 0.6;
+      if (tt <= 0 || q >= 1) continue;
+      const an = rand(f.seed, i, 1) * Math.PI * 2;
+      const r = rr * (0.5 + rand(f.seed, i, 2) * 0.5);
+      glowDot(ctx, x + Math.cos(an) * r, y + Math.sin(an) * r * 0.42 - q * 40, 3, fade(q, 0.2, 0.5));
+    }
+    return;
+  }
+  const t = f.t - BEAM_LEAD;
+  if (t < 0) return;
+  healGlow(ctx, x, y, t, 0.55);
+  const n = f.big ? 22 : 15;
+  for (let i = 0; i < n; i++) {
+    const tt = t - rand(f.seed, i, 0) * 0.45;
+    const q = tt / 0.75;
+    if (tt <= 0 || q >= 1) continue;
+    const v = 45 + rand(f.seed, i, 3) * 40;
+    const s = 2.6 + rand(f.seed, i, 4) * 2.6;
+    const px = x + (rand(f.seed, i, 1) - 0.5) * 40 + Math.sin(tt * 5 + rand(f.seed, i, 5) * 6) * 4;
+    const py = y - 16 - rand(f.seed, i, 2) * 40 - v * tt;
+    const a = q < 0.2 ? q / 0.2 : 1 - (q - 0.2) / 0.8;
+    // 外側のやわらかい光 + 白い芯(草地の上でも見えるように)
+    glowDot(ctx, px, py, s * 2, a * 0.9);
+    ctx.fillStyle = `rgba(255,255,255,${a * 0.95})`;
+    ctx.beginPath();
+    ctx.arc(px, py, s * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** プレイヤーの手前: 体が光る・星のきらめき・「＋」と光の粒 */
 export function drawPlayerFxFront(ctx: CanvasRenderingContext2D, list: readonly PlayerFx[], x: number, y: number): void {
   ctx.save();
   for (const f of list) {
+    if (f.kind === 'magic' || f.kind === 'cast') {
+      drawMagicFront(ctx, f, x, y);
+      continue;
+    }
     const level = f.kind === 'level';
     // 体が光る(レベルアップは白く一瞬、回復はやわらかい緑)
     const gd = level ? 0.5 : 0.7;
