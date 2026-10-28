@@ -231,8 +231,10 @@ export class RpgRenderer {
     // 手前の側面。島のふち(手前が「なし」)なら、さらに下まで伸ばす
     const left = lift + (map.isVoid(x, y + 1) ? 22 : 0);
     const right = lift + (map.isVoid(x + 1, y) ? 22 : 0);
-    if (left > 0) this.poly([[cx - TW / 2, cy], [cx, cy + TH / 2], [cx, cy + TH / 2 + left], [cx - TW / 2, cy + left]], pal.edge[0]);
-    if (right > 0) this.poly([[cx, cy + TH / 2], [cx + TW / 2, cy], [cx + TW / 2, cy + right], [cx, cy + TH / 2 + right]], pal.edge[1]);
+    // 水のマス自身の側面は、水のマスの段差の側面の色(front#415)。陸のマスは段差の側面の色
+    const side = g === G.WATER ? pal.liquidEdge : pal.edge;
+    if (left > 0) this.poly([[cx - TW / 2, cy], [cx, cy + TH / 2], [cx, cy + TH / 2 + left], [cx - TW / 2, cy + left]], side[0]);
+    if (right > 0) this.poly([[cx, cy + TH / 2], [cx + TW / 2, cy], [cx + TW / 2, cy + right], [cx, cy + TH / 2 + right]], side[1]);
     if (lift > 0) {
       // 段の境目の線
       ctx.strokeStyle = 'rgba(0,0,0,0.15)';

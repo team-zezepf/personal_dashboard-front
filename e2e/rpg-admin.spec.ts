@@ -784,3 +784,80 @@ test(
     });
   }
 );
+
+// 管理者のアカウントで、保存してあるベースの「水のマスの段差の側面」(front#415)を API から読む。自動なら null
+async function savedLiquidEdge(id: string): Promise<string[] | null> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgThemes { id liquidEdge } }' })
+  });
+  const body = (await res.json()) as { data: { rpgThemes: { id: string; liquidEdge: string[] | null }[] } };
+  return body.data.rpgThemes.find((t) => t.id === id)!.liquidEdge ?? null;
+}
+
+test(
+  'E2E-36 RPGマップ作成の「ベース」タブで、水のマスの段差の側面を「水の色に合わせる」から好きな2色に変えて保存でき、自動に戻せる(front#415)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンのベースを何も保存していない(最初の4つ)'],
+    expected: [
+      '「🎨 ベース」タブで草原を選ぶと、「水のマス（水）」の欄に「段差の側面」があり、「水の色に合わせる」がオン。2色は水の色を暗くした色(#2b86b3・#226b8f)で、選べない',
+      '「水の色に合わせる」をオフにすると2色を選べるようになり、左の色を #c026d3 にしてプレビューの水の段の側面がその色になる',
+      '「ベースを保存する」を押すと「ベースを保存しました」と出て、API でも草原の水のマスの段差の側面が #c026d3・#226b8f になっている',
+      '「水の色に合わせる」をオンに戻して保存すると、API でも自動(なし)に戻る'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-theme-page');
+    const list = tab.getByRole('complementary', { name: 'ベースの一覧' });
+    const row = tab.getByRole('complementary', { name: 'ベースの項目' }).getByRole('group', { name: '水のマスの段差の側面' });
+    const auto = row.getByRole('checkbox', { name: '水の色に合わせる' });
+    const left = row.getByLabel('水のマスの段差の側面 1');
+    const right = row.getByLabel('水のマスの段差の側面 2');
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「🎨 ベース」タブで「草原」を選ぶ', '「段差の側面」の行があり、「水の色に合わせる」がオン。2色は水の色を暗くした色で、選べない', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await list.getByRole('button', { name: /^草原/ }).click();
+      await expect(auto).toBeChecked();
+      await expect(left).toHaveValue('#2b86b3');
+      await expect(right).toHaveValue('#226b8f');
+      await expect(left).toBeDisabled();
+      await expect(right).toBeDisabled();
+      await row.scrollIntoViewIfNeeded();
+    });
+
+    await step('「水の色に合わせる」をオフにし、左の色を #c026d3 にする', '2色を選べるようになり、プレビューの水の段の側面が赤紫になる', async () => {
+      await auto.uncheck();
+      await expect(left).toBeEnabled();
+      await left.fill('#c026d3');
+      await expect(left).toHaveValue('#c026d3');
+      await expect(right).toHaveValue('#226b8f');
+      await expect(tab.getByLabel('ベースのプレビュー')).toBeVisible();
+    });
+
+    await step('「ベースを保存する」を押す', '「ベースを保存しました」と出て、API でも #c026d3・#226b8f になっている', async () => {
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
+      expect(await savedLiquidEdge('plain')).toEqual(['#c026d3', '#226b8f']);
+    });
+
+    await step('「水の色に合わせる」をオンに戻して「ベースを保存する」を押す', '色は自動の色に戻って選べなくなり、API でも自動(なし)に戻る', async () => {
+      await auto.check();
+      await expect(left).toHaveValue('#2b86b3');
+      await expect(left).toBeDisabled();
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
+      expect(await savedLiquidEdge('plain')).toBeNull();
+    });
+  }
+);

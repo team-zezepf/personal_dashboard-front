@@ -376,6 +376,8 @@ export interface RpgTheme {
   liquid: string;
   liquidSway: number;
   wave: string | null;
+  // 水のマスの段差の側面の色(左の面・右の面。front#415 / api#192)。null・なしなら自動(水の色を暗くした色)
+  liquidEdge?: string[] | null;
   // 草の上の飾り(flower 花 / glow 光る粒 / tuft 草の房 / crack ひび割れ)と色(3色)
   flower: string;
   flowers: string[];

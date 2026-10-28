@@ -1,5 +1,5 @@
 import { RpgTheme } from '../models/rpg.models';
-import { DEFAULT_THEMES, THEMES, THEME_LIST, hexToHsl, hexToRgba, setThemes, themeOf, toThemeDef } from './rpg-data';
+import { DEFAULT_THEMES, THEMES, THEME_LIST, autoLiquidEdge, hexToHsl, hexToRgba, liquidEdgeOf, setThemes, themeOf, toThemeDef } from './rpg-data';
 
 // ダンジョンの見た目(front#389)
 describe('rpg-data の見た目(front#389)', () => {
@@ -34,6 +34,18 @@ describe('rpg-data の見た目(front#389)', () => {
     // 草原を含まない一覧でも、草原は残す
     setThemes([snow()]);
     expect(themeOf('nothing').label).toBe('草原');
+  });
+
+  it('水のマスの段差の側面(front#415)は、選んだ2色がなければ水の色を暗くした色。陸の段差の側面とは別', () => {
+    expect(autoLiquidEdge('#37ace6')).toEqual(['#2b86b3', '#226b8f']);
+    expect(autoLiquidEdge('#000000')).toEqual(['#000000', '#000000']);
+    const plain = DEFAULT_THEMES[0];
+    expect(toThemeDef(plain).liquidEdge).toEqual(['#2b86b3', '#226b8f']);
+    expect(toThemeDef(plain).edge).toEqual(['#a0754d', '#7f5a3a']);
+    expect(liquidEdgeOf({ ...plain, liquidEdge: null })).toEqual(['#2b86b3', '#226b8f']);
+    expect(toThemeDef({ ...plain, liquidEdge: ['#123456', '#654321'] }).liquidEdge).toEqual(['#123456', '#654321']);
+    // 溶岩は、溶岩の色を暗くした色
+    expect(toThemeDef(DEFAULT_THEMES[2]).liquidEdge).toEqual(autoLiquidEdge('#f94f06'));
   });
 
   it('色の変換', () => {
