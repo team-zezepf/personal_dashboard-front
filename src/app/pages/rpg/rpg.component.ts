@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgCompanion, RpgCraft, RpgDungeon, RpgEnemy, RpgHallMember, RpgLook, RpgMap, RpgObjectDef, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
 import { DEFAULT_ENEMIES, ENEMIES, setEnemies } from '../../rpg/rpg-enemy';
 import { BgmPlayer, areaBgmId, browserStorage } from '../../rpg/rpg-bgm';
-import { SePlayer } from '../../rpg/rpg-se';
+import { SePlayer, windowSound } from '../../rpg/rpg-se';
 import { DEFAULT_SHORTCUTS, Shortcuts, loadShortcuts, saveShortcuts, shortcutIndexOf, shortcutItems } from '../../rpg/rpg-shortcuts';
 import { environment } from '../../../environments/environment';
 import {
@@ -553,8 +553,32 @@ export class RpgPageComponent implements OnDestroy {
     else this.rpgService.leaveOnUnload();
   };
 
+  /**
+   * 開いているウィンドウ(front#419)。変わったら操作音(開く・閉じる)を鳴らす。
+   * NPCとの会話・看板のメッセージは、クリックのたびに文が進むので入れない
+   */
+  readonly openWindows = computed(() =>
+    [
+      this.settingsOpen() && 'settings',
+      this.statusOpen() && 'status',
+      this.lookDraft() && 'look',
+      this.spellsOpen() && 'spells',
+      this.shopMode() && 'shop',
+      this.hallMode() && 'hall',
+      this.discardTarget() && 'discard',
+      this.itemTarget() && 'item-target'
+    ].filter((w): w is string => !!w)
+  );
+
   constructor() {
     afterNextRender(() => this.start());
+    let prevWindows: string[] = [];
+    effect(() => {
+      const next = this.openWindows();
+      const sound = windowSound(prevWindows, next);
+      prevWindows = next;
+      if (sound) this.sePlayer.play(sound);
+    });
   }
 
   // ===== 開始・終了 =====
@@ -1434,6 +1458,8 @@ export class RpgPageComponent implements OnDestroy {
       // 「ありがとう」の吹き出しを出している仲間の名前(front#398)
       thanks: (): string[] => this.game?.thanks.map((b) => b.target.name) ?? [],
       isIdle: (): boolean => !!this.game && !this.game.player.path.length && !this.game.player.target && !this.game.transitioning,
+      // 鳴らした効果音の場面(新しい順。front#419)
+      sounds: (): string[] => [...this.sePlayer.history],
       // 流しているBGMの音楽ファイルのURL(流していなければ null)
       bgmUrl: (): string | null => this.bgmPlayer.playingUrl
     };

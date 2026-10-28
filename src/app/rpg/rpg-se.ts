@@ -8,22 +8,38 @@ import { ENEMY_ATTACKS, HIT_MATERIALS } from './rpg-enemy';
 export interface SeSlotDef {
   slot: string;
   label: string;
-  // 一覧で見出しを分ける、場面のまとまり(叩いたとき・敵の攻撃・プレイヤー)
-  group: 'hit' | 'attack' | 'player';
+  // 一覧で見出しを分ける、場面のまとまり(叩いたとき・敵の攻撃・プレイヤー・操作)
+  group: 'hit' | 'attack' | 'player' | 'ui';
   // 敵の攻撃の場面なら、その攻撃の種類
   attack?: string;
 }
 
-/** 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。叩いたときは叩いたものの素材ごと(front#282)、敵の攻撃は種類ごと、プレイヤーのレベルアップ・回復(front#335) */
+/**
+ * 鳴らす場面(APIの RpgSeService.SLOTS と同じ)。叩いたときは叩いたものの素材ごと(front#282)、敵の攻撃は種類ごと、
+ * プレイヤーのレベルアップ・回復(front#335)・アイテムを拾う、操作(ウィンドウを開く・閉じる。front#419)
+ */
 export const SE_SLOTS: SeSlotDef[] = [
   ...HIT_MATERIALS.map(([id, label, icon]) => ({ slot: `hit_${id}`, label: `${icon} ${label}を叩く`, group: 'hit' as const })),
   ...ENEMY_ATTACKS.map((a) => ({ slot: `attack_${a.id}`, label: `${a.icon} ${a.label}`, attack: a.id, group: 'attack' as const })),
   { slot: 'level_up', label: '⭐ レベルアップ', group: 'player' },
-  { slot: 'heal', label: '💚 回復する', group: 'player' }
+  { slot: 'heal', label: '💚 回復する', group: 'player' },
+  { slot: 'item_pick', label: '🎒 アイテムを拾う', group: 'player' },
+  { slot: 'ui_open', label: '📂 ウィンドウを開く', group: 'ui' },
+  { slot: 'ui_close', label: '📁 ウィンドウを閉じる', group: 'ui' }
 ];
 
 /** 一覧の見出し */
-export const SE_GROUP_LABELS: Record<SeSlotDef['group'], string> = { hit: '叩いたとき', attack: '敵の攻撃（攻撃の種類ごと）', player: 'プレイヤー' };
+export const SE_GROUP_LABELS: Record<SeSlotDef['group'], string> = { hit: '叩いたとき', attack: '敵の攻撃（攻撃の種類ごと）', player: 'プレイヤー', ui: '操作' };
+
+/**
+ * 開いているウィンドウが prev から next に変わったときに鳴らす操作音(front#419)。
+ * 新しく開いたウィンドウがあれば「開く」(別のウィンドウへ移ったときも)、閉じただけなら「閉じる」、変わらなければなし
+ */
+export function windowSound(prev: readonly string[], next: readonly string[]): 'ui_open' | 'ui_close' | null {
+  if (next.some((w) => !prev.includes(w))) return 'ui_open';
+  if (prev.some((w) => !next.includes(w))) return 'ui_close';
+  return null;
+}
 
 export interface SeSettings {
   // 0〜1
@@ -53,6 +69,8 @@ export class SePlayer {
   // 場面 → 音のファイルの URL
   private urls = new Map<string, string>();
   private lastPlayed = new Map<string, number>();
+  // 鳴らした場面(新しい順に20個まで)。開発用のビルドで、テストから確かめるため
+  readonly history: string[] = [];
 
   constructor(
     private createAudio: () => BgmAudio = () => new Audio(),
@@ -80,6 +98,8 @@ export class SePlayer {
     const t = this.now();
     if (t - (this.lastPlayed.get(slot) ?? -Infinity) < MIN_GAP_MS) return false;
     this.lastPlayed.set(slot, t);
+    this.history.unshift(slot);
+    this.history.length = Math.min(this.history.length, 20);
     // 重ねて鳴らせるよう、鳴らすたびに新しく作る(短い音なのでブラウザがすぐ片付ける)
     const audio = this.createAudio();
     audio.src = url;

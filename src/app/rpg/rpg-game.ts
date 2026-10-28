@@ -1765,6 +1765,7 @@ export class RpgGame {
     const name = `${ITEMS[d.id].name}${d.count > 1 ? `×${d.count}` : ''}`;
     this.floatText(d.x, d.y, name, '#fde68a', 14, -10);
     this.events.log(`${name}を拾った`);
+    this.events.sound?.('item_pick');
     this.events.inventoryChanged();
     this.events.dirty();
   }

@@ -1457,3 +1457,94 @@ test(
     });
   }
 );
+
+// 効果音の割り当て(front#419)を、テストの中だけ「拾う・開く・閉じる」に音を選んだ状態にする。音のファイルは無音のWAV
+async function assignTestSounds(page: Page): Promise<void> {
+  const se = { id: 'e2e-se', name: '[E2E]ピコッ', filename: 'e2e-pico.wav', size: 44, createdAt: '2026-10-28T00:00:00' };
+  await page.route('**/graphql', async (route) => {
+    const body = route.request().postData() ?? '';
+    if (body.includes('GetRpgSeSlots')) {
+      await route.fulfill({ json: { data: { rpgSeSlots: ['item_pick', 'ui_open', 'ui_close'].map((slot) => ({ slot, seId: se.id })) } } });
+    } else if (body.includes('GetRpgSes')) {
+      await route.fulfill({ json: { data: { rpgSes: [se] } } });
+    } else {
+      await route.fallback();
+    }
+  });
+  // 44バイトの無音のWAV(ヘッダーだけ)
+  const wav = Buffer.alloc(44);
+  wav.write('RIFF', 0); wav.writeUInt32LE(36, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(8000, 28); wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write('data', 36); wav.writeUInt32LE(0, 40);
+  await page.route(`**/rpg-se/${se.filename}`, (route) => route.fulfill({ body: wav, contentType: 'audio/wav' }));
+}
+
+const soundsOf = (page: Page): Promise<string[]> => page.evaluate(() => (window as any).rpgTest.sounds() as string[]);
+
+test(
+  'E2E-37 RPGで、アイテムを拾うと「拾う」、設定・ステータスのウィンドウを開く・閉じると「開く」「閉じる」の効果音が鳴る。NPCとの会話では鳴らない(front#419)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'セーブデータが最初の状態',
+      '効果音の割り当てを、テストの中だけ「🎒 アイテムを拾う」「📂 ウィンドウを開く」「📁 ウィンドウを閉じる」に音を選んだ状態にする(sandbox のデータは変えない)',
+      '鳴った場面は、開発用のビルドだけにあるテスト用の入り口 rpgTest.sounds で確かめる(音そのものは聞かない)'
+    ],
+    expected: [
+      'ゲーム画面をクリックして音を出せるようにしたあと、落ちた回復薬を拾うと「アイテムを拾う」(item_pick)が鳴る',
+      '歯車(設定)を押して開くと「開く」(ui_open)、もう一度押して閉じると「閉じる」(ui_close)が鳴る',
+      '「ステータス」を開くと「開く」、「閉じる」ボタンで閉じると「閉じる」が鳴る',
+      '村長に話しかけて会話の吹き出しが出ても、効果音は増えない'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    await assignTestSounds(page);
+    const log = page.getByRole('region', { name: 'ログ' });
+
+    await step('RPG(/rpg)を開いてゲーム画面をクリックし、プレイヤーの近くに落とした回復薬を拾う', 'ログに「回復薬を拾った」と出て、「アイテムを拾う」(item_pick)が鳴る', async () => {
+      await page.goto('/rpg');
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      // 画面をクリックするまでブラウザは音を出せない。プレイヤーの足元をクリックして、音を出せるようにする
+      await clickCanvas(page, await page.evaluate(() => (window as any).rpgTest.playerPosition() as [number, number]));
+      const at = await page.evaluate(() => (window as any).rpgTest.dropNearPlayer('potion', 1) as [number, number]);
+      await page.waitForTimeout(700);
+      await clickCanvas(page, at, 10);
+      await expect(log.getByText('回復薬を拾った')).toBeVisible();
+      await expect.poll(() => soundsOf(page)).toContain('item_pick');
+      expect((await soundsOf(page))[0]).toBe('item_pick');
+    });
+
+    await step('歯車(設定)を押して開き、もう一度押して閉じる', '開くと「開く」(ui_open)、閉じると「閉じる」(ui_close)が鳴る', async () => {
+      await page.getByRole('button', { name: '設定', exact: true }).click();
+      await expect(page.getByRole('dialog', { name: '設定' })).toBeVisible();
+      await expect.poll(async () => (await soundsOf(page))[0]).toBe('ui_open');
+      await page.getByRole('button', { name: '設定', exact: true }).click();
+      await expect(page.getByRole('dialog', { name: '設定' })).toBeHidden();
+      await expect.poll(async () => (await soundsOf(page)).slice(0, 2)).toEqual(['ui_close', 'ui_open']);
+    });
+
+    await step('「ステータス」を開き、「閉じる」ボタンで閉じる', '開くと「開く」、閉じると「閉じる」が鳴る', async () => {
+      // 同じ場面の音は少しの間をあけてから鳴らすので、間をあける
+      await page.waitForTimeout(200);
+      await page.getByRole('button', { name: /ステータス/ }).click();
+      const status = page.getByRole('dialog', { name: 'ステータス' });
+      await expect(status).toBeVisible();
+      await expect.poll(async () => (await soundsOf(page))[0]).toBe('ui_open');
+      await page.waitForTimeout(200);
+      await status.getByRole('button', { name: '閉じる' }).click();
+      await expect(status).toBeHidden();
+      await expect.poll(async () => (await soundsOf(page)).slice(0, 2)).toEqual(['ui_close', 'ui_open']);
+    });
+
+    await step('村長に話しかける', '会話の吹き出しが出ても、効果音は増えない', async () => {
+      const before = (await soundsOf(page)).length;
+      await clickNpc(page, '村長 ゴロウ');
+      await expect(page.getByRole('dialog', { name: '村長 ゴロウとの会話' })).toBeVisible();
+      await page.waitForTimeout(500);
+      expect((await soundsOf(page)).length).toBe(before);
+    });
+  }
+);
