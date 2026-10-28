@@ -199,9 +199,11 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   if (pose.sword) drawSword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1');
 
   // 後ろ髪(髪のふちは服より細く)
-  const back = backHair(L, y0, d);
-  if (back) fillShaded(c, back, L.hairColor, [-20, y0 - 50, 20, y0], 0.14, 0.5);
-  hairTies(c, L, y0, d);
+  inHairSpace(c, d, () => {
+    const back = backHair(L, y0, d);
+    if (back) fillShaded(c, back, L.hairColor, [-20, y0 - 50, 20, y0], 0.14, 0.5);
+    hairTies(c, L, y0, d);
+  });
 
   // 体の後ろの腕 → 服 → 手前の腕
   drawArms(c, L, hands.filter((h) => h.back), cc, y0);
@@ -222,21 +224,23 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
     c.fillStyle = 'rgba(255,255,255,0.5)';
     c.beginPath(); c.ellipse(-4, y0 - 38, 4, 2, -0.4, 0, Math.PI * 2); c.fill();
   } else {
-    const fr = frontHair(L, y0, f, d);
-    fillShaded(c, fr, L.hairColor, [-15, y0 - 50, 15, y0 - 15], 0.14, 0.5);
-    // ツヤ: 頭の丸みにそって白い帯を入れる(前髪の中だけ)
-    c.save();
-    c.clip(fr);
-    c.strokeStyle = 'rgba(255,255,255,0.38)';
-    c.lineWidth = 1.8;
-    c.lineCap = 'round';
-    c.beginPath(); c.arc(-1 + f * 0.3, y0 - 33, 9.2, Math.PI * 1.13, Math.PI * 1.6); c.stroke();
-    c.restore();
+    inHairSpace(c, d, () => {
+      const fr = frontHair(L, y0, f, d);
+      fillShaded(c, fr, L.hairColor, [-15, y0 - 50, 15, y0 - 15], 0.14, 0.5);
+      // ツヤ: 頭の丸みにそって白い帯を入れる(前髪の中だけ)
+      c.save();
+      c.clip(fr);
+      c.strokeStyle = 'rgba(255,255,255,0.38)';
+      c.lineWidth = 1.8;
+      c.lineCap = 'round';
+      c.beginPath(); c.arc(-1 + f * 0.3, y0 - 33, 9.2, Math.PI * 1.13, Math.PI * 1.6); c.stroke();
+      c.restore();
+    });
   }
 
   drawFace(c, L, y0, f);
   // 三つ編みは肩から前へ垂らすので、体・顔の手前に描く
-  if (hairBackOf(L) === 'braid') drawBraid(c, L, y0, d);
+  if (hairBackOf(L) === 'braid') inHairSpace(c, d, () => drawBraid(c, L, y0, d));
 
   if (pose.slash && pose.slash > 0) {
     c.strokeStyle = `rgba(255,255,255,${pose.slash})`;
@@ -245,17 +249,49 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   }
 }
 
-// 頭の輪郭(front#372)。後ろ側は丸のまま、向いている側(d)は あご → ほっぺ を少し外へふくらませて丸に戻す
+// 頭の輪郭(front#405)。真ん丸ではなく、縦長の卵形にして、ほっぺから下をすぼめて あご にする。
+// 顔は向いている側(d)に寄って見えるので、向いている側は少し広く、後ろ側は細くする。
+// あごも向いている側へ少し寄せ、向いている側のほっぺは少しふっくらさせる(front#372)
+const HEAD_RY = 12;
+const HEAD_RX_FRONT = 10.6;
+const HEAD_RX_BACK = 9.2;
+
+// 髪は丸い頭(横幅 12)に合わせて描いてあるので、顔幅に合わせて横に縮めて描く(front#407)。
+// 頭は向いている側が少し広いので、縮める中心も向いている側へ少し寄せる
+const HAIR_SX = 0.88;
+function inHairSpace(c: CanvasRenderingContext2D, d: number, draw: () => void): void {
+  const cx = d * (HEAD_RX_FRONT - HEAD_RX_BACK) / 2;
+  c.save();
+  c.translate(cx, 0);
+  c.scale(HAIR_SX, 1);
+  c.translate(-cx, 0);
+  draw();
+  c.restore();
+}
 function headPath(y0: number, d: number): Path2D {
   const p = new Path2D();
   const cy = y0 - 31;
-  // 後ろ側の半円を描く向き(右を向いているときは、上 → 左 → 下)
+  // 卵形からすぼめ始める高さ(中心から下へ)
+  const sy = 1;
+  const k = Math.sqrt(1 - (sy / HEAD_RY) ** 2);
+  const t = Math.asin(sy / HEAD_RY);
+  // あご(少し丸みを残す)
+  const chinX = d * 2;
+  const chinY = cy + 13.4;
+  // 右を向いているときは、上 → 左(後ろ) → あご → 右(前) → 上 の順に描く
   const backward = d > 0;
-  p.moveTo(0, cy - 12);
-  p.arc(0, cy, 12, -Math.PI / 2, Math.PI / 2, backward);
-  p.bezierCurveTo(d * 4, cy + 12.4, d * 10.6, cy + 10.4, d * 12.5, cy + 5);
-  p.bezierCurveTo(d * 13.2, cy + 2, d * 12.3, cy - 1.5, d * 11.6, cy - 3.1);
-  p.arc(0, cy, 12, Math.atan2(-3.1, d * 11.6), -Math.PI / 2, backward);
+  const backAt = d > 0 ? Math.PI - t : t;
+  const frontAt = d > 0 ? t : Math.PI - t;
+  p.moveTo(0, cy - HEAD_RY);
+  p.ellipse(0, cy, HEAD_RX_BACK, HEAD_RY, 0, -Math.PI / 2, backAt, backward);
+  // 後ろ側: ほっぺ → あご
+  const bx = -d * HEAD_RX_BACK * k;
+  p.bezierCurveTo(bx, cy + 6.5, -d * 5, cy + 11.8, chinX - d * 1.8, chinY - 0.3);
+  p.quadraticCurveTo(chinX, chinY + 0.4, chinX + d * 1.8, chinY - 0.5);
+  // 向いている側: あご → ほっぺ(少しふっくら)
+  const fx = d * HEAD_RX_FRONT * k;
+  p.bezierCurveTo(d * 8.2, cy + 11.8, fx + d * 0.4, cy + 7, fx, cy + sy);
+  p.ellipse(0, cy, HEAD_RX_FRONT, HEAD_RY, 0, frontAt, -Math.PI / 2, backward);
   p.closePath();
   return p;
 }
@@ -525,13 +561,13 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     for (const x0 of ex) { c.beginPath(); c.arc(x0, ey, 3.7, 0, Math.PI * 2); c.stroke(); }
     c.beginPath(); c.moveTo(ex[0] + 3.7, ey - 0.5); c.lineTo(ex[1] - 3.7, ey - 0.5); c.stroke();
   }
-  // ほっぺ(front#369 で少し小さく)
+  // ほっぺ(front#369 で少し小さく。front#405 で輪郭をすぼめたので少し内側に寄せ、あごを付けたので少し下げる)
   c.fillStyle = 'rgba(255,120,120,0.35)';
-  c.beginPath(); c.ellipse(-7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(7 + f, y0 - 23, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
-  // 口(front#368 で全体的に小さく)
+  c.beginPath(); c.ellipse(-6 + f, y0 - 22.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(6 + f, y0 - 22.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
+  // 口(front#368 で全体的に小さく。front#405 であごを付けたので少し下げる)
   const mx = f;
-  const my = y0 - 22;
+  const my = y0 - 21;
   c.strokeStyle = '#7c2d12';
   c.lineWidth = 0.8;
   if (L.mouth === 'smile') { c.beginPath(); c.arc(mx, my - 1.1, 1.7, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke(); }
