@@ -7,14 +7,14 @@
     <div class="calendar-view-switch" role="group" aria-label="表示切替">
       <button
         class="calendar-view-button"
-        [class.active]="viewMode() === 'month'"
-        (click)="setViewMode('month')"
-        type="button">月表示</button>
-      <button
-        class="calendar-view-button"
         [class.active]="viewMode() === 'week'"
         (click)="setViewMode('week')"
         type="button">週表示</button>
+      <button
+        class="calendar-view-button"
+        [class.active]="viewMode() === 'month'"
+        (click)="setViewMode('month')"
+        type="button">月表示</button>
     </div>
   </div>
   <div class="content">
