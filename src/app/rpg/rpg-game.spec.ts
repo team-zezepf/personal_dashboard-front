@@ -4,7 +4,7 @@ import {
   exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
-import { MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_DELAY, THANKS_SEC, mateStatToRaise } from './rpg-game';
+import { HEAL_ALL_STAGGER, MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_DELAY, THANKS_SEC, mateStatToRaise } from './rpg-game';
 import { DEFAULT_LOOK, lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, EnemyDef, setEnemies } from './rpg-enemy';
 
@@ -1919,6 +1919,38 @@ describe('RpgGame', () => {
 
       expect(game.castSpell('healall')).toBe(true);
       expect([game.player.hp, a.hp, b.hp]).toEqual([50, 43, 0]);
+    });
+
+    it('回復魔法は、使った人に魔法陣(cast)、回復する人に光の柱と〇の粒(magic)を出す。ヒールオールは大きく、1人ずつずらす。回復薬は今までどおり(front#409)', () => {
+      field([], { items: [{ itemId: 'potion', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] });
+      game.addCompanion(mate('3'));
+      game.addCompanion(mate('4'));
+      const [a, b] = game.companions;
+      const mateFx = () => game.mateFx.map((m) => [m.target.userId, m.fx.kind, !!m.fx.big, m.fx.t]);
+
+      // ヒール: 自分に魔法陣、選んだ仲間に回復の光
+      a.hp = 10;
+      game.select(a);
+      game.castSpell('heal');
+      expect(game.playerFx.map((f) => [f.kind, !!f.big, f.t])).toEqual([['cast', false, 0]]);
+      expect(mateFx()).toEqual([[a.userId, 'magic', false, 0]]);
+
+      // 決まった長さで消える
+      run(PLAYER_FX_SEC.magic + 0.1);
+      expect(game.playerFx).toEqual([]);
+      expect(game.mateFx).toEqual([]);
+
+      // ヒールオール: 魔法陣は大きく、回復の光は 自分 → 仲間 の順に少しずつずらす(t が負の間はまだ出ない)
+      game.player.hp = 20;
+      game.castSpell('healall');
+      expect(game.playerFx.map((f) => [f.kind, !!f.big, f.t])).toEqual([['cast', true, 0], ['magic', true, 0]]);
+      expect(mateFx()).toEqual([[a.userId, 'magic', true, -HEAL_ALL_STAGGER], [b.userId, 'magic', true, -2 * HEAL_ALL_STAGGER]]);
+
+      // 回復薬は今までどおりの回復の光
+      run(PLAYER_FX_SEC.magic + 0.2);
+      a.hp = 10;
+      game.useItem('potion');
+      expect(mateFx()).toEqual([[a.userId, 'heal', false, 0]]);
     });
 
     it('回復薬は選んでいる仲間に使う。MPを回復する道具は、仲間を選んでいても自分に使い、MPが満タンなら使わない', () => {
