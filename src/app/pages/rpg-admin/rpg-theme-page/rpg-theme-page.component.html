@@ -174,14 +174,14 @@
               <input type="color" aria-label="装飾の色" [value]="sel.theme.effect.color" (input)="setEffectColor($any($event.target).value)" />
             }
           </div>
-          @if (sel.theme.effect.kind === 'vignette') {
+          @if (sel.theme.effect.kind === 'vignette' || sel.theme.effect.kind === 'bubbles') {
             <label class="f">
               <span>濃さ</span>
               <input type="range" min="0" max="1" step="0.05" [value]="sel.theme.effect.alpha" (input)="setEffectAlpha($any($event.target).value)" aria-label="装飾の濃さ" />
               <span class="val">{{ sel.theme.effect.alpha }}</span>
             </label>
           }
-          <p class="hint">装飾1は空に星、装飾2は画面に舞う粒（赤にすると火の粉に見える）、装飾3は画面の外側を選んだ色で暗くします。選べるのは1つだけです。</p>
+          <p class="hint">装飾1は空に星、装飾2は画面に舞う粒（赤にすると火の粉に見える）、装飾3は画面の外側を選んだ色で暗くします。装飾4は画面の下から泡がのぼります（海の中のように見える）。選べるのは1つだけです。</p>
         </div>
 
         <div class="section" aria-label="チェック">

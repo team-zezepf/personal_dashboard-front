@@ -386,7 +386,7 @@ export interface RpgTheme {
   leaves: string[];
   treeScale: number;
   rock: string[];
-  // 装飾(1つだけ)。none なし / stars 装飾1 / fireflies 装飾2 / vignette 装飾3。alpha は装飾3の濃さ
+  // 装飾(1つだけ)。none なし / stars 装飾1 / fireflies 装飾2 / vignette 装飾3 / bubbles 装飾4(泡)。alpha は装飾3・4の濃さ
   effect: { kind: string; color: string; alpha: number };
   sortOrder: number;
   updatedAt?: string | null;

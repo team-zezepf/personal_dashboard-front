@@ -5,10 +5,12 @@ import { DEFAULT_THEMES, THEMES, THEME_LIST, autoLiquidEdge, hexToHsl, hexToRgba
 describe('rpg-data の見た目(front#389)', () => {
   afterEach(() => setThemes(DEFAULT_THEMES));
 
-  const snow = (): RpgTheme => ({ ...DEFAULT_THEMES[0], id: 'theme1', name: '雪原', liquidName: '氷', liquid: '#ffffff', liquidSway: 0, sortOrder: 5 });
+  const snow = (): RpgTheme => ({ ...DEFAULT_THEMES[0], id: 'theme1', name: '雪原', liquidName: '氷', liquid: '#ffffff', liquidSway: 0, sortOrder: 6 });
 
-  it('最初の見た目は4つで、谷は赤いホタル(火の粉)、森はホタル、塔は星', () => {
-    expect(THEME_LIST.map((t) => t.label)).toEqual(['草原', '森', '谷', '塔']);
+  it('最初の見た目は5つで、谷は赤いホタル(火の粉)、森はホタル、塔は星、海は泡(front#421)', () => {
+    expect(THEME_LIST.map((t) => t.label)).toEqual(['草原', '森', '谷', '塔', '海']);
+    expect(THEMES['sea'].effect).toEqual({ kind: 'bubbles', color: '#e6fbff', alpha: 0.55 });
+    expect(THEMES['sea'].liquidName).toBe('海');
     expect(THEMES['valley'].effect).toEqual({ kind: 'fireflies', color: '#ff5a1f', alpha: 0.5 });
     expect(THEMES['forest'].effect.kind).toBe('fireflies');
     expect(THEMES['tower'].effect.kind).toBe('stars');
@@ -28,7 +30,7 @@ describe('rpg-data の見た目(front#389)', () => {
 
   it('見た目を入れ替えると、作った見た目も選べる。知らない見た目は草原になる', () => {
     setThemes([...DEFAULT_THEMES, snow()]);
-    expect(THEME_LIST.map((t) => t.id)).toEqual(['plain', 'forest', 'valley', 'tower', 'theme1']);
+    expect(THEME_LIST.map((t) => t.id)).toEqual(['plain', 'forest', 'valley', 'tower', 'sea', 'theme1']);
     expect(themeOf('theme1').liquidName).toBe('氷');
     expect(themeOf('nothing').label).toBe('草原');
     // 草原を含まない一覧でも、草原は残す

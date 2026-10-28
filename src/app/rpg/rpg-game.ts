@@ -1013,7 +1013,7 @@ export class RpgGame {
       if (o.mimicked || ((!isBreakableObj(o) || o.broken) && !this.signLines(o))) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
-      const ht = o.type === 'armor' ? 52 : o.type === 'sign' || o.type === SAVE_POINT ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' || o.type === 'bucket' ? 28 : 24;
+      const ht = o.type === 'armor' ? 52 : o.type === 'sign' || o.type === SAVE_POINT ? 46 : o.type === 'crystal' ? 34 : o.type === 'barrel' || o.type === 'pot' || o.type === 'bucket' || o.type === 'kelp' ? 28 : 24;
       if (wx > sx - 20 && wx < sx + 20 && wy > sy - ht && wy < sy + 10 && o.x + o.y > bestDepth) {
         bestDepth = o.x + o.y;
         best = o;
@@ -1623,7 +1623,7 @@ export class RpgGame {
     p.target = null;
     const color =
       objectTintOf(o)?.m ??
-      { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff', chest: '#f2c14e', armor: '#cbd5e1', barrel: '#9a6230', pot: '#c8693a', bones: '#e9e4d4', bucket: '#966131' }[o.type as string] ??
+      { grass: '#5cbf64', fern: '#76a84a', crystal: '#7ef9ff', chest: '#f2c14e', armor: '#cbd5e1', barrel: '#9a6230', pot: '#c8693a', bones: '#e9e4d4', bucket: '#966131', kelp: '#3fae6a', shell: '#fbcfe8' }[o.type as string] ??
       this.theme.rock[1];
     for (let i = 0; i < 12; i++) {
       this.particles.push({ x: o.x, y: o.y, ox: 0, oy: -8, vx: randi(-70, 70), vy: randi(-150, -50), t: 0, color: i % 3 ? color : '#ffffff' });

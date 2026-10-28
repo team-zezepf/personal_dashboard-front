@@ -263,7 +263,7 @@ export class RpgThemePageComponent implements OnDestroy {
 
   /** 装飾(1つだけ)。種類を変えたら、その種類のよくある色にする */
   setEffectKind(kind: string): void {
-    const colors: Record<string, string> = { stars: '#ffffff', fireflies: '#e6ffb3', vignette: '#000000' };
+    const colors: Record<string, string> = { stars: '#ffffff', fireflies: '#e6ffb3', vignette: '#000000', bubbles: '#e6fbff' };
     this.update((t) => (t.effect = { ...t.effect, kind, color: colors[kind] ?? t.effect.color }));
   }
 

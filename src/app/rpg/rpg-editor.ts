@@ -89,6 +89,10 @@ export const PALETTE: PaletteTab[] = [
       { id: 'bars', label: '鉄格子', icon: '▥', tool: { kind: 'object', type: 'bars' } },
       { id: 'shackle', label: '鎖の杭', icon: '⛓️', tool: { kind: 'object', type: 'shackle' } },
       { id: 'bucket', label: '木のおけ', icon: '🧺', tool: { kind: 'object', type: 'bucket' } },
+      // 海の置物(front#421)。サンゴは壊れない飾り、海藻・大きな貝は壊れる置物
+      { id: 'coral', label: 'サンゴ', icon: '🪸', tool: { kind: 'object', type: 'coral' } },
+      { id: 'kelp', label: '海藻', icon: '🌱', tool: { kind: 'object', type: 'kelp' } },
+      { id: 'shell', label: '大きな貝', icon: '🐚', tool: { kind: 'object', type: 'shell' } },
       // 看板(front#274)。いちばん近い「ほかのダンジョンへの端」を指し、行き先のダンジョンの名前を出す
       { id: 'sign', label: '看板', icon: '➡️', tool: { kind: 'object', type: 'sign' } },
       // セーブポイント(front#337)。調べると、たおれたときに戻る復活地点になる。始まりの草原のものは、はじめて遊ぶ人の始まりの場所
