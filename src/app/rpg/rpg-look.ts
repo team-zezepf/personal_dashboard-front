@@ -245,28 +245,36 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
   }
 }
 
-// 頭の輪郭。頭のてっぺん〜耳のあたりは丸く、ほっぺから下はすぼめて あご にする(front#405)。
-// あごは向いている側(d)へ少し寄せ、向いている側のほっぺは少しふっくらさせて向きが分かるようにする(front#372)
+// 頭の輪郭(front#405)。真ん丸ではなく、縦長の卵形にして、ほっぺから下をすぼめて あご にする。
+// 顔は向いている側(d)に寄って見えるので、向いている側は少し広く、後ろ側は細くする。
+// あごも向いている側へ少し寄せ、向いている側のほっぺは少しふっくらさせる(front#372)
+const HEAD_RY = 12;
+const HEAD_RX_FRONT = 10.6;
+const HEAD_RX_BACK = 9.2;
 function headPath(y0: number, d: number): Path2D {
   const p = new Path2D();
   const cy = y0 - 31;
-  const r = 12;
-  // 丸からすぼめ始める高さ(中心から下へ)と、そこでの横幅
-  const sy = 1.5;
-  const sx = Math.sqrt(r * r - sy * sy);
+  // 卵形からすぼめ始める高さ(中心から下へ)
+  const sy = 1;
+  const k = Math.sqrt(1 - (sy / HEAD_RY) ** 2);
+  const t = Math.asin(sy / HEAD_RY);
   // あご(少し丸みを残す)
-  const chinX = d * 1.6;
-  const chinY = cy + 13;
-  // 後ろ側の弧を描く向き(右を向いているときは、上 → 左 → 下)
+  const chinX = d * 2;
+  const chinY = cy + 13.4;
+  // 右を向いているときは、上 → 左(後ろ) → あご → 右(前) → 上 の順に描く
   const backward = d > 0;
-  p.moveTo(0, cy - r);
-  p.arc(0, cy, r, -Math.PI / 2, Math.atan2(sy, -d * sx), backward);
+  const backAt = d > 0 ? Math.PI - t : t;
+  const frontAt = d > 0 ? t : Math.PI - t;
+  p.moveTo(0, cy - HEAD_RY);
+  p.ellipse(0, cy, HEAD_RX_BACK, HEAD_RY, 0, -Math.PI / 2, backAt, backward);
   // 後ろ側: ほっぺ → あご
-  p.bezierCurveTo(-d * sx, cy + 7, -d * 6.5, cy + 11.4, chinX - d * 1.6, chinY - 0.2);
-  p.quadraticCurveTo(chinX, chinY + 0.3, chinX + d * 1.6, chinY - 0.4);
+  const bx = -d * HEAD_RX_BACK * k;
+  p.bezierCurveTo(bx, cy + 6.5, -d * 5, cy + 11.8, chinX - d * 1.8, chinY - 0.3);
+  p.quadraticCurveTo(chinX, chinY + 0.4, chinX + d * 1.8, chinY - 0.5);
   // 向いている側: あご → ほっぺ(少しふっくら)
-  p.bezierCurveTo(d * 8, cy + 11.2, d * (sx + 0.7), cy + 7.5, d * sx, cy + sy);
-  p.arc(0, cy, r, Math.atan2(sy, d * sx), -Math.PI / 2, backward);
+  const fx = d * HEAD_RX_FRONT * k;
+  p.bezierCurveTo(d * 8.2, cy + 11.8, fx + d * 0.4, cy + 7, fx, cy + sy);
+  p.ellipse(0, cy, HEAD_RX_FRONT, HEAD_RY, 0, frontAt, -Math.PI / 2, backward);
   p.closePath();
   return p;
 }
@@ -538,8 +546,8 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
   }
   // ほっぺ(front#369 で少し小さく。front#405 で輪郭をすぼめたので、少し内側・上に寄せる)
   c.fillStyle = 'rgba(255,120,120,0.35)';
-  c.beginPath(); c.ellipse(-6.5 + f, y0 - 23.5, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(6.5 + f, y0 - 23.5, 1.9, 1.25, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(-6 + f, y0 - 23.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(6 + f, y0 - 23.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
   // 口(front#368 で全体的に小さく)
   const mx = f;
   const my = y0 - 22;
