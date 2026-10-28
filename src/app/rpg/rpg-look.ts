@@ -561,13 +561,13 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     for (const x0 of ex) { c.beginPath(); c.arc(x0, ey, 3.7, 0, Math.PI * 2); c.stroke(); }
     c.beginPath(); c.moveTo(ex[0] + 3.7, ey - 0.5); c.lineTo(ex[1] - 3.7, ey - 0.5); c.stroke();
   }
-  // ほっぺ(front#369 で少し小さく。front#405 で輪郭をすぼめたので、少し内側・上に寄せる)
+  // ほっぺ(front#369 で少し小さく。front#405 で輪郭をすぼめたので少し内側に寄せ、あごを付けたので少し下げる)
   c.fillStyle = 'rgba(255,120,120,0.35)';
-  c.beginPath(); c.ellipse(-6 + f, y0 - 23.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(6 + f, y0 - 23.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
-  // 口(front#368 で全体的に小さく)
+  c.beginPath(); c.ellipse(-6 + f, y0 - 22.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(6 + f, y0 - 22.8, 1.8, 1.2, 0, 0, Math.PI * 2); c.fill();
+  // 口(front#368 で全体的に小さく。front#405 であごを付けたので少し下げる)
   const mx = f;
-  const my = y0 - 22;
+  const my = y0 - 21;
   c.strokeStyle = '#7c2d12';
   c.lineWidth = 0.8;
   if (L.mouth === 'smile') { c.beginPath(); c.arc(mx, my - 1.1, 1.7, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke(); }
