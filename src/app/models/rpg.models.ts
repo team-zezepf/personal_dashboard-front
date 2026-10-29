@@ -420,6 +420,11 @@ export interface RpgCraft {
   updatedAt?: string | null;
   // 画像のファイル名(front#345 / api#166。/rpg-item-images/{image})。なければ絵文字(icon)で出す
   image?: string | null;
+  // 武器・防具の見た目(front#431 / api#204)。形(武器: sword / greatsword / staff / moonstaff、防具: 服の形)と色(#rrggbb)。
+  // 形がなければ今までどおり(武器は片手剣、防具は自分で選んだ服)
+  lookShape?: string | null;
+  lookColor?: string | null;
+  lookAccent?: string | null;
 }
 
 // id が null なら新しい装備として追加する。sortOrder が null なら今の順番のまま(新しければ最後)
@@ -458,6 +463,11 @@ export interface RpgItem {
   updatedAt?: string | null;
   // 画像のファイル名(front#345 / api#166。/rpg-item-images/{image})。なければ絵文字(icon)で出す
   image?: string | null;
+  // 武器・防具の見た目(front#431 / api#204)。形(武器: sword / greatsword / staff / moonstaff、防具: 服の形)と色(#rrggbb)。
+  // 形がなければ今までどおり(武器は片手剣、防具は自分で選んだ服)
+  lookShape?: string | null;
+  lookColor?: string | null;
+  lookAccent?: string | null;
 }
 
 // id が null なら新しいアイテムとして追加する。sortOrder が null なら今の順番のまま(新しければ最後)。保存したアイテムの種類は変えられない

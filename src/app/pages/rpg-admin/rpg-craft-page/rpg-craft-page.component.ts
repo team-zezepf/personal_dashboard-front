@@ -7,7 +7,8 @@ import { RpgService } from '../../../services/rpg.service';
 import { ITEMS, MATERIAL_IDS, POINT_SHOP_ICONS, isCraftItem, itemsVersion, rpgItemImageUrl, setCrafts } from '../../../rpg/rpg-data';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
-import { IMAGE_MAX_BYTES } from '../rpg-item-page/rpg-item-page.component';
+import { IMAGE_MAX_BYTES, equipLookInput } from '../rpg-item-page/rpg-item-page.component';
+import { EquipLookValue, RpgEquipLookFieldComponent } from '../../../components/rpg-equip-look-field/rpg-equip-look-field.component';
 import { MAX_SPELL_LEVEL, SPELLS, SPELL_IDS, SpellId, isSpellId, levelRateOf, spellLabel } from '../../../rpg/rpg-magic';
 
 type CraftType = RpgCraft['type'];
@@ -106,7 +107,7 @@ export function problemsOf(c: RpgCraft, others: { name: string; power: number; g
 @Component({
   selector: 'app-rpg-craft-page',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet, RpgItemIconComponent],
+  imports: [FormsModule, NgTemplateOutlet, RpgItemIconComponent, RpgEquipLookFieldComponent],
   templateUrl: './rpg-craft-page.component.html',
   styleUrls: ['./rpg-craft-page.component.css']
 })
@@ -410,6 +411,11 @@ export class RpgCraftPageComponent {
   }
 
   /** 画像を外す(選んだばかりの画像も捨てる) */
+/** 武器・防具の見た目(front#431)。形を「見た目なし」にすると色も消す */
+  setLook(v: EquipLookValue): void {
+    this.update((x) => Object.assign(x, v));
+  }
+
   clearImage(): void {
     const sel = this.selected();
     if (sel) this.pendingImages.remove(sel.craft.id);
@@ -596,6 +602,8 @@ function toInput(row: CraftRow, sortOrder: number | null): RpgCraftInput {
     gold: c.gold,
     materials: c.materials.map((m) => ({ itemId: m.itemId, count: m.count })),
     sortOrder,
-    image: c.image ?? null
+    image: c.image ?? null,
+    // 武器・防具の見た目(front#431)
+    ...equipLookInput(c.type, c)
   };
 }

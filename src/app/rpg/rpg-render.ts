@@ -1,4 +1,4 @@
-import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, weaponPoseOf, wornLook } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Companion, DOOR_OPENING_HEIGHT, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
@@ -486,13 +486,13 @@ export class RpgRenderer {
     const fx: PlayerFx[] = this.game.mateFx.filter((m) => m.target === c).map((m) => m.fx);
     if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (c.dead) ctx.globalAlpha = 0.45;
-    this.drawLook(sx + c.lunge * 7 * c.dir, sy, c.look, {
+    // 装備している防具の服・武器の形で描く(front#431)
+    this.drawLook(sx + c.lunge * 7 * c.dir, sy, wornLook(c.look, c.armor), {
       dir: c.dir,
       time: this.time,
       moving: c.moving,
       hurt: c.hurt > 0,
-      sword: true,
-      swordColor: swordColorOf(c.weapon),
+      ...weaponPoseOf(c.weapon),
       slash: c.lunge
     });
     ctx.globalAlpha = 1;
@@ -1016,13 +1016,13 @@ export class RpgRenderer {
     this.drawSelectRing(p, sx, sy);
     if (fx.length) drawPlayerFxBack(ctx, fx, sx, sy);
     if (p.dead) ctx.globalAlpha = 0.45;
-    this.drawLook(sx + p.lunge * 7 * p.dir, sy, p.look, {
+    // 装備している防具の服・武器の形で描く(front#431)
+    this.drawLook(sx + p.lunge * 7 * p.dir, sy, wornLook(p.look, p.armor), {
       dir: p.dir,
       time: this.time,
       moving: p.moving,
       hurt: p.hurt > 0,
-      sword: true,
-      swordColor: swordColorOf(p.weapon),
+      ...weaponPoseOf(p.weapon),
       slash: p.lunge
     });
     ctx.globalAlpha = 1;

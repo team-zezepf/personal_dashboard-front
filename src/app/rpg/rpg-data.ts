@@ -1,6 +1,7 @@
 // RPG(front#215)の定義データ。マップの見た目はフロントが持つ。アイテム(api#163)・敵・合成の装備は、APIから読んで入れ替える。
 // エリアの地形などはマップのデータ(api#82)、ポイント交換所の品物と値段はAPIが持つ
-import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgMap, RpgMapObject, RpgObjectDef, RpgTheme } from '../models/rpg.models';
+import { RpgAreaMove, RpgChanceEnemy, RpgChanceItem, RpgCraft, RpgDungeon, RpgItem, RpgItemType, RpgLook, RpgMap, RpgMapObject, RpgObjectDef, RpgTheme } from '../models/rpg.models';
+import { EquipLook, wearArmor, weaponPose } from './rpg-look';
 import { signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { objectTiles } from './rpg-house';
@@ -28,6 +29,8 @@ export interface ItemDef {
   desc?: string;
   // 画像のURL(front#345)。なければ絵文字(icon)で出す
   image?: string;
+  // 武器・防具の見た目(front#431)。なければ今までどおり(武器は片手剣、防具は自分で選んだ服)
+  look?: EquipLook;
 }
 
 /** アイテム・合成の装備の画像のURL(front#345 / api#166) */
@@ -42,17 +45,17 @@ export function rpgItemImageUrl(filename: string): string {
 export const DEFAULT_ITEMS: RpgItem[] = [
   { id: 'potion', name: '回復薬', icon: '🧪', type: 'use', heal: 35, desc: 'HPを35回復', inShop: true, price: 10, sortOrder: 1 },
   { id: 'hipotion', name: '上回復薬', icon: '⚗️', type: 'use', heal: 120, desc: 'HPを120回復', inShop: true, price: 35, sortOrder: 2 },
-  { id: 'wood_sword', name: '木の剣', icon: '🗡️', type: 'weapon', atk: 2, inShop: false, sortOrder: 3 },
-  { id: 'copper_sword', name: '銅の剣', icon: '🗡️', type: 'weapon', atk: 6, inShop: true, price: 45, sortOrder: 4 },
-  { id: 'iron_sword', name: '鉄の剣', icon: '⚔️', type: 'weapon', atk: 12, inShop: true, price: 140, sortOrder: 5 },
-  { id: 'steel_sword', name: '鋼の剣', icon: '⚔️', type: 'weapon', atk: 22, inShop: true, price: 420, sortOrder: 6 },
-  { id: 'mithril_sword', name: 'ミスリルの剣', icon: '🔱', type: 'weapon', atk: 34, inShop: true, price: 1200, sortOrder: 7 },
-  { id: 'star_sword', name: '星の剣', icon: '🌟', type: 'weapon', atk: 26, desc: 'ポイント交換限定', inShop: false, sortOrder: 8 },
+  { id: 'wood_sword', name: '木の剣', icon: '🗡️', type: 'weapon', atk: 2, inShop: false, sortOrder: 3, lookShape: 'sword', lookColor: '#c08a52', lookAccent: '#a16207' },
+  { id: 'copper_sword', name: '銅の剣', icon: '🗡️', type: 'weapon', atk: 6, inShop: true, price: 45, sortOrder: 4, lookShape: 'sword', lookColor: '#d08a4e', lookAccent: '#a16207' },
+  { id: 'iron_sword', name: '鉄の剣', icon: '⚔️', type: 'weapon', atk: 12, inShop: true, price: 140, sortOrder: 5, lookShape: 'sword', lookColor: '#cbd5e1', lookAccent: '#64748b' },
+  { id: 'steel_sword', name: '鋼の剣', icon: '⚔️', type: 'weapon', atk: 22, inShop: true, price: 420, sortOrder: 6, lookShape: 'greatsword', lookColor: '#e2e8f0', lookAccent: '#1f2937' },
+  { id: 'mithril_sword', name: 'ミスリルの剣', icon: '🔱', type: 'weapon', atk: 34, inShop: true, price: 1200, sortOrder: 7, lookShape: 'sword', lookColor: '#a5f3fc', lookAccent: '#0e7490' },
+  { id: 'star_sword', name: '星の剣', icon: '🌟', type: 'weapon', atk: 26, desc: 'ポイント交換限定', inShop: false, sortOrder: 8, lookShape: 'greatsword', lookColor: '#fde047', lookAccent: '#f59e0b' },
   { id: 'cloth', name: '布の服', icon: '👕', type: 'armor', def: 1, inShop: false, sortOrder: 9 },
-  { id: 'leather', name: '革の鎧', icon: '🦺', type: 'armor', def: 5, inShop: true, price: 60, sortOrder: 10 },
-  { id: 'chain_mail', name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, inShop: true, price: 260, sortOrder: 11 },
-  { id: 'magic_armor', name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, inShop: true, price: 800, sortOrder: 12 },
-  { id: 'star_robe', name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定', inShop: false, sortOrder: 13 },
+  { id: 'leather', name: '革の鎧', icon: '🦺', type: 'armor', def: 5, inShop: true, price: 60, sortOrder: 10, lookShape: 'vest', lookColor: '#8b5a2b', lookAccent: '#f1e3c8' },
+  { id: 'chain_mail', name: 'くさりかたびら', icon: '🛡️', type: 'armor', def: 10, inShop: true, price: 260, sortOrder: 11, lookShape: 'armor', lookColor: '#94a3b8', lookAccent: '#64748b' },
+  { id: 'magic_armor', name: '魔法の鎧', icon: '💠', type: 'armor', def: 18, inShop: true, price: 800, sortOrder: 12, lookShape: 'armor', lookColor: '#3b82f6', lookAccent: '#facc15' },
+  { id: 'star_robe', name: '星のローブ', icon: '✨', type: 'armor', def: 16, desc: 'ポイント交換限定', inShop: false, sortOrder: 13, lookShape: 'robe', lookColor: '#1e3a8a', lookAccent: '#fde047' },
   { id: 'slime_jelly', name: 'スライムゼリー', icon: '💧', type: 'material', desc: 'スライムが落とす', inShop: false, sellPrice: 2, sortOrder: 14 },
   { id: 'mushroom_spore', name: 'キノコの胞子', icon: '🍄', type: 'material', desc: 'キノコンが落とす', inShop: false, sellPrice: 6, sortOrder: 15 },
   { id: 'spirit_light', name: '精霊の光', icon: '💫', type: 'material', desc: 'もりのせいれいが落とす', inShop: false, sellPrice: 8, sortOrder: 16 },
@@ -104,17 +107,17 @@ export const RECIPES: Recipe[] = [];
  * 合成の装備とレシピの最初の8つ(api#134 の default_crafts.json と同じ)。
  * APIから読めないとき・まだ読んでいないときに使う
  */
-const craft = (id: string, name: string, icon: string, type: 'weapon' | 'armor', power: number, gold: number, materials: [string, number][], sortOrder: number): RpgCraft =>
-  ({ id, name, icon, type, power, gold, materials: materials.map(([itemId, count]) => ({ itemId, count })), sortOrder });
+const craft = (id: string, name: string, icon: string, type: 'weapon' | 'armor', power: number, gold: number, materials: [string, number][], sortOrder: number, look: [string, string, string]): RpgCraft =>
+  ({ id, name, icon, type, power, gold, materials: materials.map(([itemId, count]) => ({ itemId, count })), sortOrder, lookShape: look[0], lookColor: look[1], lookAccent: look[2] });
 export const DEFAULT_CRAFTS: RpgCraft[] = [
-  craft('jelly_robe', 'ゼリーの服', '👘', 'armor', 4, 20, [['slime_jelly', 5]], 1),
-  craft('fang_sword', '牙の剣', '🗡️', 'weapon', 16, 120, [['raptor_fang', 3], ['golem_stone', 2]], 2),
-  craft('forest_robe', '森の衣', '🥻', 'armor', 9, 80, [['mushroom_spore', 3], ['spirit_light', 3]], 3),
-  craft('bone_mail', '骨の鎧', '🦺', 'armor', 15, 300, [['old_bone', 5], ['bat_wing', 3]], 4),
-  craft('black_sword', '黒鉄の剣', '⚔️', 'weapon', 28, 500, [['black_iron', 4], ['old_bone', 3], ['magic_scrap', 1]], 5),
-  craft('dark_sword', '闇の剣', '🗡️', 'weapon', 38, 900, [['dark_gem', 2], ['black_iron', 3], ['ghost_cloth', 2]], 6),
-  craft('dragon_sword', '竜牙の剣', '🔱', 'weapon', 46, 1500, [['dragon_scale', 3], ['raptor_fang', 4], ['dark_gem', 1]], 7),
-  craft('dragon_mail', '竜鱗の鎧', '🛡️', 'armor', 26, 1600, [['dragon_scale', 4], ['dark_gem', 2], ['mimic_tongue', 1]], 8)
+  craft('jelly_robe', 'ゼリーの服', '👘', 'armor', 4, 20, [['slime_jelly', 5]], 1, ['robe', '#7dd3fc', '#e0f2fe']),
+  craft('fang_sword', '牙の剣', '🗡️', 'weapon', 16, 120, [['raptor_fang', 3], ['golem_stone', 2]], 2, ['sword', '#f1f5f9', '#78350f']),
+  craft('forest_robe', '森の衣', '🥻', 'armor', 9, 80, [['mushroom_spore', 3], ['spirit_light', 3]], 3, ['robe', '#15803d', '#bbf7d0']),
+  craft('bone_mail', '骨の鎧', '🦺', 'armor', 15, 300, [['old_bone', 5], ['bat_wing', 3]], 4, ['armor', '#e7e5e4', '#a8a29e']),
+  craft('black_sword', '黒鉄の剣', '⚔️', 'weapon', 28, 500, [['black_iron', 4], ['old_bone', 3], ['magic_scrap', 1]], 5, ['greatsword', '#334155', '#94a3b8']),
+  craft('dark_sword', '闇の剣', '🗡️', 'weapon', 38, 900, [['dark_gem', 2], ['black_iron', 3], ['ghost_cloth', 2]], 6, ['sword', '#4c1d95', '#a78bfa']),
+  craft('dragon_sword', '竜牙の剣', '🔱', 'weapon', 46, 1500, [['dragon_scale', 3], ['raptor_fang', 4], ['dark_gem', 1]], 7, ['greatsword', '#dc2626', '#fbbf24']),
+  craft('dragon_mail', '竜鱗の鎧', '🛡️', 'armor', 26, 1600, [['dragon_scale', 4], ['dark_gem', 2], ['mimic_tongue', 1]], 8, ['armor', '#b91c1c', '#fbbf24'])
 ];
 
 /** 素材のID(持ち物・「敵」タブ・クエストで使う)。setItems で中身を入れ替える */
@@ -159,8 +162,15 @@ export function toItemDef(item: RpgItem): ItemDef {
     ...(item.inShop ? { price: item.price ?? 0 } : {}),
     ...(sellPrice !== undefined ? { sellPrice } : {}),
     ...(item.desc ? { desc: item.desc } : {}),
-    ...(item.image ? { image: rpgItemImageUrl(item.image) } : {})
+    ...(item.image ? { image: rpgItemImageUrl(item.image) } : {}),
+    ...lookOf(item)
   };
+}
+
+/** 武器・防具の見た目(front#431)。武器・防具で、形・色がそろっているときだけ持つ */
+function lookOf(x: Pick<RpgItem, 'lookShape' | 'lookColor' | 'lookAccent'> & { type: string }): { look?: EquipLook } {
+  if ((x.type !== 'weapon' && x.type !== 'armor') || !x.lookShape || !x.lookColor || !x.lookAccent) return {};
+  return { look: { shape: x.lookShape, color: x.lookColor, accent: x.lookAccent } };
 }
 
 /**
@@ -186,7 +196,8 @@ function rebuild(): void {
       // 合成でできる魔法の書(front#387)は、覚える魔法と LV を持つ
       ...(c.type === 'book' ? { spell: c.spell ?? undefined, level: c.level ?? 1 } : c.type === 'weapon' ? { atk: c.power } : { def: c.power }),
       desc: '鍛冶屋で合成',
-      ...(c.image ? { image: rpgItemImageUrl(c.image) } : {})
+      ...(c.image ? { image: rpgItemImageUrl(c.image) } : {}),
+      ...lookOf(c)
     };
     craftItemIds.add(c.id);
     RECIPES.push({ result: c.id, materials: c.materials.map((m) => ({ id: m.itemId, count: m.count })), gold: c.gold });
@@ -213,11 +224,21 @@ rebuild();
 // ポイント交換所の品物のアイコン(名前・値段はAPIから受け取る)
 export const POINT_SHOP_ICONS: Record<string, string> = { star_sword: '🌟', star_robe: '✨', gold_100: '💰' };
 
-// 手に持つ剣の色(ゲーム画面と、見た目を選ぶ欄のプレビュー)
+// 手に持つ剣の色(見た目のない武器。front#431 より前と同じ)
 export function swordColorOf(weapon: string): string {
   if (weapon === 'star_sword') return '#fde047';
   if (weapon === 'mithril_sword') return '#a5f3fc';
   return (ITEMS[weapon]?.atk ?? 0) >= 6 ? '#cbd5e1' : '#c08a52';
+}
+
+/** 装備している武器を持たせるときの LookPose の値(front#431)。見た目のない武器は swordColorOf の色の片手剣 */
+export function weaponPoseOf(weapon: string): ReturnType<typeof weaponPose> {
+  return weaponPose(ITEMS[weapon]?.look, swordColorOf(weapon));
+}
+
+/** 装備している防具を着たときの見た目(front#431)。見た目のない防具なら選んだ服のまま */
+export function wornLook(look: RpgLook, armor: string): RpgLook {
+  return wearArmor(look, ITEMS[armor]?.look);
 }
 
 export function itemStatLabel(item: ItemDef): string {

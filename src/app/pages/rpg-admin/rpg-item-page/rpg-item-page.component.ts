@@ -7,6 +7,7 @@ import { STATIC_NAMES, StaticType, rpgItemImageUrl, sellPriceOf, setItems } from
 import { MAX_SPELL_LEVEL, SPELLS, SPELL_IDS, SpellId, isSpellId, levelRateOf, spellLabel } from '../../../rpg/rpg-magic';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
+import { EquipLookValue, RpgEquipLookFieldComponent } from '../../../components/rpg-equip-look-field/rpg-equip-look-field.component';
 
 type Source = 'shop' | 'point' | 'craft' | 'other';
 type Where = 'drop' | 'material' | 'object' | 'quest' | 'craft' | 'point' | 'locked';
@@ -199,7 +200,7 @@ export function problemsOf(item: RpgItem, others: { name: string }[], shopGear: 
 @Component({
   selector: 'app-rpg-item-page',
   standalone: true,
-  imports: [FormsModule, RpgItemIconComponent],
+  imports: [FormsModule, RpgItemIconComponent, RpgEquipLookFieldComponent],
   templateUrl: './rpg-item-page.component.html',
   styleUrls: ['./rpg-item-page.component.css']
 })
@@ -496,6 +497,11 @@ export class RpgItemPageComponent {
     return !!item.image || !!this.pendingImages.url(item.id);
   }
 
+  /** 武器・防具の見た目(front#431)。形を「見た目なし」にすると色も消す */
+  setLook(v: EquipLookValue): void {
+    this.update((x) => Object.assign(x, v));
+  }
+
   setDesc(desc: string): void {
     this.update((i) => (i.desc = desc.slice(0, ITEM_LIMITS.desc)));
   }
@@ -687,6 +693,14 @@ export function toInput(row: ItemRow): RpgItemInput {
     price: inShop ? (i.price ?? null) : null,
     sellPrice: i.sellPrice ?? null,
     sortOrder: i.sortOrder,
-    image: i.image ?? null
+    image: i.image ?? null,
+    // 武器・防具の見た目(front#431)。形がなければ送らない
+    ...equipLookInput(i.type, i)
   };
+}
+
+/** 武器・防具の見た目を保存するときの値(front#431)。武器・防具で形を選んでいるときだけ送り、ほかは null */
+export function equipLookInput(type: string, x: { lookShape?: string | null; lookColor?: string | null; lookAccent?: string | null }): EquipLookValue {
+  const on = (type === 'weapon' || type === 'armor') && !!x.lookShape;
+  return { lookShape: on ? x.lookShape! : null, lookColor: on ? (x.lookColor ?? null) : null, lookAccent: on ? (x.lookAccent ?? null) : null };
 }
