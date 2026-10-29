@@ -5,6 +5,7 @@ import {
   AreaMap,
   BREAK_HITS,
   BREAK_RESPAWN_SEC,
+  DOOR,
   ENEMIES,
   HZ,
   ITEMS,
@@ -50,6 +51,7 @@ import {
   walkSpeedOf
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
+import { objectTiles } from './rpg-house';
 import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 import { SPELLS as MAGIC, MAX_SPELL_LEVEL, SPELL_COOLDOWN, SPELL_IDS, SpellId, isSpellId, levelRateOf, maxMpOf, spellHealOf, spellLabel, spellPowerOf, spellRangeOf } from './rpg-magic';
@@ -382,6 +384,9 @@ const STAT_SHORT: Record<StatKey, string> = { hp: 'HP', atk: '攻撃', def: '防
 const randi = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 export const iso = (x: number, y: number): [number, number] => [((x - y) * TW) / 2, ((x + y) * TH) / 2];
 
+// 扉(front#425)の出入り口の高さ(画面上)。扉そのものは壁と同じ高さで、上は壁
+export const DOOR_OPENING_HEIGHT = 100;
+
 /** 立つ場所(エリアとマス) */
 export interface Spot {
   area: RpgMap;
@@ -481,6 +486,41 @@ export class RpgGame {
     }
     const exit = signPointing(this.maps, this.area, o).exit;
     return signLinesOf(o.lines, exit ? this.dungeonOf(exit.to) : null);
+  }
+
+  /**
+   * 扉(front#425)を調べる。鍵のかかっていない扉と、鍵を持っているときは開ける(開けると鍵がなくなる扉は1つ減らす)。
+   * 鍵を持っていなければ「鍵がかかっている。」と、扉ごとのメッセージ(なければ「〇〇 が必要だ。」)を出す
+   */
+  touchDoor(o: StaticObj): void {
+    const p = this.player;
+    const key = o.keyItem;
+    if (key) {
+      const item = ITEMS[key];
+      // 装備している武器・防具は鍵として使っても減らさない分を残す
+      const equipped = key === p.weapon || key === p.armor ? 1 : 0;
+      const usable = (p.inv[key] ?? 0) - (o.consumeKey ? equipped : 0);
+      if (usable <= 0) {
+        const own = (o.lines ?? []).map((l) => l.trim()).filter((l) => l);
+        const [first, ...rest] = own.length ? own : [`${item ? item.icon + ' ' + item.name : key} が必要だ。`];
+        this.events.read?.(STATIC_NAMES.door, [`鍵がかかっている。${first}`, ...rest]);
+        return;
+      }
+      if (o.consumeKey) {
+        p.inv[key]--;
+        this.events.inventoryChanged();
+        this.events.dirty();
+      }
+      this.events.log(`${item?.name ?? key}を使った。扉が開いた！`);
+    }
+    this.openDoor(o);
+  }
+
+  /** 扉を開け、2マスとも通れるようにする(エリアを出ると、マップを作り直すので閉まる) */
+  private openDoor(o: StaticObj): void {
+    o.open = true;
+    for (const [x, y] of objectTiles(o)) if (this.map.inMap(x, y)) this.map.solid[y][x] = false;
+    if (this.hover === o) this.hover = null;
   }
 
   dungeonOf(area: RpgMap): RpgDungeon {
@@ -926,6 +966,15 @@ export class RpgGame {
     );
   }
 
+  /** 何マスかを占めるもの(扉。front#425)のどれかのマスの隣まで歩く */
+  private pathNearTiles(ent: Mover, tiles: readonly [number, number][]): boolean {
+    return this.setPath(
+      ent,
+      (x, y) => tiles.some(([tx, ty]) => cheb(x, y, tx, ty) <= 1) && !tiles.some(([tx, ty]) => x === tx && y === ty),
+      (x, y) => Math.max(0, Math.min(...tiles.map(([tx, ty]) => octile(x, y, tx, ty))) - 1)
+    );
+  }
+
   private moveAlong(ent: Mover, speed: number, dt: number): boolean {
     if (!ent.path.length) return false;
     const [tx, ty] = ent.path[0];
@@ -1010,6 +1059,19 @@ export class RpgGame {
     }
     // 壊れる置物(壊れていないもの)・読める看板(front#314)もクリックで狙える(front#264)。人・敵と重なれば手前のもの
     for (const o of this.map.statics) {
+      if (o.type === DOOR) {
+        // 閉まっている扉(front#425)は、2マスにまたがる出入り口のあたりをクリックで狙える
+        if (o.open) continue;
+        const tiles = objectTiles(o);
+        const [sx, sy0] = iso((tiles[0][0] + tiles[1][0]) / 2, (tiles[0][1] + tiles[1][1]) / 2);
+        const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
+        const depth = Math.max(...tiles.map(([x, y]) => x + y));
+        if (wx > sx - 40 && wx < sx + 40 && wy > sy - DOOR_OPENING_HEIGHT - 10 && wy < sy + 16 && depth > bestDepth) {
+          bestDepth = depth;
+          best = o;
+        }
+        continue;
+      }
       if (o.mimicked || ((!isBreakableObj(o) || o.broken) && !this.signLines(o))) continue;
       const [sx, sy0] = iso(o.x, o.y);
       const sy = sy0 - this.map.heightAt(o.x, o.y) * HZ;
@@ -2057,6 +2119,16 @@ export class RpgGame {
         // 落ちたアイテムは、そのマスまで歩いて拾う(front#276)
         if (Math.round(p.x) === t.x && Math.round(p.y) === t.y && !p.path.length) this.pickUp(t);
         else if (!p.path.length && !this.pathTo(p, t.x, t.y)) p.target = null;
+      } else if (t.kind === 'static' && t.type === DOOR) {
+        // 扉(front#425)は、どちらかのマスの隣まで来たら調べる(鍵を持っていれば開ける)
+        const tiles = objectTiles(t);
+        const near = tiles.find(([x, y]) => cheb(p.x, p.y, x, y) <= 1.5);
+        if (t.open) p.target = null;
+        else if (near && !p.path.length) {
+          this.faceTo(p, { x: near[0], y: near[1] });
+          p.target = null;
+          this.touchDoor(t);
+        } else if (!p.path.length && !this.pathNearTiles(p, tiles)) p.target = null;
       } else {
         const d = cheb(p.x, p.y, t.x, t.y);
         const signLines = t.kind === 'static' ? this.signLines(t) : null;

@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
-import { DEFAULT_ROOF, DEFAULT_WALL, houseTiles, objectTiles } from './rpg-house';
-import { ENEMIES, SAVE_POINT, heightFromChar, heightToChar, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { DEFAULT_ROOF, DEFAULT_WALL, DOOR_ROTATIONS, doorTiles, houseTiles, objectTiles } from './rpg-house';
+import { DOOR, ENEMIES, ITEMS, SAVE_POINT, heightFromChar, heightToChar, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -70,6 +70,8 @@ export const PALETTE: PaletteTab[] = [
       { id: 'cliff', label: '崖', icon: '⛰️', tool: { kind: 'object', type: 'cliff' } },
       // 石積みの高い壁(front#268)。部屋の奥側の端に並べて、建物の中のように見せる
       { id: 'wall', label: '壁', icon: '🧱', tool: { kind: 'object', type: 'wall' } },
+      // 鍵付きの扉(front#425)。2マス分で、壁と同じ高さ。壁の列に置くと、壁の途中の出入り口になる。鍵・向きは置いたあとに選ぶ
+      { id: 'door', label: '扉', icon: '🚪', tool: { kind: 'object', type: 'door' } },
       { id: 'fern', label: 'シダ', icon: '🌿', tool: { kind: 'object', type: 'fern' } },
       { id: 'crystal', label: '水晶', icon: '💎', tool: { kind: 'object', type: 'crystal' } },
       // 草むら・シダ・水晶・岩は攻撃で壊れ、置いたあとに中身(アイテム・敵)を選べる(front#264)
@@ -217,17 +219,20 @@ export function toMapInput(map: RpgMap, id: string | null = map.id): RpgMapInput
     heights: map.heights ?? flatHeights(map.width, map.height),
     objects: map.objects.map((o) => ({
       type: o.type, x: o.x, y: o.y, roof: o.roof ?? null, torch: o.torch,
-      shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' ? (o.rotation ?? null) : null,
+      // 扉(front#425)も向きを持つ
+      shape: o.type === 'house' ? (o.shape ?? null) : null, rotation: o.type === 'house' || o.type === DOOR ? (o.rotation ?? null) : null,
       lowRoof: o.type === 'house' ? (o.lowRoof ?? null) : null,
       wall: o.type === 'house' ? (o.wall ?? null) : null, noWindow: o.type === 'house' ? (o.noWindow ?? null) : null,
       // 看板の文章(front#314)・クリック時に表示するメッセージ(front#333)。前後の空白・空の行は API が捨てる
-      lines: o.type === 'sign' || o.showMessage ? (o.lines ?? []) : null,
+      // 扉(front#425)は、鍵を持っていないときのメッセージ
+      lines: o.type === 'sign' || o.showMessage || (o.type === DOOR && o.keyItem) ? (o.lines ?? []) : null,
       // 置いた置物1つずつの設定(front#333)。null は種類のデフォルトのまま
       color: o.color ?? null, dark: o.dark ?? null,
       items: o.items ? o.items.map((r) => ({ id: r.id, count: r.count, chance: r.chance })) : null,
       enemies: o.enemies ? o.enemies.map((r) => ({ id: r.id, chance: r.chance })) : null,
       mimics: o.mimics ? o.mimics.map((r) => ({ id: r.id, chance: r.chance })) : null,
-      hitMaterial: o.hitMaterial ?? null, showMessage: o.showMessage ? true : null, signDir: o.type === 'sign' ? (o.signDir ?? null) : null
+      hitMaterial: o.hitMaterial ?? null, showMessage: o.showMessage ? true : null, signDir: o.type === 'sign' ? (o.signDir ?? null) : null,
+      keyItem: o.type === DOOR ? (o.keyItem ?? null) : null, consumeKey: o.type === DOOR && o.keyItem && o.consumeKey ? true : null
     })),
     npcs: map.npcs.map((n) => ({
       ...n,
@@ -270,6 +275,12 @@ export function rotateMap(map: RpgMap, cw: boolean): RpgMap {
       const moved = objectTiles(o).map(([x, y]) => pos(x, y));
       // 家の向きは1つ増やすごとに画面で見て左回り(扉が右下 → 右上)なので、右回りは3つ、左回りは1つ増やす
       const rotation = ((o.rotation ?? 0) + (cw ? 3 : 1)) % 4;
+      return { ...o, rotation, x: Math.min(...moved.map((p) => p[0])), y: Math.min(...moved.map((p) => p[1])) };
+    }
+    if (o.type === DOOR) {
+      // 扉(front#425)は、90°回すと並ぶ向き(x ⇄ y)が入れかわる
+      const moved = objectTiles(o).map(([x, y]) => pos(x, y));
+      const rotation = ((o.rotation ?? 0) + 1) % DOOR_ROTATIONS;
       return { ...o, rotation, x: Math.min(...moved.map((p) => p[0])), y: Math.min(...moved.map((p) => p[1])) };
     }
     const [x, y] = pos(o.x, o.y);
@@ -450,14 +461,23 @@ export class RpgMapEditor {
    * 占めるマスがすべてマップの中の通れる地面で、ほかの置物・NPC・敵・ポータルと重ならないこと
    */
   houseProblem(house: RpgMapObject | null, x: number, y: number, shape: string, rotation: number): string | null {
-    const tiles = houseTiles(x, y, shape, rotation);
+    return this.tilesProblem(house, houseTiles(x, y, shape, rotation));
+  }
+
+  /** 扉(front#425)をその向きで (x, y) に置けるか。置けなければ、その理由を返す(家と同じきまり) */
+  doorProblem(door: RpgMapObject | null, x: number, y: number, rotation: number): string | null {
+    return this.tilesProblem(door, doorTiles(x, y, rotation));
+  }
+
+  /** 何マスかを占める置物(家・扉)を、そのマスに置けるか。except は動かす・変える置物そのもの */
+  private tilesProblem(except: RpgMapObject | null, tiles: [number, number][]): string | null {
     if (tiles.some(([tx, ty]) => !this.inMap(tx, ty))) return 'マップの外にはみ出します';
     if (tiles.some(([tx, ty]) => !this.walkableGround(tx, ty))) return '水・「なし」のマスにかかります';
     for (const [tx, ty] of tiles) {
       const at = (o: { x: number; y: number }) => o.x === tx && o.y === ty;
       const npc = this.map.npcs.find(at);
       if (npc) return `NPC「${npc.name}」と重なります`;
-      const other = this.objectAt(tx, ty, house ?? undefined);
+      const other = this.objectAt(tx, ty, except ?? undefined);
       if (other) return other.type === 'house' ? 'ほかの家と重なります' : '置物と重なります';
       if (this.map.enemies.some(at)) return '敵の出る場所と重なります';
     }
@@ -511,6 +531,16 @@ export class RpgMapEditor {
           this.map.objects.push(house);
           return { kind: 'house', ref: house };
         }
+        if (tool.type === DOOR) {
+          // 扉(front#425)は、x の向きに置けなければ y の向きに置く。鍵は錆びた鍵(あれば)・開けると鍵がなくなる、から始める
+          if (!first) return null;
+          const rotation = [0, 1].find((r) => !this.doorProblem(null, x, y, r));
+          if (rotation === undefined) return null;
+          const key = ITEMS['rusty_key'] ? 'rusty_key' : null;
+          const door: RpgMapObject = { type: DOOR, x, y, roof: null, torch: false, rotation, keyItem: key, consumeKey: key ? true : null };
+          this.map.objects.push(door);
+          return { kind: 'object', ref: door };
+        }
         if (!this.walkableGround(x, y)) return null;
         this.removeAt(x, y);
         const placed: RpgMapObject = { type: tool.type, x, y, roof: tool.roof ?? null, torch: !!tool.torch };
@@ -549,6 +579,14 @@ export class RpgMapEditor {
     if (selection.kind === 'house') {
       const { ref } = selection;
       if (this.houseProblem(ref, x, y, ref.shape ?? '1x1', ref.rotation ?? 0)) return false;
+      ref.x = x;
+      ref.y = y;
+      return true;
+    }
+    if (selection.kind === 'object' && selection.ref.type === DOOR) {
+      // 扉(front#425)は (x, y) を左上の角にする
+      const { ref } = selection;
+      if (this.doorProblem(ref, x, y, ref.rotation ?? 0)) return false;
       ref.x = x;
       ref.y = y;
       return true;

@@ -1,6 +1,6 @@
 import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, swordColorOf } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
-import { AreaSlide, Companion, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
+import { AreaSlide, Companion, DOOR_OPENING_HEIGHT, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
@@ -456,7 +456,7 @@ export class RpgRenderer {
     // 立っているマスの高さの分だけ上に描く(置物はマスの高さ、人・敵は登り降りの途中の高さ)
     const sy = sy0 - (o.kind === 'static' ? game.map.heightAt(o.x, o.y) : o.z) * HZ;
     // 火山などの大きな置物・頭の上の名前も入るよう、広めに見る
-    if (!this.onScreen(sx, sy, o.kind === 'static' && o.type === 'wall' ? WALL_HEIGHT + 40 : 160)) return;
+    if (!this.onScreen(sx, sy, o.kind === 'static' && (o.type === 'wall' || o.type === 'door') ? WALL_HEIGHT + 80 : 160)) return;
     if (o.kind === 'static') this.drawStaticState(o, sx, sy);
     else if (o.kind === 'npc') {
       this.drawLook(sx, sy, o.look ?? lookFromColors(o.hair, o.body), { dir: o.dir, time: this.time, phase: o.x });
@@ -601,6 +601,7 @@ export class RpgRenderer {
       case 'grass': return this.drawGrass(sx, sy, t);
       case 'chest': return drawChest(this.ctx, sx, sy, o.hits ?? 0, t?.m ?? '#a8682f', t?.d ?? '#f2c14e');
       case 'wall': return this.drawWall(sx, sy, o, t);
+      case 'door': return this.drawDoor(sx, sy, o, t);
       case 'armor': return drawArmor(this.ctx, sx, sy, o.hits ?? 0, this.time, t?.m ?? '#94a3b8', t?.d ?? '#dc2626');
       case 'barrel': return drawBarrel(this.ctx, sx, sy, t);
       case 'pot': return drawPot(this.ctx, sx, sy, t);
@@ -763,6 +764,114 @@ export class RpgRenderer {
     ctx.lineTo(...top[2]);
     ctx.lineTo(...top[1]);
     ctx.stroke();
+  }
+
+  /**
+   * 扉(front#425)。2マス分で、壁と同じ高さ・同じ石積み。下に2マスにまたがる両開きの出入り口があり、上は壁。
+   * (cx, cy) は占めるマスのいちばん左上のマスの真ん中。向き0は x の向きに並んで左下を向き、向き1は y の向きに並んで右下を向く。
+   * 開いているときは出入り口を穴にして、奥(床や奥にいる人)が見えるようにする。色合いは扉の板に付ける
+   */
+  private drawDoor(cx: number, cy: number, o: StaticObj, t: Tint | null = null): void {
+    const ctx = this.ctx;
+    const tile = this.game.theme.tile;
+    const h = WALL_HEIGHT;
+    const oh = DOOR_OPENING_HEIGHT;
+    const turned = (o.rotation ?? 0) % 2 === 1;
+    // (gx, gy) は左上のマスの角からの位置(マスの単位)
+    const at = (gx: number, gy: number, z = 0): Pt => {
+      const [x, y] = iso(gx - 0.5, gy - 0.5);
+      return [cx + x, cy + y - z];
+    };
+    // 正面(出入り口のある面)に沿った位置 u(0〜2)
+    const face = (u: number, z = 0): Pt => (turned ? at(1, u, z) : at(u, 1, z));
+    // 正面は、向き0なら左下を向いた面、向き1なら右下を向いた面。壁と同じ明るさにする
+    const front = shade(tile.stone[(o.x + o.y) % 3], turned ? 0.62 : 0.78);
+    const side = shade(tile.stone[(o.x + o.y + 1) % 3], turned ? 0.78 : 0.62);
+    // はしの面(並んだ向きの先)と上の面
+    const end: Pt[] = turned ? [at(0, 2), at(1, 2), at(1, 2, h), at(0, 2, h)] : [at(2, 1), at(2, 0), at(2, 0, h), at(2, 1, h)];
+    const top: Pt[] = turned ? [at(0, 0, h), at(1, 0, h), at(1, 2, h), at(0, 2, h)] : [at(0, 0, h), at(2, 0, h), at(2, 1, h), at(0, 1, h)];
+    const u0 = 0.3, u1 = 1.7;
+    // 正面の壁の部分。開いているときは、出入り口を抜いた左右と上
+    const wallParts: Pt[][] = o.open
+      ? [
+          [face(0), face(u0), face(u0, h), face(0, h)],
+          [face(u1), face(2), face(2, h), face(u1, h)],
+          [face(u0, oh), face(u1, oh), face(u1, h), face(u0, h)]
+        ]
+      : [[face(0), face(2), face(2, h), face(0, h)]];
+    for (const part of wallParts) this.poly(part, front);
+    this.poly(end, side);
+    this.poly(top, shade(tile.stone[2], 1.08));
+    // 石の段の目地(壁と同じく10ずつ)
+    ctx.save();
+    ctx.beginPath();
+    for (const part of [...wallParts, end]) {
+      part.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+    }
+    ctx.clip();
+    ctx.strokeStyle = tile.grout;
+    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const rows = Math.round(h / 10);
+    const lines: [Pt, Pt][] = [[face(0), face(2)], turned ? [at(0, 2), at(1, 2)] : [at(2, 1), at(2, 0)]];
+    for (const [a, b] of lines) {
+      for (let r = 1; r < rows; r++) {
+        const dz = (h / rows) * r;
+        ctx.moveTo(a[0], a[1] - dz);
+        ctx.lineTo(b[0], b[1] - dz);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+    // 出入り口の枠(少し明るい石)
+    const frame = shade(tile.stone[2], turned ? 0.8 : 0.95);
+    this.poly([face(u0 - 0.06, oh), face(u1 + 0.06, oh), face(u1 + 0.06, oh + 8), face(u0 - 0.06, oh + 8)], frame);
+    this.poly([face(u0 - 0.06), face(u0), face(u0, oh), face(u0 - 0.06, oh)], frame);
+    this.poly([face(u1), face(u1 + 0.06), face(u1 + 0.06, oh), face(u1, oh)], frame);
+    const m = t?.m ?? '#9b6a3e';
+    const d = t?.d ?? '#5b3a20';
+    if (o.open) {
+      // 開いた扉の板は、出入り口の両はしにたたまれて少しだけ見える
+      this.poly([face(u0), face(u0 + 0.08), face(u0 + 0.08, oh), face(u0, oh)], d);
+      this.poly([face(u1 - 0.08), face(u1), face(u1, oh), face(u1 - 0.08, oh)], d);
+      return;
+    }
+    // 閉まっている両開きの扉: 板・板の継ぎ目・鉄の帯・合わせ目・錠前(鍵のかかった扉だけ)
+    this.poly([face(u0), face(u1), face(u1, oh), face(u0, oh)], turned ? shade(m, 0.85) : m);
+    ctx.strokeStyle = d;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 1; i < 6; i++) {
+      if (i === 3) continue;
+      const [a, b] = [face(u0 + ((u1 - u0) * i) / 6), face(u0 + ((u1 - u0) * i) / 6, oh)];
+      ctx.moveTo(...a);
+      ctx.lineTo(...b);
+    }
+    ctx.stroke();
+    for (const z of [oh * 0.22, oh * 0.7]) this.poly([face(u0, z), face(u1, z), face(u1, z + 3), face(u0, z + 3)], '#3b3b44');
+    ctx.strokeStyle = shade(d, 0.7);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(...face(1));
+    ctx.lineTo(...face(1, oh));
+    ctx.stroke();
+    const [kx, ky] = face(1, oh * 0.46);
+    if (o.keyItem) {
+      ctx.fillStyle = '#f2c14e';
+      ctx.fillRect(kx - 4, ky - 5, 8, 9);
+      ctx.fillStyle = '#3b2a1e';
+      ctx.fillRect(kx - 1, ky - 2, 2, 4);
+    } else {
+      // 鍵のない扉は取っ手だけ
+      ctx.fillStyle = '#d6b36a';
+      for (const s of [-4, 4]) {
+        ctx.beginPath();
+        ctx.arc(kx + s, ky, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
 
   private drawFern(cx: number, cy: number, t: Tint | null = null): void {

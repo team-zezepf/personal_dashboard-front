@@ -33,7 +33,7 @@ const MAP_FIELDS = `
   id name dungeonId gridX gridY width height ground heights
   objects {
     type x y roof torch shape rotation lowRoof wall noWindow lines
-    color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial showMessage signDir
+    color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial showMessage signDir keyItem consumeKey
   }
   npcs {
     name x y hair body role notice lines look { ${LOOK_FIELDS} }

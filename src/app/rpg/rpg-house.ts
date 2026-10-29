@@ -329,9 +329,18 @@ export function houseTiles(x: number, y: number, shape?: string | null, rotation
   return houseGeometry(shape, rotation).tiles.map(([dx, dy]) => [x + dx, y + dy]);
 }
 
-/** 置物が占めるマス(家は形と向きで、ほかは1マス) */
+// 扉(front#425)の向きの数。向き0は x の向きに2マス(扉は左下を向く)、向き1は y の向きに2マス(扉は右下を向く)
+export const DOOR_ROTATIONS = 2;
+
+/** 扉が占めるマス(マップ上の位置)。(x, y) は占めるマスのいちばん左上 */
+export function doorTiles(x: number, y: number, rotation?: number | null): [number, number][] {
+  return (rotation ?? 0) % DOOR_ROTATIONS === 1 ? [[x, y], [x, y + 1]] : [[x, y], [x + 1, y]];
+}
+
+/** 置物が占めるマス(家は形と向きで、扉は向きで2マス、ほかは1マス) */
 export function objectTiles(o: { type: string; x: number; y: number; shape?: string | null; rotation?: number | null }): [number, number][] {
-  return o.type === 'house' ? houseTiles(o.x, o.y, o.shape, o.rotation) : [[o.x, o.y]];
+  if (o.type === 'house') return houseTiles(o.x, o.y, o.shape, o.rotation);
+  return o.type === 'door' ? doorTiles(o.x, o.y, o.rotation) : [[o.x, o.y]];
 }
 
 // 扉の向きの呼び名(画面上の向き)

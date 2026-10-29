@@ -861,3 +861,74 @@ test(
     });
   }
 );
+
+// 村(plain)に置いた扉(front#425)。API から読む
+async function savedVillageDoors(): Promise<{ x: number; y: number; rotation: number | null; keyItem: string | null; consumeKey: boolean | null; lines: string[] }[]> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgMaps { id objects { type x y rotation keyItem consumeKey lines } } }' })
+  });
+  type Obj = { type: string; x: number; y: number; rotation: number | null; keyItem: string | null; consumeKey: boolean | null; lines: string[] };
+  const body = (await res.json()) as { data: { rpgMaps: { id: string; objects: Obj[] }[] } };
+  return body.data.rpgMaps.find((m) => m.id === 'plain')!.objects.filter((o) => o.type === 'door').map(({ type: _, ...o }) => o);
+}
+
+test(
+  'E2E-39 RPGマップ作成で、扉を置くと設定のモーダルが開き、向き・開けるのに使うアイテム・鍵がなくなるか・鍵がないときのメッセージを決めて保存できる(front#425)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている',
+      'E2E 用の RPG データで、村の (2, 3)〜(3, 3) に鍵付きの扉を1つ置いてあり、(6, 2)〜(6, 3) は空いている'
+    ],
+    expected: [
+      'パレットの「置物」の「扉」で (6, 2) をクリックすると、扉の設定のモーダルが開く。向きは「左下向き（横に2マス）」、アイテムは「錆びた鍵」、「開けると鍵がなくなる」にチェックが付いている',
+      '「↻ 回す」で「右下向き（縦に2マス）」になる。アイテムを「なし」にすると、「開けると鍵がなくなる」・メッセージの欄が消える',
+      '錆びた鍵に戻し、「開けると鍵がなくなる」を外してメッセージを書き、「決める」→「保存する」を押すと、API でも (6, 2) の扉が 向き1・錆びた鍵・鍵がなくならない・そのメッセージ になっている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const dialog = page.getByRole('dialog', { name: '扉' });
+
+    await step('RPGマップ作成(/rpg/admin)を開き、パレットの「置物」の「扉」を選んで (6, 2) をクリックする', '扉の設定のモーダルが開き、左下向き（横に2マス）・錆びた鍵・開けると鍵がなくなる になっている', async () => {
+      await page.goto('/rpg/admin');
+      await page.locator('aside.palette').getByRole('button', { name: '置物', exact: true }).click();
+      await page.locator('aside.palette').getByRole('button', { name: /扉/ }).click();
+      await clickTile(page, 6, 2);
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByTestId('door-dir')).toHaveText('左下向き（横に2マス）');
+      await expect(dialog.getByLabel('開けるのに使うアイテム')).toHaveValue('rusty_key');
+      await expect(dialog.getByLabel('開けると鍵がなくなる（1つ減る）')).toBeChecked();
+    });
+
+    await step('「↻ 回す」を押し、アイテムを「なし」にする', '右下向き（縦に2マス）になり、「開けると鍵がなくなる」・メッセージの欄が消える', async () => {
+      await dialog.getByRole('button', { name: '↻ 回す' }).click();
+      await expect(dialog.getByTestId('door-dir')).toHaveText('右下向き（縦に2マス）');
+      await dialog.getByLabel('開けるのに使うアイテム').selectOption('');
+      await expect(dialog.getByLabel('開けると鍵がなくなる（1つ減る）')).toBeHidden();
+      await expect(dialog.getByLabel('鍵を持っていないときのメッセージ')).toBeHidden();
+    });
+
+    await step('錆びた鍵に戻し、「開けると鍵がなくなる」を外してメッセージを書き、「決める」→「保存する」を押す', 'API でも (6, 2) の扉が 向き1・錆びた鍵・鍵がなくならない・そのメッセージ になっている', async () => {
+      await dialog.getByLabel('開けるのに使うアイテム').selectOption('rusty_key');
+      await dialog.getByLabel('開けると鍵がなくなる（1つ減る）').uncheck();
+      await dialog.getByLabel('鍵を持っていないときのメッセージ').fill('看守の部屋にあるらしい。');
+      await dialog.getByRole('button', { name: '決める' }).click();
+      await expect(dialog).toBeHidden();
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+      expect((await savedVillageDoors()).find((d) => d.x === 6 && d.y === 2)).toEqual({
+        x: 6, y: 2, rotation: 1, keyItem: 'rusty_key', consumeKey: null, lines: ['看守の部屋にあるらしい。']
+      });
+    });
+  }
+);

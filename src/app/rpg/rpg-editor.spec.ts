@@ -206,9 +206,9 @@ describe('RpgMapEditor', () => {
       const sign = editor.apply({ kind: 'object', type: 'sign' }, 10, 2, true)!.ref as RpgMapObject;
       sign.lines = ['この先 霧の沼。', ''];
       expect(toMapInput(editor.map).objects).toEqual([
-        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null },
-        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null },
-        { type: 'sign', x: 10, y: 2, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: ['この先 霧の沼。', ''], color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null }
+        { type: 'tree', x: 1, y: 1, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null, keyItem: null, consumeKey: null },
+        { type: 'house', x: 4, y: 4, roof: '#e0605a', torch: false, shape: '1x1', rotation: 0, lowRoof: null, wall: null, noWindow: null, lines: null, color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null, keyItem: null, consumeKey: null },
+        { type: 'sign', x: 10, y: 2, roof: null, torch: false, shape: null, rotation: null, lowRoof: null, wall: null, noWindow: null, lines: ['この先 霧の沼。', ''], color: null, dark: null, items: null, enemies: null, mimics: null, hitMaterial: null, showMessage: null, signDir: null, keyItem: null, consumeKey: null }
       ]);
     });
 
@@ -594,6 +594,58 @@ describe('RpgMapEditor', () => {
 
       expect(editor.checks([editor.map, next]).filter((c) => !c.ok).map((c) => c.text)).toContain('右下の端に通れるマスがなく、「隣の浜」へ出られません');
     });
+  });
+});
+
+describe('扉(front#425)', () => {
+  let editor: RpgMapEditor;
+
+  beforeEach(() => {
+    editor = new RpgMapEditor(blankMap('area5', '地下牢', 'tower', 0, 0, 14, 12));
+  });
+
+  it('扉は2マス分で、x の向きに置けなければ y の向きに置く。最初は錆びた鍵・開けると鍵がなくなる', () => {
+    const sel = editor.apply({ kind: 'object', type: 'door' }, 4, 4, true);
+    expect(sel).toEqual({ kind: 'object', ref: { type: 'door', x: 4, y: 4, roof: null, torch: false, rotation: 0, keyItem: 'rusty_key', consumeKey: true } });
+    expect(editor.occupied(5, 4)).toBe('object');
+    expect(editor.entityAt(5, 4)?.ref).toBe(sel!.ref);
+
+    // 右どなり(9,7)が木なので、縦に置く
+    editor.apply({ kind: 'object', type: 'tree' }, 9, 7, true);
+    expect((editor.apply({ kind: 'object', type: 'door' }, 8, 7, true)!.ref as RpgMapObject).rotation).toBe(1);
+    // 右端・下端の角は置けない
+    expect(editor.apply({ kind: 'object', type: 'door' }, 13, 11, true)).toBeNull();
+    // ドラッグの途中には置かない
+    expect(editor.apply({ kind: 'object', type: 'door' }, 1, 1, false)).toBeNull();
+  });
+
+  it('向きを変える・動かすときは、2マスとも空いているか確かめる', () => {
+    const door = editor.apply({ kind: 'object', type: 'door' }, 4, 4, true)!.ref as RpgMapObject;
+    editor.apply({ kind: 'npc' }, 4, 5, true);
+    expect(editor.doorProblem(door, 4, 4, 1)).toBe('NPC「NPC1」と重なります');
+    expect(editor.doorProblem(door, 4, 4, 0)).toBeNull();
+    expect(editor.moveTo({ kind: 'object', ref: door }, 13, 0)).toBe(false);
+    expect(editor.moveTo({ kind: 'object', ref: door }, 8, 8)).toBe(true);
+    expect([door.x, door.y]).toEqual([8, 8]);
+    // 2マス目を消しゴムで消すと扉ごと消える
+    editor.apply({ kind: 'erase' }, 9, 8, true);
+    expect(editor.map.objects.filter((o) => o.type === 'door')).toEqual([]);
+  });
+
+  it('保存するときは向き・鍵・鍵がないときのメッセージを送る。鍵のない扉はメッセージ・鍵がなくなるかを送らない', () => {
+    editor.map.objects = [
+      { type: 'door', x: 1, y: 1, torch: false, rotation: 1, keyItem: 'rusty_key', consumeKey: true, lines: ['看守が持っていそうだ。'] },
+      { type: 'door', x: 4, y: 1, torch: false, rotation: 0, keyItem: null, consumeKey: true, lines: ['x'] }
+    ];
+    const [locked, open] = toMapInput(editor.map).objects;
+    expect(locked).toMatchObject({ rotation: 1, keyItem: 'rusty_key', consumeKey: true, lines: ['看守が持っていそうだ。'] });
+    expect(open).toMatchObject({ rotation: 0, keyItem: null, consumeKey: null, lines: null });
+  });
+
+  it('エリアを90°回すと、扉の並ぶ向きが入れかわり、占めるマスに合わせて位置が変わる', () => {
+    editor.map.objects = [{ type: 'door', x: 2, y: 3, torch: false, rotation: 0 }];
+    // 右回り: (x, y) → (11 - y, x)。(2,3)(3,3) → (8,2)(8,3)
+    expect(rotateMap(editor.map, true).objects[0]).toMatchObject({ x: 8, y: 2, rotation: 1 });
   });
 });
 

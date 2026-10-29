@@ -8,14 +8,14 @@ import { AuthService } from '../../services/auth.service';
 import { RpgAreaMove, RpgBgm, RpgCraft, RpgDungeon, RpgEnemy, RpgItem, RpgLook, RpgMap, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgObjectDef, RpgQuest, RpgQuestKind, RpgTheme } from '../../models/rpg.models';
 import { QUEST_KIND_LABELS } from '../../rpg/rpg-quest';
 import {
-  DEFAULT_ROOF, DEFAULT_WALL, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
+  DEFAULT_ROOF, DEFAULT_WALL, DOOR_ROTATIONS, HOUSE_ROTATIONS, HOUSE_SHAPES, ROOF_COLORS, WALL_COLORS, doorLabel, houseGeometry, housePieces, objectTiles, roofRise,
   wallColors, wallOpenings
 } from '../../rpg/rpg-house';
 import { isRoleAllowed } from '../../config/tool-access';
 import { environment } from '../../../environments/environment';
 import { TOOL_ACCESS } from '../../config/tool-access';
 import {
-  BREAK_HITS, BREAK_RESPAWN_SEC, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, SIGN_DIRS, STATIC_NAMES, Side, StaticType, TH, TW, areaDropMoves, exitOf, neighborOf, objectSettingsOf,
+  BREAK_HITS, BREAK_RESPAWN_SEC, DOOR, ENEMIES, G, GROUND_CHARS, HZ, ITEMS, SIDES, SIGN_DIRS, STATIC_NAMES, Side, StaticType, TH, TW, areaDropMoves, exitOf, neighborOf, objectSettingsOf,
   sideLabel, signExit, signLinesOf, signPointing,
   itemsVersion,
   setCrafts,
@@ -179,7 +179,10 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly objectProblem = computed(() => {
     this.objectDraftVersion();
     const d = this.objectDraft();
-    return d ? draftProblem(d) : null;
+    // 扉(front#425)は、向きを変えたときに2マス目がはみ出したり、ほかのものと重なったりしないこと
+    const o = this.objectModal();
+    const door = d && o?.type === DOOR && this.editor ? this.editor.doorProblem(o, o.x, o.y, d.rotation) : null;
+    return d ? (door ?? draftProblem(d)) : null;
   });
   private readonly signCanvas = viewChild<ElementRef<HTMLCanvasElement>>('signCanvas');
   // クエスト(front#239)。NPCのモーダルで、いま編集しているクエストの番号
@@ -651,8 +654,8 @@ export class RpgAdminPageComponent implements OnDestroy {
     const placed = editor.apply(tool, x, y, first, this.brush());
     if (placed) {
       this.selection.set(placed);
-      // NPC・家は、置いた直後(マウスを離したとき)に中身を決めるモーダルを開く
-      if (placed.kind === 'npc' || placed.kind === 'house') {
+      // NPC・家・扉(front#425)は、置いた直後(マウスを離したとき)に中身を決めるモーダルを開く
+      if (placed.kind === 'npc' || placed.kind === 'house' || (placed.kind === 'object' && placed.ref.type === DOOR)) {
         this.painting = false;
         this.placedToOpen = placed;
       }
@@ -857,6 +860,11 @@ export class RpgAdminPageComponent implements OnDestroy {
       const pages = (o.lines ?? []).filter((l) => l.trim()).length;
       return `向き: ${dir ? dir[1] : '自動'}・文章: ${pages ? pages + 'ページ' : 'なし（矢印の先の案内）'}`;
     }
+    if (o.type === DOOR) {
+      if (!o.keyItem) return '🔓 鍵なし（クリックで開く）';
+      const item = ITEMS[o.keyItem];
+      return `🔒 ${item ? item.icon + ' ' + item.name : o.keyItem} で開く${o.consumeKey ? '（開けると鍵がなくなる）' : ''}`;
+    }
     const s = objectSettingsOf(o);
     if (s.showMessage) return `💬 クリックするとメッセージ（${s.lines.length}ページ）を表示する（壊せない）`;
     const own = (['color', 'items', 'enemies', 'mimics', 'hitMaterial'] as const).filter((k) => o[k] !== undefined && o[k] !== null).length;
@@ -1037,6 +1045,41 @@ export class RpgAdminPageComponent implements OnDestroy {
     const to = ptr.exit ? this.dungeons().find((x) => x.id === ptr.exit!.to.dungeonId) : null;
     const where = to ? `「${to.name}」への端` : 'ほかのダンジョンへの端がない';
     return dir ? `${dir[1]}を指す（${ptr.exit ? where : 'その向きに' + where}）` : `自動（${ptr.exit ? where + ' = ' + (SIGN_DIRS.find(([, , s]) => s === ptr.side)?.[1] ?? '') + 'を指す' : where}）`;
+  }
+
+  // ===== 扉(front#425) =====
+
+  /** 扉の向きを回す(2方向) */
+  rotateDoor(): void {
+    const d = this.objectDraft();
+    if (!d) return;
+    d.rotation = (d.rotation + 1) % DOOR_ROTATIONS;
+    this.onObjectDraftChanged();
+  }
+
+  doorDirLabel(): string {
+    return this.objectDraft()?.rotation === 1 ? '右下向き（縦に2マス）' : '左下向き（横に2マス）';
+  }
+
+  setDoorKey(id: string): void {
+    const d = this.objectDraft();
+    if (!d) return;
+    d.keyItem = id || null;
+    this.onObjectDraftChanged();
+  }
+
+  setConsumeKey(on: boolean): void {
+    const d = this.objectDraft();
+    if (!d) return;
+    d.consumeKey = on;
+    this.onObjectDraftChanged();
+  }
+
+  /** 鍵を持っていないときのメッセージが空のときに出る文(欄の見本) */
+  doorLockedHint(): string {
+    const id = this.objectDraft()?.keyItem;
+    const item = id ? ITEMS[id] : null;
+    return `${item ? item.icon + ' ' + item.name : id ?? ''} が必要だ。`;
   }
 
   setSignLines(text: string): void {
@@ -1563,8 +1606,8 @@ export class RpgAdminPageComponent implements OnDestroy {
       ctx.strokeStyle = '#6076e0';
       ctx.lineWidth = 3;
       ctx.setLineDash([6, 4]);
-      // 家は占めるマスすべてに印を付ける
-      const tiles = sel.kind === 'house' ? objectTiles(sel.ref) : [[sel.ref.x, sel.ref.y]];
+      // 家・扉(front#425)は占めるマスすべてに印を付ける
+      const tiles = sel.kind === 'house' || sel.kind === 'object' ? objectTiles(sel.ref) : [[sel.ref.x, sel.ref.y]];
       for (const [tx, ty] of tiles) {
         diamond(tx, ty, 1.05);
         ctx.stroke();

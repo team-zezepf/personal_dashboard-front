@@ -1,5 +1,5 @@
 import { RpgChanceEnemy, RpgChanceItem, RpgMapObject, RpgObjectDef, RpgObjectDefInput } from '../models/rpg.models';
-import { DEFAULT_TINTS, OBJECT_DEFS, OBJECT_HIT_MATERIAL, StaticType, THEMED_OBJECTS } from './rpg-data';
+import { DEFAULT_TINTS, DOOR, OBJECT_DEFS, OBJECT_HIT_MATERIAL, StaticType, THEMED_OBJECTS } from './rpg-data';
 
 /**
  * 置物の設定の下書き(front#333)。「置物」タブの種類ごとのデフォルトと、マップに置いた置物のモーダルで編集する。
@@ -16,6 +16,11 @@ export interface ObjectDraft {
   showMessage: boolean;
   lines: string;
   signDir: string | null;
+  // 扉(front#425)だけ。開けるのに使うアイテム(null は鍵なし)・開けると鍵がなくなる・向き(0・1)。
+  // 鍵を持っていないときのメッセージは lines
+  keyItem: string | null;
+  consumeKey: boolean;
+  rotation: number;
 }
 
 // 1行の上限(API の RpgObjectRules と合わせる)
@@ -28,7 +33,7 @@ export function draftOfDef(def: RpgObjectDef | undefined): ObjectDraft {
   return {
     color: def?.color ?? null, dark: def?.dark ?? null,
     items: rows(def?.items) ?? [], enemies: rows(def?.enemies) ?? [], mimics: rows(def?.mimics) ?? [],
-    hitMaterial: def?.hitMaterial ?? null, showMessage: false, lines: '', signDir: null
+    hitMaterial: def?.hitMaterial ?? null, showMessage: false, lines: '', signDir: null, keyItem: null, consumeKey: false, rotation: 0
   };
 }
 
@@ -36,7 +41,8 @@ export function draftOfDef(def: RpgObjectDef | undefined): ObjectDraft {
 export function draftOfObject(o: RpgMapObject): ObjectDraft {
   return {
     color: o.color ?? null, dark: o.dark ?? null, items: rows(o.items), enemies: rows(o.enemies), mimics: rows(o.mimics),
-    hitMaterial: o.hitMaterial ?? null, showMessage: !!o.showMessage, lines: (o.lines ?? []).join('\n'), signDir: o.signDir ?? null
+    hitMaterial: o.hitMaterial ?? null, showMessage: !!o.showMessage, lines: (o.lines ?? []).join('\n'), signDir: o.signDir ?? null,
+    keyItem: o.keyItem ?? null, consumeKey: !!o.consumeKey, rotation: o.rotation ?? 0
   };
 }
 
@@ -49,6 +55,16 @@ export function applyDraft(o: RpgMapObject, d: ObjectDraft): void {
   if (o.type === 'sign') {
     set('signDir', d.signDir);
     o.lines = d.lines.split('\n');
+    return;
+  }
+  if (o.type === DOOR) {
+    // 扉(front#425)は向き・鍵・鍵がないときのメッセージ・色合いだけ。鍵がなくなるか・メッセージは鍵のかかった扉だけ
+    o.rotation = d.rotation;
+    set('keyItem', d.keyItem || null);
+    set('consumeKey', d.keyItem && d.consumeKey ? true : null);
+    set('lines', d.keyItem ? d.lines.split('\n') : null);
+    set('color', d.color);
+    set('dark', d.dark);
     return;
   }
   set('color', d.color);

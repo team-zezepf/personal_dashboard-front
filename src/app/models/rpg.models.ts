@@ -177,7 +177,7 @@ export type RpgDungeonInput = Pick<RpgDungeon, 'name' | 'theme'> & { id: string 
 // RPGのマップ(エリア)(front#217 / api#82)。マップ作成画面で作り、ゲームはこれを読んで地形を作る
 export interface RpgMapObject {
   // tree / rock / house / cliff / fern / crystal / pillar / volcano / grass / chest / armor / wall /
-  // barrel / pot / bones / bookshelf / candle / grave / sign / bars / shackle / bucket
+  // barrel / pot / bones / bookshelf / candle / grave / sign / bars / shackle / bucket / door
   type: string;
   x: number;
   y: number;
@@ -209,6 +209,11 @@ export interface RpgMapObject {
   showMessage?: boolean | null;
   // 看板の矢印の向き(se・sw・nw・ne)。なければ自動(いちばん近いほかのダンジョンへの端)
   signDir?: string | null;
+  // 扉(door。front#425 / api#200)を開けるのに使うアイテムのID。なければ鍵のかかっていない扉。
+  // 扉の向きは rotation(0・1)、鍵を持っていないときのメッセージは lines
+  keyItem?: string | null;
+  // 扉を開けたときに鍵が1つ減る
+  consumeKey?: boolean | null;
 }
 
 // 置物から出てくるアイテム(front#333)。chance は 0.001〜1

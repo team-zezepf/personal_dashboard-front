@@ -5,6 +5,18 @@ import { applyDraft, baseOf, defInputOf, draftOfDef, draftOfObject, draftProblem
 describe('置物の設定の下書き(front#333)', () => {
   afterEach(() => setObjectDefs([]));
 
+  it('扉(front#425)は、向き・鍵・鍵がないときのメッセージ・色合いだけを書き戻す。鍵をなしにすると鍵がなくなるか・メッセージは持たない', () => {
+    const o: RpgMapObject = { type: 'door', x: 1, y: 1, torch: false, rotation: 0, keyItem: 'rusty_key', consumeKey: true };
+    const d = draftOfObject(o);
+    expect(d).toMatchObject({ keyItem: 'rusty_key', consumeKey: true, rotation: 0, lines: '' });
+    Object.assign(d, { rotation: 1, consumeKey: false, lines: '看守が持っていそうだ。', color: '#6b7280', dark: '#374151', items: [{ id: 'potion', count: 1, chance: 1 }] });
+    applyDraft(o, d);
+    expect(o).toEqual({ type: 'door', x: 1, y: 1, torch: false, rotation: 1, keyItem: 'rusty_key', lines: ['看守が持っていそうだ。'], color: '#6b7280', dark: '#374151' });
+    Object.assign(d, { keyItem: null, consumeKey: true });
+    applyDraft(o, d);
+    expect(o).toEqual({ type: 'door', x: 1, y: 1, torch: false, rotation: 1, color: '#6b7280', dark: '#374151' });
+  });
+
   it('置いた置物の下書きは、決めていない項目を null(デフォルトのまま)にし、書き戻すと決めた項目だけを持つ', () => {
     const o: RpgMapObject = { type: 'barrel', x: 1, y: 1, torch: false };
     const d = draftOfObject(o);
