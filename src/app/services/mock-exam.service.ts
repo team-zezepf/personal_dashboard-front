@@ -2,12 +2,13 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService } from './exam-achievements.service';
 import { AccountService } from './account.service';
-import { ExamQuestion } from '../models/exam-question.models';
+import { ExamQuestion, JOURNAL_FIELDS, Journal, QuestionAnswer } from '../models/exam-question.models';
 import { ExamAnswer } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
-import { pickByComposition, shuffle } from '../utils/mock-exam-composition';
+import { pickByComposition, pickByType, shuffle } from '../utils/mock-exam-composition';
 import { reviewTargets } from '../utils/mistake-review';
-import { isCorrectAnswer } from '../utils/exam-answer';
+import { isAnswered, isCorrectAnswer, toRecordedAnswer } from '../utils/exam-answer';
+import { isJournal } from '../utils/journal';
 import { catchError, of, switchMap } from 'rxjs';
 
 export type MockExamView = 'start' | 'quiz' | 'result';
@@ -29,7 +30,7 @@ export class MockExamService {
   readonly subject = signal<MockExamSubject | null>(null);
   readonly view = signal<MockExamView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
-  readonly answers = signal<(number[] | undefined)[]>([]);
+  readonly answers = signal<(QuestionAnswer | undefined)[]>([]);
   readonly round = signal(0);
 
   // 残り時間(秒)。0になったら強制終了する。
@@ -48,7 +49,7 @@ export class MockExamService {
     const start = this.roundStartIndex();
     return this.sessionQuestions().slice(start, start + this.questionsPerPage());
   });
-  readonly answeredCount = computed(() => this.answers().filter((a) => a && a.length > 0).length);
+  readonly answeredCount = computed(() => this.answers().filter((a) => isAnswered(a)).length);
 
   // 出題構成に選択分野がある科目(応用情報 午後)で、開始画面で選んだ分野
   readonly selectedGenres = signal<string[]>([]);
@@ -130,6 +131,7 @@ export class MockExamService {
           explanation
           image
           code
+          ${JOURNAL_FIELDS}
         }
       }
     `;
@@ -151,9 +153,12 @@ export class MockExamService {
       }
 
       const composition = subject.mockExam.composition;
+      const typeComposition = subject.mockExam.typeComposition;
       const questions = composition
         ? pickByComposition(pool, composition, this.selectedGenres())
-        : shuffle(pool).slice(0, Math.min(subject.mockExam.questionCount, pool.length));
+        : typeComposition
+          ? pickByType(pool, typeComposition)
+          : shuffle(pool).slice(0, Math.min(subject.mockExam.questionCount, pool.length));
       if (composition) this.saveSelectedGenres(subject);
       this.sessionQuestions.set(questions);
       this.answers.set(new Array(questions.length));
@@ -187,7 +192,8 @@ export class MockExamService {
     if (!question) return;
 
     const current = [...this.answers()];
-    const existing = current[globalIndex] ?? [];
+    const saved = current[globalIndex];
+    const existing = Array.isArray(saved) ? saved : [];
     const next = question.type === 'multi'
       ? (existing.includes(choiceIndex) ? existing.filter((i) => i !== choiceIndex) : [...existing, choiceIndex])
       : [choiceIndex];
@@ -197,7 +203,21 @@ export class MockExamService {
   }
 
   isSelected(globalIndex: number, choiceIndex: number): boolean {
-    return this.answers()[globalIndex]?.includes(choiceIndex) ?? false;
+    const answer = this.answers()[globalIndex];
+    return Array.isArray(answer) && answer.includes(choiceIndex);
+  }
+
+  // 仕訳入力の問題で入力した仕訳を保存する(何も入力していない状態に戻したときは未回答になる)
+  setJournal(globalIndex: number, journal: Journal): void {
+    if (!this.sessionQuestions()[globalIndex]) return;
+    const current = [...this.answers()];
+    current[globalIndex] = journal;
+    this.answers.set(current);
+  }
+
+  journalAnswer(globalIndex: number): Journal | null {
+    const answer = this.answers()[globalIndex];
+    return isJournal(answer) ? answer : null;
   }
 
   goToRound(roundIndex: number): void {
@@ -221,7 +241,7 @@ export class MockExamService {
     const answers = this.answers();
     if (!subject || questions.length === 0) return;
 
-    const correctCount = questions.reduce((count, q, i) => count + (isCorrectAnswer(q, answers[i] ?? []) ? 1 : 0), 0);
+    const correctCount = questions.reduce((count, q, i) => count + (isCorrectAnswer(q, answers[i]) ? 1 : 0), 0);
     const totalCount = questions.length;
     const passBorder = Math.ceil(totalCount * subject.mockExam.passRatio);
     const passed = correctCount >= passBorder;
@@ -239,8 +259,8 @@ export class MockExamService {
     // 棄権した回は finish() を通らないので記録されない。
     const examAnswers: ExamAnswer[] = questions.map((q, i) => ({
       questionId: q.id,
-      selected: answers[i] ?? [],
-      correct: isCorrectAnswer(q, answers[i] ?? [])
+      ...toRecordedAnswer(answers[i]),
+      correct: isCorrectAnswer(q, answers[i])
     }));
     // 記録できたら、今回の回を含めた復習の対象数を取り直して結果画面の復習ボタンに表示する
     this.achievementsService.recordCompletion(subject.key, correctCount, totalCount, 'MOCK_EXAM', passed, examAnswers).pipe(
@@ -254,8 +274,8 @@ export class MockExamService {
     });
   }
 
-  isCorrect(question: ExamQuestion, answer: number[] | undefined): boolean {
-    return isCorrectAnswer(question, answer ?? []);
+  isCorrect(question: ExamQuestion, answer: QuestionAnswer | undefined): boolean {
+    return isCorrectAnswer(question, answer);
   }
 
   destroy(): void {

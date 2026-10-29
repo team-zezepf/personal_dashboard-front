@@ -73,6 +73,18 @@
                   @if (q.code) {
                     <app-code-block [code]="q.code" />
                   }
+                  @if (q.type === 'journal' && q.journal) {
+                    @if (!row.correct) {
+                      <p class="journal-label">あなたの回答</p>
+                      @if (row.journal; as given) {
+                        <app-journal-table [journal]="given" [compareTo]="q.journal" />
+                      } @else {
+                        <p class="unanswered">未回答</p>
+                      }
+                    }
+                    <p class="journal-label">正解</p>
+                    <app-journal-table [journal]="q.journal" />
+                  } @else {
                   <ul class="choices">
                     @for (choice of q.choices; track $index) {
                       <li [class.correct]="isCorrectChoice(q, $index)" [class.chosen]="row.selected.includes($index)">
@@ -84,6 +96,7 @@
                   </ul>
                   @if (row.selected.length === 0) {
                     <p class="unanswered">未回答</p>
+                  }
                   }
                   <div class="explanation">
                     <span class="label">解説</span>

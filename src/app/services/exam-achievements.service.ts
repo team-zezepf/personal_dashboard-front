@@ -57,6 +57,7 @@ export class ExamAchievementsService {
             questionId
             selected
             correct
+            journal { debit { account amount } credit { account amount } }
           }
           createdAt
         }

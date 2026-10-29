@@ -4,16 +4,20 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { CodeBlockComponent } from '../../components/code-block/code-block.component';
+import { JournalInputComponent } from '../../components/journal-input/journal-input.component';
+import { JournalTableComponent } from '../../components/journal-table/journal-table.component';
 import { ExamStudyService } from '../../services/exam-study.service';
 import { EXAM_ACHIEVEMENT_RATIO } from '../../services/exam-achievements.service';
-import { ExamQuestion } from '../../models/exam-question.models';
+import { ExamQuestion, Journal, QuestionAnswer } from '../../models/exam-question.models';
+import { isAnswered } from '../../utils/exam-answer';
+import { isJournal } from '../../utils/journal';
 import { findExamSubject } from '../../config/exam-subjects';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-exam-study-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent, JournalInputComponent, JournalTableComponent],
   templateUrl: './exam-study.component.html',
   styleUrl: './exam-study.component.css'
 })
@@ -32,8 +36,8 @@ export class ExamStudyPageComponent {
   // スタート画面で案内する、実績の記録に必要な正解数(出題数の7割以上)
   readonly achievementBorder = Math.ceil((this.subject?.practice.questionsPerSession ?? 0) * EXAM_ACHIEVEMENT_RATIO);
 
-  // 出題画面での選択状態(質問id → 選択済み選択肢indexの配列)。ラウンドが変わるたびリセットする。
-  private readonly selections = signal<Map<string | number, number[]>>(new Map());
+  // 出題画面での回答(質問id → 選択済み選択肢indexの配列、または入力した仕訳)。ラウンドが変わるたびリセットする。
+  private readonly selections = signal<Map<string | number, QuestionAnswer>>(new Map());
 
   constructor() {
     if (!this.subject) {
@@ -50,7 +54,7 @@ export class ExamStudyPageComponent {
   readonly canSubmitRound = computed(() => {
     const questions = this.examStudy.roundQuestions();
     const selections = this.selections();
-    return questions.length > 0 && questions.every((q) => (selections.get(q.id)?.length ?? 0) > 0);
+    return questions.length > 0 && questions.every((q) => isAnswered(selections.get(q.id)));
   });
 
   start(): void {
@@ -60,12 +64,20 @@ export class ExamStudyPageComponent {
   }
 
   isSelected(question: ExamQuestion, choiceIndex: number): boolean {
-    return this.selections().get(question.id)?.includes(choiceIndex) ?? false;
+    const answer = this.selections().get(question.id);
+    return Array.isArray(answer) && answer.includes(choiceIndex);
+  }
+
+  setJournal(question: ExamQuestion, journal: Journal): void {
+    const current = new Map(this.selections());
+    current.set(question.id, journal);
+    this.selections.set(current);
   }
 
   toggleChoice(question: ExamQuestion, choiceIndex: number): void {
     const current = new Map(this.selections());
-    const existing = current.get(question.id) ?? [];
+    const saved = current.get(question.id);
+    const existing = Array.isArray(saved) ? saved : [];
 
     const next = question.type === 'multi'
       ? (existing.includes(choiceIndex) ? existing.filter((i) => i !== choiceIndex) : [...existing, choiceIndex])
@@ -95,16 +107,22 @@ export class ExamStudyPageComponent {
     return this.examStudy.roundStartIndex() + indexInRound;
   }
 
-  answerFor(globalIndex: number): number[] | undefined {
+  answerFor(globalIndex: number): QuestionAnswer | undefined {
     return this.examStudy.answers()[globalIndex];
+  }
+
+  // 仕訳入力の問題で入力した仕訳(未回答なら null)
+  journalAnswerFor(globalIndex: number): Journal | null {
+    const answer = this.answerFor(globalIndex);
+    return isJournal(answer) ? answer : null;
   }
 
   resultFor(globalIndex: number): boolean | undefined {
     return this.examStudy.results()[globalIndex];
   }
 
-  answerText(question: ExamQuestion, answer: number[] | undefined): string {
-    if (!answer || answer.length === 0) return '（未回答）';
+  answerText(question: ExamQuestion, answer: QuestionAnswer | undefined): string {
+    if (!Array.isArray(answer) || answer.length === 0) return '（未回答）';
     return answer.map((i) => question.choices[i]).join(' / ');
   }
 

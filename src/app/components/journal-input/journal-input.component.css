@@ -1,0 +1,62 @@
+.journal-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.side-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.side-name.debit {
+  color: var(--primary-dark);
+}
+
+.side-name.credit {
+  color: var(--red-text);
+}
+
+.journal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.journal-row select,
+.journal-row input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.journal-row input {
+  text-align: right;
+}
+
+.journal-row select:focus,
+.journal-row input:focus {
+  outline: 2px solid var(--primary-border);
+  border-color: var(--primary);
+}
+
+.journal-hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .journal-input {
+    grid-template-columns: 1fr;
+  }
+}

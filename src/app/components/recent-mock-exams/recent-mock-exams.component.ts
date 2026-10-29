@@ -3,14 +3,17 @@ import { catchError, of } from 'rxjs';
 import { ExamAchievementsService } from '../../services/exam-achievements.service';
 import { ExamQuestionService } from '../../services/exam-question.service';
 import { ExamRecord } from '../../models/exam-record.models';
-import { ExamQuestion } from '../../models/exam-question.models';
+import { ExamQuestion, Journal } from '../../models/exam-question.models';
 import { findExamSubject } from '../../config/exam-subjects';
 import { RECENT_ATTEMPT_COUNT, formatTakenAt, recentAttempts, scorePercent } from '../../utils/mock-exam-stats';
 import { CodeBlockComponent } from '../code-block/code-block.component';
+import { JournalTableComponent } from '../journal-table/journal-table.component';
 
 interface AnswerRow {
   index: number;
   selected: number[];
+  // 仕訳入力の問題で入力した仕訳(未回答や4択の問題は null)
+  journal: Journal | null;
   correct: boolean;
   // 問題データから消えた問題は undefined
   question: ExamQuestion | undefined;
@@ -23,7 +26,7 @@ interface AnswerRow {
 @Component({
   selector: 'app-recent-mock-exams',
   standalone: true,
-  imports: [CodeBlockComponent],
+  imports: [CodeBlockComponent, JournalTableComponent],
   templateUrl: './recent-mock-exams.component.html',
   styleUrl: './recent-mock-exams.component.css'
 })
@@ -52,6 +55,7 @@ export class RecentMockExamsComponent implements OnInit {
     return (record.answers ?? []).map((a, i) => ({
       index: i,
       selected: a.selected,
+      journal: a.journal ?? null,
       correct: a.correct,
       question: byId.get(String(a.questionId))
     }));

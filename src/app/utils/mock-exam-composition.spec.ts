@@ -1,6 +1,6 @@
 import { ExamQuestion } from '../models/exam-question.models';
 import { MockExamComposition } from '../config/exam-subjects';
-import { pickByComposition } from './mock-exam-composition';
+import { pickByComposition, pickByType } from './mock-exam-composition';
 
 function question(id: string, subCategory: string): ExamQuestion {
   return { id, category: '午後', subCategory, type: 'single', question: id, choices: ['ア', 'イ'], correct: [0], explanation: '' };
@@ -49,5 +49,22 @@ describe('pickByComposition', () => {
       const ids = pickByComposition(pool, composition, ['DB', 'NW']).map((q) => q.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+describe('pickByType(front#429)', () => {
+  const typed = (id: string, type: string): ExamQuestion => ({ ...question(id, '仕訳'), type });
+  const pool = [typed('c1', 'single'), typed('j1', 'journal'), typed('c2', 'multi'), typed('j2', 'journal'), typed('c3', 'single'), typed('j3', 'journal')];
+
+  it('形式の並び順に、形式ごとに指定の数ずつ出題する(4択・複数選択は choice にまとめる)', () => {
+    const picked = pickByType(pool, [{ type: 'journal', label: '仕訳入力', count: 2 }, { type: 'choice', label: '4択', count: 2 }], noShuffle);
+
+    expect(picked.map((q) => q.id)).toEqual(['j1', 'j2', 'c1', 'c2']);
+  });
+
+  it('問題が指定の数より少ない形式は、その形式の全問を出題する', () => {
+    const picked = pickByType(pool, [{ type: 'journal', label: '仕訳入力', count: 5 }, { type: 'choice', label: '4択', count: 1 }], noShuffle);
+
+    expect(picked.map((q) => q.id)).toEqual(['j1', 'j2', 'j3', 'c1']);
   });
 });

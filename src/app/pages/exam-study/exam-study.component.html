@@ -18,7 +18,7 @@
       <h1 class="page-title">{{ subject.name }}</h1>
       <p class="intro-lead">{{ subject.description }}</p>
       <ul class="intro-list">
-        <li>問題プールから、毎回ランダムに{{ subject.practice.questionsPerSession }}問を出題（4択・複数選択などの形式に対応）</li>
+        <li>問題プールから、毎回ランダムに{{ subject.practice.questionsPerSession }}問を出題（4択・複数選択・仕訳入力などの形式に対応）</li>
         <li>{{ subject.practice.questionsPerRound }}問回答するごとに、正誤と解説のページが表示されます</li>
         <li>最後にまとめて結果を確認できます</li>
         <li>{{ subject.practice.questionsPerSession }}問中{{ achievementBorder }}問以上正解すると、「実績」画面のカレンダーに記録されます</li>
@@ -48,6 +48,9 @@
           @if (q.image) {
             <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
           }
+          @if (q.type === 'journal') {
+            <app-journal-input [accounts]="q.choices" [label]="'第' + (globalIndex($index) + 1) + '問 '" (changed)="setJournal(q, $event)" />
+          } @else {
           <ul class="choice-list">
             @for (choice of q.choices; track $index) {
               <li
@@ -66,6 +69,7 @@
               </li>
             }
           </ul>
+          }
         </div>
       }
       <div class="quiz-actions">
@@ -95,8 +99,19 @@
           @if (q.image) {
             <div class="question-image-wrap" [innerHTML]="trustedImage(q.image)"></div>
           }
-          <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, answerFor(globalIndex($index))) }}</p>
-          <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          @if (q.type === 'journal' && q.journal) {
+            @if (!resultFor(globalIndex($index))) {
+              <p class="review-line"><span class="label">あなたの回答：</span>@if (!journalAnswerFor(globalIndex($index))) {（未回答）}</p>
+              @if (journalAnswerFor(globalIndex($index)); as given) {
+                <app-journal-table [journal]="given" [compareTo]="q.journal" />
+              }
+            }
+            <p class="review-line"><span class="label">正解：</span></p>
+            <app-journal-table [journal]="q.journal" />
+          } @else {
+            <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, answerFor(globalIndex($index))) }}</p>
+            <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          }
           <div class="explanation-box">
             <span class="label">解説</span>
             <p class="explanation-text">{{ q.explanation }}</p>
