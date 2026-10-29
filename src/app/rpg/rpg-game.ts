@@ -256,7 +256,7 @@ export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, hea
 export const HEAL_ALL_STAGGER = 0.06;
 
 /**
- * ほかの人に回復してもらった仲間が出す「ありがとう」の吹き出し(front#398)。
+ * ほかの人に回復してもらった仲間が出す「ありがとう」(front#398。front#432 で吹き出しの枠をなくし、文字とハートにした)。
  * t は出てからの秒。回復の光と重ならないよう、回復から THANKS_DELAY 秒あけて出す(front#400。それまでは t が負)
  */
 export interface ThanksBubble {
@@ -430,7 +430,7 @@ export class RpgGame {
   spellFx: SpellFx[] = [];
   // 仲間のまわりのエフェクト(front#391)
   mateFx: MateFx[] = [];
-  // 回復してもらった仲間の「ありがとう」の吹き出し(front#398)
+  // 回復してもらった仲間の「ありがとう」(front#398 / front#432)
   thanks: ThanksBubble[] = [];
   // 選んでいる敵・仲間・自分(front#383)と、マウスの下にいる仲間・自分
   selected: Selection | null = null;
@@ -1429,7 +1429,7 @@ export class RpgGame {
     return Math.min(Math.max(f.spellLevels.find((l) => l.id === id)?.level ?? 1, 1), MAX_SPELL_LEVEL);
   }
 
-  /** ほかの人(プレイヤー・ほかの仲間)に回復してもらった仲間が「ありがとう」の吹き出しを出す(front#398)。出ていれば出し直す */
+  /** ほかの人(プレイヤー・ほかの仲間)に回復してもらった仲間が「ありがとう」を出す(front#398)。出ていれば出し直す */
   private thank(user: Fighter, target: Fighter): void {
     if (target.kind !== 'mate' || user === target) return;
     this.thanks = this.thanks.filter((b) => b.target !== target);
