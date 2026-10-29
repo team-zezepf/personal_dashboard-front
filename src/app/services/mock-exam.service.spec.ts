@@ -302,8 +302,10 @@ describe('MockExamService', () => {
 
       const answers = recordCompletion.mock.calls[0][5];
       expect(recordCompletion.mock.calls[0][1]).toBe(1);
-      expect(answers[0]).toEqual({ questionId: 11, selected: [], journal, correct: true });
-      expect(answers[1]).toEqual({ questionId: 12, selected: [], journal: wrong, correct: false });
+      // 仕訳入力の2問の並びはランダムなので、出題された順の id で確かめる
+      const [firstId, secondId] = service.sessionQuestions().map((q) => q.id);
+      expect(answers[0]).toEqual({ questionId: firstId, selected: [], journal, correct: true });
+      expect(answers[1]).toEqual({ questionId: secondId, selected: [], journal: wrong, correct: false });
       expect(answers[2]).toEqual({ questionId: service.sessionQuestions()[2].id, selected: [], correct: false });
     });
   });
