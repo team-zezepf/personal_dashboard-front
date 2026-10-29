@@ -387,6 +387,63 @@
         </div>
       </div>
     </section>
+    <section class="topic" id="topic-7">
+      <h2><span class="topic-no">8</span>月割計算のしかた</h2>
+      <p>経過勘定（前払・前受・未払・未収）、期中に取得した固定資産の減価償却、利息の計算では、金額を<strong>月割</strong>で求める。3級では日割りは出ないので、「当期に含まれるのは何か月分か」を正しく数えられれば解ける。</p>
+      <div class="formula-box">
+        <span class="label">月割の公式</span>
+        <span>当期分 = 1年分の金額 × 当期の月数 ÷ 12<br>翌期分（前払・前受） = 1年分の金額 × (12 − 当期の月数) ÷ 12<br>利息 = 元金 × 年利率 × 月数 ÷ 12</span>
+      </div>
+      <p>月数は、<strong>支払った（借りた・取得した）月から決算月までを、両端を含めて数える</strong>。会計期間が4月1日〜3月31日のとき、よく出る月の当期の月数は次のとおり。</p>
+      <table class="ref-table">
+        <thead><tr><th>始まりの日</th><th>当期の月数</th><th>翌期の月数</th><th>数え方</th></tr></thead>
+        <tbody>
+          <tr><td>7月1日</td><td>9か月</td><td>3か月</td><td>7月〜3月</td></tr>
+          <tr><td>8月1日</td><td>8か月</td><td>4か月</td><td>8月〜3月</td></tr>
+          <tr><td>9月1日</td><td>7か月</td><td>5か月</td><td>9月〜3月</td></tr>
+          <tr><td>10月1日</td><td>6か月</td><td>6か月</td><td>10月〜3月</td></tr>
+          <tr><td>11月1日</td><td>5か月</td><td>7か月</td><td>11月〜3月</td></tr>
+          <tr><td>12月1日</td><td>4か月</td><td>8か月</td><td>12・1・2・3月</td></tr>
+        </tbody>
+      </table>
+      <div class="example-box">
+        <span class="label">例題: 期中に1年分を前払いした保険料</span>
+        <span>12月1日に向こう1年分の保険料 36,000円を支払った（会計期間は4月1日〜3月31日）。<br>当期分は12月〜3月の4か月分: 36,000 × 4/12 = 12,000円<br>翌期分は8か月分: 36,000 × 8/12 = 24,000円<br>決算整理仕訳: <strong>（借）前払保険料 24,000（貸）保険料 24,000</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 利息が後払いの借入金（未払利息）</span>
+        <span>9月1日に 600,000円を年利3%で借り入れた。利息は1年後の返済時に支払う。<br>当期分は9月〜3月の7か月分: 600,000 × 3% × 7/12 = 10,500円<br>決算整理仕訳: <strong>（借）支払利息 10,500（貸）未払利息 10,500</strong></span>
+      </div>
+      <div class="example-box">
+        <span class="label">例題: 毎年同じ月に1年分を支払っている（再振替あり）</span>
+        <span>家賃は毎年6月1日に向こう1年分を支払っている。決算整理前の支払家賃は 168,000円。<br>この残高は、期首に再振替した前期の前払分（4・5月の2か月）と、6月に支払った12か月分の合計で<strong>14か月分</strong>。1か月分は 168,000 ÷ 14 = 12,000円。<br>当期末の前払分は翌期の4・5月の2か月分 24,000円で、損益計算書の支払家賃は 168,000 − 24,000 = 144,000円（12か月分）。</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>月数は「始まりの月も含めて」数える（12月1日〜3月31日は3か月ではなく4か月）。再振替がある問題では、試算表の金額が12か月分ではないことに注意する。前払・前受の月数は「12 − 当期の月数」で確かめると間違いにくい。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="保険料,前払保険料,未払保険料,現金,支払利息,未払利息" data-debit="前払保険料:28000" data-credit="保険料:28000">
+          <p class="quiz-q">問1　会計期間は4月1日〜3月31日である。11月1日に向こう1年分の保険料 48,000円を支払い、保険料勘定で処理している。決算にあたり、前払分を計上する。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>当期分は11月〜3月の5か月（20,000円）、翌期分は4月〜10月の7か月。前払分は 48,000 × 7/12 = 28,000円 で、（借）前払保険料 28,000（貸）保険料 28,000 となる。当期分の 20,000円 を前払にしないよう注意する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問2　会計期間は4月1日〜3月31日である。10月1日に 400,000円を年利3%で貸し付け、利息は1年後に受け取る。決算で計上する未収利息はいくらか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　12,000円</button>
+            <button type="button">イ　5,000円</button>
+            <button type="button">ウ　7,000円</button>
+            <button type="button">エ　6,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>当期分は10月〜3月の6か月。400,000 × 3% × 6/12 = 6,000円。アの12,000円は1年分の利息。</p>
+        </div>
+      </div>
+    </section>
     </article>
 
     <nav class="docs-genre-nav">

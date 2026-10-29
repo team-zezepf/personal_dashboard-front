@@ -253,6 +253,73 @@
         </div>
       </div>
     </section>
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>決算整理後残高試算表</h2>
+      <p>決算整理仕訳をしたあとの各勘定の残高を集めた試算表を、<strong>決算整理後残高試算表</strong>という。第3問で作成を求められることがあり、金額は精算表の「試算表欄 ± 修正記入欄」と同じになる。損益計算書・貸借対照表は、この試算表の金額をもとに作る。</p>
+      <ol>
+        <li>決算整理前残高試算表の金額を書き写す</li>
+        <li>決算整理事項を1つずつ仕訳にし、関係する勘定の金額を増減させる</li>
+        <li>決算整理で新しく出てくる勘定（貸倒引当金繰入・減価償却費・前払保険料・未払利息・貯蔵品など）を加える</li>
+        <li>借方合計と貸方合計が一致することを確かめる</li>
+      </ol>
+      <div class="example-box">
+        <span class="label">例題: 決算整理後残高試算表を作る</span>
+        <span>会計期間は4月1日〜3月31日。決算整理事項: ①期末商品棚卸高 40,000円 ②売掛金の期末残高の2%の貸倒引当金を差額補充法で設定 ③備品は定額法（耐用年数5年、残存価額ゼロ）④保険料は11月1日に1年分を支払ったもので、前払分を計上する</span>
+      </div>
+      <table class="ref-table">
+        <thead><tr><th>勘定</th><th>整理前</th><th>決算整理</th><th>整理後</th></tr></thead>
+        <tbody>
+          <tr><td>現金</td><td>150,000</td><td></td><td>150,000</td></tr>
+          <tr><td>売掛金</td><td>200,000</td><td></td><td>200,000</td></tr>
+          <tr><td>繰越商品</td><td>30,000</td><td>① −30,000 +40,000</td><td>40,000</td></tr>
+          <tr><td>前払保険料</td><td>—</td><td>④ +14,000</td><td>14,000</td></tr>
+          <tr><td>備品</td><td>300,000</td><td></td><td>300,000</td></tr>
+          <tr><td>仕入</td><td>600,000</td><td>① +30,000 −40,000</td><td>590,000</td></tr>
+          <tr><td>給料</td><td>150,000</td><td></td><td>150,000</td></tr>
+          <tr><td>保険料</td><td>24,000</td><td>④ −14,000</td><td>10,000</td></tr>
+          <tr><td>貸倒引当金繰入</td><td>—</td><td>② +3,000</td><td>3,000</td></tr>
+          <tr><td>減価償却費</td><td>—</td><td>③ +60,000</td><td>60,000</td></tr>
+          <tr><th>借方合計</th><th>1,454,000</th><th></th><th>1,517,000</th></tr>
+          <tr><td>買掛金</td><td>120,000</td><td></td><td>120,000</td></tr>
+          <tr><td>貸倒引当金</td><td>1,000</td><td>② +3,000</td><td>4,000</td></tr>
+          <tr><td>備品減価償却累計額</td><td>60,000</td><td>③ +60,000</td><td>120,000</td></tr>
+          <tr><td>資本金</td><td>300,000</td><td></td><td>300,000</td></tr>
+          <tr><td>繰越利益剰余金</td><td>73,000</td><td></td><td>73,000</td></tr>
+          <tr><td>売上</td><td>900,000</td><td></td><td>900,000</td></tr>
+          <tr><th>貸方合計</th><th>1,454,000</th><th></th><th>1,517,000</th></tr>
+        </tbody>
+      </table>
+      <p>②は 200,000 × 2% = 4,000円 から残高 1,000円 を差し引いた 3,000円 を繰り入れる。③は 300,000 ÷ 5年 = 60,000円。④は翌期の4月〜10月の7か月分 24,000 × 7/12 = 14,000円 を前払保険料にする。整理によって新しい勘定が増えるので、合計は整理前より大きくなる。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>決算整理後の「仕入」は売上原価の金額、「繰越商品」は期末商品の金額になる。繰越利益剰余金は決算整理前と同じ金額のままで、当期純利益はまだ加えない（加えるのは貸借対照表を作るとき）。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="2">
+          <p class="quiz-q">問1　決算整理前残高試算表の繰越商品が 50,000円、仕入が 700,000円で、期末商品棚卸高は 65,000円 であった。売上原価を仕入勘定で計算するとき、決算整理後残高試算表の仕入はいくらか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　700,000円</button>
+            <button type="button">イ　715,000円</button>
+            <button type="button">ウ　685,000円</button>
+            <button type="button">エ　635,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>期首商品を仕入に加え、期末商品を仕入から差し引く。50,000 + 700,000 − 65,000 = 685,000円。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="0">
+          <p class="quiz-q">問2　決算整理前残高試算表の繰越利益剰余金は 120,000円、当期純利益は 80,000円 であった。決算整理後残高試算表の繰越利益剰余金はいくらか（配当などはないものとする）。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　120,000円</button>
+            <button type="button">イ　200,000円</button>
+            <button type="button">ウ　40,000円</button>
+            <button type="button">エ　80,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>決算整理後残高試算表の段階では、当期純利益はまだ繰越利益剰余金に振り替えていないので、120,000円のまま。貸借対照表では 120,000 + 80,000 = 200,000円 と表示する。</p>
+        </div>
+      </div>
+    </section>
     </article>
 
     <nav class="docs-genre-nav">
