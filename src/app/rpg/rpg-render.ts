@@ -12,6 +12,9 @@ type Pt = [number, number];
 // 壁(front#268)の高さ。床のマスの縦の6つぶんほど
 const WALL_HEIGHT = 200;
 
+// 「ありがとう」のまわりから立ちのぼるハートの色(front#432)
+const THANKS_HEARTS = ['#f472b6', '#fb7185', '#f9a8d4'];
+
 // #rrggbb の色を暗くする(家の屋根の影の面)
 export function shade(hex: string, factor: number): string {
   const n = parseInt(hex.slice(1), 16);
@@ -1341,45 +1344,47 @@ export class RpgRenderer {
   }
 
   /**
-   * 「ありがとう♡」の吹き出し(front#398)。頭の右上に、白い角丸としっぽ。
-   * ぽんと大きくなって出て、ふわふわ揺れながら少し上がり、最後に薄くなって消える
+   * 回復してもらった仲間の「ありがとう」(front#398 / front#432)。吹き出しの枠はなく、白でふちどりしたピンクの文字を
+   * 仲間の真上の中央に出す。選んでいるときの▼より上から、大きさを変えずに一定のゆっくりした速さで湧き上がり、
+   * 出始めは薄い状態からはっきりさせ、最後に薄くなって消える。文字のまわりからハートが3つ立ちのぼる
    */
   private drawThanks(b: ThanksBubble, sx: number, sy: number): void {
     const ctx = this.ctx;
     const t = b.t;
-    const pop = t < 0.18 ? (t / 0.18) * 1.15 : t < 0.3 ? 1.15 - ((t - 0.18) / 0.12) * 0.15 : 1;
-    const a = t > THANKS_SEC - 0.35 ? Math.max(0, (THANKS_SEC - t) / 0.35) : 1;
-    const text = 'ありがとう♡';
+    const fadeIn = Math.min(1, t / 0.3);
+    const fadeOut = t > THANKS_SEC - 0.35 ? Math.max(0, (THANKS_SEC - t) / 0.35) : 1;
     ctx.save();
-    ctx.globalAlpha = a;
-    // しっぽの先(頭の右上)を中心に大きくする
-    ctx.translate(sx + 10, sy - 74 - Math.min(t, THANKS_SEC) * 6);
-    ctx.scale(pop, pop);
-    ctx.font = 'bold 13px "Yu Gothic", Meiryo, sans-serif';
-    const w = ctx.measureText(text).width + 18;
-    const h = 24;
-    const bx = 2;
-    const by = -14 - h + Math.sin(t * 9) * 1.5;
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#f472b6';
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.roundRect(bx, by, w, h, 12);
-    ctx.fill();
-    ctx.stroke();
-    // しっぽ(本体との境目は白で塗って線を消す)
-    ctx.beginPath();
-    ctx.moveTo(bx + 10, by + h - 1);
-    ctx.lineTo(0, 0);
-    ctx.lineTo(bx + 20, by + h - 1);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillRect(bx + 11, by + h - 3, 8, 3);
-    ctx.fillStyle = '#ec4899';
+    ctx.globalAlpha = fadeIn * fadeOut;
+    // 1秒に20px ずつ上がる
+    ctx.translate(sx, sy - 102 - t * 20);
+    ctx.font = '900 10px "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#fff';
+    ctx.strokeText('ありがとう', 0, 0);
+    ctx.fillStyle = '#ec4899';
+    ctx.fillText('ありがとう', 0, 0);
+    // 0.25秒おきに出て、1秒かけて立ちのぼって消えるハート(左・まんなか・右)
+    THANKS_HEARTS.forEach((color, i) => {
+      const k = Math.min(1, (t - i * 0.25) / 1);
+      if (k < 0) return;
+      ctx.globalAlpha = fadeIn * fadeOut * (1 - k);
+      this.heart((i - 1) * 18 + Math.sin(k * 9 + i) * 3, -12 - k * 22, 6.5 + i * 1.1, color);
+    });
     ctx.restore();
   }
+
+  /** ハート(中心 x, y・大きさ s) */
+  private heart(x: number, y: number, s: number, color: string): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y + s * 0.35);
+    ctx.bezierCurveTo(x - s, y - s * 0.4, x - s * 0.45, y - s * 1.1, x, y - s * 0.5);
+    ctx.bezierCurveTo(x + s * 0.45, y - s * 1.1, x + s, y - s * 0.4, x, y + s * 0.35);
+    ctx.fill();
+  }
+
 }
