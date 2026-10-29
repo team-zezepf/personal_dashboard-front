@@ -67,7 +67,7 @@ const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { i
 
 const ENEMY_FIELDS = `
   id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow guard sight respawn boss
-  attack dash charge range radius sortOrder updatedAt
+  attack magicCircle dash charge range radius sortOrder updatedAt
 `;
 
 const SAVE_MUTATION = `

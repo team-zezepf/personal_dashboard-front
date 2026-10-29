@@ -1006,3 +1006,88 @@ test(
     });
   }
 );
+
+test(
+  'E2E-42 RPGマップ作成の「敵」タブで、攻撃を属性と LV で選べ、LV2 では「魔法陣を出す」を外して保存できる(front#435)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
+      'E2E 用の RPG データで、3番目の敵キノコンの攻撃は体当たり'
+    ],
+    expected: [
+      '攻撃のボタンに絵文字がなく、属性の攻撃は「炎・水・風・雷・闇」の5つにまとまっている(前の「暗黒」「魔法陣」のボタンはない)',
+      '属性のボタンを押すと LV1 / LV2 を選べ、LV1 では「魔法陣を出す」は出ない',
+      'LV2 を選ぶと「魔法陣を出す」(はじめはオン)と、射程・範囲の欄が出る',
+      '属性を変えても LV はそのまま(水 LV2 → 雷を押すと 雷 LV2)',
+      '「魔法陣を出す」を外して保存し、読み込み直しても 水 LV2・魔法陣を出さない のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-enemy-page');
+    const list = tab.getByRole('complementary', { name: '敵の一覧' });
+    const attack = tab.locator('aside.props').getByRole('group', { name: '攻撃', exact: true });
+    const card = (label: string) => attack.locator('.attacks').getByRole('button', { name: new RegExp(`^${label}\\s?(ふるまい|見た目)`) });
+    const level = (lv: 1 | 2) => attack.getByRole('group', { name: '攻撃の LV' }).getByRole('button', { name: `LV${lv}`, exact: true });
+    const circle = attack.getByRole('checkbox', { name: '魔法陣を出す' });
+    const openKinokon = async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '👾 敵' }).click();
+      await list.getByRole('button', { name: 'キノコン', exact: true }).click();
+      await expect(tab.locator('aside.props').getByLabel('名前', { exact: true })).toHaveValue('キノコン');
+    };
+
+    await step('RPGマップ作成(/rpg/admin)の「👾 敵」タブを開き、キノコンを選ぶ', '攻撃のボタンは絵文字なしで 体当たり・ひっかき・かみつき・ジャンプ・炎・水・風・雷・闇・衝撃波。体当たりが選ばれていて、LV の欄は出ない', async () => {
+      await openKinokon();
+      await expect(attack.locator('.attacks button')).toHaveText([
+        '体当たりふるまい', 'ひっかき見た目', 'かみつき見た目', 'ジャンプふるまい',
+        '炎ふるまい', '水ふるまい', '風ふるまい', '雷ふるまい', '闇ふるまい', '衝撃波ふるまい'
+      ]);
+      await expect(card('体当たり')).toHaveAttribute('aria-pressed', 'true');
+      await expect(attack.getByRole('group', { name: '攻撃の LV' })).toHaveCount(0);
+    });
+
+    await step('「水」を押す', '水が選ばれ、LV1 が選ばれている。「魔法陣を出す」は出ず、射程の欄だけ出る', async () => {
+      await card('水').click();
+      await expect(card('水')).toHaveAttribute('aria-pressed', 'true');
+      await expect(level(1)).toHaveAttribute('aria-pressed', 'true');
+      await expect(circle).toHaveCount(0);
+      await expect(attack.getByRole('spinbutton', { name: '射程（マス）' })).toBeVisible();
+      await expect(attack.getByRole('spinbutton', { name: '範囲（まわり何マス）' })).toHaveCount(0);
+    });
+
+    await step('「LV2」を押す', '「魔法陣を出す」がオンで出て、射程・範囲の欄が出る', async () => {
+      await level(2).click();
+      await expect(level(2)).toHaveAttribute('aria-pressed', 'true');
+      await expect(circle).toBeChecked();
+      await expect(attack.getByRole('spinbutton', { name: '範囲（まわり何マス）' })).toBeVisible();
+    });
+
+    await step('「雷」を押し、もう一度「水」を押す', '雷でも LV2 のまま。水に戻しても LV2 のまま', async () => {
+      await card('雷').click();
+      await expect(card('雷')).toHaveAttribute('aria-pressed', 'true');
+      await expect(level(2)).toHaveAttribute('aria-pressed', 'true');
+      await card('水').click();
+      await expect(level(2)).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step('「魔法陣を出す」を外して「敵を保存する」を押し、読み込み直してキノコンを選ぶ', '「敵を保存しました」と出る。読み込み直しても 水・LV2 が選ばれ、「魔法陣を出す」はオフ', async () => {
+      await circle.uncheck();
+      await tab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('敵を保存しました');
+      await openKinokon();
+      await expect(card('水')).toHaveAttribute('aria-pressed', 'true');
+      await expect(level(2)).toHaveAttribute('aria-pressed', 'true');
+      await expect(circle).not.toBeChecked();
+    });
+
+    await step('(後片付け)「魔法陣を出す」をオンに戻し、「体当たり」を押して保存する', '「敵を保存しました」と出る', async () => {
+      await circle.check();
+      await card('体当たり').click();
+      await tab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('敵を保存しました');
+    });
+  }
+);

@@ -45,6 +45,8 @@ const NAMES: Partial<Record<ColumnKind, [string, string][]>> = {
   attack: ENEMY_ATTACKS.map((a) => [a.id, a.label]),
   hit: HIT_MATERIALS.map(([id, label]) => [id, label])
 };
+// 属性 × LV(front#435)にする前の攻撃の名前。前に書き出した CSV も取り込めるようにする
+const OLD_ATTACK_LABELS: Record<string, string> = { 炎: 'fire', 水: 'water', 風: 'wind', 雷: 'thunder', 暗黒: 'dark', 魔法陣: 'circle' };
 
 /** 敵を CSV にする(Excel で文字化けしないよう BOM 付き。改行は CRLF) */
 export function enemiesToCsv(enemies: { def: EnemyDef; isNew?: boolean }[]): string {
@@ -263,7 +265,8 @@ function parseCell(column: EnemyColumn, raw: string): { value: unknown } | { err
     case 'hit': {
       const list = NAMES[column.kind]!;
       if (column.kind === 'hit' && !raw) return { value: null };
-      const found = list.find(([, label]) => label === raw);
+      const old = column.kind === 'attack' ? OLD_ATTACK_LABELS[raw] : undefined;
+      const found = list.find(([id, label]) => label === raw || id === old);
       return found
         ? { value: found[0] }
         : { error: `「${raw}」という${column.label}はありません。`, allowed: list.map(([, label]) => label).join('、') + (column.kind === 'hit' ? '（空にすると体の形から決める）' : '') };

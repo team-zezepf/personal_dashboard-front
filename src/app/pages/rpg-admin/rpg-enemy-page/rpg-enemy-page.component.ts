@@ -5,6 +5,7 @@ import { RpgEnemy, RpgEnemyInput, RpgMap } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
 import { ITEMS, itemsVersion } from '../../../rpg/rpg-data';
 import {
+  ATTACK_ELEMENTS,
   ENEMY_ATTACKS,
   ENEMY_COLORS,
   ENEMY_DARKS,
@@ -22,6 +23,7 @@ import {
   drawAttackEffect,
   drawEnemyBody,
   drawEnemyThumb,
+  isLv2Attack,
   isPassive,
   isRooted,
   jumpHeight,
@@ -94,7 +96,8 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly isRooted = isRooted;
   readonly hitMaterials = HIT_MATERIALS;
   readonly disguiseOf = disguiseOf;
-  readonly attacks = ENEMY_ATTACKS;
+  readonly attackCards = ATTACK_CARDS;
+  readonly isLv2Attack = isLv2Attack;
   readonly colors = ENEMY_COLORS;
   readonly darks = ENEMY_DARKS;
   readonly limits = ENEMY_LIMITS;
@@ -130,7 +133,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   readonly selected = computed(() => this.rows().find((r) => r.def.id === this.selectedId()) ?? null);
   readonly isDirty = computed(() => this.dirtyIds().size > 0);
-  readonly attackSpec = computed(() => ENEMY_ATTACKS.find((a) => a.id === this.selected()?.def.attack) ?? ENEMY_ATTACKS[0]);
+  // 選んでいる攻撃のカード(属性の攻撃は属性のカード)と LV(front#435)
+  readonly attackCard = computed(() => cardOf(this.selected()?.def.attack ?? 'tackle'));
+  readonly attackLevel = computed(() => ENEMY_ATTACKS.find((a) => a.id === this.selected()?.def.attack)?.level ?? 1);
 
   // 敵ごとの、置いてあるエリアと数
   readonly usage = computed(() => {
@@ -238,6 +243,23 @@ export class RpgEnemyPageComponent implements OnDestroy {
 
   setAttack(attack: EnemyAttack): void {
     this.change({ attack });
+    this.restartAttack();
+  }
+
+  /** 攻撃のカードを選ぶ(front#435)。属性のカードは、今の LV のまま属性を変える(属性の攻撃でなければ LV1) */
+  selectAttackCard(card: AttackCard): void {
+    this.setAttack(card.levels ? card.levels[this.attackCard().levels ? this.attackLevel() - 1 : 0] : (card.id as EnemyAttack));
+  }
+
+  /** 属性の攻撃の LV を選ぶ(front#435) */
+  setAttackLevel(level: 1 | 2): void {
+    const levels = this.attackCard().levels;
+    if (levels) this.setAttack(levels[level - 1]);
+  }
+
+  /** LV2 の攻撃で魔法陣を出すか(front#435) */
+  setMagicCircle(magicCircle: boolean): void {
+    this.change({ magicCircle });
     this.restartAttack();
   }
 
@@ -628,7 +650,7 @@ export class RpgEnemyPageComponent implements OnDestroy {
     if (this.actT !== null) {
       drawAttackEffect(c, {
         attack: def.attack, k, time: this.time, ex: ex0 + ox, ey: cy, tx: px, ty: cy, dir: d, s,
-        radiusPx: (def.radius + 0.5) * 32 * s * 1.4, radius: def.radius, hitK: hitAt / duration
+        radiusPx: (def.radius + 0.5) * 32 * s * 1.4, radius: def.radius, hitK: hitAt / duration, circle: def.magicCircle ?? true
       });
     }
     if (hitting) {
@@ -671,6 +693,29 @@ function rowOf(e: RpgEnemy): EnemyRow {
 function toDef(e: RpgEnemy): EnemyDef {
   const { sortOrder: _s, updatedAt: _u, ...rest } = e;
   return rest as EnemyDef;
+}
+
+/** 攻撃の選ぶ欄のカード(front#435)。属性の攻撃は属性ごとに1枚にまとめ、LV はカードの下で選ぶ */
+interface AttackCard {
+  id: string;
+  label: string;
+  kind: 'look' | 'rule';
+  // 属性のカードの [LV1 の攻撃, LV2 の攻撃]
+  levels?: [EnemyAttack, EnemyAttack];
+}
+
+const specCard = (id: EnemyAttack): AttackCard => {
+  const a = ENEMY_ATTACKS.find((x) => x.id === id)!;
+  return { id: a.id, label: a.label, kind: a.kind };
+};
+const ATTACK_CARDS: AttackCard[] = [
+  ...(['tackle', 'claw', 'bite', 'jump'] as EnemyAttack[]).map(specCard),
+  ...ATTACK_ELEMENTS.map((e) => ({ id: e.id, label: e.label, kind: 'rule' as const, levels: e.levels })),
+  specCard('shockwave')
+];
+
+function cardOf(attack: EnemyAttack): AttackCard {
+  return ATTACK_CARDS.find((c) => (c.levels ? c.levels.includes(attack) : c.id === attack)) ?? ATTACK_CARDS[0];
 }
 
 function toInput(r: EnemyRow, sortOrder: number): RpgEnemyInput {

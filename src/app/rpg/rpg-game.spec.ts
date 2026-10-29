@@ -1009,8 +1009,8 @@ describe('RpgGame', () => {
     it('炎は、予告のあいだに別のマスへ動けば当たらない', () => {
       setup(test({ attack: 'fire', range: 5, interval: 5 }), [2, 7], [6, 7]);
       const hp = game.player.hp;
-      // 攻撃が始まったら、当たる前に1マス横へ動く(攻撃は 0.8 秒後に始まり、1 秒で終わる)
-      run(2.0, () => {
+      // 攻撃が始まったら、当たる前に1マス横へ動く(攻撃は 0.8 秒後に始まり、約1.5秒で終わる front#435)
+      run(2.6, () => {
         if (game.enemies[0].act && game.player.y === 7) game.player.y = 8;
       });
 
@@ -1018,15 +1018,29 @@ describe('RpgGame', () => {
       expect(game.player.hp).toBe(hp);
     });
 
-    it('魔法陣(範囲1)は、攻撃を始めたマスのまわり1マスにいても当たり、2マス離れれば当たらない(front#327)', () => {
-      for (const [moveTo, hits] of [[8, true], [9, false]] as const) {
-        setup(test({ attack: 'circle', range: 5, radius: 1, interval: 5 }), [2, 7], [6, 7]);
+    it('LV2 の攻撃(範囲1)は、攻撃を始めたマスのまわり1マスにいても当たり、2マス離れれば当たらない。魔法陣を出さなくても同じ(front#327 / front#435)', () => {
+      for (const [attack, magicCircle, moveTo, hits] of [
+        ['circle', true, 8, true], ['circle', true, 9, false],
+        ['blaze', true, 8, true], ['splash', false, 8, true], ['gale', true, 9, false], ['thunder', false, 9, false]
+      ] as const) {
+        setup(test({ attack, magicCircle, range: 5, radius: 1, interval: 5 }), [2, 7], [6, 7]);
         const hp = game.player.hp;
         // 攻撃が始まったら、当たる前に横へ動く
         run(2.0, () => {
           if (game.enemies[0].act && game.player.y === 7) game.player.y = moveTo;
         });
-        expect(game.player.hp < hp).toBe(hits);
+        expect(game.player.hp < hp, `${attack} → y=${moveTo}`).toBe(hits);
+      }
+    });
+
+    it('雷LV1 は LV1 と同じく、予告のあいだに別のマスへ動けば当たらない(front#435)', () => {
+      for (const [moveTo, hits] of [[7, true], [8, false]] as const) {
+        setup(test({ attack: 'spark', range: 5, interval: 5 }), [2, 7], [6, 7]);
+        const hp = game.player.hp;
+        run(2.6, () => {
+          if (game.enemies[0].act && game.player.y === 7) game.player.y = moveTo;
+        });
+        expect(game.player.hp < hp, `y=${moveTo}`).toBe(hits);
       }
     });
 

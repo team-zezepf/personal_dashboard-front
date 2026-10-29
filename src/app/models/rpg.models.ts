@@ -342,8 +342,10 @@ export interface RpgEnemy {
   respawn: number;
   // いつも名前とHPを出す
   boss: boolean;
-  // tackle / claw / bite / jump / fire / water / wind / thunder / dark / shockwave
+  // tackle / claw / bite / jump / fire / water / wind / thunder / dark / shockwave / circle / blaze / splash / gale / spark(front#435)
   attack: string;
+  // LV2 の攻撃で、相手の足元に魔法陣を出す(front#435 / api#206)。前のAPIにはないので、なければ出す
+  magicCircle?: boolean;
   // 体当たり・ジャンプの距離(マス)とためる時間(秒)
   dash: number;
   charge: number;
