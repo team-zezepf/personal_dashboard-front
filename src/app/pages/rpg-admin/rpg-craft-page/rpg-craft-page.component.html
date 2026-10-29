@@ -195,6 +195,20 @@
             <p class="hint">説明は「鍛冶屋で合成」と自動で付きます。</p>
           </div>
 
+          @if (sel.craft.type !== 'book') {
+            <div class="section">
+              <h2>見た目（装備したとき）</h2>
+              <app-rpg-equip-look-field
+                [type]="$any(sel.craft.type)"
+                [shape]="sel.craft.lookShape"
+                [color]="sel.craft.lookColor"
+                [accent]="sel.craft.lookAccent"
+                [disabled]="saving()"
+                (lookChange)="setLook($event)"
+              />
+            </div>
+          }
+
           <div class="section">
             <h2>レシピ</h2>
             @for (m of sel.craft.materials; track $index; let i = $index) {

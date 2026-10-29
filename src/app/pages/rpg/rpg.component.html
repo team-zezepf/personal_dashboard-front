@@ -447,7 +447,7 @@
             <button type="button" class="close-button" aria-label="閉じる" (click)="closeLook()">×</button>
           </div>
           <p class="modal-sub">武器は装備しているものを持ちます。</p>
-          <app-rpg-look-editor [look]="look" [swordColor]="lookSwordColor()" (lookChange)="lookDraft.set($event)" />
+          <app-rpg-look-editor [look]="look" [player]="true" [gear]="lookGear()" (lookChange)="lookDraft.set($event)" />
           <div class="status-actions">
             <button type="button" class="btn ghost" (click)="closeLook()">やめる</button>
             <button type="button" class="btn" (click)="confirmLook()">決める</button>

@@ -146,7 +146,8 @@ describe('アイテムタブ(front#343)', () => {
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
       expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ', spell: 'fire' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, level: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, level: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null,
+        lookShape: null, lookColor: null, lookAccent: null
       });
       // MPだけを回復する道具は、HPの回復量を送らない。魔法書は覚える魔法だけを送る(front#383)
       expect(toInput({ item: potion({ heal: 0, mp: 30 }), isNew: false })).toMatchObject({ heal: null, mp: 30, spell: null });
@@ -157,6 +158,13 @@ describe('アイテムタブ(front#343)', () => {
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
       // 素材は売れない
       expect(toInput({ item: stone({ inShop: true, price: 10 }), isNew: false })).toMatchObject({ inShop: false, price: null });
+    });
+
+    it('front#431 武器・防具は見た目(形・色)を送り、形がなければ色も送らない。武器・防具でなければ送らない', () => {
+      const look = { lookShape: 'moonstaff', lookColor: '#e2e8f0', lookAccent: '#fde047' };
+      expect(toInput({ item: sword(look), isNew: false })).toMatchObject(look);
+      expect(toInput({ item: sword({ lookShape: null, lookColor: '#ffffff', lookAccent: '#000000' }), isNew: false })).toMatchObject({ lookShape: null, lookColor: null, lookAccent: null });
+      expect(toInput({ item: potion({ ...look, lookShape: 'sword' }), isNew: false })).toMatchObject({ lookShape: null, lookColor: null, lookAccent: null });
     });
 
     it('売値(front#379)は、素材にも道具屋で売らないアイテムにも付けて送れる', () => {

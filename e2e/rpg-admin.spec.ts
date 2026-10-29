@@ -932,3 +932,77 @@ test(
     });
   }
 );
+
+test(
+  'E2E-41 RPGマップ作成の「アイテム」タブで防具に見た目(ローブ)を付けて保存すると、その防具を装備したプレイヤーの「見た目を変える」で防具の見た目が優先され、服はローブ・よろいを選べない(front#431)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している(API は api#204 の見た目の項目がある)',
+      'E2E 専用の管理者のアカウントでログインしている',
+      'E2E 用の RPG データで、革の鎧に見た目は付いていない',
+      '管理者のアカウントの RPG のセーブデータを、最初の状態に戻し、革の鎧を1つ足してある'
+    ],
+    expected: [
+      '武器を選ぶと「見た目（装備したとき）」に 見た目なし・片手剣・大剣・玉の杖・三日月の杖 が出る',
+      '防具(革の鎧)を選ぶと 見た目なし と服の7つが出て、ローブを押すと「服の色」「飾りの色」の欄が出る',
+      '飾りの色を選んで保存すると「アイテムを保存しました」と出る',
+      'ゲームで革の鎧を装備して「見た目を変える」を開くと、「防具「革の鎧」の見た目で出ています」と出て、「🛡️ 防具を着た姿」を切り替えられ、服は 1 / 5(ローブ・よろいなし)',
+      '革の鎧を「見た目なし」に戻して保存すると、案内は出なくなる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave([{ itemId: 'leather', count: 1 }]);
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-item-page');
+    const field = tab.locator('app-rpg-equip-look-field');
+    const chips = () => field.locator('.chip').allInnerTexts().then((t) => t.map((s) => s.trim()));
+    const openArmor = async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+      await tab.locator('.item-row', { hasText: '革の鎧' }).click();
+    };
+
+    await step('RPGマップ作成の「🎒 アイテム」タブで「銅の剣」を選ぶ', '「見た目（装備したとき）」に 見た目なし・片手剣・大剣・玉の杖・三日月の杖 が出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+      await tab.locator('.item-row', { hasText: '銅の剣' }).click();
+      await expect(tab.getByRole('heading', { name: '見た目（装備したとき）' })).toBeVisible();
+      expect(await chips()).toEqual(['見た目なし', '片手剣', '大剣', '玉の杖', '三日月の杖']);
+    });
+
+    await step('「革の鎧」を選び、見た目の形で「ローブ」を押して、飾りの色で金色(#fde047)を押し、保存する', '服の7つが出て、ローブを押すと服の色・飾りの色が出て、保存すると「アイテムを保存しました」と出る', async () => {
+      await tab.locator('.item-row', { hasText: '革の鎧' }).click();
+      expect(await chips()).toEqual(['見た目なし', 'シャツ', 'ローブ', 'よろい', 'ワンピース', 'ベスト', 'パーカー', 'セーラー服']);
+      await field.getByRole('button', { name: 'ローブ', exact: true }).click();
+      await expect(field.getByRole('group', { name: '服の色' })).toBeVisible();
+      await field.getByRole('button', { name: '飾りの色 #fde047' }).click();
+      await expect(field.getByRole('button', { name: '飾りの色 #fde047' })).toHaveAttribute('aria-pressed', 'true');
+      await tab.getByRole('button', { name: 'アイテムを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('アイテムを保存しました');
+    });
+
+    await step('RPG(/rpg)を開き、持ち物の革の鎧を装備して「見た目を変える」を押す', '防具の見た目を優先している案内が出て、「🛡️ 防具を着た姿」を切り替えられ、服は 1 / 5', async () => {
+      await page.goto('/rpg');
+      await page.getByRole('button', { name: '革の鎧を装備する' }).click();
+      await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
+      const editor = page.locator('app-rpg-look-editor');
+      await expect(editor.getByRole('note')).toHaveText(/防具「革の鎧」の見た目で出ています/);
+      const toggle = editor.getByRole('button', { name: '🛡️ 防具を着た姿' });
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await expect(editor.locator('.row[aria-label="服"] .count')).toHaveText('1 / 5');
+    });
+
+    await step('RPGマップ作成で「革の鎧」を「見た目なし」に戻して保存し、ゲームの「見た目を変える」を開き直す', '保存でき、防具の見た目の案内は出ない', async () => {
+      await openArmor();
+      await field.getByRole('button', { name: '見た目なし', exact: true }).click();
+      await tab.getByRole('button', { name: 'アイテムを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('アイテムを保存しました');
+      await page.goto('/rpg');
+      await page.getByRole('button', { name: '🧑 見た目を変える' }).click();
+      await expect(page.locator('app-rpg-look-editor').getByRole('note')).toHaveCount(0);
+    });
+  }
+);

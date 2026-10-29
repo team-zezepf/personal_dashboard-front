@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { HeaderComponent } from '../../components/header/header.component';
 import { RpgItemIconComponent } from '../../components/rpg-item-icon/rpg-item-icon.component';
-import { RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
+import { LookGear, RpgLookEditorComponent } from '../../components/rpg-look-editor/rpg-look-editor.component';
 import { RpgService } from '../../services/rpg.service';
 import { AuthService } from '../../services/auth.service';
 import { RpgBgm, RpgCompanion, RpgCraft, RpgDungeon, RpgEnemy, RpgHallMember, RpgLook, RpgMap, RpgObjectDef, RpgPointShopItem, RpgQuest } from '../../models/rpg.models';
@@ -38,7 +38,7 @@ import {
   healRateOf,
   itemStatLabel,
   maxHpOf,
-  swordColorOf,
+  weaponPoseOf,
   walkSpeedOf
 } from '../../rpg/rpg-data';
 import { Fighter, MAX_PARTY, Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
@@ -337,7 +337,8 @@ export class RpgPageComponent implements OnDestroy {
   // ===== 見た目(front#224)。サイド欄の「見た目を変える」で開くモーダルで選び、「決める」で保存する =====
   // 選んでいる途中の見た目(null なら閉じている)
   readonly lookDraft = signal<RpgLook | null>(null);
-  readonly lookSwordColor = signal('#c08a52');
+  // 装備している武器・防具(プレビューで持たせ、防具の服で描く。front#431)
+  readonly lookGear = signal<LookGear | null>(null);
 
   // ===== ステータス(front#223)。左下のパネルの「ステータス」で開くモーダルで、見る・振り分ける =====
   readonly statusOpen = signal(false);
@@ -1027,7 +1028,8 @@ export class RpgPageComponent implements OnDestroy {
   openLook(): void {
     if (!this.game) return;
     this.lookDraft.set({ ...this.game.player.look });
-    this.lookSwordColor.set(swordColorOf(this.game.player.weapon));
+    const p = this.game.player;
+    this.lookGear.set({ weapon: weaponPoseOf(p.weapon), armor: ITEMS[p.armor]?.look ?? null, armorName: ITEMS[p.armor]?.name ?? '' });
     this.syncLock();
   }
 

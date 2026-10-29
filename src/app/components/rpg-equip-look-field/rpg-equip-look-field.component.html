@@ -1,0 +1,65 @@
+<div class="equip-look">
+  <div class="controls">
+    <div class="field" role="group" aria-label="見た目の形">
+      <span>見た目の形</span>
+      <div class="chips">
+        @for (s of shapes(); track s[0]) {
+          <button
+            type="button"
+            class="chip"
+            [class.active]="(shape() ?? null) === s[0]"
+            [attr.aria-pressed]="(shape() ?? null) === s[0]"
+            [disabled]="disabled()"
+            (click)="setShape(s[0])"
+          >
+            {{ s[1] }}
+          </button>
+        }
+      </div>
+      <p class="hint">
+        @if (type() === 'weapon') {
+          見た目なしなら、今までどおりの片手剣（攻撃力などで色が変わる）。持ち方・振り方はどの形も同じです。
+        } @else {
+          見た目なしなら、その人が「見た目を変える」で選んだ服のまま。ローブ・よろいは防具でだけ着られます。
+        }
+      </p>
+    </div>
+
+    @if (shape()) {
+      @for (k of ['lookColor', 'lookAccent']; track k) {
+        <div class="field" role="group" [attr.aria-label]="k === 'lookColor' ? colorLabel() : accentLabel()">
+          <span>{{ k === 'lookColor' ? colorLabel() : accentLabel() }}</span>
+          <div class="swatches">
+            @for (c of colors; track c) {
+              <button
+                type="button"
+                class="sw"
+                [class.active]="isColor($any(k), c)"
+                [attr.aria-pressed]="isColor($any(k), c)"
+                [attr.aria-label]="(k === 'lookColor' ? colorLabel() : accentLabel()) + ' ' + c"
+                [style.background]="c"
+                [disabled]="disabled()"
+                (click)="setColor($any(k), c)"
+              ></button>
+            }
+            <input
+              type="color"
+              [attr.aria-label]="(k === 'lookColor' ? colorLabel() : accentLabel()) + '（ほかの色）'"
+              [value]="(k === 'lookColor' ? color() : accent()) ?? '#000000'"
+              [disabled]="disabled()"
+              (input)="setColor($any(k), $any($event.target).value)"
+            />
+          </div>
+        </div>
+      }
+      @if (type() === 'armor') {
+        <p class="hint">飾りの色は、ローブの縁・よろいの肩当て・ベストの下のシャツなど、服の形ごとに付く場所が変わります。</p>
+      }
+    }
+  </div>
+
+  <div class="preview">
+    <canvas #preview width="360" height="220" aria-label="装備したときの姿のプレビュー"></canvas>
+    <button type="button" class="tool" [class.on]="walking()" [attr.aria-pressed]="walking()" (click)="toggleWalk()">歩かせる</button>
+  </div>
+</div>

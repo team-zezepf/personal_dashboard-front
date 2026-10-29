@@ -343,3 +343,14 @@
   font-weight: 400;
   color: var(--indigo);
 }
+
+/* 防具の見た目を優先しているときの案内(front#431) */
+.armor-note {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--indigo-soft, #eef0fd);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+}

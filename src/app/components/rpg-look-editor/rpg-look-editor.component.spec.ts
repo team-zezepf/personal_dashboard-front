@@ -93,4 +93,33 @@ describe('RpgLookEditorComponent(front#362)', () => {
     input.dispatchEvent(new Event('input'));
     expect(changes.at(-1)?.hairColor).toBe('#abcdef');
   });
+
+  describe('プレイヤーの見た目(front#431)', () => {
+    const renderPlayer = (look: RpgLook, armor: boolean) => {
+      const fixture = TestBed.createComponent(RpgLookEditorComponent);
+      fixture.componentRef.setInput('look', look);
+      fixture.componentRef.setInput('player', true);
+      fixture.componentRef.setInput('gear', {
+        weapon: { sword: true, swordColor: '#cbd5e1' },
+        armor: armor ? { shape: 'armor', color: '#3b82f6', accent: '#facc15' } : null,
+        armorName: armor ? '魔法の鎧' : '布の服'
+      });
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    it('服はローブ・よろいを選べない(5つ)。村人は7つから選べる', () => {
+      expect(row(renderPlayer(DEFAULT_LOOK, false), '服').querySelector('.count')?.textContent?.trim()).toBe('1 / 5');
+      expect(row(render(DEFAULT_LOOK).el, '服').querySelector('.count')?.textContent?.trim()).toBe('1 / 7');
+    });
+
+    it('見た目のある防具を装備していれば、防具の見た目を優先していることを出し、防具を着た姿を切り替えられる', () => {
+      const el = renderPlayer(DEFAULT_LOOK, true);
+      expect(el.querySelector('.armor-note')?.textContent).toContain('防具「魔法の鎧」の見た目で出ています');
+      expect(el.querySelector('button[aria-pressed]')).not.toBeNull();
+      const plain = renderPlayer(DEFAULT_LOOK, false);
+      expect(plain.querySelector('.armor-note')).toBeNull();
+      expect(plain.textContent).not.toContain('防具を着た姿');
+    });
+  });
 });

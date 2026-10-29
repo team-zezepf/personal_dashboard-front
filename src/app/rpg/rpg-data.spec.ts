@@ -1,5 +1,6 @@
 import { RpgMap } from '../models/rpg.models';
-import { areaDropMoves, buildAreaMap, heightFromChar, heightToChar, signLinesOf } from './rpg-data';
+import { DEFAULT_CRAFTS, DEFAULT_ITEMS, ITEMS, areaDropMoves, buildAreaMap, heightFromChar, heightToChar, setCrafts, setItems, signLinesOf, toItemDef, weaponPoseOf, wornLook } from './rpg-data';
+import { DEFAULT_LOOK } from './rpg-look';
 import { blankMap } from './rpg-editor';
 
 // エリアの配置(front#301)。d1 に「村(0, 0)・丘(1, 0)・湖(0, 1)」、d2 に「塔(5, 5)」
@@ -68,5 +69,35 @@ describe('地面の高さ −5〜5段(front#412)', () => {
     // 差が1段までなら登り降りできる(マイナスでも同じ)
     expect(pit.canStep(1, 0, 2, 0)).toBe(true);
     expect(pit.canStep(0, 0, 0, 1)).toBe(false);
+  });
+});
+
+describe('装備の見た目(front#431)', () => {
+  afterEach(() => {
+    setItems(DEFAULT_ITEMS);
+    setCrafts(DEFAULT_CRAFTS);
+  });
+
+  it('武器・防具は、形・色がそろっていれば見た目を持つ。ほかの種類・形のないものは持たない', () => {
+    const base = { id: 'x', name: 'x', icon: 'x', inShop: false, sortOrder: 1 };
+    expect(toItemDef({ ...base, type: 'weapon', atk: 5, lookShape: 'staff', lookColor: '#8b5a2b', lookAccent: '#60a5fa' }).look).toEqual({ shape: 'staff', color: '#8b5a2b', accent: '#60a5fa' });
+    expect(toItemDef({ ...base, type: 'weapon', atk: 5, lookShape: null, lookColor: '#8b5a2b', lookAccent: '#60a5fa' }).look).toBeUndefined();
+    expect(toItemDef({ ...base, type: 'use', heal: 5, lookShape: 'sword', lookColor: '#8b5a2b', lookAccent: '#60a5fa' }).look).toBeUndefined();
+  });
+
+  it('最初のアイテム・合成の装備には初期の見た目がある(布の服はなし)', () => {
+    expect(ITEMS['steel_sword'].look?.shape).toBe('greatsword');
+    expect(ITEMS['star_robe'].look).toEqual({ shape: 'robe', color: '#1e3a8a', accent: '#fde047' });
+    expect(ITEMS['dragon_sword'].look?.shape).toBe('greatsword');
+    expect(ITEMS['cloth'].look).toBeUndefined();
+  });
+
+  it('装備している武器・防具の見た目で描く値を作る。見た目のない武器は今までの色の片手剣', () => {
+    expect(weaponPoseOf('steel_sword')).toEqual({ sword: true, swordColor: '#e2e8f0', weaponShape: 'greatsword', weaponAccent: '#1f2937' });
+    expect(wornLook(DEFAULT_LOOK, 'magic_armor')).toMatchObject({ clothes: 'armor', clothesColor: '#3b82f6', accentColor: '#facc15' });
+    expect(wornLook(DEFAULT_LOOK, 'cloth')).toBe(DEFAULT_LOOK);
+
+    setItems(DEFAULT_ITEMS.map((i) => (i.id === 'iron_sword' ? { ...i, lookShape: null, lookColor: null, lookAccent: null } : i)));
+    expect(weaponPoseOf('iron_sword')).toEqual({ sword: true, swordColor: '#cbd5e1' });
   });
 });

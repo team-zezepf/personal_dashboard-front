@@ -232,6 +232,20 @@
           </label>
         </div>
 
+        @if (sel.item.type === 'weapon' || sel.item.type === 'armor') {
+          <div class="section">
+            <h2>見た目（装備したとき）</h2>
+            <app-rpg-equip-look-field
+              [type]="$any(sel.item.type)"
+              [shape]="sel.item.lookShape"
+              [color]="sel.item.lookColor"
+              [accent]="sel.item.lookAccent"
+              [disabled]="saving()"
+              (lookChange)="setLook($event)"
+            />
+          </div>
+        }
+
         @if (sel.item.type !== 'material') {
           <div class="section">
             <h2>道具屋</h2>

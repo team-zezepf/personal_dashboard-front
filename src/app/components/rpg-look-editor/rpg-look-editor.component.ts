@@ -1,10 +1,12 @@
-import { Component, ElementRef, OnDestroy, afterNextRender, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, afterNextRender, computed, input, output, signal, viewChild } from '@angular/core';
 import { RpgLook } from '../../models/rpg.models';
 import {
   ACCENT_COLORS,
   BROWS,
   CLOTHES,
   CLOTHES_COLORS,
+  EquipLook,
+  PLAYER_CLOTHES,
   EYES,
   EYE_COLORS,
   HAIRS,
@@ -14,10 +16,22 @@ import {
   MOUTHS,
   SKINS,
   drawLook,
+  wearArmor,
+  weaponPose,
   hairBackOf,
   hairTopOf,
   randomLook
 } from '../../rpg/rpg-look';
+
+/**
+ * プレイヤーが装備しているもの(front#431)。プレビューで武器を持たせ、防具に見た目があれば防具の服で描く
+ */
+export interface LookGear {
+  weapon: ReturnType<typeof weaponPose>;
+  armor: EquipLook | null;
+  // 防具の名前(防具の見た目を優先しているときの案内に出す)
+  armorName: string;
+}
 
 type PartKey = 'hair' | 'hairTop' | 'hairBack' | 'brows' | 'eyes' | 'mouth' | 'clothes';
 type ColorKey = 'hairColor' | 'browColor' | 'skin' | 'eyeColor' | 'clothesColor' | 'accentColor';
@@ -62,11 +76,18 @@ export class RpgLookEditorComponent implements OnDestroy {
   readonly look = input.required<RpgLook>();
   // narrow: マップ作成画面の右側の欄(縦に並べる) / wide: プレビューと選ぶ欄を横に並べる
   readonly layout = input<'narrow' | 'wide'>('wide');
-  // プレビューで剣を持たせる(プレイヤー)
-  readonly swordColor = input<string | null>(null);
+  // プレイヤーの見た目(front#431)。服はローブ・よろいを選べない(防具でだけ着られる)
+  readonly player = input(false);
+  // プレイヤーが装備しているもの(front#431)。プレビューで武器を持たせ、防具の服で描く
+  readonly gear = input<LookGear | null>(null);
   readonly lookChange = output<RpgLook>();
 
-  readonly rows: Row[] = [
+  // 防具を着た姿でプレビューするか(防具に見た目があるときだけ。front#431)
+  readonly showArmor = signal(true);
+  // 見た目のある防具を装備している(服は防具のものを優先する)
+  readonly armorOverride = computed(() => !!this.gear()?.armor);
+
+  readonly rows = computed<Row[]>(() => [
     { key: 'hair', label: '髪型', list: HAIRS, colors: [{ key: 'hairColor', label: '髪の色', list: HAIR_COLORS, cols: 7, custom: true }] },
     { key: 'hairTop', label: 'トップ', list: HAIR_TOPS, colors: [], sub: true, now: hairTopOf },
     { key: 'hairBack', label: '後ろ', list: HAIR_BACKS, colors: [], sub: true, now: hairBackOf },
@@ -74,13 +95,13 @@ export class RpgLookEditorComponent implements OnDestroy {
     { key: 'eyes', label: '目', list: EYES, colors: [{ key: 'eyeColor', label: '目の色', list: EYE_COLORS, cols: 6, custom: true }] },
     { key: 'mouth', label: '口', list: MOUTHS, colors: [] },
     {
-      key: 'clothes', label: '服', list: CLOTHES, colors: [
+      key: 'clothes', label: '服', list: this.player() ? PLAYER_CLOTHES : CLOTHES, colors: [
         { key: 'clothesColor', label: '服の色', list: CLOTHES_COLORS, cols: 7, custom: true },
         { key: 'accentColor', label: '差し色', list: ACCENT_COLORS, cols: 7, custom: true }
       ]
     },
     { key: null, label: '肌', list: [], colors: [{ key: 'skin', label: '肌の色', list: SKINS, cols: 5 }] }
-  ];
+  ]);
 
   readonly dir = signal(1);
   readonly walking = signal(true);
@@ -110,10 +131,23 @@ export class RpgLookEditorComponent implements OnDestroy {
       c.clearRect(0, 0, cv.width, cv.height);
       c.translate(cv.width / 2, cv.height * 0.8);
       c.scale(cv.width / 100, cv.width / 100);
-      const sword = this.swordColor();
-      drawLook(c, this.look(), { dir: this.dir(), time, moving: this.walking(), sword: !!sword, swordColor: sword ?? undefined });
+      drawLook(c, this.previewLook(), { dir: this.dir(), time, moving: this.walking(), ...(this.gear()?.weapon ?? {}) });
     }
     this.frame = requestAnimationFrame(() => this.loop());
+  }
+
+  /**
+   * プレビューで描く見た目(front#431)。プレイヤーは防具を着た姿(防具の見た目を見ないときは、選んだ服。
+   * 防具でだけ着られる服はシャツにする)。村人は選んだまま
+   */
+  previewLook(): RpgLook {
+    if (!this.player()) return this.look();
+    const gear = this.gear();
+    return wearArmor(this.look(), gear && this.showArmor() ? gear.armor : null);
+  }
+
+  toggleShowArmor(): void {
+    this.showArmor.update((v) => !v);
   }
 
   // 部品の今の値(眉は、選ぶ前のデータなら ふつう。髪のトップ・後ろは、選んでいなければ null = 髪型に合わせる)
@@ -124,7 +158,7 @@ export class RpgLookEditorComponent implements OnDestroy {
 
   // 出す行(髪のトップ・後ろは「くわしく」を開いたときだけ)
   visibleRows(): Row[] {
-    return this.hairDetail() ? this.rows : this.rows.filter((r) => !r.sub);
+    return this.hairDetail() ? this.rows() : this.rows().filter((r) => !r.sub);
   }
 
   // 「髪型に合わせる」のとき、今の髪型で実際に描いているものの名前(例: 横分け)
@@ -194,6 +228,6 @@ export class RpgLookEditorComponent implements OnDestroy {
   }
 
   random(): void {
-    this.lookChange.emit(randomLook());
+    this.lookChange.emit(randomLook(Math.random, this.player() ? PLAYER_CLOTHES : CLOTHES));
   }
 }

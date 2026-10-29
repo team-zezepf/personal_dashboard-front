@@ -59,9 +59,9 @@ const THEME_FIELDS = `
   flower flowers trunk leaves treeScale rock effect { kind color alpha } sortOrder updatedAt
 `;
 
-const CRAFT_FIELDS = `id name icon type power spell level gold materials { itemId count } sortOrder updatedAt image`;
+const CRAFT_FIELDS = `id name icon type power spell level gold materials { itemId count } sortOrder updatedAt image lookShape lookColor lookAccent`;
 
-const ITEM_FIELDS = `id name icon type heal mp spell level atk def desc inShop price sellPrice sortOrder updatedAt image`;
+const ITEM_FIELDS = `id name icon type heal mp spell level atk def desc inShop price sellPrice sortOrder updatedAt image lookShape lookColor lookAccent`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 

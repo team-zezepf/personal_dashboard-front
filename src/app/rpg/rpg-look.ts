@@ -83,20 +83,53 @@ export function accentFor(clothesColor: string): string {
   return clothesColor.toLowerCase() === '#f8fafc' ? '#8b5a2b' : '#f8fafc';
 }
 
+// ===== 装備の見た目(front#431) =====
+
+/** 武器・防具の見た目。shape は武器なら WEAPON_SHAPES、防具なら服の形(CLOTHES)。color・accent は #rrggbb */
+export interface EquipLook {
+  shape: string;
+  color: string;
+  accent: string;
+}
+
+/** 武器の形。剣・杖とも2種類 */
+export const WEAPON_SHAPES: [WeaponShape, string][] = [['sword', '片手剣'], ['greatsword', '大剣'], ['staff', '玉の杖'], ['moonstaff', '三日月の杖']];
+export type WeaponShape = 'sword' | 'greatsword' | 'staff' | 'moonstaff';
+
+/** 防具でだけ着られる服。プレイヤーの「見た目を変える」では選べない(村人は選べる) */
+export const GEAR_ONLY_CLOTHES = ['robe', 'armor'];
+/** プレイヤーが「見た目を変える」で選べる服 */
+export const PLAYER_CLOTHES: [string, string][] = CLOTHES.filter(([id]) => !GEAR_ONLY_CLOTHES.includes(id));
+
+/**
+ * 防具を着たときの見た目(プレイヤー・仲間)。防具に見た目があれば、服の形・色は防具のものにする。
+ * 見た目のない防具なら選んだ服のまま。ただし防具でだけ着られる服(前に選んでいたローブ・よろい)はシャツにする
+ */
+export function wearArmor(L: RpgLook, armor: EquipLook | null | undefined): RpgLook {
+  if (armor) return { ...L, clothes: armor.shape, clothesColor: armor.color, accentColor: armor.accent };
+  return GEAR_ONLY_CLOTHES.includes(L.clothes) ? { ...L, clothes: 'shirt' } : L;
+}
+
+/** 武器を持たせるときの LookPose の値。見た目のない武器は、今までどおり fallback の色の片手剣 */
+export function weaponPose(weapon: EquipLook | null | undefined, fallback: string): Pick<LookPose, 'sword' | 'swordColor' | 'weaponShape' | 'weaponAccent'> {
+  if (!weapon || !WEAPON_SHAPES.some(([id]) => id === weapon.shape)) return { sword: true, swordColor: fallback };
+  return { sword: true, swordColor: weapon.color, weaponShape: weapon.shape as WeaponShape, weaponAccent: weapon.accent };
+}
+
 /** 髪の色・服の色だけから見た目を作る(新しい村人など)。それ以外は最初の見た目 */
 export function lookFromColors(hair: string, body: string): RpgLook {
   return { ...DEFAULT_LOOK, hairColor: hair, clothesColor: body, accentColor: accentFor(body) };
 }
 
-/** おまかせ(見た目を選ぶ欄の「おまかせ」) */
-export function randomLook(rand: () => number = Math.random): RpgLook {
+/** おまかせ(見た目を選ぶ欄の「おまかせ」)。clothes は選ぶ服の一覧(プレイヤーは PLAYER_CLOTHES。front#431) */
+export function randomLook(rand: () => number = Math.random, clothes: [string, string][] = CLOTHES): RpgLook {
   const pick = <T>(list: T[]) => list[Math.floor(rand() * list.length)];
   const clothesColor = pick(CLOTHES_COLORS);
   let accentColor = pick(ACCENT_COLORS);
   if (accentColor === clothesColor) accentColor = accentFor(clothesColor);
   return {
     hair: pick(HAIRS)[0], hairColor: pick(HAIR_COLORS), skin: pick(SKINS), eyes: pick(EYES)[0], eyeColor: pick(EYE_COLORS),
-    mouth: pick(MOUTHS)[0], clothes: pick(CLOTHES)[0], clothesColor, accentColor,
+    mouth: pick(MOUTHS)[0], clothes: pick(clothes)[0], clothesColor, accentColor,
     // 眉の色は髪の色に合わせる
     brows: pick(BROWS)[0], browColor: null,
     // 髪のトップ・後ろは髪型に合わせる(front#370)
@@ -136,6 +169,9 @@ export interface LookPose {
   // 剣を持つ(プレイヤー)
   sword?: boolean;
   swordColor?: string;
+  // 武器の形(front#431)。なければ片手剣。swordColor は刃・杖の色、weaponAccent は つば・杖の先(玉・三日月)の色
+  weaponShape?: WeaponShape;
+  weaponAccent?: string;
   // 攻撃したときの斬撃(0〜1)
   slash?: number;
 }
@@ -196,7 +232,10 @@ export function drawLook(c: CanvasRenderingContext2D, L: RpgLook, pose: LookPose
     side, back: side === d, x: side * (side === d ? 9.2 : 10.6), y: y0 - 8.6 + side * swing * 0.9
   }));
   const holder = hands.find((h) => h.back) ?? hands[1];
-  if (pose.sword) drawSword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1');
+  const shape = pose.weaponShape ?? 'sword';
+  if (pose.sword && (shape === 'staff' || shape === 'moonstaff')) drawStaff(c, holder.x, holder.y, d, pose.swordColor ?? '#8b5a2b', pose.weaponAccent ?? '#60a5fa', t, shape === 'moonstaff');
+  else if (pose.sword && shape === 'greatsword') drawGreatsword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1', pose.weaponAccent ?? '#a16207');
+  else if (pose.sword) drawSword(c, holder.x, holder.y, d, pose.swordColor ?? '#cbd5e1', pose.weaponAccent);
 
   // 後ろ髪(髪のふちは服より細く)
   inHairSpace(c, d, () => {
@@ -297,7 +336,7 @@ function headPath(y0: number, d: number): Path2D {
 }
 
 // 剣: 握っている手の位置から、斜め上へ伸ばす(手は剣のあとに描くので、柄を握って見える)
-function drawSword(c: CanvasRenderingContext2D, hx: number, hy: number, d: number, color: string): void {
+function drawSword(c: CanvasRenderingContext2D, hx: number, hy: number, d: number, color: string, guard = '#a16207'): void {
   // 刃の向き(ux, uy)と、つばの向き(px, py: 刃に直角)
   const ux = d * 0.47, uy = -0.88;
   const px = 0.88, py = d * 0.47;
@@ -309,7 +348,7 @@ function drawSword(c: CanvasRenderingContext2D, hx: number, hy: number, d: numbe
   c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + ux * 17, by + uy * 17); c.stroke();
   c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1;
   c.beginPath(); c.moveTo(bx - px * 0.6, by - py * 0.6); c.lineTo(bx + ux * 15 - px * 0.6, by + uy * 15 - py * 0.6); c.stroke();
-  c.strokeStyle = '#a16207'; c.lineWidth = 2.4;
+  c.strokeStyle = guard; c.lineWidth = 2.4;
   c.beginPath(); c.moveTo(bx - px * 3.6, by - py * 3.6); c.lineTo(bx + px * 3.6, by + py * 3.6); c.stroke();
 }
 
@@ -709,4 +748,87 @@ function drawClothesOver(c: CanvasRenderingContext2D, L: RpgLook, y0: number): v
   pads.moveTo(14, y0 - 17);
   pads.ellipse(9, y0 - 17, 5, 4, 0, 0, Math.PI * 2);
   fillShaded(c, pads, L.accentColor, [-14, y0 - 21, 14, y0 - 13]);
+}
+
+// 魔法の杖(front#431): 握っている手から、少し前に傾けて上へ伸ばす。先に光る玉と、玉を抱える飾り
+function drawStaff(c: CanvasRenderingContext2D, hx: number, hy: number, d: number, color: string, orb: string, t: number, moon = false): void {
+  const ux = d * 0.2, uy = -0.98;
+  const bx = hx - ux * 7, by = hy - uy * 7;
+  const tx = hx + ux * 27, ty = hy + uy * 27;
+  c.lineCap = 'round';
+  c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 3.6;
+  c.beginPath(); c.moveTo(bx, by); c.lineTo(tx, ty); c.stroke();
+  c.strokeStyle = color; c.lineWidth = 2.4;
+  c.beginPath(); c.moveTo(bx, by); c.lineTo(tx, ty); c.stroke();
+  c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 0.8;
+  c.beginPath(); c.moveTo(bx - 0.6, by); c.lineTo(tx - 0.6, ty); c.stroke();
+  const ox = tx + ux * 4, oy = ty + uy * 4;
+  if (moon) {
+    // 三日月の杖: 先に三日月(先の色)。三日月の内側に小さな光る玉
+    const glow = 0.3 + 0.15 * Math.sin(t * 3);
+    const g = c.createRadialGradient(ox, oy, 0, ox, oy, 9);
+    g.addColorStop(0, hexA(orb, glow)); g.addColorStop(1, hexA(orb, 0));
+    c.fillStyle = g; c.beginPath(); c.arc(ox, oy, 9, 0, Math.PI * 2); c.fill();
+    const m = new Path2D();
+    m.arc(ox, oy - 0.5, 6, Math.PI * 0.95, Math.PI * 2.05, true);
+    m.arc(ox, oy - 2.6, 4.6, Math.PI * 2.0, Math.PI * 1.0, false);
+    m.closePath();
+    c.fillStyle = orb; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.8;
+    c.fill(m); c.stroke(m);
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(ox, oy - 2.2, 1.4, 0, Math.PI * 2); c.fill();
+    return;
+  }
+  // 玉を抱える飾り(杖の色)
+  c.strokeStyle = color; c.lineWidth = 1.6;
+  c.beginPath(); c.arc(ox, oy, 4.6, Math.PI * 0.15, Math.PI * 0.85); c.stroke();
+  // 光る玉(ゆっくり明るさが変わる)
+  const glow = 0.35 + 0.15 * Math.sin(t * 3);
+  const g = c.createRadialGradient(ox, oy, 0, ox, oy, 8);
+  g.addColorStop(0, hexA(orb, glow)); g.addColorStop(1, hexA(orb, 0));
+  c.fillStyle = g; c.beginPath(); c.arc(ox, oy, 8, 0, Math.PI * 2); c.fill();
+  c.fillStyle = orb; c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 0.8;
+  c.beginPath(); c.arc(ox, oy, 3.2, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fillStyle = 'rgba(255,255,255,0.85)';
+  c.beginPath(); c.arc(ox - 1, oy - 1.1, 1, 0, Math.PI * 2); c.fill();
+}
+
+function hexA(hex: string, a: number): string {
+  const [r, g, b] = rgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// 大剣(front#431): 片手剣より太く長い刃。刃の形を塗り、ふち・まん中の溝・広いつば・柄頭を描く
+function drawGreatsword(c: CanvasRenderingContext2D, hx: number, hy: number, d: number, color: string, guard: string): void {
+  const ux = d * 0.47, uy = -0.88;
+  const px = 0.88, py = d * 0.47;
+  c.lineCap = 'round';
+  // 柄と柄頭
+  c.strokeStyle = '#4a3420'; c.lineWidth = 2.6;
+  c.beginPath(); c.moveTo(hx - ux * 3.5, hy - uy * 3.5); c.lineTo(hx + ux * 1.5, hy + uy * 1.5); c.stroke();
+  c.fillStyle = guard;
+  c.beginPath(); c.arc(hx - ux * 4.4, hy - uy * 4.4, 1.6, 0, Math.PI * 2); c.fill();
+  // 刃(根元が太く、先がとがる)
+  const bx = hx + ux * 2.4, by = hy + uy * 2.4;
+  const L = 22, w = 2.7;
+  const blade = new Path2D();
+  blade.moveTo(bx - px * w, by - py * w);
+  blade.lineTo(bx + ux * (L - 4) - px * w * 0.8, by + uy * (L - 4) - py * w * 0.8);
+  blade.lineTo(bx + ux * L, by + uy * L);
+  blade.lineTo(bx + ux * (L - 4) + px * w * 0.8, by + uy * (L - 4) + py * w * 0.8);
+  blade.lineTo(bx + px * w, by + py * w);
+  blade.closePath();
+  c.fillStyle = color; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.8;
+  c.fill(blade); c.stroke(blade);
+  // 光(片側)と、まん中の溝
+  c.strokeStyle = 'rgba(255,255,255,0.65)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(bx - px * 1.6, by - py * 1.6); c.lineTo(bx + ux * (L - 5) - px * 1.4, by + uy * (L - 5) - py * 1.4); c.stroke();
+  c.strokeStyle = 'rgba(0,0,0,0.18)'; c.lineWidth = 0.8;
+  c.beginPath(); c.moveTo(bx + ux * 1.5, by + uy * 1.5); c.lineTo(bx + ux * (L - 6), by + uy * (L - 6)); c.stroke();
+  // つば(広く、まん中に石)
+  c.strokeStyle = guard; c.lineWidth = 2.8;
+  c.beginPath(); c.moveTo(bx - px * 5.2, by - py * 5.2); c.lineTo(bx + px * 5.2, by + py * 5.2); c.stroke();
+  c.fillStyle = '#fff'; c.globalAlpha = 0.8;
+  c.beginPath(); c.arc(bx, by, 1, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1;
 }

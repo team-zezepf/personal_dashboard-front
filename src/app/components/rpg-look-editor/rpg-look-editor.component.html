@@ -5,7 +5,15 @@
       <button type="button" class="tool" (click)="turn()">↔ 向きを変える</button>
       <button type="button" class="tool" [class.on]="walking()" [attr.aria-pressed]="walking()" (click)="toggleWalk()">歩く</button>
       <button type="button" class="tool" (click)="random()">🎲 おまかせ</button>
+      @if (armorOverride()) {
+        <button type="button" class="tool" [class.on]="showArmor()" [attr.aria-pressed]="showArmor()" (click)="toggleShowArmor()">🛡️ 防具を着た姿</button>
+      }
     </div>
+    @if (gear(); as g) {
+      @if (g.armor) {
+        <p class="armor-note" role="note">🛡️ 防具「{{ g.armorName }}」の見た目で出ています。下の「服」は、見た目のない防具を装備したときに使われます。</p>
+      }
+    }
   </div>
 
   <div class="rows">

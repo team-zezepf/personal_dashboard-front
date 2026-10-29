@@ -1,3 +1,4 @@
+import { PLAYER_CLOTHES, WEAPON_SHAPES, drawLook, wearArmor, weaponPose } from './rpg-look';
 import { ACCENT_COLORS, BROWS, HAIR_BACKS, HAIR_TOPS, hairBackOf, hairTopOf, CLOTHES, CLOTHES_COLORS, DEFAULT_LOOK, EYES, EYE_COLORS, HAIRS, HAIR_COLORS, MOUTHS, lookFromColors, randomLook } from './rpg-look';
 
 describe('rpg-look', () => {
@@ -73,5 +74,41 @@ describe('rpg-look 髪のトップ・後ろ(front#370)', () => {
 
   it('おまかせでは、トップ・後ろは髪型に合わせる(null)', () => {
     expect(randomLook()).toMatchObject({ hairTop: null, hairBack: null });
+  });
+
+  describe('装備の見た目(front#431)', () => {
+    const armor = { shape: 'robe', color: '#1e3a8a', accent: '#fde047' };
+
+    it('見た目のある防具を着ると、服の形・色・飾りの色は防具のものになる。見た目のない防具なら選んだ服のまま', () => {
+      const look = { ...DEFAULT_LOOK, clothes: 'hoodie', clothesColor: '#ef4444', accentColor: '#f8fafc' };
+      expect(wearArmor(look, armor)).toMatchObject({ clothes: 'robe', clothesColor: '#1e3a8a', accentColor: '#fde047', hair: look.hair });
+      expect(wearArmor(look, null)).toBe(look);
+    });
+
+    it('前に選んでいたローブ・よろいは、見た目のない防具のときはシャツにする', () => {
+      expect(wearArmor({ ...DEFAULT_LOOK, clothes: 'robe' }, null).clothes).toBe('shirt');
+      expect(wearArmor({ ...DEFAULT_LOOK, clothes: 'armor' }, undefined).clothes).toBe('shirt');
+    });
+
+    it('プレイヤーの服からローブ・よろいを外す。おまかせでも選ばない', () => {
+      expect(PLAYER_CLOTHES.map(([id]) => id)).toEqual(['shirt', 'dress', 'vest', 'hoodie', 'sailor']);
+      for (let i = 0; i < 20; i++) expect(['robe', 'armor']).not.toContain(randomLook(() => (i % 10) / 10, PLAYER_CLOTHES).clothes);
+    });
+
+    it('武器は片手剣・大剣・玉の杖・三日月の杖。見た目のない武器・知らない形は、今までの色の片手剣', () => {
+      expect(WEAPON_SHAPES.map(([id]) => id)).toEqual(['sword', 'greatsword', 'staff', 'moonstaff']);
+      expect(weaponPose({ shape: 'staff', color: '#8b5a2b', accent: '#60a5fa' }, '#c08a52')).toEqual({ sword: true, swordColor: '#8b5a2b', weaponShape: 'staff', weaponAccent: '#60a5fa' });
+      expect(weaponPose(undefined, '#c08a52')).toEqual({ sword: true, swordColor: '#c08a52' });
+      expect(weaponPose({ shape: 'axe', color: '#000000', accent: '#000000' }, '#cbd5e1')).toEqual({ sword: true, swordColor: '#cbd5e1' });
+    });
+
+    it('どの武器の形・どの防具の服でも描ける(描くときにエラーにならない)', () => {
+      const cv = document.createElement('canvas');
+      const c = cv.getContext('2d');
+      if (!c) return;
+      for (const [shape] of WEAPON_SHAPES) {
+        expect(() => drawLook(c, wearArmor(DEFAULT_LOOK, armor), { dir: -1, time: 1, ...weaponPose({ shape, color: '#cbd5e1', accent: '#a16207' }, '#000000') })).not.toThrow();
+      }
+    });
   });
 });
