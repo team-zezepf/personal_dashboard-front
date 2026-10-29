@@ -573,6 +573,15 @@ export const DEFAULT_THEMES: RpgTheme[] = [
     liquid: '#1e88c8', liquidSway: 5, wave: '#e6fbff', flower: 'glow', flowers: ['#fdf6e3', '#a5f3fc', '#fbcfe8'],
     trunk: '#9c7a4f', leaves: ['#2fa37a', '#33b086', '#45c495'], treeScale: 1, rock: ['#7c8b94', '#9fb0b9'],
     effect: { kind: 'bubbles', color: '#e6fbff', alpha: 0.55 }, sortOrder: 5
+  },
+  // 海の中(front#423)。深い青の空・青緑の海底の砂・光るプランクトン・泡
+  {
+    id: 'seabed', name: '海底', liquidName: '深み',
+    sky: ['#031a33', '#0b4a6e'], grass: ['#3b6f7a', '#376a74', '#40767f'], path: ['#6f8f8a', '#688882'], sand: '#8fb3ad', edge: ['#24505a', '#1b3f48'],
+    stone: ['#7fa6b0', '#76a0aa', '#89b0b9'], grout: '#3d6470', brick: ['#3f6f86', '#386579', '#46788f'], mortar: '#9cc0c8',
+    liquid: '#08305a', liquidSway: 4, wave: '#7fdcff', flower: 'glow', flowers: ['#7ff3ff', '#c4b5fd', '#f9a8d4'],
+    trunk: '#2f5d50', leaves: ['#1f8a6a', '#24997a', '#2fb08a'], treeScale: 1.2, rock: ['#34505c', '#4b6b78'],
+    effect: { kind: 'bubbles', color: '#bff4ff', alpha: 0.6 }, sortOrder: 6
   }
 ];
 
