@@ -2,7 +2,7 @@
   <p class="info">{{ info() }}</p>
 
   <!-- 表示されるメッセージ(置いた置物だけ。front#333) -->
-  @if (placement()) {
+  @if (placement() && !door()) {
     <section class="sec">
       <h3>💬 表示されるメッセージ</h3>
       <label class="check"><input type="checkbox" [ngModel]="draft().showMessage" (ngModelChange)="setShowMessage($event)" /> クリック時にメッセージを表示する</label>
@@ -45,7 +45,7 @@
     </div>
   </section>
 
-  @if (!reading()) {
+  @if (!reading() && !door()) {
     <!-- 出てくるアイテム・出てくる敵(壊れる置物だけ) -->
     @for (key of ['items', 'enemies']; track key) {
       <section class="sec" [class.dis]="!breakable()">

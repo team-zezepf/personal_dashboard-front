@@ -304,11 +304,15 @@ export const GROUND_CHARS = ['g', 'f', 'p', 'w', 'b', 's', 'v', 't', 'r'];
 export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal' | 'pillar' | 'volcano' | 'grass' | 'chest' | 'armor' | 'wall'
   | 'barrel' | 'pot' | 'bones' | 'bookshelf' | 'candle' | 'grave' | 'sign' | 'bars' | 'shackle' | 'bucket' | 'save_point'
   // 海の置物(front#421)
-  | 'coral' | 'kelp' | 'shell';
+  | 'coral' | 'kelp' | 'shell'
+  // 鍵付きの扉(front#425)。2マス分
+  | 'door';
 export const STATIC_TYPES: StaticType[] = [
   'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket', 'save_point',
-  'coral', 'kelp', 'shell'
+  'coral', 'kelp', 'shell', 'door'
 ];
+// 扉(front#425)
+export const DOOR = 'door';
 
 // 攻撃で壊れる置物と、壊すのに必要な攻撃の回数(front#264)。宝箱・甲冑(front#266)、たる・つぼ・骨の山(front#270)、木のおけ(front#321)、海藻・大きな貝(front#421)。ほかの置物は壊れない
 export const BREAK_HITS: Partial<Record<StaticType, number>> = { grass: 1, fern: 1, crystal: 2, rock: 3, chest: 1, armor: 3, barrel: 1, pot: 1, bones: 1, bucket: 1, kelp: 1, shell: 2 };
@@ -325,7 +329,7 @@ export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
   barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板',
   bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ', save_point: 'セーブポイント',
-  coral: 'サンゴ', kelp: '海藻', shell: '大きな貝'
+  coral: 'サンゴ', kelp: '海藻', shell: '大きな貝', door: '扉'
 };
 
 export interface StaticObj {
@@ -351,6 +355,11 @@ export interface StaticObj {
   hitMaterial?: string;
   showMessage?: boolean;
   signDir?: string;
+  // 扉(front#425)を開けるのに使うアイテムのID(なければ鍵のかかっていない扉)と、開けたときに鍵が1つ減るか。
+  // open はゲームの中で開いているか(エリアを出ると閉まる)。鍵を持っていないときのメッセージは lines
+  keyItem?: string;
+  consumeKey?: boolean;
+  open?: boolean;
   // 擬態している敵がこの置物のふりをしている(front#333)。置物そのものは描かず、通れる(敵が置物の絵で立つ)
   mimicked?: boolean;
   // 壊れる置物のゲームの中での状態(front#264)。hits: 受けた攻撃の回数、broken: 壊れている、
@@ -374,8 +383,8 @@ export function setObjectDefs(list: readonly RpgObjectDef[]): void {
   for (const d of list) OBJECT_DEFS[d.type] = d;
 }
 
-/** デフォルトを決められる置物(家・看板は置いたあとに一つずつ決めるので除く。API の RpgObjectService.TYPES と同じ) */
-export const OBJECT_DEF_TYPES: StaticType[] = STATIC_TYPES.filter((t) => t !== 'house' && t !== 'sign');
+/** デフォルトを決められる置物(家・看板・扉は置いたあとに一つずつ決めるので除く。API の RpgObjectService.TYPES と同じ) */
+export const OBJECT_DEF_TYPES: StaticType[] = STATIC_TYPES.filter((t) => t !== 'house' && t !== 'sign' && t !== DOOR);
 
 /** テーマ(草原・森・谷・塔)で色が変わる置物。色を決めていなければ、テーマの色で描く */
 export const THEMED_OBJECTS: StaticType[] = ['tree', 'rock', 'wall'];
@@ -394,7 +403,9 @@ export const DEFAULT_TINTS: Partial<Record<StaticType, { m: string; d: string }>
   // 海の置物(front#421)。サンゴ・海藻は 明るい色 = 先、暗い色 = 根元。大きな貝は 明るい色 = 貝がら、暗い色 = すじ
   coral: { m: '#f472b6', d: '#be185d' }, kelp: { m: '#3fae6a', d: '#1f6b40' }, shell: { m: '#fbcfe8', d: '#db8fb5' },
   // セーブポイント(front#337)。明るい色 = 光る石、暗い色 = 台座
-  save_point: { m: '#8b5cf6', d: '#9ca3af' }
+  save_point: { m: '#8b5cf6', d: '#9ca3af' },
+  // 扉(front#425)。明るい色 = 扉の板、暗い色 = 板の継ぎ目・ふち(上の壁はテーマの色)
+  door: { m: '#9b6a3e', d: '#5b3a20' }
 };
 
 /** 置物の設定(置いた1つずつの設定と、種類のデフォルトをまとめたもの) */
@@ -419,7 +430,8 @@ type ObjectLike = Pick<RpgMapObject, 'type' | 'color' | 'dark' | 'items' | 'enem
 export function objectSettingsOf(o: ObjectLike): ObjectSettings {
   const def = OBJECT_DEFS[o.type];
   // セーブポイント(front#337)は調べると復活地点になるので、メッセージを表示せず、擬態もしない
-  const savePoint = o.type === SAVE_POINT;
+  // 扉(front#425)も、鍵がないときのメッセージは扉の欄で決め、擬態もしない
+  const savePoint = o.type === SAVE_POINT || o.type === DOOR;
   const showMessage = o.type !== 'sign' && !savePoint && !!o.showMessage;
   const breakable = isBreakable(o.type) && !showMessage;
   return {
@@ -899,7 +911,9 @@ export function buildAreaMap(map: RpgMap): AreaMap {
       kind: 'static', type: o.type as StaticType, x: o.x, y: o.y, torch: o.torch, roof: o.roof ?? undefined,
       shape: o.shape ?? undefined, rotation: o.rotation ?? undefined, lowRoof: o.lowRoof ?? undefined,
       wall: o.wall ?? undefined, noWindow: o.noWindow ?? undefined,
-      lines: o.type === 'sign' || o.showMessage ? (o.lines ?? undefined) : undefined,
+      lines: o.type === 'sign' || o.showMessage || o.type === DOOR ? (o.lines ?? undefined) : undefined,
+      // 扉の鍵(front#425)
+      keyItem: o.type === DOOR ? (o.keyItem ?? undefined) : undefined, consumeKey: o.type === DOOR ? (o.consumeKey ?? undefined) : undefined,
       // 置いた置物1つずつの設定(front#333)
       color: o.color ?? undefined, dark: o.dark ?? undefined,
       items: o.items ?? undefined, enemies: o.enemies ?? undefined, mimics: o.mimics ?? undefined,

@@ -9,6 +9,15 @@
   "ground" : [ "ggggggggggggggggggfgggggfggggggg", "gggggfgggfgggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "gggggggggggggggggggggggggggggggg", "ggggggggggggggggggggggggggfgggfg", "ggggggggggggggggggggggggfggggggg", "gggggggggggggggggggggggggggggggg", "gggfggggggggggpggggggggggggggggg", "ggggggggggggggpfgggppppppggggggg", "ggggggggggggggpggggpgggggggggggg", "ggggggggggggggpgfgfpgggggggggggg", "ggggggggggggggpggggpgggfgggggggg", "gggggggfggggpppppppppgfgfggfgggg", "ggggggggggggpppppppppggfggfggggg", "ggggggggggggpppppppppfgggggggggg", "gggggggppppppppfsfpppppppppppppp", "ggggggggfggfpppswspppppppppppppp", "gggggggfggggpppfsfpppppppppppppp", "gggfggggggggpppppppppggggggggggg", "fgggggggpppppppppppppppppggggggg", "ggggggfgpgggpppppppppgggpggggggg", "fgggggggpgfggggpppggggggpgggfggg", "ggggggggpgfggggpppggggggpggggggg", "ggggggggpffggggpppggggfggsssgggg", "gggggggggggggggpppggggggswwwsggg", "gggggggggggfgggpppgggggswwwwwsgg", "ggggggggggfggggpppgggggswwwwwsgg", "gggggggggggggggpppgggggswwwwwsgg", "gggggggggggggggpppggggfgswwwsggg", "ggggfggggggfgggpppgggggggsssgggg", "gggggggggggggggpppggggggggggfggg", "gggggggggggggggpppgggggggggggggg" ],
   "heights" : null,
   "objects" : [ {
+    "type" : "door",
+    "x" : 2,
+    "y" : 3,
+    "torch" : false,
+    "rotation" : 0,
+    "lines" : [ "看守が持っていそうだ。" ],
+    "key_item" : "rusty_key",
+    "consume_key" : true
+  }, {
     "type" : "save_point",
     "x" : 9,
     "y" : 5,

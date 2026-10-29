@@ -1,7 +1,7 @@
 import { RpgCompanion, RpgCraft, RpgDungeon, RpgMap, RpgQuest, RpgSave } from '../models/rpg.models';
 import {
   BREAK_RESPAWN_SEC, DEFAULT_CRAFTS, DEFAULT_ITEMS, ENEMIES, G, ITEMS, MATERIAL_IDS, RECIPES, THEMES, ZERO_STATS, attackIntervalOf, barsAlong, besideSavePoint, buildAreaMap, centerSpot, edgeMiddle,
-  exitOf, firstSpot, isCraftItem, linkArrival, maxHpOf,
+  StaticObj, exitOf, firstSpot, isBreakableObj, isCraftItem, linkArrival, maxHpOf,
   objectSettingsOf, objectTintOf, pickMimic, setCrafts, setItems, setObjectDefs, shelfFace, signExit, signPointing, walkSpeedOf
 } from './rpg-data';
 import { HEAL_ALL_STAGGER, MATE_PICK_DELAY, PLAYER_FX_SEC, RpgGame, RpgGameEvents, THANKS_DELAY, THANKS_SEC, mateStatToRaise } from './rpg-game';
@@ -1333,6 +1333,83 @@ describe('RpgGame', () => {
       } finally {
         random.mockRestore();
       }
+    });
+  });
+
+  describe('扉(front#425)', () => {
+    function run(seconds: number): void {
+      for (let t = 0; t < seconds; t += 0.05) game.update(0.05);
+    }
+
+    // 扉は向き1で (7,5)(7,6) の2マス。プレイヤーは (5,5) から
+    function setup(door: Partial<RpgMap['objects'][number]> = {}): StaticObj {
+      game.loadMap(map('field', { objects: [{ type: 'door', x: 7, y: 5, torch: false, rotation: 1, ...door }] }));
+      Object.assign(game.player, { x: 5, y: 5, path: [], target: null });
+      game.update(0);
+      return game.map.statics.find((o) => o.type === 'door')!;
+    }
+
+    it('閉まっている扉は2マスとも通れない。鍵を持っていなければ「鍵がかかっている。〇〇 が必要だ。」と出て開かない', () => {
+      const door = setup({ keyItem: 'rusty_key', consumeKey: true });
+      expect([game.map.walkable(7, 5), game.map.walkable(7, 6)]).toEqual([false, false]);
+      game.player.target = door;
+      run(3);
+      expect(ev.reads).toEqual([['扉', ['鍵がかかっている。🗝️ 錆びた鍵 が必要だ。']]]);
+      expect(door.open).toBeFalsy();
+      expect(game.map.walkable(7, 5)).toBe(false);
+    });
+
+    it('鍵を持っていないときのメッセージは扉ごとに決められ、1行が1ページ', () => {
+      const door = setup({ keyItem: 'rusty_key', lines: [' 看守が持っていそうだ。', '', '牢屋の奥にいるらしい。'] });
+      game.player.target = door;
+      run(3);
+      expect(ev.reads).toEqual([['扉', ['鍵がかかっている。看守が持っていそうだ。', '牢屋の奥にいるらしい。']]]);
+    });
+
+    it('鍵を持っていれば開き、2マスとも通れる。開けると鍵がなくなる扉は鍵が1つ減る', () => {
+      const door = setup({ keyItem: 'rusty_key', consumeKey: true });
+      game.player.inv['rusty_key'] = 2;
+      const dirty = ev.dirtyCount;
+      game.player.target = door;
+      run(3);
+      expect(door.open).toBe(true);
+      expect([game.map.walkable(7, 5), game.map.walkable(7, 6)]).toEqual([true, true]);
+      expect(game.player.inv['rusty_key']).toBe(1);
+      expect(ev.messages).toContain('錆びた鍵を使った。扉が開いた！');
+      expect(ev.dirtyCount).toBeGreaterThan(dirty);
+      expect(ev.reads).toEqual([]);
+    });
+
+    it('開けても鍵がなくならない扉は、鍵が減らない', () => {
+      const door = setup({ keyItem: 'rusty_key', consumeKey: false });
+      game.player.inv['rusty_key'] = 1;
+      game.player.target = door;
+      run(3);
+      expect(door.open).toBe(true);
+      expect(game.player.inv['rusty_key']).toBe(1);
+    });
+
+    it('鍵のかかっていない扉はクリックするだけで開き、エリアに入り直すと閉まっている', () => {
+      setup();
+      // 2マスにまたがる出入り口のあたりをクリックする
+      const [sx, sy] = game.screenPositionOf({ x: 7, y: 5.5 });
+      game.click(sx, sy - 50);
+      run(3);
+      const door = game.map.statics.find((o) => o.type === 'door')!;
+      expect(door.open).toBe(true);
+      expect(game.map.walkable(7, 6)).toBe(true);
+      expect(ev.reads).toEqual([]);
+
+      const again = setup();
+      expect(again.open).toBeFalsy();
+      expect(game.map.walkable(7, 6)).toBe(false);
+    });
+
+    it('扉は壊れず、擬態もしない', () => {
+      const door = setup({ mimics: [{ id: 'slime', chance: 1 }] });
+      expect(game.enemies.some((e) => e.disguise)).toBe(false);
+      expect(objectSettingsOf(door).mimics).toEqual([]);
+      expect(isBreakableObj(door)).toBe(false);
     });
   });
 

@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RpgChanceEnemy, RpgChanceItem } from '../../../models/rpg.models';
-import { ITEMS, STATIC_NAMES, itemsVersion, StaticType, THEMED_OBJECTS, isBreakable } from '../../../rpg/rpg-data';
+import { DOOR, ITEMS, STATIC_NAMES, itemsVersion, StaticType, THEMED_OBJECTS, isBreakable } from '../../../rpg/rpg-data';
 import { ENEMIES, ENEMY_COLORS, ENEMY_DARKS, HIT_MATERIALS } from '../../../rpg/rpg-enemy';
 import { OBJECT_LIMITS, ObjectDraft, baseOf, currentHitMaterialOf, currentTintOf } from '../../../rpg/rpg-object';
 
@@ -38,6 +38,8 @@ export class RpgObjectFormComponent {
 
   readonly name = computed(() => STATIC_NAMES[this.type() as StaticType] ?? this.type());
   readonly breakable = computed(() => isBreakable(this.type()));
+  // 扉(front#425)は、鍵・向きをマップ作成画面の欄で決めるので、ここでは色合いだけ
+  readonly door = computed(() => this.type() === DOOR);
   readonly themed = computed(() => THEMED_OBJECTS.includes(this.type() as StaticType));
   // 種類のデフォルト(置いた置物で「デフォルトのまま」のときに見せる値・外したときに入れる値)
   readonly base = computed(() => baseOf(this.type()));
@@ -52,6 +54,7 @@ export class RpgObjectFormComponent {
   }
 
   info(): string {
+    if (this.door()) return '扉（叩いても壊れない・擬態もしない）';
     if (this.reading()) return 'クリックするとメッセージを表示する置物（壊せない）';
     return this.breakable() ? '攻撃で壊れる置物' : '壊れない置物';
   }

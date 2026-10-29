@@ -856,7 +856,8 @@ export class RpgPageComponent implements OnDestroy {
       return;
     }
     // 村人・落ちたアイテム(front#276)は「話す・拾う」、敵・壊れる置物は「攻撃」
-    const readable = game.hover?.kind === 'static' && game.hover.type === 'sign';
+    // 扉(front#425)も調べるもの
+    const readable = game.hover?.kind === 'static' && (game.hover.type === 'sign' || game.hover.type === 'door');
     const state: GemState = game.hover ? (game.hover.kind === 'npc' || game.hover.kind === 'drop' || readable ? 'talk' : 'attack') : 'normal';
     this.gem.draw(state, dt, game.time, this.dpr);
   }

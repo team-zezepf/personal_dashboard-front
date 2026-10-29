@@ -1548,3 +1548,83 @@ test(
     });
   }
 );
+
+// 今のセーブデータの、そのアイテムの個数(front#425)
+async function savedItemCount(itemId: string): Promise<number> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ACCOUNT.email, password: E2E_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgSave { items { itemId count } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgSave: { items: { itemId: string; count: number }[] } } };
+  return body.data.rpgSave.items.find((i) => i.itemId === itemId)?.count ?? 0;
+}
+
+test(
+  'E2E-38 RPGで、鍵付きの扉をクリックすると、鍵がなければ扉ごとのメッセージが出て開かず、鍵があれば開いて通れ、鍵が1つ減る(front#425)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用のアカウントでログインしている',
+      'E2E 用の RPG データで、村の (2, 3)〜(3, 3) に鍵付きの扉(錆びた鍵・開けると鍵がなくなる・鍵がないときのメッセージ「看守が持っていそうだ。」)を置いてある'
+    ],
+    expected: [
+      '錆びた鍵を持っていないとき、扉をクリックすると、そばまで歩いて調べ、「鍵がかかっている。看守が持っていそうだ。」と出る。扉のマスへは進めない',
+      '錆びた鍵を2つ持っているとき、扉をクリックすると、ログに「錆びた鍵を使った。扉が開いた！」と出て、扉のマスに立てる',
+      '画面を離れると保存され、錆びた鍵が1つ(2つ → 1つ)になっている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step);
+    await resetRpg();
+    const log = page.getByRole('region', { name: 'ログ' });
+    const clickDoor = async () => {
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      // 2マスにまたがる出入り口(足元から少し上)をクリックする
+      const position = (await page.evaluate(() => (window as any).rpgTest.tilePosition(2.5, 3))) as [number, number];
+      await clickCanvas(page, position, 50);
+    };
+    const clickTile = async (x: number, y: number) => {
+      const position = (await page.evaluate(([tx, ty]) => (window as any).rpgTest.tilePosition(tx, ty), [x, y])) as [number, number];
+      await clickCanvas(page, position);
+    };
+
+    await step('鍵を持たずに RPG(/rpg)を開き、村の左上の扉をクリックする', '「鍵がかかっている。看守が持っていそうだ。」と出る', async () => {
+      await page.goto('/rpg');
+      await clickDoor();
+      await expect(page.getByText('鍵がかかっている。看守が持っていそうだ。')).toBeVisible();
+    });
+
+    await step('錆びた鍵を2つ持った状態で開き直し、扉のマス (2, 3) をクリックする', '扉が閉まっているので、扉のマスには立てない', async () => {
+      await page.goto('/');
+      await resetRpg(1, [{ itemId: 'rusty_key', count: 2 }]);
+      await page.goto('/rpg');
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      await clickTile(2, 4);
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest.playerTile()?.slice(0, 2)), { timeout: 15000 }).toEqual([2, 4]);
+      await clickTile(2, 3);
+      await page.waitForTimeout(1500);
+      expect(await page.evaluate(() => (window as any).rpgTest.playerTile()?.slice(0, 2))).not.toEqual([2, 3]);
+    });
+
+    await step('扉をクリックし、開いたら扉のマス (2, 3) をクリックする', 'ログに「錆びた鍵を使った。扉が開いた！」と出て、扉のマスに立てる', async () => {
+      await clickDoor();
+      await expect(log.getByText('錆びた鍵を使った。扉が開いた！')).toBeVisible();
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest?.isIdle())).toBe(true);
+      await clickTile(2, 3);
+      await expect.poll(() => page.evaluate(() => (window as any).rpgTest.playerTile()?.slice(0, 2)), { timeout: 15000 }).toEqual([2, 3]);
+    });
+
+    await step('ダッシュボードへ移って保存させ、セーブデータを読む', '錆びた鍵が1つになっている', async () => {
+      await page.goto('/');
+      await expect.poll(() => savedItemCount('rusty_key')).toBe(1);
+    });
+  }
+);

@@ -906,6 +906,34 @@
               </div>
             </div>
           } @else {
+            @if (o.type === 'door') {
+              <!-- 扉(front#425)の向き・鍵 -->
+              <div class="field row">
+                <span>向き</span>
+                <div class="rotate-row">
+                  <button type="button" class="btn small" (click)="rotateDoor()">↻ 回す</button>
+                  <span class="muted small" data-testid="door-dir">{{ doorDirLabel() }}</span>
+                </div>
+              </div>
+              <p class="muted small">2マス分の置物で、高さは壁と同じです。壁の列に並べると、壁の途中に出入り口ができます。</p>
+              <label class="field">
+                <span>🔒 開けるのに使うアイテム</span>
+                <select aria-label="開けるのに使うアイテム" [ngModel]="draft.keyItem ?? ''" (ngModelChange)="setDoorKey($event)">
+                  <option value="">なし（鍵はかかっていない。クリックで開く）</option>
+                  @for (it of itemOptions(); track it.id) {
+                    <option [value]="it.id">{{ it.name }}</option>
+                  }
+                </select>
+              </label>
+              @if (draft.keyItem) {
+                <label class="check"><input type="checkbox" [ngModel]="draft.consumeKey" (ngModelChange)="setConsumeKey($event)" /> 開けると鍵がなくなる（1つ減る）</label>
+                <label class="field">
+                  <span>鍵を持っていないときのメッセージ（「鍵がかかっている。」のあとに出す。1行が1ページ）</span>
+                  <textarea rows="2" maxlength="4200" aria-label="鍵を持っていないときのメッセージ" [placeholder]="doorLockedHint()" [ngModel]="draft.lines" (ngModelChange)="setSignLines($event)"></textarea>
+                </label>
+                <p class="muted small">空なら「{{ doorLockedHint() }}」と出ます。開けた扉は、エリアを出ると閉まります。</p>
+              }
+            }
             <app-rpg-object-form [type]="o.type" [draft]="draft" [placement]="true" (changed)="onObjectDraftChanged()" />
           }
           @if (objectProblem(); as p) {
