@@ -148,16 +148,28 @@
 
       <div class="section" role="group" aria-label="攻撃">
         <h2>攻撃</h2>
+        <!-- 属性の攻撃は属性ごとに1枚。選ぶと LV1 / LV2、LV2 なら魔法陣を出すかを選べる(front#435) -->
         <div class="attacks">
-          @for (a of attacks; track a.id) {
-            <button type="button" class="opt attack" [class.active]="sel.def.attack === a.id" [attr.aria-pressed]="sel.def.attack === a.id" (click)="setAttack(a.id)">
-              <span class="icon">{{ a.icon }}</span>
+          @for (a of attackCards; track a.id) {
+            <button type="button" class="opt attack" [class.active]="attackCard().id === a.id" [attr.aria-pressed]="attackCard().id === a.id" (click)="selectAttackCard(a)">
               <span>{{ a.label }}</span>
               <span class="kind">{{ a.kind === 'look' ? '見た目' : 'ふるまい' }}</span>
             </button>
           }
         </div>
-        <p class="hint">{{ attackSpec().desc }}</p>
+        @if (attackCard().levels) {
+          <div class="attack-level">
+            <span class="level-label">LV</span>
+            <span class="seg" role="group" aria-label="攻撃の LV">
+              @for (lv of [1, 2]; track lv) {
+                <button type="button" [class.on]="attackLevel() === lv" [attr.aria-pressed]="attackLevel() === lv" (click)="setAttackLevel($any(lv))">LV{{ lv }}</button>
+              }
+            </span>
+            @if (isLv2Attack(sel.def.attack)) {
+              <label class="check inline"><input type="checkbox" [ngModel]="sel.def.magicCircle ?? true" (ngModelChange)="setMagicCircle($event)" /> 魔法陣を出す</label>
+            }
+          </div>
+        }
         @switch (sel.def.attack) {
           @case ('tackle') {
             <div class="grid2">
@@ -176,18 +188,15 @@
               <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
             </div>
           }
-          @case ('circle') {
-            <!-- 魔法陣(front#327): 何マス先の相手に使うか(射程)と、足元のまわり何マスに当たるか(範囲) -->
-            <div class="grid2">
-              <label class="field"><span>射程（マス）</span><input type="number" [min]="limits.range[0]" [max]="limits.range[1]" step="1" [ngModel]="sel.def.range" (ngModelChange)="setNumber('range', $event)" /></label>
-              <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
-            </div>
-          }
           @case ('claw') {}
           @case ('bite') {}
           @default {
+            <!-- LV2 の攻撃(魔法陣 front#327 / front#435): 何マス先の相手に使うか(射程)と、足元のまわり何マスに当たるか(範囲) -->
             <div class="grid2">
               <label class="field"><span>射程（マス）</span><input type="number" [min]="limits.range[0]" [max]="limits.range[1]" step="1" [ngModel]="sel.def.range" (ngModelChange)="setNumber('range', $event)" /></label>
+              @if (isLv2Attack(sel.def.attack)) {
+                <label class="field"><span>範囲（まわり何マス）</span><input type="number" [min]="limits.radius[0]" [max]="limits.radius[1]" step="1" [ngModel]="sel.def.radius" (ngModelChange)="setNumber('radius', $event)" /></label>
+              }
             </div>
           }
         }

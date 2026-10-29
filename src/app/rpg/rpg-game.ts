@@ -52,7 +52,7 @@ import {
 } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
 import { objectTiles } from './rpg-house';
-import { EnemyDef, SPELLS, attackReach, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
+import { EnemyDef, SPELLS, attackReach, isLv2Attack, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
 import { SPELLS as MAGIC, MAX_SPELL_LEVEL, SPELL_COOLDOWN, SPELL_IDS, SpellId, isSpellId, levelRateOf, maxMpOf, spellHealOf, spellLabel, spellPowerOf, spellRangeOf } from './rpg-magic';
 
@@ -2640,7 +2640,7 @@ export class RpgGame {
       const melee = def.attack === 'tackle' || def.attack === 'claw' || def.attack === 'bite';
       // 範囲の攻撃(魔法陣・衝撃波・炎や水などマスに出す攻撃)は、範囲の中にいる全員に当たる。
       // ほかは狙っていた相手にだけ当たる(front#358)
-      const area = def.attack === 'circle' || def.attack === 'shockwave' || SPELLS.includes(def.attack);
+      const area = def.attack === 'shockwave' || SPELLS.includes(def.attack);
       const targets = area ? this.fighters() : [a.foe ?? this.player];
       for (const f of targets) {
         if (!f.dead && this.fighters().includes(f) && this.actHits(e, def, a, f)) this.enemyAttack(e, f, melee && !movesToTarget(def));
@@ -2651,8 +2651,8 @@ export class RpgGame {
 
   /** 攻撃が当たったか(当たる時に、相手 p がその場所にいるか) */
   private actHits(e: Enemy, def: EnemyDef, a: EnemyAct, p: Fighter): boolean {
-    // 魔法陣(front#327)は、攻撃を始めたマスのまわり(範囲)にいても当たる
-    if (def.attack === 'circle') return cheb(p.x, p.y, a.tx, a.ty) <= def.radius + 0.5;
+    // LV2 の攻撃(魔法陣 front#327 / front#435)は、攻撃を始めたマスのまわり(範囲)にいても当たる
+    if (isLv2Attack(def.attack)) return cheb(p.x, p.y, a.tx, a.ty) <= def.radius + 0.5;
     if (SPELLS.includes(def.attack)) return cheb(p.x, p.y, a.tx, a.ty) < 0.6;
     if (def.attack === 'shockwave') return cheb(p.x, p.y, e.x, e.y) <= def.radius + 0.5;
     if (movesToTarget(def)) return cheb(p.x, p.y, e.x, e.y) <= 1.0;

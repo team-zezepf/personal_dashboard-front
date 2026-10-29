@@ -610,12 +610,52 @@
 }
 
 .opt.attack {
-  font-size: 11px;
-  padding: 6px 2px;
+  font-size: 12px;
+  padding: 9px 2px;
 }
 
-.opt .icon {
-  font-size: 18px;
+/* 属性の攻撃の LV と、LV2 の魔法陣を出すか(front#435) */
+.attack-level {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.level-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.seg {
+  display: inline-flex;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg button {
+  background: var(--card);
+  color: var(--text);
+  border: 0;
+  padding: 4px 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.seg button + button {
+  border-left: 2px solid var(--line);
+}
+
+.seg button.on {
+  background: var(--indigo);
+  color: #fff;
+  font-weight: 700;
+}
+
+.check.inline {
+  margin-top: 0;
 }
 
 .kind {

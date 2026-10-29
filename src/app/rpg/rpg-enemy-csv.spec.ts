@@ -11,6 +11,16 @@ describe('敵の CSV(front#297)', () => {
     return table.map((r) => r.join(',')).join('\r\n');
   };
 
+  it('攻撃の種類は「水 LV2」のように属性と LV で書く。前の名前(暗黒・魔法陣・雷)で書いた CSV も取り込める(front#435)', () => {
+    const csv = edit(enemiesToCsv(rows()), [[1, '攻撃の種類', '水 LV2'], [2, '攻撃の種類', '魔法陣'], [3, '攻撃の種類', '暗黒']]);
+    expect(parseCsv(csv)[1]).toContain('水 LV2');
+    const result = readEnemyCsv(csv, enemies, enemies[0]);
+    expect(result.errors).toEqual([]);
+    expect(result.changes.map((c) => c.def.attack)).toEqual(['splash', 'circle', 'dark']);
+    expect(result.changes[1].diffs).toEqual([{ label: '攻撃の種類', before: '体当たり', after: '闇 LV2' }]);
+    expect(readEnemyCsv(edit(enemiesToCsv(rows()), [[3, '攻撃の種類', '雷']]), enemies, enemies[0]).changes[0].def.attack).toBe('thunder');
+  });
+
   it('BOM 付きで、見出しは日本語、名前で書き、落とす物の列は入れない', () => {
     const csv = enemiesToCsv(rows());
     expect(csv.startsWith('﻿')).toBe(true);

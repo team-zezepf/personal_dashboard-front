@@ -11,7 +11,9 @@ export type EnemyShape = 'slime' | 'mushroom' | 'wisp' | 'raptor' | 'golem' | 'g
   | 'grimoire' | 'shade' | 'wardcrystal' | 'gargoyle'
   // 海の敵(front#421)
   | 'crab' | 'jellyfish' | 'fishman' | 'kraken';
-export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave' | 'circle';
+export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water' | 'wind' | 'thunder' | 'dark' | 'shockwave' | 'circle'
+  // 炎LV2・水LV2・風LV2・雷LV1(front#435)
+  | 'blaze' | 'splash' | 'gale' | 'spark';
 
 export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
 
@@ -33,25 +35,48 @@ export interface AttackSpec {
   // look: 動きだけが変わる(となりのマスを攻撃する) / rule: ゲームのきまりも変わる
   kind: 'look' | 'rule';
   desc: string;
+  // 属性と LV(front#435)。離れたところに出す属性の攻撃だけ
+  element?: AttackElement;
+  level?: 1 | 2;
 }
+
+export type AttackElement = 'fire' | 'water' | 'wind' | 'thunder' | 'dark';
 
 export const ENEMY_ATTACKS: AttackSpec[] = [
   { id: 'tackle', label: '体当たり', icon: '💥', kind: 'rule', desc: '体をふるわせて力をためてから、まっすぐ突っ込む。ためている間に横へ動けば当たらない（距離1・ためる時間0なら、となりの相手に少し前に出てぶつかる）。' },
   { id: 'claw', label: 'ひっかき', icon: '🐾', kind: 'look', desc: 'となりのマスにいる相手を、爪でひっかく。白い爪あとが走る。' },
   { id: 'bite', label: 'かみつき', icon: '🦷', kind: 'look', desc: 'となりのマスにいる相手に、大きく飛びかかってかみつく。' },
   { id: 'jump', label: 'ジャンプ', icon: '⤴️', kind: 'rule', desc: '体をふるわせて力をためてから、跳び上がって相手の上に落ちる。着地で土ぼこりが立つ。ためている間に動けばよけられる。' },
-  { id: 'fire', label: '炎', icon: '🔥', kind: 'rule', desc: '相手の足元の地面が赤く光り、下から火柱が噴き上がる。光ったマスから離れればよけられる。' },
-  { id: 'water', label: '水', icon: '💧', kind: 'rule', desc: '相手の足元に水の輪が出て、少しあとに水柱が吹き上がる。輪が出たマスから離れればよけられる。' },
-  { id: 'wind', label: '風', icon: '🌪️', kind: 'rule', desc: '相手のいたマスに竜巻が起こり、その場で回って消える（動かない）。できはじめたら離れればよけられる。' },
-  { id: 'thunder', label: '雷', icon: '⚡', kind: 'rule', desc: '相手の頭の上に小さな雷雲が出て、少しあとに稲妻が落ちる。雲が出たマスから離れればよけられる。' },
-  { id: 'dark', label: '暗黒', icon: '🌑', kind: 'rule', desc: '相手の足元に黒い影が広がり、少しあとに闇の柱が立ちのぼる。影が出たマスから離れればよけられる。' },
   { id: 'shockwave', label: '衝撃波', icon: '🌀', kind: 'rule', desc: '足元の地面が一瞬赤く光り、輪がすばやく広がる。範囲の中にいると、輪が届いたときに当たる。' },
-  // 闇の魔導士の専用の攻撃(front#327)。ほかの敵も選べる
-  { id: 'circle', label: '魔法陣', icon: '🔯', kind: 'rule', desc: '杖を掲げて詠唱し、相手の足元に魔法陣を浮かべる。0.4秒後、魔法陣から太い闇の柱が立ちのぼる。範囲（まわり何マス。1なら3×3）の中にいると当たる。詠唱が短く、よけるのはむずかしい。' }
+  // 属性 × LV(front#435)。LV1 は相手のいたマスに出る(離れればよけられる)。LV2 は魔法陣が出てすぐ、範囲(まわり何マス)に当たる
+  { id: 'fire', label: '炎 LV1', icon: '🔥', kind: 'rule', element: 'fire', level: 1, desc: '相手の足元の地面が赤く光り、下から火柱が噴き上がる。光ったマスから離れればよけられる。' },
+  { id: 'blaze', label: '炎 LV2', icon: '🔥', kind: 'rule', element: 'fire', level: 2, desc: '相手の足元に赤い魔法陣を浮かべ、すぐに大きな火柱が噴き上がる。範囲の中にいると当たる。' },
+  { id: 'water', label: '水 LV1', icon: '💧', kind: 'rule', element: 'water', level: 1, desc: '相手の足元に水の輪が出て、少しあとに水柱が吹き上がる。輪が出たマスから離れればよけられる。' },
+  { id: 'splash', label: '水 LV2', icon: '💧', kind: 'rule', element: 'water', level: 2, desc: '相手の足元に青い魔法陣を浮かべ、すぐに中心から水が激しく噴き出して飛び散る。範囲の中にいると当たる。' },
+  { id: 'wind', label: '風 LV1', icon: '🌪️', kind: 'rule', element: 'wind', level: 1, desc: '相手のいたマスに竜巻が起こり、その場で回って消える（動かない）。できはじめたら離れればよけられる。' },
+  { id: 'gale', label: '風 LV2', icon: '🌪️', kind: 'rule', element: 'wind', level: 2, desc: '相手の足元に緑の魔法陣を浮かべ、すぐに大きな竜巻と風の刃が起こる。範囲の中にいると当たる。' },
+  { id: 'spark', label: '雷 LV1', icon: '⚡', kind: 'rule', element: 'thunder', level: 1, desc: '相手の足元が黄色くちらつき、少しあとに足元から雷がピリピリっと流れる。ちらついたマスから離れればよけられる。' },
+  { id: 'thunder', label: '雷 LV2', icon: '⚡', kind: 'rule', element: 'thunder', level: 2, desc: '相手の足元に黄色い魔法陣を浮かべ、すぐに空から太い稲妻が落ちる。範囲の中にいると当たる。' },
+  { id: 'dark', label: '闇 LV1', icon: '🌑', kind: 'rule', element: 'dark', level: 1, desc: '相手の足元に黒い影が広がり、少しあとに闇の柱が立ちのぼる。影が出たマスから離れればよけられる。' },
+  // 闇の魔導士の専用の攻撃だった魔法陣(front#327)
+  { id: 'circle', label: '闇 LV2', icon: '🔯', kind: 'rule', element: 'dark', level: 2, desc: '杖を掲げ、相手の足元に紫の魔法陣を浮かべる。すぐに魔法陣から太い闇の柱が立ちのぼる。範囲の中にいると当たる。' }
 ];
 
-// 離れたところ(相手の足元)に出す攻撃。魔法陣(front#327)は、足元のまわり(範囲)にも当たる
-export const SPELLS: EnemyAttack[] = ['fire', 'water', 'wind', 'thunder', 'dark', 'circle'];
+/** 敵の編集画面で選ぶ属性(front#435)。[LV1 の攻撃, LV2 の攻撃] */
+export const ATTACK_ELEMENTS: { id: AttackElement; label: string; levels: [EnemyAttack, EnemyAttack] }[] = [
+  { id: 'fire', label: '炎', levels: ['fire', 'blaze'] },
+  { id: 'water', label: '水', levels: ['water', 'splash'] },
+  { id: 'wind', label: '風', levels: ['wind', 'gale'] },
+  { id: 'thunder', label: '雷', levels: ['spark', 'thunder'] },
+  { id: 'dark', label: '闇', levels: ['dark', 'circle'] }
+];
+
+// LV2 の攻撃(front#435)。相手の足元に魔法陣を出し(出さないこともできる)、足元のまわり(範囲)にも当たる
+export const LV2_ATTACKS: EnemyAttack[] = ['blaze', 'splash', 'gale', 'thunder', 'circle'];
+export const isLv2Attack = (attack: EnemyAttack) => LV2_ATTACKS.includes(attack);
+
+// 離れたところ(相手の足元)に出す攻撃
+export const SPELLS: EnemyAttack[] = ['fire', 'water', 'wind', 'spark', 'dark', ...LV2_ATTACKS];
 
 export const ENEMY_COLORS = [
   '#7ddc6f', '#6fb6ff', '#e85d75', '#7ef9ff', '#7fb069', '#a3acb6', '#f5f3ff', '#475569', '#6d28d9', '#fbbf24', '#f97316', '#ec4899', '#1f2937', '#8b5a2b',
@@ -68,7 +93,7 @@ export const ENEMY_LIMITS = {
   sight: [0, 8], respawn: [3, 600], dash: [1, 5], charge: [0, 2], range: [1, 5], radius: [1, 2]
 } as const;
 
-const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false, guard: false };
+const base = { boss: false, attack: 'tackle' as EnemyAttack, dash: 1, charge: 0, range: 3, radius: 1, material: null as string | null, materialRate: 0, hitMaterial: null as string | null, glow: false, guard: false, magicCircle: true };
 
 // まだ「敵」タブで保存していないときの25種類(APIの default_enemies.json と同じ)
 export const DEFAULT_ENEMIES: EnemyDef[] = [
@@ -120,7 +145,8 @@ export function setEnemies(list: (RpgEnemy | EnemyDef)[]): void {
     const shape = (SHAPE_IDS as string[]).includes(e.shape) ? (e.shape as EnemyShape) : 'slime';
     const attack = (ATTACK_IDS as string[]).includes(e.attack) ? (e.attack as EnemyAttack) : 'tackle';
     const { sortOrder: _s, updatedAt: _u, ...rest } = e as RpgEnemy;
-    ENEMIES[e.id] = { ...rest, shape, attack };
+    // 魔法陣を出す(front#435)は、前のAPIのデータにはないので出す
+    ENEMIES[e.id] = { ...rest, shape, attack, magicCircle: rest.magicCircle ?? true };
   }
 }
 
@@ -191,9 +217,13 @@ export const disguiseOf = (def: Pick<EnemyDef, 'shape'>): string | null => DISGU
 
 // ===== 攻撃の長さ(秒)と当たる時(攻撃を始めてからの秒) =====
 
-// 魔法陣(front#327)の、詠唱(魔法陣が出ている間)と、闇の柱が伸びる時間(秒)
-const CIRCLE_CAST = 0.4;
-const CIRCLE_RISE = 0.13;
+// 属性の攻撃の速さ(front#435)。前の 0.65倍の速さ(約1.5倍の長さ)にする。動き(ちらつき・回転)も同じだけゆっくりにする
+export const SPELL_FX_SPEED = 0.65;
+const slow = (sec: number) => sec / SPELL_FX_SPEED;
+// LV2 の攻撃(front#435)の、魔法陣が出てから攻撃が伸びきるまで(当たる時)の秒。魔法陣が出たらすぐ攻撃が出る
+const LV2_CAST = slow(0.15);
+const LV2_RISE = slow(0.1);
+const lv2Timing = (after: number) => ({ duration: LV2_CAST + LV2_RISE + slow(after), hitAt: LV2_CAST + LV2_RISE });
 
 /** 体当たり・ジャンプで、相手まで動くか(距離1なら、その場で少し前に出るだけ) */
 export const movesToTarget = (def: EnemyDef) => (def.attack === 'tackle' || def.attack === 'jump') && def.dash > 1;
@@ -205,14 +235,19 @@ export function attackTiming(def: EnemyDef): { duration: number; hitAt: number }
     case 'jump': return { duration: c + 0.75, hitAt: c + 0.42 };
     case 'claw': return { duration: 0.55, hitAt: 0.22 };
     case 'bite': return { duration: 0.6, hitAt: 0.27 };
-    case 'fire': return { duration: 1.0, hitAt: 0.45 };
-    case 'water': return { duration: 0.9, hitAt: 0.45 };
-    case 'wind': return { duration: 1.0, hitAt: 0.4 };
-    case 'thunder': return { duration: 0.9, hitAt: 0.41 };
-    case 'dark': return { duration: 1.0, hitAt: 0.45 };
     case 'shockwave': return { duration: 0.75, hitAt: 0.38 };
-    // 詠唱 0.4秒 → 柱が伸びて 0.53秒で当たる → 消えていく(front#327)
-    case 'circle': return { duration: CIRCLE_CAST + CIRCLE_RISE + 0.4, hitAt: CIRCLE_CAST + CIRCLE_RISE };
+    // LV1(front#435 で約1.5倍の長さにした)
+    case 'fire': return { duration: slow(1.0), hitAt: slow(0.45) };
+    case 'water': return { duration: slow(0.9), hitAt: slow(0.45) };
+    case 'wind': return { duration: slow(1.0), hitAt: slow(0.4) };
+    case 'spark': return { duration: slow(0.9), hitAt: slow(0.45) };
+    case 'dark': return { duration: slow(1.0), hitAt: slow(0.45) };
+    // LV2: 魔法陣が出る → すぐ当たる → 消えていく(front#435)
+    case 'blaze': return lv2Timing(0.6);
+    case 'splash': return lv2Timing(0.7);
+    case 'gale': return lv2Timing(0.65);
+    case 'thunder': return lv2Timing(0.4);
+    case 'circle': return lv2Timing(0.4);
   }
 }
 
@@ -1727,8 +1762,12 @@ export interface EffectFrame {
   radiusPx: number;
   // 範囲(まわり何マス)。魔法陣(front#327)の大きさに使う
   radius: number;
-  // 当たる時(attackTiming の hitAt / duration)。ジャンプの着地に使う
+  // 当たる時(attackTiming の hitAt / duration)。ジャンプの着地・LV2 の攻撃に使う
   hitK: number;
+  // LV2 の攻撃で魔法陣を出す(front#435)。なければ出す
+  circle?: boolean;
+  // プレイヤーの魔法(front#383)の演出に使う。敵の攻撃の変更(front#435 の速さ・雷LV2)に巻き込まず、前のままの絵にする
+  player?: boolean;
 }
 
 /** 体当たり・ジャンプで、ためているとき体をふるわせる量 */
@@ -1745,7 +1784,9 @@ export function jumpHeight(def: EnemyDef, elapsed: number, s = 1): number {
 
 /** 攻撃の演出(エフェクト)を描く。地面に出るもの・相手の上に出るものをまとめて描く */
 export function drawAttackEffect(c: CanvasRenderingContext2D, f: EffectFrame): void {
-  const { attack, k, time, ex, ey, tx, ty, dir: d, s } = f;
+  const { attack, k, ex, ey, tx, ty, dir: d, s } = f;
+  // 属性の攻撃は、ちらつき・回転もゆっくりにする(front#435)
+  const time = SPELLS.includes(attack) && !f.player ? f.time * SPELL_FX_SPEED : f.time;
   if (attack === 'claw' && k > 0.3 && k < 0.8) {
     c.strokeStyle = `rgba(255,255,255,${1 - (k - 0.3) / 0.5})`;
     c.lineWidth = 3;
@@ -1771,10 +1812,12 @@ export function drawAttackEffect(c: CanvasRenderingContext2D, f: EffectFrame): v
   if (attack === 'fire') drawFire(c, k, time, tx, ty, s);
   if (attack === 'water') drawWater(c, k, time, tx, ty, s);
   if (attack === 'wind') drawWind(c, k, time, tx, ty, s);
-  if (attack === 'thunder') drawThunder(c, k, time, tx, ty, s);
+  if (attack === 'spark') drawSpark(c, k, time, tx, ty, s);
   if (attack === 'dark') drawDark(c, k, time, tx, ty, s);
   if (attack === 'shockwave') drawShockwave(c, k, time, ex, ey, f.radiusPx);
-  if (attack === 'circle') drawMagicCircle(c, f);
+  // プレイヤーのサンダーは、前の雷(雷雲から稲妻)のまま
+  if (attack === 'thunder' && f.player) drawThunderCloud(c, k, time, tx, ty, s);
+  if (isLv2Attack(attack) && !f.player) drawLv2(c, { ...f, time });
   void d;
 }
 
@@ -1810,11 +1853,16 @@ function drawFire(c: CanvasRenderingContext2D, k: number, time: number, x: numbe
   if (k >= 0.9) return;
   const r = (k - 0.35) / 0.55;
   const hgt = Math.sin(Math.min(1, r * 1.8) * Math.PI * 0.5) * 72 * s * (r > 0.7 ? (1 - r) / 0.3 : 1);
-  for (let j = 0; j < 50; j++) {
+  fireParticles(c, time, x, y, s, hgt, 36 * s, 50);
+}
+
+/** 炎の粒(下が黄色、上へ行くほど赤く小さくなる)。hgt: 高さ / width: 幅 / n: 数 / size: 粒の大きさの倍率 */
+function fireParticles(c: CanvasRenderingContext2D, time: number, x: number, y: number, s: number, hgt: number, width: number, n: number, size = 1): void {
+  for (let j = 0; j < n; j++) {
     const life = (time * 2.6 + rnd(j, 1)) % 1;
-    const px = x + (rnd(j, 2) - 0.5) * 36 * s * (1 - life * 0.5) + Math.sin(time * 9 + j) * 2 * s;
+    const px = x + (rnd(j, 2) - 0.5) * width * (1 - life * 0.5) + Math.sin(time * 9 + j) * 2 * s;
     const py = y - life * hgt;
-    const rr = (11 - life * 6) * s * (0.6 + rnd(j, 3) * 0.6);
+    const rr = (11 - life * 6) * s * (0.6 + rnd(j, 3) * 0.6) * size;
     c.fillStyle = life < 0.3 ? 'rgba(255,214,90,0.8)' : life < 0.65 ? 'rgba(251,128,30,0.6)' : 'rgba(220,50,25,0.4)';
     c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fill();
   }
@@ -1862,35 +1910,41 @@ function drawWater(c: CanvasRenderingContext2D, k: number, time: number, x: numb
 
 // 風: 相手のいたマスに竜巻が起こり、その場で大きくなって消える
 function drawWind(c: CanvasRenderingContext2D, k: number, time: number, x: number, y: number, s: number): void {
-  const grow = Math.min(1, k / 0.35);
-  const fade = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1;
+  tornado(c, Math.min(1, k / 0.35), k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1, time, x, y, s, 1);
+}
+
+/** 竜巻。grow: 0〜1(できていく) / fade: 濃さ / big: 大きさ(1 が風LV1。風LV2 は大きく、段も増やす) */
+function tornado(c: CanvasRenderingContext2D, grow: number, fade: number, time: number, x: number, y: number, s: number, big: number): void {
+  const wide = big > 1;
   c.save();
   c.globalAlpha = Math.max(0, fade);
   c.save(); c.translate(x, y); c.scale(1, 0.5);
   c.strokeStyle = 'rgba(167,243,208,0.7)';
-  c.lineWidth = 2;
-  c.beginPath(); c.arc(0, 0, 30 * s, time * 6, time * 6 + Math.PI * 1.4); c.stroke();
+  c.lineWidth = 2 * big;
+  c.beginPath(); c.arc(0, 0, 30 * s * big, time * 6, time * 6 + Math.PI * 1.4); c.stroke();
   c.restore();
-  const layers = Math.max(1, Math.round(9 * grow));
-  c.lineWidth = 2.5;
+  const layers = Math.max(1, Math.round(9 * grow * (wide ? 1.4 : 1)));
+  c.lineWidth = 2.5 * (wide ? 1.4 : 1);
   for (let i = 0; i < layers; i++) {
-    const yy = y - i * 8 * s;
-    const w = (6 + i * 3.4) * s * (0.6 + grow * 0.4);
+    const yy = y - i * 8 * s * (wide ? 1.1 : 1);
+    const w = (6 + i * 3.4) * s * (0.6 + grow * 0.4) * big;
     const sway = Math.sin(time * 12 + i * 0.7) * 5 * s;
-    c.strokeStyle = `rgba(220,245,235,${0.9 - i * 0.06})`;
+    c.strokeStyle = `rgba(220,245,235,${0.9 - i * (wide ? 0.045 : 0.06)})`;
     c.beginPath(); c.ellipse(x + sway, yy, w, w * 0.32, 0, 0, Math.PI * 2); c.stroke();
   }
   c.fillStyle = 'rgba(74,222,128,0.85)';
-  for (let i = 0; i < 4; i++) {
+  const leaves = 4 * Math.round(big * 1.5);
+  for (let i = 0; i < (wide ? leaves : 4); i++) {
     const a = time * 9 + i * 1.6;
-    const h2 = ((time * 0.8 + i / 4) % 1) * 64 * s * grow;
-    c.beginPath(); c.ellipse(x + Math.cos(a) * (12 + h2 / (4 * s)) * s * 0.6, y - h2, 3 * s, 1.6 * s, a, 0, Math.PI * 2); c.fill();
+    const h2 = ((time * 0.8 + i / (4 * big)) % 1) * 64 * s * grow * big;
+    c.beginPath(); c.ellipse(x + Math.cos(a) * (12 + h2 / (4 * s)) * s * 0.6 * big, y - h2, 3 * s, 1.6 * s, a, 0, Math.PI * 2); c.fill();
   }
   c.restore();
 }
 
-// 雷: 頭の上に雷雲 → 太い稲妻が落ち、まわりが一瞬白く光る → 足元に火花
-function drawThunder(c: CanvasRenderingContext2D, k: number, time: number, x: number, y: number, s: number): void {
+// 雷(プレイヤーの魔法サンダー): 頭の上に雷雲 → 太い稲妻が落ち、まわりが一瞬白く光る → 足元に火花。
+// 敵の雷は front#435 で 雷LV1(足元を流れる雷)・雷LV2(魔法陣と空からの稲妻)に変えた
+function drawThunderCloud(c: CanvasRenderingContext2D, k: number, time: number, x: number, y: number, s: number): void {
   const cyc = y - 95 * s;
   const fade = k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1;
   c.save();
@@ -2016,42 +2070,67 @@ function drawDarkColumn(c: CanvasRenderingContext2D, q: number, time: number, x:
   c.restore();
 }
 
-/**
- * 魔法陣(front#327)。相手の足元に魔法陣が浮かんで回りながら広がり(詠唱)、魔法陣いっぱいの太い闇の柱が立ちのぼる。
- * 柱が伸びきった時(hitK)に当たり、魔法陣が弾けて闇のかけらが飛び散る。魔法陣の大きさは範囲のマス(1なら3×3)の外のふち
- */
-function drawMagicCircle(c: CanvasRenderingContext2D, f: EffectFrame): void {
-  const { k, time, tx: x, ty: y, s, hitK } = f;
+// ===== LV2 の攻撃(front#435) =====
+// 相手の足元に属性の色の魔法陣が浮かんで、すぐ攻撃が出る(当たる時 hitK に伸びきる)。
+// 魔法陣の大きさは、範囲のマス(1なら3×3)の外のふちの 65%(見た目だけ。当たる範囲は変えない)
+
+// 魔法陣の大きさ(範囲のマスの外のふちに対する割合)と、広がりきるまでの秒
+const CIRCLE_SCALE = 0.65;
+const CIRCLE_GROW = slow(0.12);
+
+interface CirclePalette { glow: string; line: string; star: string; mark: string; bg1: string; bg2: string }
+const CIRCLE_PALETTES: Record<AttackElement, CirclePalette> = {
+  fire: { glow: '#f97316', line: '254,215,170', star: 'rgba(249,115,22,0.95)', mark: 'rgba(254,205,160,0.9)', bg1: '249,115,22', bg2: '127,29,29' },
+  water: { glow: '#38bdf8', line: '224,242,254', star: 'rgba(56,189,248,0.95)', mark: 'rgba(186,230,253,0.9)', bg1: '56,189,248', bg2: '12,74,110' },
+  wind: { glow: '#4ade80', line: '220,252,231', star: 'rgba(74,222,128,0.95)', mark: 'rgba(187,247,208,0.9)', bg1: '74,222,128', bg2: '20,83,45' },
+  thunder: { glow: '#facc15', line: '254,249,195', star: 'rgba(250,204,21,0.95)', mark: 'rgba(254,240,138,0.9)', bg1: '250,204,21', bg2: '113,63,18' },
+  dark: { glow: '#a855f7', line: '233,213,255', star: 'rgba(168,85,247,0.9)', mark: 'rgba(245,208,254,0.85)', bg1: '168,85,247', bg2: '46,16,101' }
+};
+
+/** LV2 の攻撃。魔法陣(出すときだけ)を描いてから、属性ごとの攻撃を描く */
+function drawLv2(c: CanvasRenderingContext2D, f: EffectFrame): void {
+  const spec = ENEMY_ATTACKS.find((a) => a.id === f.attack);
+  if (!spec?.element) return;
   const radius = Math.max(0, Math.round(f.radius));
-  const sec = k * attackTiming({ attack: 'circle' } as EnemyDef).duration;
-  // 範囲のマスの外のふち(マスの幅は rpg-data の TW = 64)。範囲0なら暗黒の柱くらい
-  const R = radius ? (radius + 0.5) * 64 * s : 30 * s;
-  const pillarK = (hitK * CIRCLE_CAST) / (CIRCLE_CAST + CIRCLE_RISE);
-  const grow = Math.min(1, sec / 0.24);
+  // 範囲のマスの外のふち(マスの幅は rpg-data の TW = 64)。範囲0なら闇LV1の柱くらい
+  const R = radius ? (radius + 0.5) * 64 * f.s * CIRCLE_SCALE : 30 * f.s;
+  const lv2 = { ...f, hitK: Math.min(0.95, Math.max(0.05, f.hitK)) };
+  if (f.circle ?? true) drawCircleBase(c, lv2, R, CIRCLE_PALETTES[spec.element], radius ? 16 : 10);
+  if (f.attack === 'blaze') drawBlaze(c, lv2, R);
+  if (f.attack === 'splash') drawSplash(c, lv2, R);
+  if (f.attack === 'gale') drawGale(c, lv2, R);
+  if (f.attack === 'thunder') drawThunderBolt(c, lv2, R);
+  if (f.attack === 'circle') drawDarkPillar(c, lv2, R);
+}
+
+/** 地面の魔法陣(つぶした円): 二重の輪・回る六芒星・逆に回るルーンの印。当たった瞬間に光の輪が広がる */
+function drawCircleBase(c: CanvasRenderingContext2D, f: EffectFrame, R: number, pal: CirclePalette, marks: number): void {
+  const { k, time, tx: x, ty: y, s, hitK } = f;
+  const sec = k * attackTiming({ attack: f.attack } as EnemyDef).duration;
+  const grow = Math.min(1, sec / CIRCLE_GROW);
   const fade = k > hitK ? Math.max(0, 1 - (k - hitK) / (1 - hitK)) : 1;
   const charge = Math.min(1, k / hitK);
-  // 地面の魔法陣(つぶした円): 二重の輪・回る六芒星・逆に回るルーンの印
   c.save();
   c.translate(x, y);
   c.scale(1, 0.5);
   c.globalAlpha = fade;
   const r = R * (0.3 + 0.7 * grow);
   const bg = c.createRadialGradient(0, 0, 2, 0, 0, r);
-  bg.addColorStop(0, `rgba(168,85,247,${0.15 + 0.35 * charge})`);
-  bg.addColorStop(0.8, 'rgba(46,16,101,0.35)');
-  bg.addColorStop(1, 'rgba(46,16,101,0)');
+  bg.addColorStop(0, `rgba(${pal.bg1},${0.15 + 0.35 * charge})`);
+  bg.addColorStop(0.8, `rgba(${pal.bg2},0.35)`);
+  bg.addColorStop(1, `rgba(${pal.bg2},0)`);
   c.fillStyle = bg;
   c.beginPath(); c.arc(0, 0, r * 1.08, 0, Math.PI * 2); c.fill();
-  c.shadowColor = '#a855f7';
+  c.shadowColor = pal.glow;
   c.shadowBlur = 10 + 14 * charge;
-  c.strokeStyle = `rgba(233,213,255,${0.55 + 0.4 * charge})`;
+  c.strokeStyle = `rgba(${pal.line},${0.55 + 0.4 * charge})`;
   c.lineWidth = 2.2 * s;
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
   c.lineWidth = 1.2 * s;
   c.beginPath(); c.arc(0, 0, r * 0.82, 0, Math.PI * 2); c.stroke();
   c.save();
   c.rotate(time * 1.4);
-  c.strokeStyle = 'rgba(168,85,247,0.9)';
+  c.strokeStyle = pal.star;
   c.lineWidth = 1.6 * s;
   for (const off of [0, Math.PI / 3]) {
     c.beginPath();
@@ -2065,8 +2144,7 @@ function drawMagicCircle(c: CanvasRenderingContext2D, f: EffectFrame): void {
   c.restore();
   c.save();
   c.rotate(-time * 0.9);
-  c.fillStyle = 'rgba(245,208,254,0.85)';
-  const marks = radius ? 16 : 10;
+  c.fillStyle = pal.mark;
   for (let i = 0; i < marks; i++) {
     c.save();
     c.rotate((i * Math.PI * 2) / marks);
@@ -2074,34 +2152,371 @@ function drawMagicCircle(c: CanvasRenderingContext2D, f: EffectFrame): void {
     c.restore();
   }
   c.restore();
-  // 当たった瞬間に広がる光の輪
   if (k >= hitK) {
     const q = (k - hitK) / (1 - hitK);
     c.shadowBlur = 0;
     c.globalAlpha = 1;
-    c.strokeStyle = `rgba(245,208,254,${1 - q})`;
+    c.strokeStyle = `rgba(${pal.line},${1 - q})`;
     c.lineWidth = (4 * (1 - q) + 1) * s;
     c.beginPath(); c.arc(0, 0, R * (0.6 + q * 0.8), 0, Math.PI * 2); c.stroke();
   }
   c.restore();
-  // 魔法陣から立つ太い闇の柱(当たる時に伸びきる)。太さは魔法陣の7割くらい
+}
+
+/** 当たってからの進み(0〜1)。当たる前は -1 */
+const afterHit = (f: EffectFrame) => (f.k < f.hitK ? -1 : (f.k - f.hitK) / (1 - f.hitK));
+
+/** ギザギザの線(稲妻)。seed が変わると形が変わる */
+function zigzag(c: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, n: number, amp: number, seed: number): void {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  c.beginPath();
+  c.moveTo(x0, y0);
+  for (let i = 1; i < n; i++) {
+    const t = i / n;
+    const o = (rnd(seed, i) - 0.5) * 2 * amp;
+    c.lineTo(x0 + dx * t + nx * o, y0 + dy * t + ny * o);
+  }
+  c.lineTo(x1, y1);
+  c.stroke();
+}
+
+// 雷LV1: 足元が黄色くちらつく → 足元の中心から、地面を這うように雷がピリピリっと流れる。体のまわりにも小さな電気が走る
+function drawSpark(c: CanvasRenderingContext2D, k: number, time: number, x: number, y: number, s: number): void {
+  // 形を細かく変えて「ピリピリ」させる
+  const flick = Math.floor(time * 24);
+  c.save();
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  if (k < 0.45) {
+    const q = k / 0.45;
+    c.save(); c.translate(x, y); c.scale(1, 0.5);
+    c.fillStyle = `rgba(250,204,21,${0.12 + Math.abs(Math.sin(time * 26)) * 0.14})`;
+    c.beginPath(); c.arc(0, 0, 26 * s * (0.6 + 0.4 * q), 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.strokeStyle = 'rgba(254,249,195,0.9)';
+    c.lineWidth = 1.4 * s;
+    for (let i = 0; i < 3; i++) {
+      if (rnd(flick, i + 9) < 0.4) continue;
+      const a = rnd(flick, i) * Math.PI * 2;
+      const l = (5 + 6 * q) * s;
+      zigzag(c, x, y, x + Math.cos(a) * l, y + Math.sin(a) * l * 0.5, 3, 2 * s, flick * 7 + i);
+    }
+    c.restore();
+    return;
+  }
+  const q = (k - 0.45) / 0.55;
+  c.globalAlpha = q > 0.55 ? Math.max(0, 1 - (q - 0.55) / 0.45) : 1;
+  const reach = Math.min(1, q / 0.18);
+  const g = c.createRadialGradient(x, y - 4 * s, 1, x, y - 4 * s, 30 * s);
+  g.addColorStop(0, `rgba(255,255,255,${0.8 * (1 - q)})`);
+  g.addColorStop(1, 'rgba(250,204,21,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(x, y - 4 * s, 30 * s, 0, Math.PI * 2); c.fill();
+  // 地面を這う雷(7本。先で枝分かれする)
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + rnd(i, 3) * 0.6;
+    const l = (24 + rnd(i, 4) * 14) * s * reach;
+    const ex = x + Math.cos(a) * l;
+    const ey = y + Math.sin(a) * l * 0.5;
+    for (const [w, col] of [[5 * s, 'rgba(250,204,21,0.35)'], [1.6 * s, '#fffbe6']] as [number, string][]) {
+      c.strokeStyle = col;
+      c.lineWidth = w;
+      zigzag(c, x, y, ex, ey, 5, 4 * s, flick * 13 + i);
+      if (reach >= 1 && rnd(flick, i + 20) > 0.35) {
+        const b = a + (rnd(flick, i + 30) - 0.5) * 1.6;
+        zigzag(c, ex, ey, ex + Math.cos(b) * 10 * s, ey + Math.sin(b) * 5 * s, 3, 2.5 * s, flick * 17 + i);
+      }
+    }
+  }
+  // 体のまわりを走る小さな電気
+  c.strokeStyle = 'rgba(254,249,195,0.95)';
+  c.lineWidth = 1.5 * s;
+  for (let i = 0; i < 4; i++) {
+    if (rnd(flick, i + 40) < 0.35) continue;
+    const ox = (rnd(flick, i + 50) - 0.5) * 26 * s;
+    const oy = -(8 + rnd(flick, i + 60) * 40) * s;
+    zigzag(c, x + ox, y + oy, x + ox + (rnd(flick, i + 70) - 0.5) * 14 * s, y + oy - 12 * s, 3, 3 * s, flick * 19 + i);
+  }
+  // 足元に飛ぶ火花
+  c.fillStyle = 'rgba(253,224,71,0.9)';
+  for (let i = 0; i < 10; i++) {
+    const a = rnd(i, 80) * Math.PI * 2;
+    const sp = (18 + rnd(i, 81) * 22) * s * q;
+    c.beginPath(); c.arc(x + Math.cos(a) * sp, y - 6 * s - (30 * q - 34 * q * q) * s + Math.sin(a) * sp * 0.4, 1.6 * s, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// 雷LV2: 頭の上の空が光る → 空から太い稲妻が落ち、まわりが白く光る。魔法陣の中にも細い稲妻 → 足元に火花
+function drawThunderBolt(c: CanvasRenderingContext2D, f: EffectFrame, R: number): void {
+  const { k, time, tx: x, ty: y, s, hitK } = f;
+  if (k < hitK) {
+    const g = c.createRadialGradient(x, y - 150 * s, 2, x, y - 150 * s, 40 * s);
+    g.addColorStop(0, `rgba(254,249,195,${0.5 * (k / hitK)})`);
+    g.addColorStop(1, 'rgba(254,249,195,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y - 150 * s, 40 * s, 0, Math.PI * 2); c.fill();
+    return;
+  }
+  const q = afterHit(f);
+  c.save();
+  if (q < 0.15) {
+    const g = c.createRadialGradient(x, y - 40 * s, 10 * s, x, y - 40 * s, 170 * s);
+    g.addColorStop(0, 'rgba(255,255,255,0.55)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y - 40 * s, 170 * s, 0, Math.PI * 2); c.fill();
+  }
+  if (q < 0.55) {
+    const top = y - 160 * s;
+    const pts: [number, number][] = [[0, 0], [-7, 22], [5, 28], [-4, 52], [8, 58], [0, 82]];
+    const scaleY = (y - top) / 82;
+    c.lineJoin = 'round';
+    c.lineCap = 'round';
+    for (const [w, col] of [[16, 'rgba(253,224,71,0.45)'], [6, '#fffbe6']] as [number, string][]) {
+      c.strokeStyle = col;
+      c.lineWidth = w * Math.max(0.6, s / 2.2) * 1.3;
+      c.beginPath();
+      pts.forEach(([px, py], i) => (i ? c.lineTo(x + px * s * 1.3, top + py * scaleY) : c.moveTo(x + px * s * 1.3, top + py * scaleY)));
+      c.stroke();
+    }
+    const flick = Math.floor(time * 20);
+    c.strokeStyle = 'rgba(254,249,195,0.9)';
+    c.lineWidth = 2 * s;
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + 0.6;
+      const bx = x + Math.cos(a) * R * 0.6;
+      const by = y + Math.sin(a) * R * 0.3;
+      zigzag(c, bx + 6 * s, by - 110 * s, bx, by, 6, 6 * s, flick * 11 + i);
+    }
+  }
+  if (q > 0.1) {
+    const r = (q - 0.1) / 0.9;
+    c.strokeStyle = `rgba(253,224,71,${1 - r})`;
+    c.lineWidth = 2;
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      const r1 = 8 * s + r * 26 * s;
+      const r2 = r1 + 8 * s;
+      c.beginPath();
+      c.moveTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1 * 0.5);
+      c.lineTo(x + Math.cos(a) * r2, y + Math.sin(a) * r2 * 0.5);
+      c.stroke();
+    }
+  }
+  c.restore();
+}
+
+// 水LV2: 中心が泡立つ → 白く光り、太い水柱と斜めの水流が一気に噴き出す。しぶきが2回に分けて尾を引きながら飛び散り、水の壁・霧・波紋が広がる
+function drawSplash(c: CanvasRenderingContext2D, f: EffectFrame, R: number): void {
+  const { k, time, tx: x, ty: y, s, hitK } = f;
+  if (k < hitK) {
+    const charge = k / hitK;
+    c.fillStyle = `rgba(147,197,253,${0.35 + 0.4 * charge})`;
+    for (let i = 0; i < 6; i++) {
+      const life = (time * 2.2 + i / 6) % 1;
+      const a = i * 2.1;
+      c.beginPath(); c.arc(x + Math.cos(a) * 10 * s * life, y - life * 12 * s * charge, (2 + 2 * charge) * s * (1 - life), 0, Math.PI * 2); c.fill();
+    }
+    return;
+  }
+  const q = afterHit(f);
+  c.save();
+  if (q < 0.12) {
+    const g = c.createRadialGradient(x, y - 30 * s, 5 * s, x, y - 30 * s, R * 1.4);
+    g.addColorStop(0, `rgba(240,249,255,${0.75 * (1 - q / 0.12)})`);
+    g.addColorStop(1, 'rgba(56,189,248,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y - 30 * s, R * 1.4, 0, Math.PI * 2); c.fill();
+  }
+  // 足元に広がる霧
+  c.save(); c.translate(x, y); c.scale(1, 0.5);
+  c.fillStyle = `rgba(224,242,254,${0.35 * Math.max(0, 1 - q)})`;
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + time * 0.5;
+    const rr = R * (0.2 + 0.8 * Math.min(1, q * 2));
+    c.beginPath(); c.arc(Math.cos(a) * rr, Math.sin(a) * rr, (14 + 10 * q) * s, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  // 王冠のような水の壁
+  if (q < 0.65) {
+    const r = q / 0.65;
+    const rr = R * (0.15 + 0.8 * Math.min(1, r * 1.5));
+    c.globalAlpha = 1 - r;
+    for (let i = 0; i < 22; i++) {
+      const a = (i / 22) * Math.PI * 2 + rnd(i, 7) * 0.15;
+      const px = x + Math.cos(a) * rr;
+      const py = y + Math.sin(a) * rr * 0.5;
+      const h = (28 + rnd(i, 5) * 26) * s * (1 - r * 0.5);
+      poly(c, [[px - 4 * s, py], [px + Math.cos(a) * h * 0.35, py - h], [px + 4 * s, py]], i % 2 ? 'rgba(191,219,254,0.9)' : 'rgba(240,249,255,0.9)');
+    }
+    c.globalAlpha = 1;
+  }
+  // 太い水柱と、斜めに飛び出す水流(ゆらぎながら崩れる)
+  const up = q < 0.15 ? q / 0.15 : Math.max(0, 1 - (q - 0.35) / 0.3);
+  if (up > 0) {
+    for (const [ang, hm, wm] of [[0, 1, 1], [-0.45, 0.65, 0.55], [0.45, 0.65, 0.55], [-0.8, 0.45, 0.4], [0.8, 0.45, 0.4]]) {
+      const hgt = Math.min(1, up) * 140 * s * hm;
+      const w = 26 * s * wm;
+      const wob = Math.sin(time * 30 + ang * 5) * 3 * s;
+      c.save(); c.translate(x, y); c.rotate(ang);
+      const g = c.createLinearGradient(0, -hgt, 0, 0);
+      g.addColorStop(0, 'rgba(240,249,255,0.95)');
+      g.addColorStop(0.5, 'rgba(96,165,250,0.9)');
+      g.addColorStop(1, 'rgba(29,78,216,0.9)');
+      c.fillStyle = g;
+      c.beginPath();
+      c.moveTo(-w, 0);
+      c.quadraticCurveTo(-w * 0.45 + wob, -hgt * 0.6, -w * 0.2, -hgt);
+      c.quadraticCurveTo(0, -hgt - 10 * s, w * 0.2, -hgt);
+      c.quadraticCurveTo(w * 0.45 - wob, -hgt * 0.6, w, 0);
+      c.closePath();
+      c.fill();
+      c.restore();
+    }
+  }
+  // 飛び散るしぶき(2回に分けて噴き出す。尾を引いて放物線を描き、地面で消える)
+  c.lineCap = 'round';
+  for (const [start, n, seed] of [[0, 70, 1], [0.22, 50, 2]]) {
+    for (let i = 0; i < n; i++) {
+      const j = i + seed * 100;
+      const a = rnd(j, 1) * Math.PI * 2;
+      const sp = (0.4 + rnd(j, 2) * 0.9) * R;
+      const vz = (80 + rnd(j, 3) * 120) * s;
+      const t = Math.min(1, (q - start) * (1.2 + rnd(j, 4) * 0.6));
+      if (t <= 0 || t >= 1) continue;
+      const pos = (tt: number): [number, number] => [x + Math.cos(a) * sp * tt, y + Math.sin(a) * sp * tt * 0.5 - Math.max(0, vz * 1.6 * tt * (1 - tt))];
+      const [px, py] = pos(t);
+      const [bx, by] = pos(Math.max(0, t - 0.08));
+      const alpha = 0.95 * (1 - t * 0.5);
+      const col = j % 3 ? `rgba(147,197,253,${alpha})` : `rgba(240,249,255,${alpha})`;
+      const rr = (2.5 + rnd(j, 6) * 3) * s;
+      c.strokeStyle = col;
+      c.lineWidth = rr * 1.2;
+      c.beginPath(); c.moveTo(bx, by); c.lineTo(px, py); c.stroke();
+      c.fillStyle = col;
+      c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // 地面に広がる波紋
+  c.translate(x, y); c.scale(1, 0.5);
+  for (let i = 0; i < 4; i++) {
+    const r = q * 1.4 - i * 0.15;
+    if (r <= 0 || r >= 1) continue;
+    c.strokeStyle = `rgba(186,230,253,${0.9 * (1 - r)})`;
+    c.lineWidth = 4 * s * (1 - r) + 0.5;
+    c.beginPath(); c.arc(0, 0, R * (0.2 + r), 0, Math.PI * 2); c.stroke();
+  }
+  c.restore();
+}
+
+// 炎LV2: 魔法陣いっぱいに大きな火柱が噴き上がり、炎の輪が地面を走って広がる。火の粉が飛び散る
+function drawBlaze(c: CanvasRenderingContext2D, f: EffectFrame, R: number): void {
+  const { time, tx: x, ty: y, s } = f;
+  const q = afterHit(f);
+  if (q < 0) return;
+  c.save();
+  if (q < 0.18) {
+    const g = c.createRadialGradient(x, y - 30 * s, 5 * s, x, y - 30 * s, R * 1.3);
+    g.addColorStop(0, `rgba(255,237,213,${0.7 * (1 - q / 0.18)})`);
+    g.addColorStop(1, 'rgba(249,115,22,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y - 30 * s, R * 1.3, 0, Math.PI * 2); c.fill();
+  }
+  // 地面を走って広がる炎の輪
+  if (q < 0.75) {
+    const r = q / 0.75;
+    const rr = R * (0.25 + 0.75 * Math.min(1, r * 1.6));
+    for (let i = 0; i < 18; i++) {
+      const a = (i / 18) * Math.PI * 2 + rnd(i, 7) * 0.2;
+      const px = x + Math.cos(a) * rr;
+      const py = y + Math.sin(a) * rr * 0.5;
+      const h = (16 + rnd(i, 8) * 14 + Math.sin(time * 20 + i) * 4) * s * (1 - r);
+      const g = c.createLinearGradient(0, py - h, 0, py);
+      g.addColorStop(0, 'rgba(220,38,38,0)');
+      g.addColorStop(0.5, 'rgba(251,128,30,0.8)');
+      g.addColorStop(1, 'rgba(255,214,90,0.95)');
+      c.fillStyle = g;
+      c.beginPath();
+      c.moveTo(px - 6 * s, py);
+      c.quadraticCurveTo(px - 4 * s, py - h * 0.6, px, py - h);
+      c.quadraticCurveTo(px + 4 * s, py - h * 0.6, px + 6 * s, py);
+      c.closePath();
+      c.fill();
+    }
+  }
+  // 大きな火柱(すぐ伸びきり、後半で縮む)
+  const hgt = Math.sin(Math.min(1, q * 4) * Math.PI * 0.5) * 120 * s * (q > 0.55 ? Math.max(0, (1 - q) / 0.45) : 1);
+  if (hgt > 1) fireParticles(c, time * 1.3, x, y, s, hgt, R * 0.9, 90, 1.35);
+  // 飛び散る火の粉
+  c.globalAlpha = 1 - q;
+  c.fillStyle = 'rgba(255,214,90,0.9)';
+  for (let i = 0; i < 22; i++) {
+    const a = rnd(i, 30) * Math.PI * 2;
+    const sp = (0.4 + rnd(i, 31) * 0.7) * R * q;
+    c.beginPath(); c.arc(x + Math.cos(a) * sp, y - (90 * q - 70 * q * q) * s * (0.6 + rnd(i, 32)) + Math.sin(a) * sp * 0.5, 2 * s, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// 風LV2: 大きな竜巻が立ち、まわりを風の刃(三日月形)が切り裂きながら回る。葉っぱが巻き上がる
+function drawGale(c: CanvasRenderingContext2D, f: EffectFrame, R: number): void {
+  const { time, tx: x, ty: y, s } = f;
+  const q = afterHit(f);
+  if (q < 0) return;
+  const fade = q > 0.65 ? Math.max(0, 1 - (q - 0.65) / 0.35) : 1;
+  c.save();
+  c.globalAlpha = fade;
+  c.translate(x, y); c.scale(1, 0.5);
+  c.lineCap = 'round';
+  for (let i = 0; i < 5; i++) {
+    const a = time * 9 + (i / 5) * Math.PI * 2;
+    const rr = R * (0.45 + 0.4 * Math.min(1, q * 3)) * (0.9 + 0.1 * Math.sin(i * 3 + time * 5));
+    for (const [w, col] of [[7 * s, 'rgba(74,222,128,0.35)'], [2.4 * s, 'rgba(240,253,244,0.95)']] as [number, string][]) {
+      c.strokeStyle = col;
+      c.lineWidth = w;
+      c.beginPath(); c.arc(0, 0, rr, a, a + 0.9); c.stroke();
+    }
+  }
+  c.restore();
+  tornado(c, Math.min(1, q / 0.2), fade, time, x, y, s, 1.6);
+  c.save();
+  c.globalAlpha = fade;
+  for (let i = 0; i < 14; i++) {
+    const life = (time * 1.1 + rnd(i, 40)) % 1;
+    const a = time * 7 + i * 2.3;
+    const rr = R * (0.85 - life * 0.5);
+    c.fillStyle = i % 2 ? 'rgba(74,222,128,0.9)' : 'rgba(134,239,172,0.9)';
+    c.beginPath(); c.ellipse(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.5 - life * 110 * s, 3.5 * s, 1.8 * s, a, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// 闇LV2(前の魔法陣 front#327): 魔法陣から太い闇の柱が立ちのぼる(当たる時に伸びきる)。当たると白く光り、闇のかけらが飛び散る
+function drawDarkPillar(c: CanvasRenderingContext2D, f: EffectFrame, R: number): void {
+  const { k, time, tx: x, ty: y, s, hitK } = f;
+  // 柱は、当たるまでの後ろの4割で伸びる
+  const pillarK = hitK * (LV2_CAST / (LV2_CAST + LV2_RISE));
+  // 太さは魔法陣の7割くらい
   if (k >= pillarK) drawDarkColumn(c, Math.min(1, ((k - pillarK) / (hitK - pillarK)) * 0.3), time, x, y, s, Math.max(1, (R * 0.7) / (15 * s)));
-  // 当たった瞬間の白い光と、飛び散る闇のかけら
-  if (k >= hitK) {
-    const q = (k - hitK) / (1 - hitK);
-    if (q < 0.25) {
-      c.fillStyle = `rgba(255,255,255,${0.5 * (1 - q / 0.25)})`;
-      c.beginPath(); c.ellipse(x, y - 10 * s, R * 0.9, R * 0.45, 0, 0, Math.PI * 2); c.fill();
-    }
-    for (let i = 0; i < 14; i++) {
-      const n1 = Math.sin(i * 5.3 * 12.9898) * 43758.5453;
-      const n2 = Math.sin(i * 9.1 * 12.9898) * 43758.5453;
-      const a = (n1 - Math.floor(n1)) * Math.PI * 2;
-      const sp = (30 + (n2 - Math.floor(n2)) * 50) * s;
-      const px = x + Math.cos(a) * sp * q;
-      const py = y - 12 * s - (60 * q - 70 * q * q) * s - Math.sin(a) * sp * q * 0.3;
-      poly(c, [[px, py - 3 * s], [px + 2 * s, py], [px, py + 3 * s], [px - 2 * s, py]], i % 3 ? `rgba(27,11,51,${1 - q})` : `rgba(168,85,247,${1 - q})`);
-    }
+  const q = afterHit(f);
+  if (q < 0) return;
+  if (q < 0.25) {
+    c.fillStyle = `rgba(255,255,255,${0.5 * (1 - q / 0.25)})`;
+    c.beginPath(); c.ellipse(x, y - 10 * s, R * 0.9, R * 0.45, 0, 0, Math.PI * 2); c.fill();
+  }
+  for (let i = 0; i < 14; i++) {
+    const n1 = Math.sin(i * 5.3 * 12.9898) * 43758.5453;
+    const n2 = Math.sin(i * 9.1 * 12.9898) * 43758.5453;
+    const a = (n1 - Math.floor(n1)) * Math.PI * 2;
+    const sp = (30 + (n2 - Math.floor(n2)) * 50) * s;
+    const px = x + Math.cos(a) * sp * q;
+    const py = y - 12 * s - (60 * q - 70 * q * q) * s - Math.sin(a) * sp * q * 0.3;
+    poly(c, [[px, py - 3 * s], [px + 2 * s, py], [px, py + 3 * s], [px - 2 * s, py]], i % 3 ? `rgba(27,11,51,${1 - q})` : `rgba(168,85,247,${1 - q})`);
   }
 }
 

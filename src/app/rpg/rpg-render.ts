@@ -1140,7 +1140,7 @@ export class RpgRenderer {
       if (!this.onScreen(ex, ey, 300) && !this.onScreen(tx, ty, 200)) continue;
       drawAttackEffect(this.ctx, {
         attack: def.attack, k: Math.min(1, e.act.t / duration), time: this.time, ex, ey, tx, ty, dir: e.dir, s: 1,
-        radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, radius: def.radius, hitK: hitAt / duration
+        radiusPx: (def.radius + 0.5) * (TW / 2) * 1.4, radius: def.radius, hitK: hitAt / duration, circle: def.magicCircle ?? true
       });
     }
   }
@@ -1260,7 +1260,7 @@ export class RpgRenderer {
       const { hitAt, duration } = SPELL_FX_SEC[fx.spell];
       const [tx, ty] = this.at(fx.x, fx.y);
       const frame = (attack: 'fire' | 'water' | 'thunder', k: number, x: number, y: number) =>
-        drawAttackEffect(ctx, { attack, k, time: this.time, ex: x, ey: y, tx: x, ty: y, dir: 1, s: 1, radiusPx: 0, radius: 0, hitK: 0 });
+        drawAttackEffect(ctx, { attack, k, time: this.time, ex: x, ey: y, tx: x, ty: y, dir: 1, s: 1, radiusPx: 0, radius: 0, hitK: 0, player: true });
       if (fx.spell === 'thunder') {
         const k = 0.2 + 0.8 * Math.min(1, fx.t / duration);
         const spots = fx.hit && fx.hits.length ? fx.hits.map((e) => this.at(e.x, e.y)) : [[tx, ty] as [number, number]];
