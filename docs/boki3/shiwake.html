@@ -673,6 +673,49 @@
         </div>
       </div>
     </section>
+    <section class="topic" id="topic-10">
+      <h2><span class="topic-no">11</span>訂正仕訳</h2>
+      <p>記帳した仕訳に誤りが見つかったときは、誤りの部分だけを直す仕訳を行う。これを<strong>訂正仕訳</strong>という。次の3つの手順で考えると間違えにくい。</p>
+      <ol>
+        <li>誤った仕訳の貸借を逆にした仕訳で、誤った仕訳を取り消す</li>
+        <li>正しい仕訳をする</li>
+        <li>1と2で同じ勘定科目が貸借反対に出てきたら相殺して、1本の仕訳にまとめる</li>
+      </ol>
+      <div class="example-box">
+        <span class="label">例題: 勘定科目の誤り</span>
+        <span>売掛金 50,000円を現金で回収したときに、誤って「（借）現金 50,000（貸）売上 50,000」と記帳していた。<br>1 取り消し: （借）売上 50,000（貸）現金 50,000<br>2 正しい仕訳: （借）現金 50,000（貸）売掛金 50,000<br>3 現金を相殺: <strong>（借）売上 50,000（貸）売掛金 50,000</strong></span>
+      </div>
+      <table class="ref-table">
+        <thead><tr><th>誤りの種類</th><th>例</th><th>訂正仕訳</th></tr></thead>
+        <tbody>
+          <tr><td>勘定科目の誤り</td><td>備品を後払いで買い、未払金ではなく買掛金で処理した</td><td>（借）買掛金（貸）未払金</td></tr>
+          <tr><td>金額の誤り</td><td>買掛金 30,000円の支払いを 3,000円と記帳した</td><td>不足の 27,000円を追加:（借）買掛金 27,000（貸）当座預金など 27,000</td></tr>
+          <tr><td>貸借の逆</td><td>買掛金 40,000円の現金払いを「（借）現金（貸）買掛金」と記帳した</td><td>金額を2倍にして正しい向きに:（借）買掛金 80,000（貸）現金 80,000</td></tr>
+          <tr><td>記入漏れ</td><td>給料から差し引いた源泉所得税を記帳しなかった</td><td>（借）給料（貸）所得税預り金</td></tr>
+        </tbody>
+      </table>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>正しく記帳されている勘定科目は、訂正仕訳には出てこない。貸借を逆に記帳した場合は、取り消し分と正しい分の2回分が必要なので、金額が2倍になる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-journal" data-accounts="給料,所得税預り金,現金,租税公課,未払金,預り金" data-debit="給料:24000" data-credit="所得税預り金:24000">
+          <p class="quiz-q">問1　給料 300,000円から所得税の源泉徴収額 24,000円を差し引き、残額を現金で支払ったが、「（借）給料 276,000（貸）現金 276,000」と記帳していた。訂正仕訳をしなさい。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>正しい仕訳は「（借）給料 300,000（貸）所得税預り金 24,000・現金 276,000」。現金は合っているので、足りない給料 24,000円と所得税預り金 24,000円を追加する。</p>
+        </div>
+        <div class="quiz quiz-journal" data-accounts="現金,買掛金,売掛金,仕入,当座預金,未払金" data-debit="買掛金:80000" data-credit="現金:80000">
+          <p class="quiz-q">問2　買掛金 40,000円を現金で支払ったが、誤って「（借）現金 40,000（貸）買掛金 40,000」と記帳していた。訂正仕訳をしなさい。</p>
+          <div class="journal"></div>
+          <button type="button" class="quiz-check">答え合わせ</button>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>取り消し「（借）買掛金 40,000（貸）現金 40,000」と正しい仕訳「（借）買掛金 40,000（貸）現金 40,000」は同じ形なので、合わせて「（借）買掛金 80,000（貸）現金 80,000」になる。</p>
+        </div>
+      </div>
+    </section>
     </article>
 
     <nav class="docs-genre-nav">

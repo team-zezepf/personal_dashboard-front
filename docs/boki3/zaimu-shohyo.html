@@ -227,6 +227,114 @@
         </div>
       </div>
     </section>
+    <section class="topic" id="topic-3">
+      <h2><span class="topic-no">4</span>貸借対照表・損益計算書の表示のしかた</h2>
+      <p>財務諸表には、勘定科目の名前をそのまま書くとは限らない。第3問で財務諸表を作るときは、次の<strong>表示科目</strong>に読み替えて書く。</p>
+      <table class="ref-table">
+        <thead><tr><th>勘定科目</th><th>表示科目</th><th>表示する場所</th></tr></thead>
+        <tbody>
+          <tr><td>繰越商品</td><td>商品</td><td>貸借対照表（資産）</td></tr>
+          <tr><td>前払保険料・前払家賃など</td><td>前払費用</td><td>貸借対照表（資産）</td></tr>
+          <tr><td>未収利息・未収家賃など</td><td>未収収益</td><td>貸借対照表（資産）</td></tr>
+          <tr><td>未払利息・未払家賃など</td><td>未払費用</td><td>貸借対照表（負債）</td></tr>
+          <tr><td>前受家賃・前受地代など</td><td>前受収益</td><td>貸借対照表（負債）</td></tr>
+          <tr><td>当座借越</td><td>借入金</td><td>貸借対照表（負債）</td></tr>
+          <tr><td>仕入</td><td>売上原価</td><td>損益計算書（費用）</td></tr>
+          <tr><td>売上</td><td>売上高</td><td>損益計算書（収益）</td></tr>
+        </tbody>
+      </table>
+      <p>貸倒引当金と減価償却累計額は、負債ではなく<strong>資産から差し引いて表示する</strong>。差し引く前の金額・差し引く金額・差し引いた後の金額を並べて書く。</p>
+      <table class="ref-table">
+        <thead><tr><th colspan="3">貸借対照表（資産の部の一部）</th></tr></thead>
+        <tbody>
+          <tr><td>売掛金</td><td>200,000</td><td></td></tr>
+          <tr><td>貸倒引当金</td><td>△ 4,000</td><td>196,000</td></tr>
+          <tr><td>備品</td><td>300,000</td><td></td></tr>
+          <tr><td>減価償却累計額</td><td>△ 120,000</td><td>180,000</td></tr>
+        </tbody>
+      </table>
+      <div class="formula-box">
+        <span class="label">財務諸表で計算する金額</span>
+        <span>売上総利益 = 売上高 − 売上原価<br>当期純利益 = 税引前当期純利益 − 法人税等<br>貸借対照表の繰越利益剰余金 = 決算整理前の繰越利益剰余金 + 当期純利益</span>
+      </div>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>法人税等を中間納付しているときは、貸借対照表の未払法人税等は「法人税等 − 仮払法人税等」になる。貸借対照表の繰越利益剰余金に当期純利益を加え忘れると、貸借が合わなくなる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 2問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="3">
+          <p class="quiz-q">問1　決算整理前残高試算表の繰越利益剰余金が 150,000円、当期純利益が 87,000円 であった。貸借対照表に表示する繰越利益剰余金はいくらか（配当などはないものとする）。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　63,000円</button>
+            <button type="button">イ　150,000円</button>
+            <button type="button">ウ　87,000円</button>
+            <button type="button">エ　237,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>当期純利益は繰越利益剰余金を増やすので、150,000 + 87,000 = 237,000円 と表示する。</p>
+        </div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問2　勘定科目と、貸借対照表に表示する科目の組み合わせとして正しいものはどれか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　前受家賃 → 前払費用</button>
+            <button type="button">イ　未収利息 → 未収収益</button>
+            <button type="button">ウ　当座借越 → 当座預金</button>
+            <button type="button">エ　繰越商品 → 売上原価</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>未収利息は未収収益として資産に表示する。前受家賃は前受収益（負債）、当座借越は借入金（負債）、繰越商品は商品（資産）と表示する。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="topic-4">
+      <h2><span class="topic-no">5</span>第3問の解き方</h2>
+      <p>第3問（35点）は、決算整理前残高試算表と決算整理事項から、<strong>財務諸表・精算表・決算整理後残高試算表</strong>のいずれかを作る問題である。どの形式でもやることは同じで、「決算整理事項を1つずつ仕訳にして、試算表の金額に加減する」ことの積み重ねになる。</p>
+      <ol>
+        <li><strong>形式と会計期間を確認する</strong>: 何を作るのか、会計期間はいつからいつまでか（月割計算に使う）。</li>
+        <li><strong>未処理事項・訂正事項を先に処理する</strong>: 「売掛金の回収が未記帳だった」などがあれば、決算整理より前に仕訳する（売掛金の残高が変わり、貸倒引当金の計算に影響するため）。</li>
+        <li><strong>決算整理事項を1つずつ仕訳にする</strong>: 問題用紙の試算表の横に、増減を「+」「−」で書き込む（下書き）。</li>
+        <li><strong>解答用紙に書き写す</strong>: 表示科目（前払費用・商品など）と、差し引いて表示するもの（貸倒引当金・減価償却累計額）に注意する。</li>
+        <li><strong>当期純利益を確かめる</strong>: 収益合計 − 費用合計で計算し、貸借対照表の繰越利益剰余金に加えて貸借が一致するか確かめる。</li>
+      </ol>
+      <div class="example-box">
+        <span class="label">例題: 下書きのしかた</span>
+        <span>会計期間は4月1日〜3月31日。決算整理前の残高: 売掛金 200,000、貸倒引当金 1,000、繰越商品 30,000、備品 300,000、備品減価償却累計額 60,000、売上 900,000、仕入 600,000、保険料 24,000、給料 150,000<br>決算整理事項: ①期末商品 40,000 ②売掛金の2%を差額補充 ③備品は定額法・耐用年数5年・残存価額ゼロ ④保険料は11月1日に1年分を支払った</span>
+      </div>
+      <table class="ref-table">
+        <thead><tr><th>勘定</th><th>整理前</th><th>整理（下書き）</th><th>整理後</th><th>表示</th></tr></thead>
+        <tbody>
+          <tr><td>仕入</td><td>600,000</td><td>① +30,000 −40,000</td><td>590,000</td><td>P/L 売上原価</td></tr>
+          <tr><td>繰越商品</td><td>30,000</td><td>① −30,000 +40,000</td><td>40,000</td><td>B/S 商品</td></tr>
+          <tr><td>貸倒引当金</td><td>1,000</td><td>② +3,000（200,000 × 2% = 4,000 との差額）</td><td>4,000</td><td>B/S 売掛金から差し引く</td></tr>
+          <tr><td>貸倒引当金繰入</td><td>—</td><td>② +3,000</td><td>3,000</td><td>P/L</td></tr>
+          <tr><td>減価償却費</td><td>—</td><td>③ +60,000（300,000 ÷ 5年）</td><td>60,000</td><td>P/L</td></tr>
+          <tr><td>備品減価償却累計額</td><td>60,000</td><td>③ +60,000</td><td>120,000</td><td>B/S 備品から差し引く</td></tr>
+          <tr><td>保険料</td><td>24,000</td><td>④ −14,000（翌期の7か月分）</td><td>10,000</td><td>P/L</td></tr>
+          <tr><td>前払保険料</td><td>—</td><td>④ +14,000</td><td>14,000</td><td>B/S 前払費用</td></tr>
+        </tbody>
+      </table>
+      <p>当期純利益 = 売上 900,000 −（売上原価 590,000 + 給料 150,000 + 保険料 10,000 + 貸倒引当金繰入 3,000 + 減価償却費 60,000）= <strong>87,000円</strong><br>貸借対照表では、売掛金 200,000 − 貸倒引当金 4,000 = 196,000、備品 300,000 − 減価償却累計額 120,000 = 180,000 と表示する。</p>
+      <div class="pitfall-box">
+        <span class="label">つまずきやすいポイント</span>
+        <span>決算整理事項は上から順に処理し、処理したものに印をつけて抜けを防ぐ。法人税等がある問題では、税引前当期純利益から法人税等を差し引いたものが当期純利益になる。貸借対照表の貸借が合わないときは、まず「差し引いて表示するもの」と「新しく出てきた勘定」の書き忘れを確かめる。</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">練習問題 <span class="practice-score">0 / 1問 正解</span></div>
+        <div class="quiz quiz-choice" data-answer="1">
+          <p class="quiz-q">問1　上の例題に、決算整理事項「⑤給料の未払分が 5,000円ある」が加わった場合、当期純利益はいくらか。</p>
+          <div class="quiz-choices">
+            <button type="button">ア　87,000円</button>
+            <button type="button">イ　82,000円</button>
+            <button type="button">ウ　92,000円</button>
+            <button type="button">エ　68,000円</button>
+          </div>
+          <div class="quiz-result" hidden aria-live="polite"></div>
+          <p class="quiz-explain" hidden>未払の給料 5,000円も当期の費用なので、給料は 155,000円になる。当期純利益は 87,000 − 5,000 = 82,000円。</p>
+        </div>
+      </div>
+    </section>
     </article>
 
     <nav class="docs-genre-nav">

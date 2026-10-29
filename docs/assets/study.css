@@ -109,6 +109,36 @@
   font-weight: 700;
 }
 
+/* 商品有高帳: 列が多いので横にスクロールできるようにし、数字は右に寄せる。払出欄は赤字(front#426) */
+.genre-article .ledger-wrap {
+  overflow-x: auto;
+}
+
+.genre-article table.ref-table.ledger td {
+  padding: 4px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.genre-article table.ref-table.ledger td.l {
+  text-align: left;
+}
+
+.genre-article table.ref-table.ledger td.o {
+  color: #d64545;
+  font-weight: 700;
+}
+
+/* T字形の勘定: 摘要は左、金額は右に寄せる(front#426) */
+.genre-article table.ref-table.t-account td {
+  text-align: left;
+}
+
+.genre-article table.ref-table.t-account td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
 .genre-article .formula-box,
 .genre-article .example-box,
 .genre-article .pitfall-box {
