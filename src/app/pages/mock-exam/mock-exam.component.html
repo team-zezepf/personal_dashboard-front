@@ -12,6 +12,9 @@
           <li>制限時間: {{ subject.mockExam.durationMinutes }}分</li>
           <li>出題数: {{ subject.mockExam.questionCount }}問({{ subject.mockExam.questionsPerPage }}問ずつ表示されます)</li>
           <li>合格ボーダー: 正解数が全体の{{ subject.mockExam.passRatio * 100 }}%以上</li>
+          @if (subject.mockExam.typeComposition; as typeComposition) {
+            <li>出題構成: {{ typeCompositionText(typeComposition) }}の順に出題します</li>
+          }
           @if (mockExam.composition(); as composition) {
             <li>出題構成: {{ requiredText(composition) }}、選んだ{{ composition.elective.pickCount }}分野から{{ composition.elective.countPerGenre }}問ずつ</li>
           }
@@ -103,6 +106,14 @@
               @if (q.code) {
                 <app-code-block [code]="q.code"></app-code-block>
               }
+              @if (q.type === 'journal') {
+                <app-journal-input
+                  [accounts]="q.choices"
+                  [value]="mockExam.journalAnswer(globalIndex(i))"
+                  [label]="'第' + (globalIndex(i) + 1) + '問 '"
+                  (changed)="mockExam.setJournal(globalIndex(i), $event)"
+                />
+              } @else {
               <ul class="choice-list">
                 @for (choice of q.choices; track $index; let ci = $index) {
                   <li class="choice-item" [class.selected]="mockExam.isSelected(globalIndex(i), ci)" (click)="mockExam.selectAnswer(globalIndex(i), ci)">
@@ -114,6 +125,7 @@
                   </li>
                 }
               </ul>
+              }
             </div>
           }
 
@@ -171,8 +183,19 @@
           @if (q.code) {
             <app-code-block [code]="q.code"></app-code-block>
           }
-          <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, mockExam.answers()[i]) }}</p>
-          <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          @if (q.type === 'journal' && q.journal) {
+            @if (!mockExam.isCorrect(q, mockExam.answers()[i])) {
+              <p class="review-line"><span class="label">あなたの回答：</span>@if (!mockExam.journalAnswer(i)) {（未回答）}</p>
+              @if (mockExam.journalAnswer(i); as given) {
+                <app-journal-table [journal]="given" [compareTo]="q.journal" />
+              }
+            }
+            <p class="review-line"><span class="label">正解：</span></p>
+            <app-journal-table [journal]="q.journal" />
+          } @else {
+            <p class="review-line"><span class="label">あなたの回答：</span>{{ answerText(q, mockExam.answers()[i]) }}</p>
+            <p class="review-line"><span class="label">正解：</span>{{ correctText(q) }}</p>
+          }
           <div class="explanation-box">
             <span class="label">解説</span>
             <p class="explanation-text">{{ q.explanation }}</p>

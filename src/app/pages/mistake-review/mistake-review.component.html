@@ -79,6 +79,9 @@
             @if (item.question.image) {
               <div class="question-image-wrap" [innerHTML]="trustedImage(item.question.image)"></div>
             }
+            @if (item.question.type === 'journal') {
+              <app-journal-input [accounts]="item.question.choices" [label]="'第' + (globalIndex($index) + 1) + '問 '" (changed)="setJournal(item.question, $event)" />
+            } @else {
             <ul class="choice-list">
               @for (choice of item.question.choices; track $index) {
                 <li class="choice-item" [class.selected]="isSelected(item.question, $index)" (click)="toggleChoice(item.question, $index)">
@@ -93,6 +96,7 @@
                 </li>
               }
             </ul>
+            }
           </div>
         }
         <div class="quiz-actions">
@@ -122,6 +126,20 @@
             @if (item.question.image) {
               <div class="question-image-wrap" [innerHTML]="trustedImage(item.question.image)"></div>
             }
+            @if (item.question.type === 'journal' && item.question.journal) {
+              @if (!resultFor(globalIndex(i))) {
+                <p class="review-line"><span class="label">あなたの回答：</span>@if (!journalAnswerFor(globalIndex(i))) {未回答}</p>
+                @if (journalAnswerFor(globalIndex(i)); as given) {
+                  <app-journal-table [journal]="given" [compareTo]="item.question.journal" />
+                }
+              }
+              <p class="review-line"><span class="label">前回の回答：</span>@if (!item.lastJournal) {未回答}</p>
+              @if (item.lastJournal; as last) {
+                <app-journal-table [journal]="last" [compareTo]="item.question.journal" />
+              }
+              <p class="review-line"><span class="label">正解：</span></p>
+              <app-journal-table [journal]="item.question.journal" />
+            } @else {
             <ul class="answer-choices">
               @for (choice of item.question.choices; track $index) {
                 <li [class.correct]="isCorrectChoice(item.question, $index)" [class.wrong]="!isCorrectChoice(item.question, $index) && (answerFor(globalIndex(i)).includes($index) || item.lastSelected.includes($index))">
@@ -134,6 +152,7 @@
             </ul>
             @if (item.lastSelected.length === 0) {
               <p class="review-line"><span class="label">前回の回答：</span>未回答</p>
+            }
             }
             <div class="explanation-box">
               <span class="label">解説</span>

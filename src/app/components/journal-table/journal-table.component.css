@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  overflow-x: auto;
+}
+
+.journal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 4px 0 10px;
+  background: var(--card);
+}
+
+.journal-table th,
+.journal-table td {
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  text-align: left;
+}
+
+.journal-table th {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.journal-table .amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.journal-table td.wrong {
+  color: var(--red-text);
+  font-weight: 700;
+}

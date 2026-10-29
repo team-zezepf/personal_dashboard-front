@@ -43,3 +43,18 @@ describe('reviewTargets', () => {
     expect(reviewTargets(records, 'kihonjoho')).toEqual([]);
   });
 });
+
+describe('reviewTargets 仕訳入力の問題(front#429)', () => {
+  it('最後に解いたときに入力した仕訳を持ち、4択の問題や仕訳のない記録は null にする', () => {
+    const journal = { debit: [{ account: '仕入', amount: 80000 }], credit: [{ account: '現金', amount: 80000 }] };
+    const record = attempt(1, [['j1', false], ['c1', false]]);
+    record.answers = [
+      { questionId: 'j1', selected: [], correct: false, journal },
+      { questionId: 'c1', selected: [1], correct: false }
+    ];
+    const targets = reviewTargets([record], 'kihonjoho');
+
+    expect(targets.find((t) => t.questionId === 'j1')?.lastJournal).toEqual(journal);
+    expect(targets.find((t) => t.questionId === 'c1')?.lastJournal).toBeNull();
+  });
+});

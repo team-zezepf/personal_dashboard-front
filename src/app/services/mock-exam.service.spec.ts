@@ -276,4 +276,35 @@ describe('MockExamService', () => {
       expect(service.selectedGenres()).toEqual([]);
     });
   });
+  describe('仕訳入力の問題がある科目(front#429)', () => {
+    const journal = { debit: [{ account: '仕入', amount: 80000 }], credit: [{ account: '買掛金', amount: 80000 }] };
+    const journalQuestion = (id: number) => question(id, [], { type: 'journal', choices: ['仕入', '現金', '買掛金'], journal });
+
+    beforeEach(() => {
+      pool.push(journalQuestion(11), journalQuestion(12));
+    });
+
+    it('形式ごとの出題数があれば、仕訳入力の問題を先に、4択をその後に出す', () => {
+      startExam(subject({ questionCount: 3, typeComposition: [{ type: 'journal', label: '仕訳入力', count: 2 }, { type: 'choice', label: '4択', count: 1 }] }));
+
+      expect(service.sessionQuestions().map((q) => q.type)).toEqual(['journal', 'journal', expect.stringMatching(/single|multi/)]);
+    });
+
+    it('入力した仕訳で採点し、回答済みに数え、記録に入力した仕訳を残す', () => {
+      startExam(subject({ questionCount: 3, typeComposition: [{ type: 'journal', label: '仕訳入力', count: 2 }, { type: 'choice', label: '4択', count: 1 }] }));
+      const wrong = { debit: [{ account: '仕入', amount: 80000 }], credit: [{ account: '現金', amount: 80000 }] };
+      service.setJournal(0, journal);
+      service.setJournal(1, wrong);
+
+      expect(service.answeredCount()).toBe(2);
+      expect(service.journalAnswer(1)).toEqual(wrong);
+      service.finish(false);
+
+      const answers = recordCompletion.mock.calls[0][5];
+      expect(recordCompletion.mock.calls[0][1]).toBe(1);
+      expect(answers[0]).toEqual({ questionId: 11, selected: [], journal, correct: true });
+      expect(answers[1]).toEqual({ questionId: 12, selected: [], journal: wrong, correct: false });
+      expect(answers[2]).toEqual({ questionId: service.sessionQuestions()[2].id, selected: [], correct: false });
+    });
+  });
 });

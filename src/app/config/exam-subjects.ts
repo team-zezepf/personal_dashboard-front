@@ -9,6 +9,15 @@ export interface ExamSubjectMockExamConfig {
   questionsPerPage: number;
   // 分野ごとの出題数。省略した科目は、全ての問題からランダムに questionCount 問を出題する
   composition?: MockExamComposition;
+  // 問題の形式ごとの出題数(簿記3級の、仕訳入力と4択など)。並べた順に出題する。count の合計は questionCount と一致させる
+  typeComposition?: MockExamTypeComposition[];
+}
+
+// 問題の形式ごとの出題数。journal は仕訳入力の問題、choice はそれ以外(4択・複数選択)の問題
+export interface MockExamTypeComposition {
+  type: 'journal' | 'choice';
+  label: string;
+  count: number;
 }
 
 /**
@@ -78,7 +87,17 @@ export const EXAM_SUBJECTS: ExamSubject[] = [
     path: '/study/boki3',
     practice: DEFAULT_PRACTICE,
     pointsPerCorrectAnswer: DEFAULT_POINTS_PER_CORRECT_ANSWER,
-    mockExam: { durationMinutes: 60, questionCount: 100, passRatio: 0.7, questionsPerPage: 2 }
+    // 本番の第1問(仕訳15問)に合わせて、仕訳入力15問を先に出す。仕訳入力は1問に時間がかかるため、全体を50問にしている(front#429)
+    mockExam: {
+      durationMinutes: 60,
+      questionCount: 50,
+      passRatio: 0.7,
+      questionsPerPage: 2,
+      typeComposition: [
+        { type: 'journal', label: '仕訳入力', count: 15 },
+        { type: 'choice', label: '4択', count: 35 }
+      ]
+    }
   },
   {
     key: 'oyojoho',

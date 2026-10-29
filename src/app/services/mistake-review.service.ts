@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ExamAchievementsService } from './exam-achievements.service';
 import { ExamQuestionService } from './exam-question.service';
-import { ExamQuestion } from '../models/exam-question.models';
+import { ExamQuestion, Journal, QuestionAnswer } from '../models/exam-question.models';
 import { ExamRecord } from '../models/exam-record.models';
 import { MockExamSubject } from '../config/exam-subjects';
 import { reviewTargets } from '../utils/mistake-review';
@@ -15,6 +15,8 @@ export interface ReviewItem {
   question: ExamQuestion;
   // 最後に解いた模擬試験での回答(未回答なら空)
   lastSelected: number[];
+  // 仕訳入力の問題で、最後に解いた模擬試験で入力した仕訳(未回答や4択の問題は null)
+  lastJournal: Journal | null;
   // 直近の模擬試験のうち、この問題を間違えた回(古い順)
   missedAttempts: ExamRecord[];
 }
@@ -47,7 +49,7 @@ export class MistakeReviewService {
 
   readonly sessionItems = signal<ReviewItem[]>([]);
   readonly round = signal(0);
-  readonly answers = signal<(number[] | undefined)[]>([]);
+  readonly answers = signal<(QuestionAnswer | undefined)[]>([]);
   readonly results = signal<(boolean | undefined)[]>([]);
 
   // 間違えた問題がある分野と問題数(多い順)
@@ -107,7 +109,7 @@ export class MistakeReviewService {
       // 問題データから消えた問題は出題できないので除く
       const items = reviewTargets(res.records, subject.key).flatMap((t) => {
         const question = byId.get(t.questionId);
-        return question ? [{ question, lastSelected: t.lastSelected, missedAttempts: t.missedAttempts }] : [];
+        return question ? [{ question, lastSelected: t.lastSelected, lastJournal: t.lastJournal, missedAttempts: t.missedAttempts }] : [];
       });
       this.items.set(items);
       this.selectedGenres.set(this.genres().map((g) => g.genre));
@@ -143,7 +145,7 @@ export class MistakeReviewService {
     this.view.set('start');
   }
 
-  submitRound(roundAnswers: number[][]): void {
+  submitRound(roundAnswers: QuestionAnswer[]): void {
     const globalStart = this.roundStartIndex();
     const answers = [...this.answers()];
     const results = [...this.results()];

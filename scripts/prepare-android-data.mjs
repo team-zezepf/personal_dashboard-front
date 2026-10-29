@@ -39,7 +39,9 @@ const questions = JSON.parse(raw).map((q) => ({
   correct: q.correct,
   explanation: q.explanation,
   image: q.image ?? null,
-  code: q.code ?? null
+  code: q.code ?? null,
+  // 仕訳入力の問題の正解の仕訳(front#429)
+  journal: q.journal ?? null
 }));
 
 // 更新日時は最後にコミットした日時を使う(ファイルの更新日時は git の取得や切り替えでも変わってしまうため)。

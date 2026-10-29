@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { GraphQLService } from './graphql.service';
 import { ExamAchievementsService, EXAM_ACHIEVEMENT_RATIO } from './exam-achievements.service';
 import { AccountService } from './account.service';
-import { ExamQuestion } from '../models/exam-question.models';
+import { ExamQuestion, JOURNAL_FIELDS, QuestionAnswer } from '../models/exam-question.models';
 import { ExamSubject, findExamSubject } from '../config/exam-subjects';
 import { catchError, of } from 'rxjs';
 import { isCorrectAnswer } from '../utils/exam-answer';
@@ -39,7 +39,7 @@ export class ExamStudyService {
   readonly view = signal<ExamStudyView>('start');
   readonly sessionQuestions = signal<ExamQuestion[]>([]);
   readonly round = signal(0);
-  readonly answers = signal<(number[] | undefined)[]>([]);
+  readonly answers = signal<(QuestionAnswer | undefined)[]>([]);
   readonly results = signal<(boolean | undefined)[]>([]);
 
   readonly totalRounds = computed(() =>
@@ -88,6 +88,7 @@ export class ExamStudyService {
           explanation
           image
           code
+          ${JOURNAL_FIELDS}
         }
       }
     `;
@@ -117,7 +118,7 @@ export class ExamStudyService {
     });
   }
 
-  submitRound(roundAnswers: number[][]): void {
+  submitRound(roundAnswers: QuestionAnswer[]): void {
     const globalStart = this.roundStartIndex();
     const questions = this.roundQuestions();
 
@@ -179,7 +180,7 @@ export class ExamStudyService {
     ).subscribe();
   }
 
-  isCorrect(question: ExamQuestion, answer: number[] | undefined): boolean {
-    return isCorrectAnswer(question, answer ?? []);
+  isCorrect(question: ExamQuestion, answer: QuestionAnswer | undefined): boolean {
+    return isCorrectAnswer(question, answer);
   }
 }

@@ -4,14 +4,18 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HeaderComponent } from '../../components/header/header.component';
 import { CodeBlockComponent } from '../../components/code-block/code-block.component';
+import { JournalInputComponent } from '../../components/journal-input/journal-input.component';
+import { JournalTableComponent } from '../../components/journal-table/journal-table.component';
 import { MockExamService } from '../../services/mock-exam.service';
-import { MockExamComposition, findExamSubject, hasMockExam } from '../../config/exam-subjects';
+import { MockExamComposition, MockExamTypeComposition, findExamSubject, hasMockExam } from '../../config/exam-subjects';
+import { QuestionAnswer } from '../../models/exam-question.models';
+import { isAnswered } from '../../utils/exam-answer';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-mock-exam-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CodeBlockComponent, JournalInputComponent, JournalTableComponent],
   templateUrl: './mock-exam.component.html',
   styleUrl: './mock-exam.component.css'
 })
@@ -78,6 +82,11 @@ export class MockExamPageComponent implements OnDestroy {
     return composition.required.map((r) => `${r.genre}から${r.count}問(必須)`).join('、');
   }
 
+  // 例: 「仕訳入力15問 → 4択35問」
+  typeCompositionText(composition: MockExamTypeComposition[]): string {
+    return composition.map((c) => `${c.label}${c.count}問`).join(' → ');
+  }
+
   requiredGenresText(composition: MockExamComposition): string {
     return composition.required.map((r) => r.genre).join('・');
   }
@@ -87,7 +96,7 @@ export class MockExamPageComponent implements OnDestroy {
   }
 
   isAnswered(globalIndex: number): boolean {
-    return (this.mockExam.answers()[globalIndex]?.length ?? 0) > 0;
+    return isAnswered(this.mockExam.answers()[globalIndex]);
   }
 
   roundOf(globalIndex: number): number {
@@ -129,8 +138,8 @@ export class MockExamPageComponent implements OnDestroy {
     return this.mockExam.sessionQuestions().length - this.mockExam.answeredCount();
   }
 
-  answerText(question: { choices: string[] }, answer: number[] | undefined): string {
-    if (!answer || answer.length === 0) return '（未回答）';
+  answerText(question: { choices: string[] }, answer: QuestionAnswer | undefined): string {
+    if (!Array.isArray(answer) || answer.length === 0) return '（未回答）';
     return answer.map((i) => question.choices[i]).join(' / ');
   }
 

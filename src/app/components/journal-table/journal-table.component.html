@@ -1,0 +1,23 @@
+<table class="journal-table">
+  <thead>
+    <tr><th>借方</th><th class="amount">金額</th><th>貸方</th><th class="amount">金額</th></tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track $index) {
+      <tr>
+        @if (row.debit; as cell) {
+          <td [class.wrong]="cell.wrong">{{ cell.line.account || '（未選択）' }}</td>
+          <td class="amount" [class.wrong]="cell.wrong">{{ amountText(cell.line.amount) }}</td>
+        } @else {
+          <td></td><td></td>
+        }
+        @if (row.credit; as cell) {
+          <td [class.wrong]="cell.wrong">{{ cell.line.account || '（未選択）' }}</td>
+          <td class="amount" [class.wrong]="cell.wrong">{{ amountText(cell.line.amount) }}</td>
+        } @else {
+          <td></td><td></td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>

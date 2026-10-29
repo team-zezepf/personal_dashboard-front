@@ -1,0 +1,31 @@
+<div class="journal-input">
+  @for (side of sides; track side.key) {
+    <div class="journal-side" [attr.data-side]="side.key">
+      <div class="side-name" [class.debit]="side.key === 'debit'" [class.credit]="side.key === 'credit'">{{ side.name }}</div>
+      @for (row of draft()[side.key]; track $index; let i = $index) {
+        <div class="journal-row">
+          <select
+            [value]="row.account"
+            [attr.aria-label]="label() + side.name + 'の勘定科目' + (i + 1)"
+            (change)="setAccount(side.key, i, $any($event.target).value)"
+          >
+            <option value="">（勘定科目）</option>
+            @for (account of accounts(); track account) {
+              <option [value]="account" [selected]="account === row.account">{{ account }}</option>
+            }
+          </select>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="金額"
+            [value]="row.amount"
+            [attr.aria-label]="label() + side.name + 'の金額' + (i + 1)"
+            (input)="setAmount(side.key, i, $any($event.target).value)"
+          >
+        </div>
+      }
+    </div>
+  }
+</div>
+<p class="journal-hint">使わない行は空のままで構いません。金額は「30000」でも「30,000」でも入力できます。</p>

@@ -294,6 +294,13 @@ th.text, td.text {
   margin: 0 0 8px;
 }
 
+/* 仕訳入力の問題の「あなたの回答」「正解」の見出し(front#429) */
+.journal-label {
+  margin: 6px 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .explanation {
   background: var(--surface);
   border: 1px dashed var(--line);

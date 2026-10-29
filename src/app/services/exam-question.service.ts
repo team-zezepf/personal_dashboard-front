@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
 import { GraphQLService } from './graphql.service';
-import { ExamQuestion } from '../models/exam-question.models';
+import { ExamQuestion, JOURNAL_FIELDS } from '../models/exam-question.models';
 
 /**
  * 実績の分野別集計や受験の詳細で、問題ID から問題文・分野などを引くために問題データを取得する。
@@ -31,6 +31,7 @@ export class ExamQuestionService {
           explanation
           image
           code
+          ${JOURNAL_FIELDS}
         }
       }
     `;

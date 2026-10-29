@@ -1,10 +1,13 @@
 import { ExamRecord } from '../models/exam-record.models';
+import { Journal } from '../models/exam-question.models';
 import { recentAttempts } from './mock-exam-stats';
 
 export interface ReviewTarget {
   questionId: string;
   // 最後に解いたときの回答(未回答なら空)
   lastSelected: number[];
+  // 仕訳入力の問題で、最後に解いたときに入力した仕訳(未回答や4択の問題は null)
+  lastJournal: Journal | null;
   // 直近の模擬試験のうち、この問題を間違えた回(古い順)
   missedAttempts: ExamRecord[];
 }
@@ -16,12 +19,13 @@ export interface ReviewTarget {
  */
 export function reviewTargets(records: ExamRecord[], examType: string): ReviewTarget[] {
   const attempts = recentAttempts(records.filter((r) => r.examType === examType && r.mode === 'MOCK_EXAM'));
-  const byId = new Map<string, { lastSelected: number[]; lastCorrect: boolean; missedAttempts: ExamRecord[]; order: number }>();
+  const byId = new Map<string, { lastSelected: number[]; lastJournal: Journal | null; lastCorrect: boolean; missedAttempts: ExamRecord[]; order: number }>();
   attempts.forEach((attempt, order) => {
     for (const answer of attempt.answers ?? []) {
       const id = String(answer.questionId);
-      const entry = byId.get(id) ?? { lastSelected: [], lastCorrect: false, missedAttempts: [], order };
+      const entry = byId.get(id) ?? { lastSelected: [], lastJournal: null, lastCorrect: false, missedAttempts: [], order };
       entry.lastSelected = answer.selected;
+      entry.lastJournal = answer.journal ?? null;
       entry.lastCorrect = answer.correct;
       if (!answer.correct) {
         entry.missedAttempts.push(attempt);
@@ -33,5 +37,5 @@ export function reviewTargets(records: ExamRecord[], examType: string): ReviewTa
   return [...byId.entries()]
     .filter(([, e]) => !e.lastCorrect)
     .sort(([, a], [, b]) => b.order - a.order)
-    .map(([questionId, e]) => ({ questionId, lastSelected: e.lastSelected, missedAttempts: e.missedAttempts }));
+    .map(([questionId, e]) => ({ questionId, lastSelected: e.lastSelected, lastJournal: e.lastJournal, missedAttempts: e.missedAttempts }));
 }
