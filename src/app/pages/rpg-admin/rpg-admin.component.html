@@ -12,19 +12,19 @@
   </main>
 } @else {
   <div class="editor">
+    <!-- タブはフォルダの見出しの形にして、ツールバーの上の段に置く(front#440) -->
+    <div class="page-tabs" role="tablist">
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
+      <!-- ベース(旧「見た目」)はマップの右隣(front#401) -->
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'theme'" [attr.aria-selected]="page() === 'theme'" (click)="page.set('theme')">🎨 ベース</button>
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
+    </div>
+    @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme') {
     <div class="toolbar">
-      <div class="page-tabs" role="tablist">
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'map'" [attr.aria-selected]="page() === 'map'" (click)="page.set('map')">🗺️ マップ</button>
-        <!-- ベース(旧「見た目」)はマップの右隣(front#401) -->
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'theme'" [attr.aria-selected]="page() === 'theme'" (click)="page.set('theme')">🎨 ベース</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'bgm'" [attr.aria-selected]="page() === 'bgm'" (click)="page.set('bgm')">🎵 BGM・効果音</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'enemy'" [attr.aria-selected]="page() === 'enemy'" (click)="page.set('enemy')">👾 敵</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
-        <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
-      </div>
-      @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme') {
-      <span class="sep"></span>
       <label class="toolbar-label">
         ダンジョン
         <select [ngModel]="currentDungeonId()" (ngModelChange)="selectDungeon($event)" aria-label="ダンジョン">
@@ -63,8 +63,8 @@
       <button type="button" class="btn primary" [disabled]="!isDirty() || saving()" (click)="save()">
         {{ saving() ? '保存中…' : '保存する' }}
       </button>
-      }
     </div>
+    }
 
     <!-- 敵タブは、ほかのタブに移っても編集中の内容を残すため、隠すだけにする -->
     <app-rpg-enemy-page
