@@ -1,6 +1,6 @@
 import { RpgMap, RpgMapEnemy, RpgMapInput, RpgMapNpc, RpgMapObject, RpgNpcRole, RpgQuest } from '../models/rpg.models';
 import { DEFAULT_ROOF, DEFAULT_WALL, DOOR_ROTATIONS, doorTiles, houseTiles, objectTiles } from './rpg-house';
-import { DOOR, ENEMIES, ITEMS, SAVE_POINT, heightFromChar, heightToChar, SIDES, SIGN_DIRS, StaticType, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
+import { DOOR, ENEMIES, ITEMS, SAVE_POINT, heightFromChar, heightToChar, SIDES, SIGN_DIRS, StaticType, Side, besideSavePoint, buildAreaMap, exitOf, isBreakable, neighborOf, sideLabel } from './rpg-data';
 import { CLOTHES_COLORS, HAIR_COLORS, lookFromColors } from './rpg-look';
 
 // RPGのマップ作成画面(front#217)の編集の中身。画面(コンポーネント)から切り離して、テストできるようにしておく
@@ -689,3 +689,44 @@ export class RpgMapEditor {
 }
 
 export { clone as cloneMap };
+
+/**
+ * NPCを、端の矢印の行き先のエリアへ移す(front#443)。from の side の向きの端の矢印へドラッグしたときに呼ぶ。
+ * 置く場所は、行き先のエリアのこちら側の端のまん中に近いマスから順に見て、最初に置けるマス(歩ける地面で、何も置いていない)。
+ * 「会いに行く」クエストの行き先がこのNPCなら、行き先のエリアも書き換える。
+ * 移せたら、変わったエリアのIDを返す。移せなければ、理由の文を返す(何も変えない)
+ */
+export function moveNpcToArea(
+  maps: readonly RpgMap[], from: RpgMap, npc: RpgMapNpc, to: RpgMap, [dx, dy]: Side
+): { changed: string[] } | { error: string } {
+  if (to.npcs.some((n) => n.name === npc.name)) return { error: `「${to.name}」には同じ名前の「${npc.name}」がいるため、移せません` };
+  const target = new RpgMapEditor(to);
+  // こちら側の端(右下の矢印なら、行き先の左上の端)のまん中
+  const ex = dx === 1 ? 0 : dx === -1 ? to.width - 1 : (to.width - 1) / 2;
+  const ey = dy === 1 ? 0 : dy === -1 ? to.height - 1 : (to.height - 1) / 2;
+  let spot: [number, number] | null = null;
+  let best = Infinity;
+  for (let y = 0; y < to.height; y++) {
+    for (let x = 0; x < to.width; x++) {
+      const d = Math.hypot(x - ex, y - ey);
+      if (d < best && target.walkableGround(x, y) && !target.occupied(x, y)) {
+        best = d;
+        spot = [x, y];
+      }
+    }
+  }
+  if (!spot) return { error: `「${to.name}」に置ける空いたマスがないため、移せません` };
+  from.npcs = from.npcs.filter((n) => n !== npc);
+  [npc.x, npc.y] = spot;
+  to.npcs.push(npc);
+  const changed = new Set([from.id, to.id]);
+  for (const m of maps) {
+    for (const q of m.npcs.flatMap((n) => n.quests ?? [])) {
+      if (q.kind === 'visit' && q.targetArea === from.id && q.target === npc.name) {
+        q.targetArea = to.id;
+        changed.add(m.id);
+      }
+    }
+  }
+  return { changed: [...changed] };
+}

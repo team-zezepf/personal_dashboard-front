@@ -489,6 +489,8 @@
                       <div class="selected-title">🧑 NPC <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>
                       <p class="muted small">{{ sel.ref.name }}</p>
                       <button type="button" class="btn small" (click)="openModal(sel)">NPCの中身を変える</button>
+                      <!-- 端の矢印へドラッグして、隣のエリアへ移す(front#443) -->
+                      <p class="muted small">マップの端の ▶ の上までドラッグして離すと、そのエリアへ移せます。</p>
                     }
                     @case ('house') {
                       <div class="selected-title">🏠 家 <span class="muted">（x {{ sel.ref.x }} ・ y {{ sel.ref.y }}）</span></div>

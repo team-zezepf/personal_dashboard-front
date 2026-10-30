@@ -54,6 +54,7 @@ import {
   blankMap,
   blankQuest,
   cloneMap,
+  moveNpcToArea,
   toMapInput
 } from '../../rpg/rpg-editor';
 
@@ -319,7 +320,9 @@ export class RpgAdminPageComponent implements OnDestroy {
   // 置いたばかりのNPC・家。マウスを離したときにモーダルを開く(押したときに開くと、離したクリックがモーダルの外側に当たって閉じてしまう)
   private placedToOpen: Selection | null = null;
   // マップの端の、隣のエリアへ移る矢印(front#439)。描くたびに、押せる範囲(ワールド座標)を覚えておく
-  private edgeArrows: { to: string; text: string; tri: [number, number][]; rect: [number, number, number, number] }[] = [];
+  private edgeArrows: { to: string; side: Side; text: string; tri: [number, number][]; rect: [number, number, number, number] }[] = [];
+  // NPCをドラッグして重ねている端の矢印の行き先(離すとそのエリアへ移す。front#443)
+  private dropArrow: string | null = null;
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
     if (this.isDirty() || this.enemyDirty() || this.itemDirty() || this.craftDirty() || this.objectDirty() || this.themeDirty()) e.preventDefault();
@@ -653,8 +656,17 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.useTool(tool, x, y, true);
   }
 
-  @HostListener('window:mouseup')
-  onMouseUp(): void {
+  @HostListener('window:mouseup', ['$event'])
+  onMouseUp(event?: MouseEvent): void {
+    // NPCを端の矢印の上で離したら、そのエリアへ移す(front#443)。
+    // 素早く動かして離すと、最後のマウスの動きより先に離したことが届くことがあるので、離した位置でも矢印を探す
+    const to = this.dragging?.kind === 'npc' ? (event ? this.arrowAtClient(event.clientX, event.clientY) : this.dropArrow) : null;
+    if (this.dragging?.kind === 'npc' && to) {
+      const npc = this.dragging.ref;
+      this.dragging = null;
+      this.dropArrow = null;
+      this.moveNpcTo(npc, to);
+    }
     // 「選ぶ・動かす」でNPC・家をクリックした(動かさずに離した)ら、中身を変えるモーダルを開く
     const clicked = this.dragging && !this.dragMoved ? this.dragging : this.placedToOpen;
     this.painting = false;
@@ -673,7 +685,10 @@ export class RpgAdminPageComponent implements OnDestroy {
       game.camY = this.panning.camY + event.clientY - this.panning.y;
       return;
     }
-    (event.target as HTMLElement).style.cursor = this.arrowAt(event.offsetX, event.offsetY) ? 'pointer' : '';
+    const arrow = this.arrowAt(event.offsetX, event.offsetY);
+    (event.target as HTMLElement).style.cursor = arrow ? 'pointer' : '';
+    // NPCをドラッグして端の矢印に重ねたら、矢印を目立たせる(離すとそのエリアへ移す。front#443)
+    this.dropArrow = this.dragging?.kind === 'npc' ? arrow : null;
     const [x, y] = game.screenToTile(event.offsetX, event.offsetY);
     const prev = this.hoverTile();
     if (!prev || prev[0] !== x || prev[1] !== y) this.hoverTile.set([x, y]);
@@ -689,6 +704,7 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   onMouseLeave(): void {
     this.hoverTile.set(null);
+    this.dropArrow = null;
   }
 
   onWheel(event: WheelEvent): void {
@@ -1661,8 +1677,32 @@ export class RpgAdminPageComponent implements OnDestroy {
     ctx.restore();
   }
 
+  /** NPCを、端の矢印の行き先のエリアへ移す(front#443)。画面は今のエリアのまま。元に戻すでは戻せない(戻すと2人になるため、履歴を消す) */
+  private moveNpcTo(npc: RpgMapNpc, toId: string): void {
+    const editor = this.editor;
+    const arrow = this.edgeArrows.find((a) => a.to === toId);
+    const to = this.maps().find((m) => m.id === toId);
+    if (!editor || !arrow || !to) return;
+    const from = editor.map;
+    const result = moveNpcToArea(this.maps(), from, npc, to, arrow.side);
+    if ('error' in result) {
+      this.toast(result.error);
+      return;
+    }
+    this.editor = new RpgMapEditor(from);
+    this.selection.set(null);
+    this.dirtyIds.set(new Set([...this.dirtyIds(), ...result.changed]));
+    this.refresh();
+    const where = to.dungeonId === from.dungeonId ? to.name : `${this.dungeonName(to.dungeonId)} ／ ${to.name}`;
+    this.toast(`「${npc.name}」を「${where}」へ移しました（x ${npc.x} ・ y ${npc.y}）`);
+  }
+
   /** 端の矢印を1つ描く。三角のお尻の辺はマップの端と平行で、先は外向き。名前の札はその先に置く(front#439) */
   private drawEdgeArrow(ctx: CanvasRenderingContext2D, map: RpgMap, [dx, dy]: Side, text: string, to: string, bg: string): void {
+    // NPCを重ねている矢印は、大きくして黄色で縁取り、離したときのことを書く(front#443)
+    const dropping = this.dropArrow === to;
+    const name = text;
+    if (dropping) text = `ここで離すと「${text}」へ移す`;
     // 端の真ん中のすぐ外のマス
     const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
     const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
@@ -1672,7 +1712,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     const [ux, uy] = unit(((dx - dy) * TW) / 2, ((dx + dy) * TH) / 2);
     const [vx, vy] = dx !== 0 ? unit(-TW / 2, TH / 2) : unit(TW / 2, TH / 2);
     // 縮小しても押しやすいよう、画面の上で同じくらいの大きさに見せる(拡大したときは、そのまま大きくする)
-    const k = Math.max(1, 1 / (this.game?.zoom ?? 1));
+    const k = Math.max(1, 1 / (this.game?.zoom ?? 1)) * (dropping ? 1.3 : 1);
     const tip: [number, number] = [ax + ux * 14 * k, ay + uy * 14 * k];
     const bx = ax - ux * 8 * k;
     const by = ay - uy * 8 * k;
@@ -1682,6 +1722,12 @@ export class RpgAdminPageComponent implements OnDestroy {
     ctx.lineTo(...tri[1]);
     ctx.lineTo(...tri[2]);
     ctx.closePath();
+    if (dropping) {
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 7 * k;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
     ctx.fillStyle = bg;
     ctx.fill();
     ctx.strokeStyle = '#fff';
@@ -1695,7 +1741,17 @@ export class RpgAdminPageComponent implements OnDestroy {
     const lx = tip[0] + ux * reach;
     const ly = tip[1] + uy * reach;
     this.label(ctx, text, lx, ly, bg, k);
-    this.edgeArrows.push({ to, text, tri, rect: [lx - w / 2, ly - h / 2, w, h] });
+    this.edgeArrows.push({ to, side: [dx, dy], text: name, tri, rect: [lx - w / 2, ly - h / 2, w, h] });
+  }
+
+  /** ウィンドウの中の位置にある、端の矢印の行き先のエリア(front#443) */
+  private arrowAtClient(clientX: number, clientY: number): string | null {
+    const canvas = this.canvas()?.nativeElement;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    // キャンバスの外(右の欄など)で離したときは、移さない
+    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null;
+    return this.arrowAt(clientX - rect.left, clientY - rect.top);
   }
 
   /** 画面の位置(キャンバスの中)にある、端の矢印の行き先のエリア。なければ null(front#439) */
