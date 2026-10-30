@@ -1195,3 +1195,89 @@ test(
     });
   }
 );
+
+// マップの端の矢印(front#439)の名前の札をクリックする(位置は開発用のビルドだけで出す window.rpgAdminTest から求める)
+async function clickArrow(page: Page, text: string): Promise<void> {
+  await expect.poll(() => page.evaluate((t) => !!(window as any).rpgAdminTest?.arrowPosition(t), text)).toBe(true);
+  const [sx, sy] = (await page.evaluate((t) => (window as any).rpgAdminTest.arrowPosition(t), text)) as [number, number];
+  const box = (await page.getByLabel('マップ', { exact: true }).boundingBox())!;
+  await page.mouse.click(box.x + sx, box.y + sy);
+}
+
+test(
+  'E2E-44 RPGマップ作成で、マップの端の矢印を押すと隣のエリア・ほかのダンジョンのエリアへ移り、置いた敵を押すと左の一覧でも選ばれ、もう一度押すと「敵」タブでその敵を編集できる(front#439)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: はじまりの村だけ。スライムが x 26・y 11 にいる)'],
+    expected: [
+      '隣にエリアがある端に、行き先の名前の付いた矢印が出て、押すとそのエリアに切り替わる',
+      'ほかのダンジョンへのつながり(紫)の矢印を押すと、そのダンジョンのエリアに切り替わり、上の「ダンジョン」のプルダウンも変わる',
+      'パレットの敵を選んでいるときに、敵以外の場所(右の欄)を押すと、選択が外れる',
+      'マップに置いてある敵を押すと、パレットの一覧でもその敵が選ばれる',
+      'パレットで選んでいる敵をもう一度押すと、「👾 敵」タブに移り、その敵が選ばれている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const areaName = page.getByRole('region', { name: 'エリアの設定' }).getByLabel('エリアの名前');
+    const east = '[E2E]東の原っぱ';
+
+    await step('RPGマップ作成(/rpg/admin)を開き、「🏰 ダンジョン」の「エリアの配置」で、はじまりの村の右の「＋」から「' + east + '」を作る', '作ったエリアに切り替わり、左上の端に「はじまりの村」の矢印が出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+      await page.locator('.layout-grid [data-cell="1,0"]').click();
+      const dialog = page.getByRole('dialog', { name: '新しいエリア' });
+      await dialog.getByLabel('エリアの名前').fill(east);
+      await dialog.getByRole('button', { name: '作る' }).click();
+      await expect(dialog).toBeHidden();
+      await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+      await expect(areaName).toHaveValue(east);
+      await expect.poll(() => page.evaluate(() => !!(window as any).rpgAdminTest.arrowPosition('はじまりの村'))).toBe(true);
+    });
+
+    await step('マップの左上の端の「はじまりの村」の矢印を押す', 'はじまりの村に切り替わり、右下の端に「' + east + '」の矢印が出る', async () => {
+      await clickArrow(page, 'はじまりの村');
+      await expect(areaName).toHaveValue('はじまりの村');
+      await expect.poll(() => page.evaluate((t) => !!(window as any).rpgAdminTest.arrowPosition(t), east)).toBe(true);
+    });
+
+    await step(
+      '「＋ 新しいダンジョン」で「[E2E]海辺」を作り、その「入口」の右上の端のつながりを「始まりの草原 ／ はじまりの村」にして、紫の矢印を押す',
+      'はじまりの村に切り替わり、上の「ダンジョン」のプルダウンが「始まりの草原」になる',
+      async () => {
+        await page.getByRole('button', { name: '＋ 新しいダンジョン' }).click();
+        const dialog = page.getByRole('dialog', { name: '新しいダンジョン' });
+        await dialog.getByLabel('名前').fill('[E2E]海辺');
+        await dialog.getByRole('button', { name: '作る' }).click();
+        await expect(dialog).toBeHidden();
+        await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+        await expect(areaName).toHaveValue('入口');
+        await page.getByLabel('右上の端のつながり').selectOption({ label: '始まりの草原 ／ はじまりの村' });
+        await clickArrow(page, '始まりの草原 ／ はじまりの村');
+        await expect(areaName).toHaveValue('はじまりの村');
+        await expect(page.getByLabel('ダンジョン', { exact: true }).locator('option:checked')).toContainText('始まりの草原');
+      }
+    );
+
+    const palette = page.getByRole('complementary', { name: 'パレット' });
+    const slime = palette.locator('.enemy-item[title="スライム"]');
+    await step('パレットの「敵」を押してから、右の欄の「エリアの設定」の見出しを押す', '最初はスライムが選ばれていて、右の欄を押すと、パレットの敵の選択が外れる', async () => {
+      await palette.getByRole('button', { name: '敵', exact: true }).click();
+      await expect(slime).toHaveClass(/active/);
+      await page.getByRole('heading', { name: 'エリアの設定' }).click();
+      await expect(palette.locator('.enemy-item.active')).toHaveCount(0);
+    });
+
+    await step('マップの x 26・y 11 に置いてあるスライムを押す', 'パレットの一覧でもスライムが選ばれ、右の欄に「敵の出る場所」が出る', async () => {
+      await clickTile(page, 26, 11);
+      await expect(slime).toHaveClass(/active/);
+      await expect(page.getByText('👾 敵の出る場所')).toBeVisible();
+    });
+
+    await step('パレットで選んでいるスライムを、もう一度押す', '「👾 敵」タブに移り、一覧でスライムが選ばれている', async () => {
+      await slime.click();
+      await expect(page.getByRole('tab', { name: '👾 敵' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.locator('app-rpg-enemy-page .enemy-row.active')).toContainText('スライム');
+    });
+  }
+);

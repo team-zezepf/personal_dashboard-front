@@ -103,6 +103,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   // パレットの敵の見本(front#310)
   private readonly enemyThumbs = viewChildren<ElementRef<HTMLCanvasElement>>('enemyThumb');
+  private readonly enemyPage = viewChild(RpgEnemyPageComponent);
 
   readonly allowed = isRoleAllowed(this.authService.currentUser()?.role, TOOL_ACCESS['/rpg/admin']);
   readonly palette = PALETTE;
@@ -317,6 +318,8 @@ export class RpgAdminPageComponent implements OnDestroy {
   private dragMoved = false;
   // 置いたばかりのNPC・家。マウスを離したときにモーダルを開く(押したときに開くと、離したクリックがモーダルの外側に当たって閉じてしまう)
   private placedToOpen: Selection | null = null;
+  // マップの端の、隣のエリアへ移る矢印(front#439)。描くたびに、押せる範囲(ワールド座標)を覚えておく
+  private edgeArrows: { to: string; text: string; tri: [number, number][]; rect: [number, number, number, number] }[] = [];
 
   private readonly onBeforeUnload = (e: BeforeUnloadEvent) => {
     if (this.isDirty() || this.enemyDirty() || this.itemDirty() || this.craftDirty() || this.objectDirty() || this.themeDirty()) e.preventDefault();
@@ -394,7 +397,14 @@ export class RpgAdminPageComponent implements OnDestroy {
     if (environment.production) return;
     (window as unknown as Record<string, unknown>)['rpgAdminTest'] = {
       // マスの上の面の中心の、キャンバスの中の位置
-      tilePosition: (x: number, y: number): [number, number] | null => (this.game ? this.game.screenPositionOf({ x, y }) : null)
+      tilePosition: (x: number, y: number): [number, number] | null => (this.game ? this.game.screenPositionOf({ x, y }) : null),
+      // 端の矢印(front#439)の名前の札の真ん中の、キャンバスの中の位置。text は札の文字
+      arrowPosition: (text: string): [number, number] | null => {
+        const arrow = this.edgeArrows.find((a) => a.text === text);
+        if (!arrow || !this.game) return null;
+        const [x, y, w, h] = arrow.rect;
+        return [(x + w / 2) * this.game.zoom + this.game.camX, (y + h / 2) * this.game.zoom + this.game.camY];
+      }
     };
   }
 
@@ -538,11 +548,37 @@ export class RpgAdminPageComponent implements OnDestroy {
     this.tool.set(PALETTE.find((t) => t.id === id)!.items[0]);
   }
 
-  /** パレットの物を押す。選んでいる物をもう一度押すと選択を外し、「選ぶ・動かす」に戻す(front#290) */
+  /**
+   * パレットの物を押す。選んでいる物をもう一度押すと選択を外し、「選ぶ・動かす」に戻す(front#290)。
+   * 敵は、選んでいる敵をもう一度押すと「👾 敵」タブへ移り、その敵を選んだ状態で開く(front#439)
+   */
   pickTool(item: PaletteItem): void {
     const cur = this.tool();
     const same = cur.id === item.id && cur.tool.kind === item.tool.kind;
+    if (same && item.tool.kind === 'enemy') {
+      this.openEnemyPage(item.tool.type);
+      return;
+    }
     this.tool.set(same ? SELECT_ITEM : item);
+  }
+
+  /** 「👾 敵」タブへ移り、その敵を選んで、一覧のその行が見えるようにする(front#439) */
+  private openEnemyPage(type: string): void {
+    this.enemyPage()?.select(type);
+    this.page.set('enemy');
+    setTimeout(() => document.querySelector('app-rpg-enemy-page .enemy-row.active')?.scrollIntoView({ block: 'nearest' }));
+  }
+
+  /**
+   * マップで、パレットの敵を選んでいる間に敵以外の場所を押したら、選択を外して「選ぶ・動かす」に戻す(front#439)。
+   * マップの上(空いているマスに置く・置いてある物を選ぶ)と、パレットの敵の項目は除く
+   */
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentMouseDown(event: MouseEvent): void {
+    if (this.page() !== 'map' || this.tool().tool.kind !== 'enemy') return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.('.stage canvas, .palette .enemy-item')) return;
+    this.tool.set(SELECT_ITEM);
   }
 
   itemLabel(item: PaletteItem): string {
@@ -585,12 +621,23 @@ export class RpgAdminPageComponent implements OnDestroy {
       this.panning = { x: event.clientX, y: event.clientY, camX: game.camX, camY: game.camY };
       return;
     }
+    // 端の矢印を押したら、そのエリアへ移る(ほかのダンジョンのエリアなら、ダンジョンも切り替わる。front#439)
+    const arrow = this.arrowAt(event.offsetX, event.offsetY);
+    if (arrow) {
+      this.selectArea(arrow);
+      return;
+    }
     const [x, y] = game.screenToTile(event.offsetX, event.offsetY);
     const tool = this.tool().tool;
     // 置いてある物をクリックしたら、置かずにその物を選ぶ。そのままドラッグすると動かす(front#290)
     const hit = selectsPlaced(tool) ? editor.entityAt(x, y) : null;
     if (hit || tool.kind === 'select') {
       this.selection.set(hit);
+      // パレットの敵のタブを開いているときは、選んだ敵の種類をパレットでも選ぶ(front#439)
+      if (hit?.kind === 'enemy' && this.tab() === 'enemy') {
+        const item = this.tabItems().find((i) => i.tool.kind === 'enemy' && i.tool.type === hit.ref.type);
+        if (item) this.tool.set(item);
+      }
       if (hit) {
         // 選ぶだけなら元に戻す位置は作らず、ドラッグで動かしたときに作る(front#356)
         editor.holdCheckpoint();
@@ -626,6 +673,7 @@ export class RpgAdminPageComponent implements OnDestroy {
       game.camY = this.panning.camY + event.clientY - this.panning.y;
       return;
     }
+    (event.target as HTMLElement).style.cursor = this.arrowAt(event.offsetX, event.offsetY) ? 'pointer' : '';
     const [x, y] = game.screenToTile(event.offsetX, event.offsetY);
     const prev = this.hoverTile();
     if (!prev || prev[0] !== x || prev[1] !== y) this.hoverTile.set([x, y]);
@@ -716,14 +764,6 @@ export class RpgAdminPageComponent implements OnDestroy {
 
   dungeonName(id: string): string {
     return this.dungeons().find((d) => d.id === id)?.name ?? '';
-  }
-
-  // 隣のエリアへつながる向きと、隣のエリア(マップの上に名前を出す)
-  private neighbors(map: RpgMap): { side: readonly [number, number]; area: RpgMap }[] {
-    return SIDES.flatMap((side) => {
-      const area = neighborOf(this.maps(), map, side);
-      return area ? [{ side, area }] : [];
-    });
   }
 
   changeSize(width: number, height: number): void {
@@ -1580,24 +1620,14 @@ export class RpgAdminPageComponent implements OnDestroy {
       }
     }
 
-    // 隣のエリアへつながる端に、隣のエリアの名前(端の真ん中の外側)
-    for (const { side, area: next } of this.neighbors(map)) {
-      const [dx, dy] = side;
-      const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
-      const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
-      const [lx, ly] = iso(ex, ey);
-      this.label(ctx, `▶ ${next.name}`, lx, ly, 'rgba(8,145,178,0.92)');
-    }
-
-    // ほかのダンジョンへの端のつながり(front#274)の行き先(端の真ん中の外側、紫)
+    // 隣のエリアへつながる端に、外向きの三角の矢印と行き先の名前(端の真ん中の外側)。押すとそのエリアへ移る(front#439)。
+    // 同じダンジョンの隣のエリアは水色、ほかのダンジョンへのつながり(front#274)は紫
+    this.edgeArrows = [];
     for (const side of SIDES) {
       const exit = exitOf(this.maps(), map, side);
-      if (!exit?.link) continue;
-      const [dx, dy] = side;
-      const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
-      const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
-      const [lx, ly] = iso(ex, ey);
-      this.label(ctx, `▶ ${this.dungeonName(exit.to.dungeonId)} ／ ${exit.to.name}`, lx, ly, 'rgba(124,58,237,0.92)');
+      if (!exit) continue;
+      const text = exit.link ? `${this.dungeonName(exit.to.dungeonId)} ／ ${exit.to.name}` : exit.to.name;
+      this.drawEdgeArrow(ctx, map, side, text, exit.to.id, exit.link ? 'rgba(124,58,237,0.92)' : 'rgba(8,145,178,0.92)');
     }
 
     // 選んでいるもの
@@ -1631,12 +1661,67 @@ export class RpgAdminPageComponent implements OnDestroy {
     ctx.restore();
   }
 
-  private label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, bg: string): void {
+  /** 端の矢印を1つ描く。三角のお尻の辺はマップの端と平行で、先は外向き。名前の札はその先に置く(front#439) */
+  private drawEdgeArrow(ctx: CanvasRenderingContext2D, map: RpgMap, [dx, dy]: Side, text: string, to: string, bg: string): void {
+    // 端の真ん中のすぐ外のマス
+    const ex = dx === 1 ? map.width : dx === -1 ? -1 : (map.width - 1) / 2;
+    const ey = dy === 1 ? map.height : dy === -1 ? -1 : (map.height - 1) / 2;
+    const [ax, ay] = iso(ex, ey);
+    // 画面の上での、外向き(u)と端に沿う向き(v)の単位ベクトル
+    const unit = (x: number, y: number): [number, number] => [x / Math.hypot(x, y), y / Math.hypot(x, y)];
+    const [ux, uy] = unit(((dx - dy) * TW) / 2, ((dx + dy) * TH) / 2);
+    const [vx, vy] = dx !== 0 ? unit(-TW / 2, TH / 2) : unit(TW / 2, TH / 2);
+    // 縮小しても押しやすいよう、画面の上で同じくらいの大きさに見せる(拡大したときは、そのまま大きくする)
+    const k = Math.max(1, 1 / (this.game?.zoom ?? 1));
+    const tip: [number, number] = [ax + ux * 14 * k, ay + uy * 14 * k];
+    const bx = ax - ux * 8 * k;
+    const by = ay - uy * 8 * k;
+    const tri: [number, number][] = [tip, [bx + vx * 15 * k, by + vy * 15 * k], [bx - vx * 15 * k, by - vy * 15 * k]];
+    ctx.beginPath();
+    ctx.moveTo(...tri[0]);
+    ctx.lineTo(...tri[1]);
+    ctx.lineTo(...tri[2]);
+    ctx.closePath();
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2 * k;
+    ctx.stroke();
+    // 名前の札は、三角の先から、札の大きさの分だけ外へ
     ctx.font = 'bold 11px "Yu Gothic", Meiryo, sans-serif';
-    const w = ctx.measureText(text).width + 12;
+    const w = (ctx.measureText(text).width + 12) * k;
+    const h = 17 * k;
+    const reach = Math.abs(ux) * (w / 2) + Math.abs(uy) * (h / 2) + 4 * k;
+    const lx = tip[0] + ux * reach;
+    const ly = tip[1] + uy * reach;
+    this.label(ctx, text, lx, ly, bg, k);
+    this.edgeArrows.push({ to, text, tri, rect: [lx - w / 2, ly - h / 2, w, h] });
+  }
+
+  /** 画面の位置(キャンバスの中)にある、端の矢印の行き先のエリア。なければ null(front#439) */
+  private arrowAt(mx: number, my: number): string | null {
+    const game = this.game;
+    if (!game) return null;
+    const wx = (mx - game.camX) / game.zoom;
+    const wy = (my - game.camY) / game.zoom;
+    const cross = (a: [number, number], b: [number, number]) => (b[0] - a[0]) * (wy - a[1]) - (b[1] - a[1]) * (wx - a[0]);
+    for (const { to, tri, rect } of this.edgeArrows) {
+      const [x, y, w, h] = rect;
+      if (wx >= x && wx <= x + w && wy >= y && wy <= y + h) return to;
+      const c = [cross(tri[0], tri[1]), cross(tri[1], tri[2]), cross(tri[2], tri[0])];
+      if (c.every((v) => v >= 0) || c.every((v) => v <= 0)) return to;
+    }
+    return null;
+  }
+
+  // scale は札の大きさの倍率(端の矢印の札は、縮小しても読めるよう大きくする。front#439)
+  private label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, bg: string, scale = 1): void {
+    ctx.font = 'bold 11px "Yu Gothic", Meiryo, sans-serif';
+    const w = (ctx.measureText(text).width + 12) * scale;
+    ctx.font = `bold ${11 * scale}px "Yu Gothic", Meiryo, sans-serif`;
     ctx.fillStyle = bg;
     ctx.beginPath();
-    ctx.roundRect(x - w / 2, y - 9, w, 17, 8);
+    ctx.roundRect(x - w / 2, y - 8.5 * scale, w, 17 * scale, 8 * scale);
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
