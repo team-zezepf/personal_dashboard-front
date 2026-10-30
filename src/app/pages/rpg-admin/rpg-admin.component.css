@@ -147,27 +147,38 @@ textarea {
   display: none;
 }
 
+/* フォルダの見出しの形のタブ(front#440)。選んでいるタブは、下の白い欄とつながって見える */
 .page-tabs {
+  flex-shrink: 0;
   display: flex;
   gap: 4px;
+  padding: 10px 16px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .page-tab {
   border: 1px solid var(--line);
-  background: var(--card);
+  border-bottom: none;
+  background: var(--line);
   color: var(--text);
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 12.5px;
+  border-radius: 8px 8px 0 0;
+  padding: 7px 14px;
+  margin-bottom: -1px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
 
+.page-tab:hover {
+  background: var(--card);
+}
+
 .page-tab.active {
-  background: var(--indigo);
-  border-color: var(--indigo);
-  color: #fff;
-  font-weight: 700;
+  background: var(--card);
+  color: var(--indigo);
+  /* 下の線を隠して、下の欄とつなげる */
+  box-shadow: 0 1px 0 var(--card);
 }
 
 /* ===== BGM ===== */
