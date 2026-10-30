@@ -36,6 +36,8 @@ export interface RpgSave {
   spells?: string[];
   // 覚えた魔法のLV(front#387 / api#183)。ない魔法は LV1
   spellLevels?: RpgSpellLevel[];
+  // 属性(front#437 / api#208)。fire / water / wood / light / dark。前のAPIにはないので、なければ木
+  element?: string | null;
 }
 
 // 覚えた魔法のLV(front#387)。LV は 1〜5
@@ -61,6 +63,8 @@ export interface RpgCompanion {
   mp?: number | null;
   spells?: string[];
   spellLevels?: RpgSpellLevel[];
+  // 属性(front#437)。仲間のアカウントの属性
+  element?: string | null;
 }
 
 // 保存するときにいっしょに送る仲間のデータ(front#358)。それぞれのアカウントのセーブデータに書かれる
@@ -346,6 +350,8 @@ export interface RpgEnemy {
   attack: string;
   // LV2 の攻撃で、相手の足元に魔法陣を出す(front#435 / api#206)。前のAPIにはないので、なければ出す
   magicCircle?: boolean;
+  // 属性(front#437 / api#208)。fire / water / wood / light / dark。null・なければ属性なし
+  element?: string | null;
   // 体当たり・ジャンプの距離(マス)とためる時間(秒)
   dash: number;
   charge: number;
@@ -435,7 +441,8 @@ export type RpgCraftInput = Omit<RpgCraft, 'id' | 'sortOrder' | 'updatedAt'> & {
 // RPGのアイテム(front#343 / api#163)。回復の道具・武器・防具・素材。マップ作成画面の「アイテム」タブで作る(合成の装備は含まない)
 // revive: たおれた人を起き上がらせる道具(front#358)。heal は起き上がるときのHPの割合(%)
 // book: 魔法書(front#383)。使うと spell の魔法を覚え、なくなる
-export type RpgItemType = 'use' | 'revive' | 'weapon' | 'armor' | 'material' | 'book';
+// element: 使うと属性が変わる(front#437)
+export type RpgItemType = 'use' | 'revive' | 'weapon' | 'armor' | 'material' | 'book' | 'element';
 
 export interface RpgItem {
   // アイテムのID(持ち物・装備のIDと同じ)
@@ -470,6 +477,8 @@ export interface RpgItem {
   lookShape?: string | null;
   lookColor?: string | null;
   lookAccent?: string | null;
+  // 使うと変わる属性(element。front#437 / api#208)
+  element?: string | null;
 }
 
 // id が null なら新しいアイテムとして追加する。sortOrder が null なら今の順番のまま(新しければ最後)。保存したアイテムの種類は変えられない

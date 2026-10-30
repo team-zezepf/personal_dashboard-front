@@ -1091,3 +1091,107 @@ test(
     });
   }
 );
+
+test(
+  'E2E-43 RPGで、敵に属性を付けられ、「属性を変える」アイテムを道具屋で買って使うと、プレイヤーの属性が変わり、開き直しても残っている(front#437)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている(global-setup で作り、管理者にする。front#341)',
+      'E2E 用の RPG データで、敵キノコンの属性はなし',
+      '管理者のアカウントの RPG のセーブデータを、最初の状態(30G・回復薬×3・属性は木)に戻してある'
+    ],
+    expected: [
+      '「👾 敵」タブの「属性」で、なし・火・水・木・光・闇を選べ、火にして保存すると、読み込み直しても火のまま',
+      '「🎒 アイテム」タブで種類「属性を変える」を選ぶと「変わる属性」を選べ、保存できる',
+      'ゲームの左下に自分の属性(はじめは 🌳木)が出る',
+      '道具屋で買った「属性を変える」アイテムを使うと、属性が 🔥火 に変わり、アイテムはなくなる',
+      '開き直しても 🔥火 のまま'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const enemyTab = page.locator('app-rpg-enemy-page');
+    const itemTab = page.locator('app-rpg-item-page');
+    const enemyElement = enemyTab.locator('aside.props').getByRole('group', { name: '敵の属性' });
+    const name = '[E2E]ほのおの石';
+    const openKinokon = async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '👾 敵' }).click();
+      await enemyTab.getByRole('complementary', { name: '敵の一覧' }).getByRole('button', { name: 'キノコン', exact: true }).click();
+      await expect(enemyTab.locator('aside.props').getByLabel('名前', { exact: true })).toHaveValue('キノコン');
+    };
+
+    await step('RPGマップ作成(/rpg/admin)の「👾 敵」タブでキノコンを選ぶ', '「属性」に なし・🔥 火・💧 水・🌳 木・✨ 光・🌑 闇 が並び、「なし」が選ばれている', async () => {
+      await openKinokon();
+      await expect(enemyElement.getByRole('button')).toHaveText(['なし', '🔥 火', '💧 水', '🌳 木', '✨ 光', '🌑 闇']);
+      await expect(enemyElement.getByRole('button', { name: 'なし' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step('「🔥 火」を押して「敵を保存する」を押し、読み込み直してキノコンを選ぶ', '「敵を保存しました」と出て、読み込み直しても「🔥 火」が選ばれている', async () => {
+      await enemyElement.getByRole('button', { name: '🔥 火' }).click();
+      await enemyTab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(enemyTab.getByRole('status')).toHaveText('敵を保存しました');
+      await openKinokon();
+      await expect(enemyElement.getByRole('button', { name: '🔥 火' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step(
+      `「🎒 アイテム」タブで「＋ 新しいアイテム」を押し、種類「属性を変える」、名前「${name}」、変わる属性「🔥 火」、道具屋で売る・値段 10 にして保存する`,
+      '強さの欄の代わりに「変わる属性」が出て、チェックが ✅ になり、「アイテムを保存しました」と出る',
+      async () => {
+        await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+        await itemTab.getByRole('button', { name: '＋ 新しいアイテム' }).click();
+        const props = itemTab.getByRole('complementary', { name: 'アイテム', exact: true });
+        await props.getByRole('group', { name: '種類' }).getByRole('button', { name: /属性を変える/ }).click();
+        await expect(props.getByLabel('HPの回復量')).toHaveCount(0);
+        await props.getByLabel('名前', { exact: true }).fill(name);
+        await props.getByLabel('変わる属性').selectOption('fire');
+        await props.getByLabel('道具屋で売る').check();
+        await props.getByLabel(/値段/).fill('10');
+        await expect(props.getByText('✅ 問題はありません')).toBeVisible();
+        await itemTab.getByRole('button', { name: 'アイテムを保存する' }).click();
+        await expect(itemTab.getByRole('status')).toHaveText('アイテムを保存しました');
+      }
+    );
+
+    const status = page.getByRole('region', { name: 'プレイヤーの状態' });
+    await step('RPG(/rpg)を開く', '左下のプレイヤーの状態に、属性「🌳木」が出る', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByLabel('属性 木')).toHaveText('🌳木');
+    });
+
+    await step(`「道具屋 ミナ」に話しかけて「${name}」を買い、持ち物の「使う」を押す`, `属性が「🔥火」に変わり、持ち物から「${name}」がなくなる`, async () => {
+      await clickNpc(page, '道具屋 ミナ');
+      const dialog = page.getByRole('dialog', { name: '道具屋 ミナとの会話' });
+      await dialog.click();
+      await dialog.click();
+      await page.getByRole('button', { name: `${name}を買う` }).click();
+      await expect(status.getByText('20G')).toBeVisible();
+      await page.getByRole('button', { name: '閉じる' }).click();
+      const inventory = page.getByRole('region', { name: '持ち物' });
+      await inventory.getByRole('button', { name: `${name}を使う` }).click();
+      await expect(status.getByLabel('属性 火')).toHaveText('🔥火');
+      await expect(inventory.getByText(name)).toHaveCount(0);
+    });
+
+    await step('RPG(/rpg)を開き直す', '属性は「🔥火」のまま', async () => {
+      await page.goto('/rpg');
+      await expect(status.getByLabel('属性 火')).toHaveText('🔥火');
+    });
+
+    await step('あとかたづけ: 作ったアイテムを消し、キノコンの属性を「なし」に戻して保存する', '「〜を消しました」「敵を保存しました」と出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎒 アイテム' }).click();
+      await itemTab.locator('.item-row', { hasText: name }).click();
+      await itemTab.getByRole('button', { name: '🗑 このアイテムを消す' }).click();
+      await expect(itemTab.getByRole('status')).toHaveText(`「${name}」を消しました`);
+      await openKinokon();
+      await enemyElement.getByRole('button', { name: 'なし' }).click();
+      await enemyTab.getByRole('button', { name: '敵を保存する' }).click();
+      await expect(enemyTab.getByRole('status')).toHaveText('敵を保存しました');
+    });
+  }
+);

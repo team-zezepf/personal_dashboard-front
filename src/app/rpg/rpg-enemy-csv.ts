@@ -1,15 +1,18 @@
 import { ENEMY_ATTACKS, ENEMY_LIMITS, ENEMY_SHAPES, EnemyDef, HIT_MATERIALS } from './rpg-enemy';
+import { ELEMENTS, ELEMENT_IDS } from './rpg-element';
 
 // 敵の CSV の書き出し・取り込み(front#297)。画面(コンポーネント)から切り離して、テストできるようにしておく。
 // 落とすアイテム・落とす素材とその確率は、1体が複数の物を落とす(1対多)ようになったときに表で扱えないため、CSV には入れない
 
-type ColumnKind = 'id' | 'name' | 'color' | 'number' | 'int' | 'shape' | 'attack' | 'hit' | 'bool';
+type ColumnKind = 'id' | 'name' | 'color' | 'number' | 'int' | 'shape' | 'attack' | 'hit' | 'bool' | 'element';
 
 interface EnemyColumn {
   key: keyof EnemyDef;
   label: string;
   kind: ColumnKind;
   limit?: readonly [number, number];
+  // 前に書き出した CSV にはない列(front#437)。なければ今の値のまま
+  optional?: boolean;
 }
 
 export const ENEMY_CSV_COLUMNS: EnemyColumn[] = [
@@ -33,6 +36,7 @@ export const ENEMY_CSV_COLUMNS: EnemyColumn[] = [
   { key: 'respawn', label: '復活までの秒数', kind: 'int', limit: ENEMY_LIMITS.respawn },
   { key: 'boss', label: 'ボス', kind: 'bool' },
   { key: 'attack', label: '攻撃の種類', kind: 'attack' },
+  { key: 'element', label: '属性', kind: 'element', optional: true },
   { key: 'dash', label: '突っ込む・跳ぶ距離（マス）', kind: 'int', limit: ENEMY_LIMITS.dash },
   { key: 'charge', label: 'ためる時間（秒）', kind: 'number', limit: ENEMY_LIMITS.charge },
   { key: 'range', label: '射程（マス）', kind: 'int', limit: ENEMY_LIMITS.range },
@@ -43,7 +47,9 @@ const NAME_MAX = 20;
 const NAMES: Partial<Record<ColumnKind, [string, string][]>> = {
   shape: ENEMY_SHAPES,
   attack: ENEMY_ATTACKS.map((a) => [a.id, a.label]),
-  hit: HIT_MATERIALS.map(([id, label]) => [id, label])
+  hit: HIT_MATERIALS.map(([id, label]) => [id, label]),
+  // 属性(front#437)。空なら属性なし
+  element: ELEMENT_IDS.map((id) => [id, ELEMENTS[id].label])
 };
 // 属性 × LV(front#435)にする前の攻撃の名前。前に書き出した CSV も取り込めるようにする
 const OLD_ATTACK_LABELS: Record<string, string> = { 炎: 'fire', 水: 'water', 風: 'wind', 雷: 'thunder', 暗黒: 'dark', 魔法陣: 'circle' };
@@ -62,6 +68,7 @@ function cellOf(column: EnemyColumn, def: EnemyDef): string {
     case 'shape':
     case 'attack':
     case 'hit':
+    case 'element':
       return NAMES[column.kind]!.find(([id]) => id === value)?.[1] ?? '';
     default:
       return value === null || value === undefined ? '' : String(value);
@@ -170,7 +177,9 @@ export function readEnemyCsv(text: string, current: EnemyDef[], template: EnemyD
   }
   const header = rows[0].map((h) => h.trim());
   const index = new Map(ENEMY_CSV_COLUMNS.map((c) => [c.key, header.indexOf(c.label)]));
-  const missing = ENEMY_CSV_COLUMNS.filter((c) => index.get(c.key)! < 0);
+  const missing = ENEMY_CSV_COLUMNS.filter((c) => !c.optional && index.get(c.key)! < 0);
+  // CSV にある列だけ読む(ない列は今の値のまま)
+  const columns = ENEMY_CSV_COLUMNS.slice(1).filter((c) => index.get(c.key)! >= 0);
   if (missing.length) {
     result.errors.push({
       line: 1, name: '見出しの行', column: '',
@@ -196,7 +205,7 @@ export function readEnemyCsv(text: string, current: EnemyDef[], template: EnemyD
 
     const values: Partial<Record<keyof EnemyDef, unknown>> = {};
     let ok = true;
-    for (const column of ENEMY_CSV_COLUMNS.slice(1)) {
+    for (const column of columns) {
       const parsed = parseCell(column, get(column));
       if ('error' in parsed) {
         ok = false;
@@ -214,7 +223,7 @@ export function readEnemyCsv(text: string, current: EnemyDef[], template: EnemyD
       result.additions.push({ line, name: def.name, def });
       return;
     }
-    const diffs = ENEMY_CSV_COLUMNS.slice(1)
+    const diffs = columns
       .filter((c) => !same(c, base[c.key], values[c.key]))
       .map((c) => ({ label: c.label, before: shown(c, base), after: shown(c, { ...base, ...values } as EnemyDef) }));
     if (!diffs.length) {
@@ -235,6 +244,7 @@ function same(column: EnemyColumn, a: unknown, b: unknown): boolean {
 function shown(column: EnemyColumn, def: EnemyDef): string {
   const cell = cellOf(column, def);
   if (column.kind === 'hit' && !cell) return '（体の形から決める）';
+  if (column.kind === 'element' && !cell) return '（なし）';
   if (column.kind === 'bool') return cell === '1' ? 'はい' : 'いいえ';
   return cell;
 }
@@ -262,14 +272,15 @@ function parseCell(column: EnemyColumn, raw: string): { value: unknown } | { err
       return { error: `「${raw}」は 1（はい）か 0（いいえ）で書いてください。` };
     case 'shape':
     case 'attack':
-    case 'hit': {
+    case 'hit':
+    case 'element': {
       const list = NAMES[column.kind]!;
-      if (column.kind === 'hit' && !raw) return { value: null };
+      if ((column.kind === 'hit' || column.kind === 'element') && !raw) return { value: null };
       const old = column.kind === 'attack' ? OLD_ATTACK_LABELS[raw] : undefined;
       const found = list.find(([id, label]) => label === raw || id === old);
       return found
         ? { value: found[0] }
-        : { error: `「${raw}」という${column.label}はありません。`, allowed: list.map(([, label]) => label).join('、') + (column.kind === 'hit' ? '（空にすると体の形から決める）' : '') };
+        : { error: `「${raw}」という${column.label}はありません。`, allowed: list.map(([, label]) => label).join('、') + (column.kind === 'hit' ? '（空にすると体の形から決める）' : column.kind === 'element' ? '（空にすると属性なし）' : '') };
     }
     default:
       return { value: raw };

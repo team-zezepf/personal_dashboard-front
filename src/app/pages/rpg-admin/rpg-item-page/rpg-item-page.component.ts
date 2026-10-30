@@ -5,6 +5,7 @@ import { RpgCraft, RpgEnemy, RpgItem, RpgItemInput, RpgItemType, RpgMap, RpgObje
 import { RpgService } from '../../../services/rpg.service';
 import { STATIC_NAMES, StaticType, rpgItemImageUrl, sellPriceOf, setItems } from '../../../rpg/rpg-data';
 import { MAX_SPELL_LEVEL, SPELLS, SPELL_IDS, SpellId, isSpellId, levelRateOf, spellLabel } from '../../../rpg/rpg-magic';
+import { ELEMENTS, ELEMENT_IDS, isElementId } from '../../../rpg/rpg-element';
 import { RpgItemIconComponent } from '../../../components/rpg-item-icon/rpg-item-icon.component';
 import { PendingImages } from '../../../components/rpg-item-icon/pending-images';
 import { EquipLookValue, RpgEquipLookFieldComponent } from '../../../components/rpg-equip-look-field/rpg-equip-look-field.component';
@@ -55,14 +56,15 @@ export const LOCKED_ITEMS: Record<string, string> = { wood_sword: '初期装備'
 
 // revive: たおれた人を起き上がらせる道具(front#358)。強さは起き上がるときのHPの割合(%)
 // book: 魔法書(front#383)。強さはなく、覚える魔法を選ぶ
-export const TYPE_LABELS: Record<RpgItemType, string> = { use: '回復の道具', revive: '復活の道具', weapon: '武器', armor: '防具', material: '素材', book: '魔法書' };
-const TYPE_ICONS: Record<RpgItemType, string> = { use: '🧪', revive: '🕊️', weapon: '🗡️', armor: '🛡️', material: '💎', book: '📕' };
+// element: 属性を変える道具(front#437)。強さはなく、変わる属性を選ぶ
+export const TYPE_LABELS: Record<RpgItemType, string> = { use: '回復の道具', revive: '復活の道具', weapon: '武器', armor: '防具', material: '素材', book: '魔法書', element: '属性を変える' };
+const TYPE_ICONS: Record<RpgItemType, string> = { use: '🧪', revive: '🕊️', weapon: '🗡️', armor: '🛡️', material: '💎', book: '📕', element: '🔮' };
 const TYPES = Object.keys(TYPE_LABELS) as RpgItemType[];
-type StatType = Exclude<RpgItemType, 'material' | 'book'>;
+type StatType = Exclude<RpgItemType, 'material' | 'book' | 'element'>;
 const STAT_LABELS: Record<StatType, string> = { use: 'HPの回復量', revive: '起き上がるHP（%）', weapon: '攻撃力', armor: '防御力' };
 const STAT_KEYS = { use: 'heal', revive: 'heal', weapon: 'atk', armor: 'def' } as const;
 /** 強さ(回復量・攻撃力・防御力)を持つ種類か */
-const hasStat = (type: RpgItemType): type is StatType => type !== 'material' && type !== 'book';
+const hasStat = (type: RpgItemType): type is StatType => type !== 'material' && type !== 'book' && type !== 'element';
 // 起き上がるときのHPの割合(%)の範囲(api#168 の RpgItemService.REVIVE_RANGE と同じ)
 const REVIVE_RANGE = [1, 100] as const;
 
@@ -72,7 +74,8 @@ const ICONS: Record<RpgItemType, string[]> = {
   weapon: ['🗡️', '⚔️', '🔱', '🪓', '🏹', '🔨', '🔪', '⛏️'],
   armor: ['🛡️', '🦺', '👘', '🥻', '🧥', '👕', '💠', '✨'],
   material: ['💎', '🧱', '🦴', '🔮', '🍯', '🗝️', '🔩', '🍃'],
-  book: ['📕', '📘', '📗', '📙', '📒', '📜', '📓', '🔮']
+  book: ['📕', '📘', '📗', '📙', '📒', '📜', '📓', '🔮'],
+  element: ['🔮', '💎', '🔥', '💧', '🌳', '✨', '🌑', '🪨']
 };
 
 export const WHERE_LABELS: Record<Where, string> = {
@@ -101,6 +104,7 @@ export function statText(item: RpgItem): string {
   // MPを回復する道具(front#383)は、HP・MPの回復量を並べる
   if (item.type === 'use') return [item.heal ? `HP +${item.heal}` : null, item.mp ? `MP +${item.mp}` : null].filter(Boolean).join('・') || 'HP +0';
   if (item.type === 'book') return isSpellId(item.spell) ? `${SPELLS[item.spell].icon} ${spellLabel(item.spell, item.level ?? 1)}を覚える` : '覚える魔法なし';
+  if (item.type === 'element') return isElementId(item.element) ? `属性が${ELEMENTS[item.element].icon}${ELEMENTS[item.element].label}になる` : '変わる属性なし';
   if (item.type === 'revive') return `HP${item.heal ?? 0}%で起き上がる`;
   if (item.type === 'weapon') return `攻撃 +${item.atk ?? 0}`;
   if (item.type === 'armor') return `防御 +${item.def ?? 0}`;
@@ -161,6 +165,8 @@ export function problemsOf(item: RpgItem, others: { name: string }[], shopGear: 
     else if (!inRange(item.heal) || !inRange(item.mp)) out.push({ ng: true, text: `回復量は ${ITEM_LIMITS.power[0]}〜${ITEM_LIMITS.power[1]} にしてください。` });
   } else if (item.type === 'book') {
     if (!isSpellId(item.spell)) out.push({ ng: true, text: '覚える魔法を選んでください。' });
+  } else if (item.type === 'element') {
+    if (!isElementId(item.element)) out.push({ ng: true, text: '変わる属性を選んでください。' });
   } else if (hasStat(item.type) && (stat === null || stat < ITEM_LIMITS.power[0] || stat > ITEM_LIMITS.power[1])) {
     out.push({ ng: true, text: `${STAT_LABELS[item.type]}は ${ITEM_LIMITS.power[0]}〜${ITEM_LIMITS.power[1]} にしてください。` });
   }
@@ -234,6 +240,9 @@ export class RpgItemPageComponent {
   // 魔法書の LV(front#387)と、その倍率
   readonly spellLevels = Array.from({ length: MAX_SPELL_LEVEL }, (_, i) => ({ level: i + 1, rate: levelRateOf(i + 1) }));
   readonly spells = SPELLS;
+  // 属性を変える道具で選べる属性(front#437)
+  readonly elementIds = ELEMENT_IDS;
+  readonly elements = ELEMENTS;
 
   readonly rows = signal<ItemRow[]>([]);
   readonly selectedId = signal<string | null>(null);
@@ -420,6 +429,7 @@ export class RpgItemPageComponent {
       i.mp = type === 'use' ? (i.mp ?? null) : null;
       i.spell = type === 'book' ? (i.spell ?? 'fire') : null;
       i.level = type === 'book' ? (i.level ?? 1) : null;
+      i.element = type === 'element' ? (i.element ?? 'fire') : null;
       i.atk = type === 'weapon' ? (i.atk ?? 10) : null;
       i.def = type === 'armor' ? (i.def ?? 5) : null;
       if (type === 'material') {
@@ -458,6 +468,13 @@ export class RpgItemPageComponent {
   setLevel(level: number | string): void {
     this.update((i) => {
       if (i.type === 'book') i.level = clamp(Number(level), [1, MAX_SPELL_LEVEL]);
+    });
+  }
+
+  /** 属性を変える道具で変わる属性(front#437) */
+  setElement(id: string): void {
+    this.update((i) => {
+      if (i.type === 'element' && isElementId(id)) i.element = id;
     });
   }
 
@@ -686,6 +703,7 @@ export function toInput(row: ItemRow): RpgItemInput {
     mp: i.type === 'use' ? i.mp || null : null,
     spell: i.type === 'book' ? (i.spell ?? null) : null,
     level: i.type === 'book' ? (i.level ?? 1) : null,
+    element: i.type === 'element' ? (i.element ?? null) : null,
     atk: i.type === 'weapon' ? (i.atk ?? null) : null,
     def: i.type === 'armor' ? (i.def ?? null) : null,
     desc: i.desc?.trim() || null,

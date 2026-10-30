@@ -146,6 +146,18 @@
         </label>
       </div>
 
+      <!-- 属性(front#437) -->
+      <div class="section" role="group" aria-label="属性">
+        <h2>属性</h2>
+        <span class="seg" role="group" aria-label="敵の属性">
+          <button type="button" [class.on]="!sel.def.element" [attr.aria-pressed]="!sel.def.element" (click)="setElement(null)">なし</button>
+          @for (id of elementIds; track id) {
+            <button type="button" [class.on]="sel.def.element === id" [attr.aria-pressed]="sel.def.element === id" (click)="setElement(id)">{{ elements[id].icon }} {{ elements[id].label }}</button>
+          }
+        </span>
+        <p class="hint">火→木・水→火・木→水・光⇄闇（矢印の先に強い）。この敵の属性が有利なら、プレイヤー・仲間に与えるダメージが 1.5 倍。プレイヤー・仲間の属性が有利なら、この敵が受けるダメージが 1.2 倍になります。攻撃の種類（炎・水などの見た目）とは別です。</p>
+      </div>
+
       <div class="section" role="group" aria-label="攻撃">
         <h2>攻撃</h2>
         <!-- 属性の攻撃は属性ごとに1枚。選ぶと LV1 / LV2、LV2 なら魔法陣を出すかを選べる(front#435) -->

@@ -1,5 +1,6 @@
 import { RpgEnemy } from '../models/rpg.models';
 import { drawArmor, drawChest, mix, shade } from './rpg-props';
+import { ElementId, isElementId } from './rpg-element';
 
 /**
  * RPGの敵(front#229)。種類ごとのデータ(マップ作成画面の「敵」タブで作る)と、体の絵・攻撃の動きの描き方を持つ。
@@ -15,7 +16,8 @@ export type EnemyAttack = 'tackle' | 'claw' | 'bite' | 'jump' | 'fire' | 'water'
   // 炎LV2・水LV2・風LV2・雷LV1(front#435)
   | 'blaze' | 'splash' | 'gale' | 'spark';
 
-export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt'> & { shape: EnemyShape; attack: EnemyAttack };
+// element: 属性(front#437)。null なら属性なし
+export type EnemyDef = Omit<RpgEnemy, 'sortOrder' | 'updatedAt' | 'element'> & { shape: EnemyShape; attack: EnemyAttack; element?: ElementId | null };
 
 export const ENEMY_SHAPES: [EnemyShape, string][] = [
   ['slime', 'スライム'], ['mushroom', 'キノコ'], ['wisp', '精霊'], ['raptor', 'ラプトル'],
@@ -146,7 +148,8 @@ export function setEnemies(list: (RpgEnemy | EnemyDef)[]): void {
     const attack = (ATTACK_IDS as string[]).includes(e.attack) ? (e.attack as EnemyAttack) : 'tackle';
     const { sortOrder: _s, updatedAt: _u, ...rest } = e as RpgEnemy;
     // 魔法陣を出す(front#435)は、前のAPIのデータにはないので出す
-    ENEMIES[e.id] = { ...rest, shape, attack, magicCircle: rest.magicCircle ?? true };
+    // 属性(front#437)は、前のAPIのデータ・知らない値なら属性なし
+    ENEMIES[e.id] = { ...rest, shape, attack, magicCircle: rest.magicCircle ?? true, element: isElementId(rest.element) ? rest.element : null };
   }
 }
 

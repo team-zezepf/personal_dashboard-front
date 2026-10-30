@@ -6,6 +6,7 @@ import { signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { objectTiles } from './rpg-house';
 import { SPELLS, isSpellId, spellLabel } from './rpg-magic';
+import { ElementId, isElementId } from './rpg-element';
 
 // material: 素材(front#277)。使う・装備することはできず、クエストで集めたり、鍛冶屋で装備の合成に使ったりする
 export type ItemType = RpgItemType;
@@ -31,6 +32,8 @@ export interface ItemDef {
   image?: string;
   // 武器・防具の見た目(front#431)。なければ今までどおり(武器は片手剣、防具は自分で選んだ服)
   look?: EquipLook;
+  // 使うと変わる属性(属性を変える道具。front#437)
+  element?: ElementId;
 }
 
 /** アイテム・合成の装備の画像のURL(front#345 / api#166) */
@@ -157,6 +160,7 @@ export function toItemDef(item: RpgItem): ItemDef {
     ...(item.type === 'use' && item.mp ? { mp: item.mp } : {}),
     // 魔法書の LV(front#387)は、なければ 1
     ...(item.type === 'book' && item.spell ? { spell: item.spell, level: item.level ?? 1 } : {}),
+    ...(item.type === 'element' && isElementId(item.element) ? { element: item.element } : {}),
     ...(item.type === 'weapon' ? { atk: item.atk ?? 0 } : {}),
     ...(item.type === 'armor' ? { def: item.def ?? 0 } : {}),
     ...(item.inShop ? { price: item.price ?? 0 } : {}),

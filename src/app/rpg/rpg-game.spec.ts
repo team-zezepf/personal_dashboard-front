@@ -122,6 +122,8 @@ describe('RpgGame', () => {
         mp: 20,
         spells: [],
         spellLevels: [],
+        // 属性(front#437)。属性ができる前のセーブデータは木
+        element: 'wood',
         companions: []
       });
     });
@@ -1601,8 +1603,8 @@ describe('RpgGame', () => {
 
       expect(game.companions.map((c) => [c.userId, c.hp])).toEqual([['3', 30], ['4', maxHpOf({ ...ZERO_STATS, atk: 3 })]]);
       expect(game.toSaveInput().companions).toEqual([
-        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [] },
-        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [] }
+        { userId: '3', level: 2, exp: 0, hp: 30, weapon: 'wood_sword', armor: 'cloth', items: [{ itemId: 'potion', count: 2 }], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [], element: 'wood' },
+        { userId: '4', level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth', items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, mp: 20, spells: [], spellLevels: [], element: 'wood' }
       ]);
     });
 
@@ -2415,6 +2417,121 @@ describe('RpgGame', () => {
       expect(c.stats.mag).toBeGreaterThan(3);
       expect(game.mateFx.some((m) => m.target === c && m.fx.kind === 'level')).toBe(true);
       expect(ev.sounds).toContain('level_up');
+    });
+  });
+
+  describe('属性(front#437)', () => {
+    const STONE = { id: 'fire_stone', name: 'ほのおの石', icon: '🔮', type: 'element' as const, element: 'fire', inShop: true, price: 300, sortOrder: 90 };
+    // HPが高く倒れない、属性だけ変えた敵
+    const foe = (element: EnemyDef['element']): EnemyDef => ({ ...DEFAULT_ENEMIES[0], id: 'test', name: 'テスト', hp: 9999, atk: 40, def: 0, sight: 0, element });
+    type Hits = {
+      playerAttack(e: unknown, p?: unknown): void;
+      enemyAttack(e: unknown, f?: unknown, lunge?: boolean): void;
+      spellDamage(e: unknown, spell: string, caster?: unknown): void;
+    };
+    const hits = () => game as unknown as Hits;
+
+    function place(element: EnemyDef['element']): void {
+      setEnemies([...DEFAULT_ENEMIES, foe(element)]);
+      game.loadMap(map('field', { enemies: [{ type: 'test', x: 2, y: 7 }] }));
+    }
+
+    /** 敵に与えたダメージ。乱数は 0.5 にそろえる(会心・回避なし) */
+    function dealt(element: EnemyDef['element'], act: () => void): number {
+      place(element);
+      const e = game.enemies[0];
+      const before = e.hp;
+      act();
+      return before - e.hp;
+    }
+
+    beforeEach(() => {
+      setItems([...DEFAULT_ITEMS, STONE]);
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    });
+    afterEach(() => {
+      setItems(DEFAULT_ITEMS);
+      setEnemies(DEFAULT_ENEMIES);
+      vi.restoreAllMocks();
+    });
+
+    it('はじめは木。属性ができる前のセーブデータも木で、保存すると属性も送る', () => {
+      expect(game.player.element).toBe('wood');
+      game.loadSave(save());
+      expect(game.player.element).toBe('wood');
+      game.loadSave(save({ element: 'dark' }));
+      expect(game.player.element).toBe('dark');
+      expect(game.toSaveInput().element).toBe('dark');
+      // 知らない属性は木
+      game.loadSave(save({ element: 'wind' }));
+      expect(game.player.element).toBe('wood');
+    });
+
+    it('通常攻撃は、キャラの属性が有利なら 1.2 倍。不利・属性なしの敵はそのまま', () => {
+      game.loadSave(save());
+      const p = game.player;
+      const base = dealt(null, () => hits().playerAttack(game.enemies[0], p));
+      expect(dealt('fire', () => hits().playerAttack(game.enemies[0], p))).toBe(base);
+      expect(dealt('water', () => hits().playerAttack(game.enemies[0], p))).toBe(Math.round(base * 1.2));
+      // 増えたダメージには ▲ を付ける
+      expect(game.floats.at(-1)?.text).toBe(`${Math.round(base * 1.2)}▲`);
+    });
+
+    it('攻撃魔法は、キャラの属性と魔法の属性が有利なら 1.2 倍ずつ(両方なら 1.44 倍)', () => {
+      game.loadSave(save({ spells: ['fire'] }));
+      const p = game.player;
+      const fire = (element: EnemyDef['element']) => dealt(element, () => hits().spellDamage(game.enemies[0], 'fire', p));
+      const base = fire(null);
+      // 木のプレイヤーが水の敵に: キャラの属性だけ有利
+      expect(fire('water')).toBe(Math.round(base * 1.2));
+      // 木の敵に: ファイア(火)だけ有利
+      expect(fire('wood')).toBe(Math.round(base * 1.2));
+      // 火のプレイヤーがファイアを木の敵に: 両方有利
+      p.element = 'fire';
+      expect(fire('wood')).toBe(Math.round(base * 1.44));
+      expect(game.floats.at(-1)?.text).toBe(`${Math.round(base * 1.44)}▲`);
+    });
+
+    it('敵の攻撃は、敵の属性が有利なら 1.5 倍', () => {
+      game.loadSave(save());
+      const p = game.player;
+      const taken = (element: EnemyDef['element']) => {
+        place(element);
+        p.hp = 999;
+        hits().enemyAttack(game.enemies[0], p, false);
+        return 999 - p.hp;
+      };
+      const base = taken(null);
+      expect(taken('water')).toBe(base);
+      expect(taken('fire')).toBe(Math.round(base * 1.5));
+      expect(game.floats.at(-1)?.text).toBe(`-${Math.round(base * 1.5)}▲`);
+    });
+
+    it('仲間も、仲間のアカウントの属性で計算する(なければ木)', () => {
+      const mate = (userId: string, element?: string): RpgCompanion => ({
+        userId, name: `仲間${userId}`, level: 2, exp: 0, hp: 50, weapon: 'wood_sword', armor: 'cloth',
+        items: [], stats: { ...ZERO_STATS, atk: 3 }, statPoints: 0, look: LOOK, ...(element ? { element } : {})
+      });
+      game.loadSave(save({ party: [mate('8', 'fire'), mate('9')] }));
+      expect(game.companions.map((c) => c.element)).toEqual(['fire', 'wood']);
+      expect(game.toSaveInput().companions?.map((c) => c.element)).toEqual(['fire', 'wood']);
+      const c = game.companions[0];
+      const base = dealt(null, () => hits().playerAttack(game.enemies[0], c));
+      expect(dealt('wood', () => hits().playerAttack(game.enemies[0], c))).toBe(Math.round(base * 1.2));
+    });
+
+    it('属性を変える道具を使うと属性が変わり、道具がなくなる。もうその属性なら使えない。道具屋ではいくつでも買える', () => {
+      game.loadSave(save({ gold: 1000, items: [{ itemId: 'fire_stone', count: 2 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] }));
+      expect(game.itemBlocker('fire_stone', game.player)).toBeNull();
+      expect(game.useItem('fire_stone')).toBe(true);
+      expect(game.player.element).toBe('fire');
+      expect(game.player.inv['fire_stone']).toBe(1);
+      expect(ev.messages.at(-1)).toBe('ほのおの石を使った。属性が🔥火になった！');
+
+      expect(game.useItem('fire_stone')).toBe(false);
+      expect(game.player.inv['fire_stone']).toBe(1);
+      expect(game.itemBlocker('fire_stone', game.player)).toBe('もう火属性');
+      expect(game.buyableCount('fire_stone')).toBe(3);
     });
   });
 

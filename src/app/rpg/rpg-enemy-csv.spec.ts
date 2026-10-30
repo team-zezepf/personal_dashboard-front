@@ -21,6 +21,28 @@ describe('敵の CSV(front#297)', () => {
     expect(readEnemyCsv(edit(enemiesToCsv(rows()), [[3, '攻撃の種類', '雷']]), enemies, enemies[0]).changes[0].def.attack).toBe('thunder');
   });
 
+  it('属性は「火」のように書き、空なら属性なし。知らない属性はエラー。属性の列がない前の CSV は今の属性のまま取り込める(front#437)', () => {
+    const withFire = enemies.map((e, i) => (i === 2 ? { ...e, element: 'fire' as const } : e));
+    const csv = enemiesToCsv(withFire.map((def) => ({ def })));
+    const table = parseCsv(csv);
+    const at = table[0].indexOf('属性');
+    expect([table[1][at], table[3][at]]).toEqual(['', '火']);
+
+    const result = readEnemyCsv(edit(csv, [[1, '属性', '水'], [3, '属性', '']]), withFire, withFire[0]);
+    expect(result.errors).toEqual([]);
+    expect(result.changes.map((c) => c.def.element)).toEqual(['water', null]);
+    expect(result.changes[1].diffs).toEqual([{ label: '属性', before: '火', after: '（なし）' }]);
+
+    const bad = readEnemyCsv(edit(csv, [[1, '属性', '風']]), withFire, withFire[0]);
+    expect(bad.errors[0]).toMatchObject({ line: 2, column: '属性', allowed: '火、水、木、光、闇（空にすると属性なし）' });
+
+    // 属性の列がない(前に書き出した) CSV
+    const old = table.map((r) => r.filter((_, i) => i !== at).join(',')).join('\r\n');
+    const imported = readEnemyCsv(old, withFire, withFire[0]);
+    expect(imported.errors).toEqual([]);
+    expect(imported.unchanged).toBe(3);
+  });
+
   it('BOM 付きで、見出しは日本語、名前で書き、落とす物の列は入れない', () => {
     const csv = enemiesToCsv(rows());
     expect(csv.startsWith('﻿')).toBe(true);
