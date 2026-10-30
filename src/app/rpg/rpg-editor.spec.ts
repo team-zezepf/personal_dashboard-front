@@ -1,5 +1,5 @@
-import { RpgMap, RpgMapObject } from '../models/rpg.models';
-import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, paletteGroups, rotateMap, selectsPlaced, toMapInput } from './rpg-editor';
+import { RpgMap, RpgMapNpc, RpgMapObject } from '../models/rpg.models';
+import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, moveNpcToArea, paletteGroups, rotateMap, selectsPlaced, toMapInput } from './rpg-editor';
 import { houseTiles } from './rpg-house';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
@@ -667,5 +667,69 @@ describe('paletteGroups(front#323)', () => {
   it('ほかのエリアがなければ「このダンジョンで使用中」は空、どこでも使っていなければ全部「その他」', () => {
     expect(paletteGroups(items, withObjects('a', ['bars']), []).dungeon).toEqual([]);
     expect(paletteGroups(items, withObjects('a', []), [withObjects('b', [])])).toEqual({ area: [], dungeon: [], other: items });
+  });
+});
+
+describe('moveNpcToArea(NPCを端の矢印の行き先のエリアへ移す。front#443)', () => {
+  const npc = (name: string, x: number, y: number): RpgMapNpc => ({
+    name, x, y, hair: '#000000', body: '#000000', role: 'talk', notice: false, lines: ['やあ'], look: lookFromColors('#000000', '#000000'), quests: []
+  });
+  let village: RpgMap;
+  let forest: RpgMap;
+  let mina: RpgMapNpc;
+  beforeEach(() => {
+    village = blankMap('plain', 'はじまりの村', 'plain', 0, 0, 10, 10);
+    forest = blankMap('area2', '森', 'plain', 1, 0, 10, 10);
+    mina = npc('ミナ', 5, 5);
+    village.npcs.push(mina);
+  });
+
+  it('右下の矢印で移すと、行き先の左上の端のまん中に近いマスに置き、元のエリアからは消える', () => {
+    const result = moveNpcToArea([village, forest], village, mina, forest, [1, 0]);
+    expect(result).toEqual({ changed: ['plain', 'area2'] });
+    expect(village.npcs).toEqual([]);
+    expect(forest.npcs).toEqual([mina]);
+    expect([mina.x, mina.y]).toEqual([0, 4]);
+  });
+
+  it('左下の矢印で移すと、行き先の右上の端のまん中に近いマスに置く', () => {
+    moveNpcToArea([village, forest], village, mina, forest, [0, 1]);
+    expect([mina.x, mina.y]).toEqual([4, 0]);
+  });
+
+  it('物が置いてあるマス・水のマスには置かず、その次に近いマスに置く', () => {
+    forest.npcs.push(npc('ケン', 0, 4));
+    forest.ground[5] = 'w' + forest.ground[5].slice(1);
+    moveNpcToArea([village, forest], village, mina, forest, [1, 0]);
+    expect([mina.x, mina.y]).toEqual([1, 4]);
+  });
+
+  it('行き先に同じ名前のNPCがいると移さず、理由を返す', () => {
+    forest.npcs.push(npc('ミナ', 3, 3));
+    const result = moveNpcToArea([village, forest], village, mina, forest, [1, 0]);
+    expect(result).toEqual({ error: '「森」には同じ名前の「ミナ」がいるため、移せません' });
+    expect(village.npcs).toEqual([mina]);
+    expect([mina.x, mina.y]).toEqual([5, 5]);
+  });
+
+  it('行き先に置けるマスがないと移さず、理由を返す', () => {
+    forest.ground = forest.ground.map((row) => 'w'.repeat(row.length));
+    const result = moveNpcToArea([village, forest], village, mina, forest, [1, 0]);
+    expect(result).toEqual({ error: '「森」に置ける空いたマスがないため、移せません' });
+    expect(village.npcs).toEqual([mina]);
+  });
+
+  it('「会いに行く」クエストの行き先がこのNPCなら、行き先のエリアを書き換え、そのクエストのエリアも変わったエリアに入れる', () => {
+    const lake = blankMap('area3', '湖', 'plain', 2, 0, 10, 10);
+    const goro = npc('ゴロウ', 2, 2);
+    goro.role = 'quest';
+    goro.quests = [
+      { ...blankQuest(), kind: 'visit', target: 'ミナ', targetArea: 'plain', count: 1 },
+      { ...blankQuest(), kind: 'visit', target: 'ポポ', targetArea: 'plain', count: 1 }
+    ];
+    lake.npcs.push(goro);
+    const result = moveNpcToArea([village, forest, lake], village, mina, forest, [1, 0]);
+    expect(result).toEqual({ changed: ['plain', 'area2', 'area3'] });
+    expect(goro.quests.map((q) => q.targetArea)).toEqual(['area2', 'plain']);
   });
 });

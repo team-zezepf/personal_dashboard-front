@@ -1281,3 +1281,67 @@ test(
     });
   }
 );
+
+test(
+  'E2E-45 RPGマップ作成で、置いてあるNPCをドラッグして端の矢印の上で離すと、矢印の行き先のエリアへ移せ、保存できる(front#443)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: はじまりの村だけ。道具屋 ミナが x 18・y 13 にいる)'],
+    expected: [
+      'NPCを左下の端の矢印へドラッグして離すと、「〜へ移しました」と出て、画面ははじまりの村のまま、元の場所からNPCがいなくなる',
+      '移した先のエリアの、こちら側(右上)の端のまん中の近くに、移したNPCがいる',
+      '両方のエリアが保存していない変更になり、「保存する」で保存できる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const areaName = page.getByRole('region', { name: 'エリアの設定' }).getByLabel('エリアの名前');
+    // E2E-44 が村の右にエリアを作って保存しているので、村の下に作る
+    const south = '[E2E]南の原っぱ';
+
+    await step('RPGマップ作成(/rpg/admin)を開き、はじまりの村の下の「＋」から「' + south + '」(20×20)を作って、右上の端の矢印ではじまりの村に戻る', 'はじまりの村に戻り、左下の端に「' + south + '」の矢印が出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+      await page.locator('.layout-grid [data-cell="0,1"]').click();
+      const dialog = page.getByRole('dialog', { name: '新しいエリア' });
+      await dialog.getByLabel('エリアの名前').fill(south);
+      await dialog.getByRole('button', { name: '作る' }).click();
+      await expect(dialog).toBeHidden();
+      await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+      await expect(areaName).toHaveValue(south);
+      await clickArrow(page, 'はじまりの村');
+      await expect(areaName).toHaveValue('はじまりの村');
+    });
+
+    await step(
+      'パレットの「その他」(選ぶ・動かす)にして、x 18・y 13 の「道具屋 ミナ」を、左下の端の「' + south + '」の矢印までドラッグして離す',
+      '「「道具屋 ミナ」を「' + south + '」へ移しました（x 9 ・ y 0）」と出て、画面ははじまりの村のまま、保存していない変更になる',
+      async () => {
+        await page.getByRole('complementary', { name: 'パレット' }).getByRole('button', { name: 'その他', exact: true }).click();
+        const box = (await page.getByLabel('マップ', { exact: true }).boundingBox())!;
+        const [fx, fy] = (await page.evaluate(() => (window as any).rpgAdminTest.tilePosition(18, 13))) as [number, number];
+        const [tx, ty] = (await page.evaluate((t) => (window as any).rpgAdminTest.arrowPosition(t), south)) as [number, number];
+        await page.mouse.move(box.x + fx, box.y + fy);
+        await page.mouse.down();
+        await page.mouse.move(box.x + tx, box.y + ty, { steps: 20 });
+        await page.mouse.up();
+        await expect(page.getByRole('status')).toHaveText(`「道具屋 ミナ」を「${south}」へ移しました（x 9 ・ y 0）`);
+        await expect(areaName).toHaveValue('はじまりの村');
+        await expect(page.getByText('● 保存していない変更があります')).toBeVisible();
+      }
+    );
+
+    await step('「保存する」を押す', '保存していない変更がなくなる', async () => {
+      await page.getByRole('button', { name: '保存する', exact: true }).click();
+      await expect(page.getByText('● 保存していない変更があります')).toBeHidden();
+    });
+
+    await step('左下の端の「' + south + '」の矢印を押し、x 9・y 0 のマスを押す', south + 'に切り替わり、「道具屋 ミナ」のNPCの設定が開く', async () => {
+      await clickArrow(page, south);
+      await expect(areaName).toHaveValue(south);
+      await clickTile(page, 9, 0);
+      const dialog = page.getByRole('dialog', { name: 'NPC' });
+      await expect(dialog.getByLabel('名前', { exact: true })).toHaveValue('道具屋 ミナ');
+    });
+  }
+);
