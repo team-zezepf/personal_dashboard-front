@@ -44,6 +44,7 @@ import {
 import { Fighter, MAX_PARTY, Npc, RpgGame, RpgGameEvents } from '../../rpg/rpg-game';
 import { SPELLS, SPELL_IDS, isSpellId, levelRateOf, maxMpOf, spellLabel, spellOfShortcut, spellRangeOf, spellShortcut } from '../../rpg/rpg-magic';
 import { RpgRenderer } from '../../rpg/rpg-render';
+import { ELEMENTS } from '../../rpg/rpg-element';
 import { GEM_SIZE, GEM_TIP, GemCursor, GemState, HAND_TIP, HandCursor } from '../../rpg/rpg-cursor';
 
 // 保存はデータのリポジトリへの自動コミットになるため、変更があっても30秒に1回までにする
@@ -158,6 +159,8 @@ export class RpgPageComponent implements OnDestroy {
         armor: ITEMS[c.armor]?.name ?? '',
         potions: count('use'),
         feathers: count('revive'),
+        // 属性(front#437)
+        element: ELEMENTS[c.element],
         // 持ち物は全部出す(拾った武器・魔法書・素材など。front#391)。装備中のものは上の行に出しているので除く
         items: Object.entries(c.inv)
           .filter(([id, n]) => n > 0 && ITEMS[id] && id !== c.weapon && id !== c.armor)
@@ -329,6 +332,8 @@ export class RpgPageComponent implements OnDestroy {
       def: game.def(),
       gold: p.gold,
       statPoints: p.statPoints,
+      // 属性(front#437)
+      element: ELEMENTS[p.element],
       weapon: { icon: weapon.icon, image: weapon.image, name: weapon.name, plus: `攻撃 +${weapon.atk ?? 0}` },
       armor: { icon: armor.icon, image: armor.image, name: armor.name, plus: `防御 +${armor.def ?? 0}` }
     };
@@ -424,9 +429,11 @@ export class RpgPageComponent implements OnDestroy {
           image: item.image,
           name: item.name,
           // 回復薬・いのちの羽(front#358)・魔法書(front#383)は「使う」。回復薬は選んでいる仲間・自分に使う
-          usable: item.type === 'use' || item.type === 'revive' || item.type === 'book',
+          usable: item.type === 'use' || item.type === 'revive' || item.type === 'book' || item.type === 'element',
           // もう覚えている魔法の書(front#383)は使えない(売れる)
           learned: item.type === 'book' && game.knowsBook(id),
+          // 属性を変える道具(front#437)で、もうその属性になっている
+          sameElement: item.type === 'element' && item.element === game.player.element,
           // 素材(front#277)は数と「素材」の印だけ出す(使う・装備するボタンはない)
           material: item.type === 'material',
           count: game.player.inv[id],
@@ -493,7 +500,8 @@ export class RpgPageComponent implements OnDestroy {
         const price = item.price ?? 0;
         // 回復薬・いのちの羽(front#358)・魔法書(front#387)はいくつでも買える。個数を選んで買う(front#379)
         const book = item.type === 'book';
-        const consumable = item.type === 'use' || item.type === 'revive' || book;
+        // 属性を変える道具(front#437)も、いくつでも買える
+        const consumable = item.type === 'use' || item.type === 'revive' || item.type === 'element' || book;
         const has = !consumable && game.owned(id);
         const max = game.buyableCount(id);
         const value = pick(`buy:${id}`, max);

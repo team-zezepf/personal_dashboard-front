@@ -54,6 +54,7 @@ import { DEFAULT_LOOK } from './rpg-look';
 import { objectTiles } from './rpg-house';
 import { EnemyDef, SPELLS, attackReach, isLv2Attack, attackTiming, disguiseOf, guardRateOf, hitHeightOf, hitMaterialOf, isPassive, isRooted, movesToTarget, ringSizeOf } from './rpg-enemy';
 import { cheb, findPath, octile } from './rpg-path';
+import { ELEMENTS, ElementId, INITIAL_ELEMENT, elementOrInitial, enemyElementRate, playerElementRate } from './rpg-element';
 import { SPELLS as MAGIC, MAX_SPELL_LEVEL, SPELL_COOLDOWN, SPELL_IDS, SpellId, isSpellId, levelRateOf, maxMpOf, spellHealOf, spellLabel, spellPowerOf, spellRangeOf } from './rpg-magic';
 
 export interface Mover {
@@ -171,6 +172,8 @@ export interface Player extends Mover {
   spellCd: number;
   // 覚えた魔法のLV(front#387)。ない魔法は LV1
   spellLevels: Partial<Record<SpellId, number>>;
+  // 属性(front#437)。はじめは木。属性を変える道具を使うと変わる
+  element: ElementId;
 }
 
 /**
@@ -214,6 +217,8 @@ export interface Companion extends Mover {
   spellLevels: RpgSpellLevel[];
   // 拾いに行く落ちたアイテム(front#391)
   pick: Drop | null;
+  // 属性(front#437)。仲間のアカウントの属性
+  element: ElementId;
 }
 
 /** 仲間のまわりのエフェクト(front#391)。回復の光・レベルアップの光をプレイヤーと同じ絵で出す */
@@ -341,6 +346,9 @@ export interface RpgGameEvents {
 }
 
 const ATTACK_RANGE = 1.35;
+// 属性が有利で増えたダメージの印と色(front#437)
+const UP_MARK = '▲';
+const ELEMENT_UP_COLOR = '#ff8a3d';
 const LEASH = 8;
 // 仲間(front#358)は3人まで。たおれてから1分待てる
 export const MAX_PARTY = 3;
@@ -417,7 +425,7 @@ export class RpgGame {
     kind: 'player', x: 0, y: 0, z: 0, path: [], dir: 1, moving: false, target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0,
     level: 1, exp: 0, hp: maxHpOf(ZERO_STATS), gold: 30, weapon: 'wood_sword', armor: 'cloth',
     inv: { potion: 3, wood_sword: 1, cloth: 1 }, stats: { ...ZERO_STATS }, statPoints: 0, look: { ...DEFAULT_LOOK }, lastCombat: -99, regen: 0, dead: false,
-    downT: 0, mp: maxMpOf(ZERO_STATS), mpRegen: 0, spells: [], spellCd: 0, spellLevels: {}
+    downT: 0, mp: maxMpOf(ZERO_STATS), mpRegen: 0, spells: [], spellCd: 0, spellLevels: {}, element: INITIAL_ELEMENT
   };
   // 連れている仲間(front#358)
   companions: Companion[] = [];
@@ -652,6 +660,8 @@ export class RpgGame {
       if (isSpellId(l.id) && p.spells.includes(l.id)) p.spellLevels[l.id] = Math.min(Math.max(Math.round(l.level), 1), MAX_SPELL_LEVEL);
     }
     p.mp = save.mp == null || save.hp <= 0 ? this.maxMp() : Math.max(0, Math.min(save.mp, this.maxMp()));
+    // 属性(front#437)。属性ができる前のセーブデータは木
+    p.element = elementOrInitial(save.element);
     p.mpRegen = 0;
     p.spellCd = 0;
     this.selected = null;
@@ -705,6 +715,7 @@ export class RpgGame {
       spells: [...p.spells],
       // LV2 以上の魔法だけ送る(ない魔法は LV1)
       spellLevels: p.spells.filter((id) => this.spellLevel(id) > 1).map((id) => ({ id, level: this.spellLevel(id) })),
+      element: p.element,
       // 仲間のデータ(front#358)。それぞれのアカウントに書かれる
       companions: this.companions.map((c) => ({
         userId: c.userId,
@@ -718,7 +729,8 @@ export class RpgGame {
         statPoints: c.statPoints,
         mp: Math.max(0, Math.floor(c.mp)),
         spells: [...c.spells],
-        spellLevels: c.spellLevels.map((l) => ({ ...l }))
+        spellLevels: c.spellLevels.map((l) => ({ ...l })),
+        element: c.element
       }))
     };
   }
@@ -749,7 +761,8 @@ export class RpgGame {
       target: null, repath: 0, atkCd: 0, lunge: 0, hurt: 0, lastCombat: -99, regen: 0, dead: false, downT: 0, help: null, reviving: 0, itemCd: 0,
       // MP(front#391)。呼んだとき・魔法ができる前のデータは最大MP
       mp: keepHp && rc.mp != null ? Math.min(rc.mp, maxMpOf(stats)) : maxMpOf(stats), mpRegen: 0, spellCd: 0,
-      spells: [...(rc.spells ?? [])], spellLevels: (rc.spellLevels ?? []).map((l) => ({ ...l })), pick: null
+      spells: [...(rc.spells ?? [])], spellLevels: (rc.spellLevels ?? []).map((l) => ({ ...l })), pick: null,
+      element: elementOrInitial(rc.element)
     };
   }
 
@@ -1193,6 +1206,7 @@ export class RpgGame {
   useItem(id: string): boolean {
     const item = ITEMS[id];
     if (item?.type === 'book') return this.learnSpell(id);
+    if (item?.type === 'element') return this.changeElement(id);
     return this.useItemOn(id, item?.type === 'use' && !item.heal ? this.player : this.healTarget());
   }
 
@@ -1205,6 +1219,8 @@ export class RpgGame {
     if (!item) return '使えない';
     if (item.type === 'revive') return target.dead ? null : 'たおれていない';
     if (item.type === 'book') return target.kind !== 'player' ? '使えない' : this.knowsBook(id) ? 'もう覚えている' : null;
+    // 属性を変える道具(front#437)は自分だけ。もうその属性なら使わない
+    if (item.type === 'element') return target.kind !== 'player' || !item.element ? '使えない' : target.element === item.element ? `もう${ELEMENTS[item.element].label}属性` : null;
     if (item.type !== 'use') return '使えない';
     if (target.dead) return 'たおれている';
     const needHp = !!item.heal && target.hp < this.maxHpOf(target);
@@ -1219,6 +1235,7 @@ export class RpgGame {
     const item = ITEMS[id];
     if (!item || !this.owned(id) || this.player.dead) return false;
     if (item.type === 'book') return target.kind === 'player' && this.learnSpell(id);
+    if (item.type === 'element') return target.kind === 'player' && this.changeElement(id);
     const blocker = this.itemBlocker(id, target);
     if (blocker) {
       if (blocker === 'HPは満タン') this.events.log(target.kind === 'player' ? 'HPは満タンだ' : `${target.name}のHPは満タンだ`);
@@ -1267,6 +1284,28 @@ export class RpgGame {
     if (healed) this.thank(user, target);
     this.events.sound?.('heal');
     this.events.statsChanged();
+  }
+
+  /** 属性を変える道具を使う(front#437)。道具はなくなる。もうその属性なら使わない */
+  private changeElement(id: string): boolean {
+    const item = ITEMS[id];
+    const p = this.player;
+    if (!item || item.type !== 'element' || !item.element || !this.owned(id) || p.dead) return false;
+    const el = ELEMENTS[item.element];
+    if (p.element === el.id) {
+      this.events.log(`もう${el.icon}${el.label}属性になっている`);
+      return false;
+    }
+    p.inv[id]--;
+    p.element = el.id;
+    this.floatText(p.x, p.y, `${el.icon}${el.label}`, el.color, 17, -18);
+    this.addPlayerFx('magic');
+    this.events.log(`${item.name}を使った。属性が${el.icon}${el.label}になった！`);
+    this.events.sound?.('level_up');
+    this.events.statsChanged();
+    this.events.inventoryChanged();
+    this.events.dirty();
+    return true;
   }
 
   // ===== 魔法(front#383) =====
@@ -1488,6 +1527,9 @@ export class RpgGame {
     const def = ENEMIES[e.type];
     // 威力は LV で増える(front#387)
     let dmg = Math.max(1, Math.round(spellPowerOf(p.stats) * s.rate * levelRateOf(this.levelOf(caster, spell)) - def.def * 0.3 + randi(-2, 2)));
+    // 属性(front#437)。キャラの属性・魔法の属性が有利なら 1.2 倍ずつ
+    const rate = playerElementRate(p.element, def.element, s.element ?? null);
+    if (rate > 1) dmg = Math.round(dmg * rate);
     // 守る敵(front#330)が生きている間は、魔法でもボスへのダメージが減る
     const guards = def.boss ? this.bossGuards() : 0;
     if (guards) dmg = Math.round(dmg * guardRateOf(guards));
@@ -1500,7 +1542,7 @@ export class RpgGame {
       e.atkCd = 0.6;
     }
     const color = spell === 'fire' ? '#fdba74' : spell === 'blizzard' ? '#bae6fd' : '#fde047';
-    this.floatText(e.x, e.y, guards ? `🛡${dmg}` : `${dmg}`, guards ? '#9ca3af' : color, 18);
+    this.floatText(e.x, e.y, `${guards ? '🛡' : ''}${dmg}${rate > 1 ? UP_MARK : ''}`, guards ? '#9ca3af' : rate > 1 ? ELEMENT_UP_COLOR : color, rate > 1 ? 20 : 18);
     if (e.hp <= 0) this.killEnemy(e);
   }
 
@@ -1549,6 +1591,8 @@ export class RpgGame {
     if (item.type === 'use' || item.type === 'revive') return can;
     // 魔法書(front#383)は、覚えている魔法の書も買える(合成の素材に使うため。front#387)。回復薬と同じく、いくつでも買える
     if (item.type === 'book') return can;
+    // 属性を変える道具(front#437)も、いくつでも買える
+    if (item.type === 'element') return can;
     return this.owned(id) ? 0 : Math.min(can, 1);
   }
 
@@ -1642,6 +1686,9 @@ export class RpgGame {
     let dmg = Math.max(1, Math.round(this.atkOf(p) - def.def * 0.6 + randi(-2, 2)));
     const crit = Math.random() < critRateOf(p.stats);
     if (crit) dmg = Math.round(dmg * 1.6);
+    // 属性(front#437)。キャラの属性が有利なら 1.2 倍
+    const rate = playerElementRate(p.element, def.element);
+    if (rate > 1) dmg = Math.round(dmg * rate);
     // 守る敵(front#330)が生きている間、ボスへのダメージは1体につき1/4ずつ減る
     const guards = def.boss ? this.bossGuards() : 0;
     if (guards) dmg = Math.round(dmg * guardRateOf(guards));
@@ -1652,8 +1699,9 @@ export class RpgGame {
       e.aggro = true;
       e.atkCd = 0.6;
     }
-    if (guards) this.floatText(e.x, e.y, `🛡${dmg}`, '#9ca3af', 17);
-    else this.floatText(e.x, e.y, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffd54a' : '#ffffff', crit ? 22 : 17);
+    const up = rate > 1 ? UP_MARK : '';
+    if (guards) this.floatText(e.x, e.y, `🛡${dmg}${up}`, '#9ca3af', 17);
+    else this.floatText(e.x, e.y, crit ? `${dmg}!${up}` : `${dmg}${up}`, crit ? '#ffd54a' : up ? ELEMENT_UP_COLOR : '#ffffff', crit ? 22 : up ? 20 : 17);
     if (e.hp <= 0) this.killEnemy(e);
   }
 
@@ -1957,10 +2005,13 @@ export class RpgGame {
       this.floatText(f.x, f.y, 'MISS', '#a5f3fc', 15);
       return;
     }
-    const dmg = Math.max(1, Math.round(def.atk - this.defOf(f) * 0.6 + randi(-1, 2)));
+    let dmg = Math.max(1, Math.round(def.atk - this.defOf(f) * 0.6 + randi(-1, 2)));
+    // 属性(front#437)。敵の属性が有利なら 1.5 倍
+    const rate = enemyElementRate(def.element, f.element);
+    if (rate > 1) dmg = Math.round(dmg * rate);
     f.hp -= dmg;
     f.hurt = 0.2;
-    this.floatText(f.x, f.y, `-${dmg}`, '#ff6b6b', 17);
+    this.floatText(f.x, f.y, `-${dmg}${rate > 1 ? UP_MARK : ''}`, rate > 1 ? '#ff3b3b' : '#ff6b6b', rate > 1 ? 20 : 17);
     if (f.hp <= 0) {
       if (f.kind === 'player') this.knockOut();
       else this.knockOutCompanion(f);

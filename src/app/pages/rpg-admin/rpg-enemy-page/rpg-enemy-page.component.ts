@@ -2,6 +2,7 @@ import { Component, ElementRef, OnDestroy, afterNextRender, afterRenderEffect, c
 import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgEnemy, RpgEnemyInput, RpgMap } from '../../../models/rpg.models';
+import { ELEMENTS, ELEMENT_IDS, ElementId } from '../../../rpg/rpg-element';
 import { RpgService } from '../../../services/rpg.service';
 import { ITEMS, itemsVersion } from '../../../rpg/rpg-data';
 import {
@@ -96,6 +97,9 @@ export class RpgEnemyPageComponent implements OnDestroy {
   readonly isRooted = isRooted;
   readonly hitMaterials = HIT_MATERIALS;
   readonly disguiseOf = disguiseOf;
+  // 属性(front#437)
+  readonly elementIds = ELEMENT_IDS;
+  readonly elements = ELEMENTS;
   readonly attackCards = ATTACK_CARDS;
   readonly isLv2Attack = isLv2Attack;
   readonly colors = ENEMY_COLORS;
@@ -255,6 +259,11 @@ export class RpgEnemyPageComponent implements OnDestroy {
   setAttackLevel(level: 1 | 2): void {
     const levels = this.attackCard().levels;
     if (levels) this.setAttack(levels[level - 1]);
+  }
+
+  /** 属性(front#437)。null なら属性なし */
+  setElement(element: ElementId | null): void {
+    this.change({ element });
   }
 
   /** LV2 の攻撃で魔法陣を出すか(front#435) */

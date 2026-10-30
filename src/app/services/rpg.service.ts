@@ -20,11 +20,11 @@ const SAVE_FIELDS = `
   items { itemId count }
   area x y
   stats { hp atk def mag spd luk }
-  statPoints updatedAt mp spells spellLevels { id level }
+  statPoints updatedAt mp spells spellLevels { id level } element
   look { ${LOOK_FIELDS} }
   quests { id state count }
   respawn { area x y }
-  party { userId name level exp hp weapon armor items { itemId count } stats { hp atk def mag spd luk } statPoints look { ${LOOK_FIELDS} } mp spells spellLevels { id level } }
+  party { userId name level exp hp weapon armor items { itemId count } stats { hp atk def mag spd luk } statPoints look { ${LOOK_FIELDS} } mp spells spellLevels { id level } element }
 `;
 
 const HALL_FIELDS = `userId name level look { ${LOOK_FIELDS} } partyOf playing inMyParty`;
@@ -61,13 +61,13 @@ const THEME_FIELDS = `
 
 const CRAFT_FIELDS = `id name icon type power spell level gold materials { itemId count } sortOrder updatedAt image lookShape lookColor lookAccent`;
 
-const ITEM_FIELDS = `id name icon type heal mp spell level atk def desc inShop price sellPrice sortOrder updatedAt image lookShape lookColor lookAccent`;
+const ITEM_FIELDS = `id name icon type heal mp spell level atk def desc inShop price sellPrice sortOrder updatedAt image lookShape lookColor lookAccent element`;
 
 const OBJECT_DEF_FIELDS = `type color dark items { id count chance } enemies { id chance } mimics { id chance } hitMaterial updatedAt`;
 
 const ENEMY_FIELDS = `
   id name shape color dark size hp atk def interval speed exp gold drop dropRate material materialRate hitMaterial glow guard sight respawn boss
-  attack magicCircle dash charge range radius sortOrder updatedAt
+  attack magicCircle element dash charge range radius sortOrder updatedAt
 `;
 
 const SAVE_MUTATION = `

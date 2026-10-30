@@ -191,7 +191,21 @@
                 </select>
               </label>
             }
+            @if (sel.item.type === 'element') {
+              <!-- 属性を変える道具(front#437) -->
+              <label class="field">
+                <span>変わる属性</span>
+                <select [ngModel]="sel.item.element" (ngModelChange)="setElement($event)" aria-label="変わる属性">
+                  @for (id of elementIds; track id) {
+                    <option [value]="id">{{ elements[id].icon }} {{ elements[id].label }}</option>
+                  }
+                </select>
+              </label>
+            }
           </div>
+          @if (sel.item.type === 'element') {
+            <p class="hint">プレイヤーが使うと、属性がこの属性に変わります（道具はなくなります）。攻撃力などのステータスは変わらず、ダメージを計算するときだけ使います。</p>
+          }
           @if (sel.item.type === 'use') {
             <div class="grid2">
               <label class="field">

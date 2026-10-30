@@ -4,6 +4,7 @@ import { AreaSlide, Companion, DOOR_OPENING_HEIGHT, DROP_BLINK_SEC, DROP_LIFE_SE
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
 import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-player-fx';
 import { RpgLook } from '../models/rpg.models';
+import { ELEMENTS } from './rpg-element';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
 import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawCoral, drawGrave, drawKelp, drawPot, drawSavePoint, drawShackle, drawShell, drawSign, relTint, tintOf } from './rpg-props';
 
@@ -506,7 +507,8 @@ export class RpgRenderer {
       this.label(`${c.name}  ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, sx, sy - 62, 'rgba(185,28,28,0.85)');
       return;
     }
-    this.label(c.name, sx, sy - 66, 'rgba(37,99,235,0.85)');
+    // 名前の前に属性(front#437)
+    this.label(`${ELEMENTS[c.element].icon}${c.name}`, sx, sy - 66, 'rgba(37,99,235,0.85)');
     this.hpBar(sx, sy - 56, c.hp / this.game.maxHpOf(c));
     // いのちの羽で起こしているところ
     if (c.reviving > 0) this.label('🕊️ 起こしている…', sx, sy - 86, 'rgba(22,163,74,0.9)');
@@ -1120,7 +1122,8 @@ export class RpgRenderer {
       if (targeted || hovered) this.label(disguise, sx, barY - 10, targeted ? 'rgba(220,38,38,0.85)' : undefined);
     } else if (targeted || hovered || e.hp < def.hp || def.boss) {
       this.hpBar(sx, barY - 10, e.hp / def.hp);
-      if (targeted || hovered || def.boss) this.label(def.name, sx, barY - 22, e.aggro || def.boss ? 'rgba(220,38,38,0.85)' : undefined);
+      // 属性(front#437)があれば名前の前に出す
+      if (targeted || hovered || def.boss) this.label(def.element ? `${ELEMENTS[def.element].icon}${def.name}` : def.name, sx, barY - 22, e.aggro || def.boss ? 'rgba(220,38,38,0.85)' : undefined);
     }
   }
 

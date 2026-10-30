@@ -1,6 +1,7 @@
 // RPGの魔法(front#383)。魔法の中身(威力・MP・見た目)はフロントが持ち、APIは覚えた魔法のIDとMPだけを保存する(api#181)。
 // 魔法書(アイテムの種類 book)を使うと覚える。威力・回復量・最大MP・攻撃魔法の届く距離は、魔力で伸びる
 import type { Stats } from './rpg-data';
+import type { ElementId } from './rpg-element';
 
 export type SpellId = 'fire' | 'blizzard' | 'thunder' | 'heal' | 'healall';
 
@@ -19,13 +20,15 @@ export interface SpellDef {
   slow?: number;
   // パーティ全員を回復する(ヒールオール)
   all?: boolean;
+  // 攻撃魔法の属性(front#437)。敵の属性に強ければダメージ ×1.2
+  element?: ElementId;
   desc: string;
 }
 
 export const SPELLS: Record<SpellId, SpellDef> = {
-  fire: { id: 'fire', name: 'ファイア', icon: '🔥', mp: 4, kind: 'attack', rate: 1, desc: '選んだ敵1体に火の玉' },
-  blizzard: { id: 'blizzard', name: 'ブリザド', icon: '❄️', mp: 6, kind: 'attack', rate: 0.9, slow: 3, desc: '敵1体に氷。少しの間 動きが遅くなる' },
-  thunder: { id: 'thunder', name: 'サンダー', icon: '⚡', mp: 10, kind: 'attack', rate: 0.8, radius: 1.5, desc: '選んだ敵のまわりの敵全部に雷' },
+  fire: { id: 'fire', name: 'ファイア', icon: '🔥', mp: 4, kind: 'attack', rate: 1, element: 'fire', desc: '選んだ敵1体に火の玉' },
+  blizzard: { id: 'blizzard', name: 'ブリザド', icon: '❄️', mp: 6, kind: 'attack', rate: 0.9, slow: 3, element: 'water', desc: '敵1体に氷。少しの間 動きが遅くなる' },
+  thunder: { id: 'thunder', name: 'サンダー', icon: '⚡', mp: 10, kind: 'attack', rate: 0.8, radius: 1.5, element: 'light', desc: '選んだ敵のまわりの敵全部に雷' },
   heal: { id: 'heal', name: 'ヒール', icon: '💚', mp: 5, kind: 'heal', rate: 1, desc: '自分か仲間1人のHPを回復' },
   healall: { id: 'healall', name: 'ヒールオール', icon: '✨', mp: 14, kind: 'heal', rate: 1, all: true, desc: 'パーティ全員のHPを回復' }
 };

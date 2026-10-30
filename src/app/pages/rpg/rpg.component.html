@@ -361,6 +361,8 @@
         <div class="vitals-top">
           <span class="vitals-lv">Lv {{ s.level }}</span>
           <span class="vitals-name">あなた</span>
+          <!-- 属性(front#437) -->
+          <span class="element-badge" [style.background]="s.element.color" [style.color]="s.element.text" [attr.aria-label]="'属性 ' + s.element.label" [title]="'属性: ' + s.element.label">{{ s.element.icon }}{{ s.element.label }}</span>
           <span class="vitals-gold" aria-label="ゴールド">💰 {{ s.gold }}G</span>
           <button type="button" class="status-button" (click)="openStatus()">
             📊 ステータス
@@ -395,6 +397,9 @@
           <div class="modal-head">
             <span>📊 ステータス</span>
             <span class="status-lv">Lv {{ v.level }}</span>
+            @if (stats(); as s) {
+              <span class="element-badge" [style.background]="s.element.color" [style.color]="s.element.text" [attr.aria-label]="'属性 ' + s.element.label">{{ s.element.icon }}{{ s.element.label }}</span>
+            }
             <button type="button" class="close-button" aria-label="閉じる" (click)="closeStatus()">×</button>
           </div>
           @if (v.allocating) {
@@ -462,7 +467,11 @@
         @for (m of party(); track m.userId) {
           <!-- クリックすると、その仲間を選ぶ(front#383) -->
           <div class="mate" [class.down]="m.dead" [class.selected]="selection()?.name === m.name" [attr.aria-label]="m.name" (click)="selectMate(m.userId)">
-            <div class="mate-top"><b>{{ m.name }}</b><span>Lv {{ m.level }}</span></div>
+            <div class="mate-top">
+              <b>{{ m.name }}</b>
+              <span class="element-badge" [style.background]="m.element.color" [style.color]="m.element.text" [attr.aria-label]="'属性 ' + m.element.label" [title]="'属性: ' + m.element.label">{{ m.element.icon }}</span>
+              <span>Lv {{ m.level }}</span>
+            </div>
             <div class="mate-hp">{{ m.dead ? 'たおれている ' + m.left : 'HP ' + m.hp + '/' + m.maxHp }}</div>
             <div class="vitals-bar"><div class="hp" [class.low]="m.hpRate <= 30" [style.width.%]="m.hpRate"></div></div>
             <div class="mate-items">🧪{{ m.potions }}　🕊️{{ m.feathers }}</div>
@@ -524,6 +533,9 @@
             } @else if (item.learned) {
               <span class="count">×{{ item.count }}</span>
               <span class="badge">覚えている</span>
+            } @else if (item.sameElement) {
+              <span class="count">×{{ item.count }}</span>
+              <span class="badge">今の属性</span>
             } @else if (item.usable) {
               <span class="count">×{{ item.count }}</span>
               <button type="button" class="btn" [attr.aria-label]="item.name + 'を使う'" (click)="useItem(item.id)">使う</button>

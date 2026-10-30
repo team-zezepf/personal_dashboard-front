@@ -145,14 +145,16 @@ describe('アイテムタブ(front#343)', () => {
 
   describe('保存するときの形', () => {
     it('新しいアイテムは id を null にし、種類に関係ない値・売らないときの値段は送らない', () => {
-      expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ', spell: 'fire' }), isNew: true })).toEqual({
-        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, level: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null,
+      expect(toInput({ item: potion({ id: 'new-1', atk: 3, desc: '  ', spell: 'fire', element: 'fire' }), isNew: true })).toEqual({
+        id: null, name: '特製回復薬', icon: '🍵', type: 'use', heal: 80, mp: null, spell: null, level: null, element: null, atk: null, def: null, desc: null, inShop: true, price: 25, sellPrice: null, sortOrder: 37, image: null,
         lookShape: null, lookColor: null, lookAccent: null
       });
       // MPだけを回復する道具は、HPの回復量を送らない。魔法書は覚える魔法だけを送る(front#383)
       expect(toInput({ item: potion({ heal: 0, mp: 30 }), isNew: false })).toMatchObject({ heal: null, mp: 30, spell: null });
       expect(toInput({ item: potion({ type: 'book', heal: 80, mp: 5, spell: 'heal' }), isNew: false })).toMatchObject({ heal: null, mp: null, spell: 'heal', level: 1 });
       expect(toInput({ item: potion({ type: 'book', spell: 'heal', level: 3 }), isNew: false }).level).toBe(3);
+      // 属性を変える道具(front#437)は、変わる属性だけを送る
+      expect(toInput({ item: potion({ type: 'element', heal: 80, element: 'dark' }), isNew: false })).toMatchObject({ heal: null, element: 'dark' });
       // 画像(front#345)はファイル名のまま送る
       expect(toInput({ item: potion({ image: 'a.png' }), isNew: false }).image).toBe('a.png');
       expect(toInput({ item: sword({ inShop: false }), isNew: false })).toMatchObject({ id: 'item2', atk: 30, inShop: false, price: null });
