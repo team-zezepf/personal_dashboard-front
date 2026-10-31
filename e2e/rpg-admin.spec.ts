@@ -845,8 +845,7 @@ test(
       expect(heights[24].slice(10, 13)).toBe('000');
     });
 
-    await step('「高さを数字で表示」を入れ、くぼみと高台の間でホイールを回して拡大する', '(画面で見る)くぼみのまわりに壁が見え、数字は −2 / 5 と出る', async () => {
-      await page.getByLabel('高さを数字で表示').check();
+    await step('くぼみと高台の間でホイールを回して拡大する', '(画面で見る)くぼみのまわりに壁が見える', async () => {
       const [sx, sy] = (await page.evaluate(() => (window as any).rpgAdminTest.tilePosition(15, 26))) as [number, number];
       const box = (await page.getByLabel('マップ', { exact: true }).boundingBox())!;
       await page.mouse.move(box.x + sx, box.y + sy);
@@ -854,7 +853,6 @@ test(
     });
 
     await step('(あと片づけ)「リセット」で (11, 26)・(20, 26) をクリックし、「保存する」を押す', 'API の高さがすべて0に戻る', async () => {
-      await page.getByLabel('高さを数字で表示').uncheck();
       await tool('リセット');
       await clickTile(page, 11, 26);
       await clickTile(page, 20, 26);

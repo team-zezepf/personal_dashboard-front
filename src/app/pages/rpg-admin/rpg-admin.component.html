@@ -37,16 +37,6 @@
       <span class="sep"></span>
       <button type="button" class="btn" [disabled]="!canUndo()" (click)="undo()" title="Ctrl+Z">↶ 元に戻す</button>
       <button type="button" class="btn" [disabled]="!canRedo()" (click)="redo()" title="Ctrl+Y">↷ やり直す</button>
-      <span class="sep"></span>
-      <label class="toolbar-label">
-        <input type="checkbox" [ngModel]="showGrid()" (ngModelChange)="showGrid.set($event)" /> マス目を表示
-      </label>
-      <label class="toolbar-label">
-        <input type="checkbox" [ngModel]="showHeights()" (ngModelChange)="showHeights.set($event)" /> 高さを数字で表示
-      </label>
-      <label class="toolbar-label">
-        <input type="checkbox" [ngModel]="showCliffs()" (ngModelChange)="showCliffs.set($event)" /> 通れない段差（崖）に印
-      </label>
       <span class="spacer"></span>
       @if (isDirty()) {
         <span class="dirty">● 保存していない変更があります</span>
