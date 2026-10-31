@@ -1,0 +1,130 @@
+<!-- キーワードの所を目立たせて出す -->
+<ng-template #hl let-text>@for (p of parts(text); track $index) {@if (p.hit) {<mark>{{ p.text }}</mark>} @else {<span>{{ p.text }}</span>}}</ng-template>
+
+<div class="npc-page">
+  <div class="filters">
+    <div class="seg" role="tablist" aria-label="一覧の切り替え">
+      <button type="button" role="tab" [class.on]="mode() === 'quest'" [attr.aria-selected]="mode() === 'quest'" (click)="mode.set('quest')">クエスト</button>
+      <button type="button" role="tab" [class.on]="mode() === 'npc'" [attr.aria-selected]="mode() === 'npc'" (click)="mode.set('npc')">NPC</button>
+    </div>
+    <div class="search">
+      <input
+        type="search"
+        aria-label="キーワード"
+        placeholder="キーワードで探す（クエスト名・NPC・敵・アイテム・セリフ・場所）"
+        [ngModel]="keyword()"
+        (ngModelChange)="keyword.set($event)"
+      />
+    </div>
+    <label class="sel">
+      ダンジョン
+      <select aria-label="ダンジョン" [ngModel]="dungeonId()" (ngModelChange)="dungeonId.set($event)">
+        <option value="">すべて</option>
+        @for (d of sortedDungeons(); track d.id) {
+          <option [value]="d.id">{{ d.name }}</option>
+        }
+      </select>
+    </label>
+    @if (mode() === 'quest') {
+      <label class="sel">
+        種類
+        <select aria-label="種類" [ngModel]="kind()" (ngModelChange)="kind.set($event)">
+          <option value="">すべて</option>
+          @for (k of kinds; track k[0]) {
+            <option [value]="k[0]">{{ k[1] }}</option>
+          }
+        </select>
+      </label>
+    }
+    <label class="chk" [title]="mode() === 'quest' ? '会う相手が見つからないクエストだけを出します' : 'クエスト依頼なのにクエストを持っていないNPCだけを出します'">
+      <input type="checkbox" [ngModel]="problemOnly()" (ngModelChange)="problemOnly.set($event)" />
+      問題があるものだけ
+    </label>
+  </div>
+
+  <div class="count" data-testid="npc-list-count">{{ count() }}件@if (keyword().trim()) {（「{{ keyword().trim() }}」で探した結果）}</div>
+
+  <div class="table-wrap">
+    @if (!count()) {
+      <div class="empty">見つかりませんでした</div>
+    } @else if (mode() === 'quest') {
+      <table aria-label="クエストの一覧">
+        <thead>
+          <tr><th>クエスト</th><th>種類</th><th>内容</th><th>依頼主</th><th>報酬</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (r of questList(); track r.row.quest) {
+            <tr class="row" [class.has-hits]="r.hits.length">
+              <td><b><ng-container *ngTemplateOutlet="hl; context: { $implicit: r.row.quest.title }" /></b></td>
+              <td><span [class]="'kind ' + r.row.quest.kind">{{ r.row.kindLabel }}</span></td>
+              <td>
+                <ng-container *ngTemplateOutlet="hl; context: { $implicit: r.row.content }" />
+                @if (r.row.lost) {
+                  <div class="warn">⚠ 会う相手が見つかりません</div>
+                }
+              </td>
+              <td>
+                <ng-container *ngTemplateOutlet="hl; context: { $implicit: r.row.giver.name }" />
+                <div class="where"><ng-container *ngTemplateOutlet="hl; context: { $implicit: r.row.place }" /></div>
+              </td>
+              <td><ng-container *ngTemplateOutlet="hl; context: { $implicit: r.row.reward }" /></td>
+              <td>
+                <button type="button" class="btn small" (click)="open.emit({ areaId: r.row.area.id, npcName: r.row.giver.name, questIndex: r.row.index })">マップで開く</button>
+              </td>
+            </tr>
+            @if (r.hits.length) {
+              <tr class="hits">
+                <td colspan="6">
+                  @for (h of r.hits; track $index) {
+                    <div class="hit"><b>{{ h.label }}</b><ng-container *ngTemplateOutlet="hl; context: { $implicit: h.line }" /></div>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    } @else {
+      <table aria-label="NPCの一覧">
+        <thead>
+          <tr><th>NPC</th><th>役割</th><th>場所</th><th>出しているクエスト</th><th>会いに来るクエスト</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (r of npcList(); track r.npc) {
+            <tr class="row">
+              <td><b><ng-container *ngTemplateOutlet="hl; context: { $implicit: r.npc.name }" /></b></td>
+              <td>
+                <ng-container *ngTemplateOutlet="hl; context: { $implicit: r.roleLabel }" />
+                @if (r.noQuest) {
+                  <div class="warn">⚠ クエストがありません</div>
+                }
+              </td>
+              <td>
+                <ng-container *ngTemplateOutlet="hl; context: { $implicit: r.place }" />
+                <div class="where">x {{ r.npc.x }}・y {{ r.npc.y }}</div>
+              </td>
+              <td>
+                @for (q of r.npc.role === 'quest' ? r.npc.quests : []; track $index) {
+                  <div><ng-container *ngTemplateOutlet="hl; context: { $implicit: q.title }" /></div>
+                } @empty {
+                  <span class="where">—</span>
+                }
+              </td>
+              <td>
+                @for (v of r.visitors; track $index) {
+                  <div><ng-container *ngTemplateOutlet="hl; context: { $implicit: v.title }" /></div>
+                  <div class="where"><ng-container *ngTemplateOutlet="hl; context: { $implicit: v.giver }" />から</div>
+                } @empty {
+                  <span class="where">—</span>
+                }
+              </td>
+              <td>
+                <button type="button" class="btn small" (click)="open.emit({ areaId: r.area.id, npcName: r.npc.name, questIndex: null })">マップで開く</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

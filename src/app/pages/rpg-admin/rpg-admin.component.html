@@ -22,8 +22,10 @@
       <button type="button" role="tab" class="page-tab" [class.active]="page() === 'item'" [attr.aria-selected]="page() === 'item'" (click)="page.set('item')">🎒 アイテム</button>
       <button type="button" role="tab" class="page-tab" [class.active]="page() === 'craft'" [attr.aria-selected]="page() === 'craft'" (click)="page.set('craft')">⚒️ 合成</button>
       <button type="button" role="tab" class="page-tab" [class.active]="page() === 'object'" [attr.aria-selected]="page() === 'object'" (click)="page.set('object')">🏺 置物</button>
+      <!-- 全ダンジョンのNPCとクエストの一覧(front#453) -->
+      <button type="button" role="tab" class="page-tab" [class.active]="page() === 'npc'" [attr.aria-selected]="page() === 'npc'" (click)="page.set('npc')">📜 NPC</button>
     </div>
-    @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme') {
+    @if (page() !== 'enemy' && page() !== 'item' && page() !== 'craft' && page() !== 'object' && page() !== 'theme' && page() !== 'npc') {
     <div class="toolbar">
       <label class="toolbar-label">
         ダンジョン
@@ -94,6 +96,17 @@
       [maps]="maps()"
       (saved)="onObjectDefsSaved($event)"
       (dirtyChange)="objectDirty.set($event)"
+    />
+
+    <!-- 「📜 NPC」タブ(front#453)。キーワード・絞り込みを残すため、ほかのタブに移っても隠すだけにする -->
+    <app-rpg-npc-page
+      [style.display]="page() === 'npc' ? null : 'none'"
+      [maps]="maps()"
+      [dungeons]="dungeons()"
+      [enemies]="enemies()"
+      [items]="itemOptions()"
+      [version]="version()"
+      (open)="openNpcFromList($event)"
     />
 
     <!-- ベースタブ(旧「見た目」。front#389 / front#401)。ダンジョン・エリアのベースを作る・直す。ほかのタブに移っても編集中の内容を残す -->
