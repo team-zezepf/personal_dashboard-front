@@ -595,6 +595,85 @@ test(
   }
 );
 
+// 管理者のアカウントで、保存してあるベースの木の種類(front#447)を API から読む。なければ null(広葉樹)
+async function savedTreeKind(themeName: string): Promise<string | null> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgThemes { name treeKind } }' })
+  });
+  const body = (await res.json()) as { data: { rpgThemes: { name: string; treeKind: string | null }[] } };
+  return body.data.rpgThemes.find((x) => x.name === themeName)!.treeKind ?? null;
+}
+
+test(
+  'E2E-46 RPGマップ作成の「ベース」タブで、ベースの木の種類(広葉樹・針葉樹・ヤシの木・葉なし)を選んで保存できる(front#447)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンのベースを何も保存していない(最初の4つ)'],
+    expected: [
+      '草原を選ぶと「木の種類」は「広葉樹」。選ぶ欄には 広葉樹・針葉樹・ヤシの木・葉なし が並ぶ',
+      '草原を複製して名前を「[E2E]枯れ野」、木の種類を「葉なし」にすると、葉の色の欄が使えなくなり「葉なしでは、葉の色は使いません。」と出る',
+      '木の種類を「針葉樹」にすると、葉の色の欄がまた使えるようになり、案内も消える',
+      '「ベースを保存する」を押すと「ベースを保存しました」と出て、API でも木の種類が conifer になっている。画面を開き直しても「針葉樹」のまま',
+      '(あと片づけ)「[E2E]枯れ野」を消せる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-theme-page');
+    const list = tab.getByRole('complementary', { name: 'ベースの一覧' });
+    const props = tab.getByRole('complementary', { name: 'ベースの項目' });
+    const kind = props.getByLabel('木の種類');
+    const hint = props.getByText('葉なしでは、葉の色は使いません。');
+    const name = '[E2E]枯れ野';
+
+    await step('RPGマップ作成(/rpg/admin)の「🎨 ベース」タブで「草原」を選ぶ', '「木の種類」は「広葉樹」で、広葉樹・針葉樹・ヤシの木・葉なしが選べる', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await list.getByRole('button', { name: /^草原/ }).click();
+      await expect(kind.locator('option:checked')).toHaveText('広葉樹');
+      await expect(kind.locator('option')).toHaveText(['広葉樹', '針葉樹', 'ヤシの木', '葉なし']);
+    });
+
+    await step(`「＋ 新しいベース」を押し、名前を「${name}」、木の種類を「葉なし」にする`, '葉の色の欄が使えなくなり、「葉なしでは、葉の色は使いません。」と出る', async () => {
+      await tab.getByRole('button', { name: '＋ 新しいベース' }).click();
+      await props.getByLabel('ベースの名前').fill(name);
+      await kind.selectOption({ label: '葉なし' });
+      await expect(props.getByLabel('葉の色 1')).toBeDisabled();
+      await expect(hint).toBeVisible();
+    });
+
+    await step('木の種類を「針葉樹」にする', '葉の色の欄がまた使えるようになり、案内も消える', async () => {
+      await kind.selectOption({ label: '針葉樹' });
+      await expect(props.getByLabel('葉の色 1')).toBeEnabled();
+      await expect(hint).toHaveCount(0);
+    });
+
+    await step('「ベースを保存する」を押し、画面を開き直して同じベースを選ぶ', '「ベースを保存しました」と出て、API でも conifer。開き直しても「針葉樹」', async () => {
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
+      expect(await savedTreeKind(name)).toBe('conifer');
+      await page.reload();
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await list.getByRole('button', { name }).click();
+      await expect(kind.locator('option:checked')).toHaveText('針葉樹');
+    });
+
+    await step(`(あと片づけ)「${name}」を「🗑 消す」`, '「消しました」と出る', async () => {
+      await tab.getByRole('button', { name: '🗑 消す' }).click();
+      await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
+    });
+  }
+);
+
 // 管理者のアカウントで、保存してある村のエリアのベース(front#401)を API から読む。なければ null
 async function savedVillageTheme(): Promise<string | null> {
   const login = await fetch(`${API_URL}/api/auth/login`, {

@@ -1,5 +1,5 @@
 import { RpgMap } from '../models/rpg.models';
-import { DEFAULT_CRAFTS, DEFAULT_ITEMS, ITEMS, areaDropMoves, buildAreaMap, heightFromChar, heightToChar, setCrafts, setItems, signLinesOf, toItemDef, weaponPoseOf, wornLook } from './rpg-data';
+import { DEFAULT_CRAFTS, DEFAULT_ITEMS, DEFAULT_THEMES, ITEMS, areaDropMoves, buildAreaMap, heightFromChar, heightToChar, setCrafts, setItems, signLinesOf, toItemDef, toThemeDef, treeKindOf, weaponPoseOf, wornLook } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
 import { blankMap } from './rpg-editor';
 
@@ -7,6 +7,16 @@ import { blankMap } from './rpg-editor';
 const area = (id: string, dungeonId: string, x: number, y: number) => blankMap(id, id, dungeonId, x, y, 10, 10);
 const maps = [area('村', 'd1', 0, 0), area('丘', 'd1', 1, 0), area('湖', 'd1', 0, 1), area('塔', 'd2', 5, 5)];
 const [village, hill] = maps;
+
+describe('木の種類(front#447)', () => {
+  it('ベースの木の種類で描く。なし・知らない値は広葉樹(今の木)', () => {
+    const plain = DEFAULT_THEMES[0];
+    expect(toThemeDef(plain).tree.kind).toBe('broadleaf');
+    for (const kind of ['conifer', 'palm', 'bare'] as const) expect(toThemeDef({ ...plain, treeKind: kind }).tree.kind).toBe(kind);
+    expect(treeKindOf(null)).toBe('broadleaf');
+    expect(treeKindOf('cactus')).toBe('broadleaf');
+  });
+});
 
 describe('signLinesOf(front#314)', () => {
   const tower = { name: '闇の塔' };

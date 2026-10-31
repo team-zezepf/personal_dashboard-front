@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgDungeon, RpgMap, RpgMapObject, RpgTheme, RpgThemeInput } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_FLOWERS, THEME_FLOWER_LABELS, liquidEdgeOf, setThemes, toThemeDef } from '../../../rpg/rpg-data';
+import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_FLOWERS, THEME_FLOWER_LABELS, TREE_KINDS, TREE_KIND_LABELS, liquidEdgeOf, setThemes, toThemeDef, treeKindOf } from '../../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../../rpg/rpg-game';
 import { RpgRenderer } from '../../../rpg/rpg-render';
 
@@ -89,6 +89,9 @@ export class RpgThemePageComponent implements OnDestroy {
   readonly limits = THEME_LIMITS;
   readonly flowers = THEME_FLOWERS;
   readonly flowerLabels = THEME_FLOWER_LABELS;
+  readonly treeKinds = TREE_KINDS;
+  readonly treeKindLabels = TREE_KIND_LABELS;
+  readonly treeKindOf = treeKindOf;
   readonly effectKinds = THEME_EFFECT_KINDS;
   readonly effectLabels = THEME_EFFECT_LABELS;
   // 編集欄に並べる色のまとまり(名前・何色か)
@@ -255,6 +258,11 @@ export class RpgThemePageComponent implements OnDestroy {
 
   setFlower(kind: string): void {
     this.update((t) => (t.flower = kind));
+  }
+
+  /** 木の種類(front#447)。広葉樹は null(API と同じく「なし = 広葉樹」) */
+  setTreeKind(kind: string): void {
+    this.update((t) => (t.treeKind = treeKindOf(kind) === 'broadleaf' ? null : kind));
   }
 
   setTreeScale(v: number | string): void {

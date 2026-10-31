@@ -141,13 +141,24 @@
 
         <div class="section">
           <h2>木・岩</h2>
+          <label class="f">
+            <span>木の種類</span>
+            <select aria-label="木の種類" [ngModel]="treeKindOf(sel.theme.treeKind)" (ngModelChange)="setTreeKind($event)">
+              @for (k of treeKinds; track k) {
+                <option [value]="k">{{ treeKindLabels[k] }}</option>
+              }
+            </select>
+          </label>
           <div class="f"><span>幹</span><input type="color" aria-label="幹の色" [value]="sel.theme.trunk" (input)="setColor('trunk', null, $any($event.target).value)" /></div>
           <div class="f" role="group" aria-label="葉の色">
             <span>葉（3色）</span>
             @for (i of indexes(3); track $index) {
-              <input type="color" [attr.aria-label]="'葉の色 ' + (i! + 1)" [value]="colorAt(sel.theme, 'leaves', i)" (input)="setColor('leaves', i, $any($event.target).value)" />
+              <input type="color" [attr.aria-label]="'葉の色 ' + (i! + 1)" [value]="colorAt(sel.theme, 'leaves', i)" [disabled]="treeKindOf(sel.theme.treeKind) === 'bare'" (input)="setColor('leaves', i, $any($event.target).value)" />
             }
           </div>
+          @if (treeKindOf(sel.theme.treeKind) === 'bare') {
+            <p class="hint">葉なしでは、葉の色は使いません。</p>
+          }
           <label class="f">
             <span>木の大きさ</span>
             <input type="range" step="0.05" [min]="limits.treeScale[0]" [max]="limits.treeScale[1]" [value]="sel.theme.treeScale" (input)="setTreeScale($any($event.target).value)" aria-label="木の大きさ" />
