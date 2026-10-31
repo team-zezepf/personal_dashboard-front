@@ -1480,3 +1480,84 @@ test(
     });
   }
 );
+
+test(
+  'E2E-48 RPGマップ作成の「📜 NPC」タブで、NPC・クエストを一覧で見てキーワードで探せ、「マップで開く」でそのクエストの所を開ける(front#453)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている',
+      'E2E 用の RPG データ(はじまりの村に、村長 ゴロウ「スライム退治」・子ども ポポ「おとうさんへの伝言」(旅人 ケンに会う)・宿屋 マーサ「湖のブルースライム」のクエストがある)'
+    ],
+    expected: [
+      '上のタブの右端に「📜 NPC」があり、押すとクエストの一覧が出る。「内容」は種類・対象・数から作った「スライムを3体」のような文になる',
+      'キーワードで、クエスト名・内容・セリフから探せる。セリフで見つかったときは、見つかった行が「依頼のセリフ」として下に出る',
+      '「NPC」に切り替えると、旅人 ケンに会いに来るクエスト(子ども ポポから)がわかる。「問題があるものだけ」にすると、問題のないデータでは何も出ない',
+      'クエストの行の「マップで開く」を押すと、マップタブに移って、依頼主のNPCの設定がそのクエストを選んだ状態で開く'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const list = page.locator('app-rpg-npc-page');
+    const search = list.getByLabel('キーワード');
+    const count = list.getByTestId('npc-list-count');
+
+    await step('RPGマップ作成(/rpg/admin)を開き、上のタブの右端の「📜 NPC」を押す', 'クエストの一覧に3件出て、村長 ゴロウの「スライム退治」の内容は「スライムを3体」、報酬は「50G・回復薬×2」', async () => {
+      await page.goto('/rpg/admin');
+      const tabs = page.locator('.page-tabs .page-tab');
+      await expect(tabs.last()).toHaveText('📜 NPC');
+      await tabs.last().click();
+      await expect(count).toHaveText('3件');
+      const row = list.getByRole('row').filter({ hasText: 'スライム退治' });
+      await expect(row).toContainText('敵を倒す');
+      await expect(row).toContainText('スライムを3体');
+      await expect(row).toContainText('始まりの草原 ／ はじまりの村');
+      await expect(row).toContainText('50G・回復薬×2');
+      await expect(list.getByRole('row').filter({ hasText: 'おとうさんへの伝言' })).toContainText('旅人 ケン（はじまりの村）に会う');
+    });
+
+    await step('キーワードに「ケン」と入れる', '「おとうさんへの伝言」の1件だけになり、「ケン」の所が目立つ', async () => {
+      await search.fill('ケン');
+      await expect(count).toHaveText('1件（「ケン」で探した結果）');
+      await expect(list.locator('tbody tr.row')).toHaveCount(1);
+      await expect(list.locator('tbody tr.row')).toContainText('おとうさんへの伝言');
+      await expect(list.locator('mark').first()).toHaveText('ケン');
+    });
+
+    await step('キーワードを「回復薬を使う」(村長 ゴロウの依頼のセリフにある言葉)にする', '「スライム退治」の1件になり、下に「依頼のセリフ」として見つかった行が出る', async () => {
+      await search.fill('回復薬を使う');
+      await expect(count).toHaveText('1件（「回復薬を使う」で探した結果）');
+      await expect(list.locator('tbody tr.row')).toContainText('スライム退治');
+      await expect(list.locator('.hit')).toHaveCount(1);
+      await expect(list.locator('.hit')).toContainText('依頼のセリフ');
+      await expect(list.locator('.hit mark')).toHaveText('回復薬を使う');
+    });
+
+    await step('「NPC」に切り替えて、キーワードを「ケン」にする', '旅人 ケンの行に、会いに来るクエスト「おとうさんへの伝言」(子ども ポポから)が出る', async () => {
+      await list.getByRole('tab', { name: 'NPC', exact: true }).click();
+      await search.fill('ケン');
+      const row = list.getByRole('row').filter({ hasText: '旅人 ケン' });
+      await expect(row).toContainText('話すだけ');
+      await expect(row).toContainText('おとうさんへの伝言');
+      await expect(row).toContainText('子ども ポポから');
+    });
+
+    await step('キーワードを消して「問題があるものだけ」にチェックを入れる', 'クエストのないクエスト依頼のNPCはいないので、「見つかりませんでした」と出る', async () => {
+      await search.fill('');
+      await list.getByLabel('問題があるものだけ').check();
+      await expect(count).toHaveText('0件');
+      await expect(list.getByText('見つかりませんでした')).toBeVisible();
+      await list.getByLabel('問題があるものだけ').uncheck();
+    });
+
+    await step('「クエスト」に戻し、「湖のブルースライム」の行の「マップで開く」を押す', 'マップタブに移り、宿屋 マーサのNPCの設定が、「湖のブルースライム」を選んだ状態で開く', async () => {
+      await list.getByRole('tab', { name: 'クエスト', exact: true }).click();
+      await list.getByRole('row').filter({ hasText: '湖のブルースライム' }).getByRole('button', { name: 'マップで開く' }).click();
+      await expect(page.getByRole('tab', { name: '🗺️ マップ' })).toHaveAttribute('aria-selected', 'true');
+      const dialog = page.getByRole('dialog', { name: 'NPC' });
+      await expect(dialog.getByLabel('名前', { exact: true })).toHaveValue('宿屋 マーサ');
+      await expect(dialog.locator('.quest-item.active')).toContainText('湖のブルースライム');
+    });
+  }
+);

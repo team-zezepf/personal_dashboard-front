@@ -36,6 +36,7 @@ import { RpgThemePageComponent } from './rpg-theme-page/rpg-theme-page.component
 import { RpgItemPageComponent } from './rpg-item-page/rpg-item-page.component';
 import { RpgObjectPageComponent } from './rpg-object-page/rpg-object-page.component';
 import { RpgObjectFormComponent } from './rpg-object-form/rpg-object-form.component';
+import { NpcOpenRequest, RpgNpcPageComponent } from './rpg-npc-page/rpg-npc-page.component';
 import { ObjectDraft, applyDraft, draftOfObject, draftProblem } from '../../rpg/rpg-object';
 import { SIGN_BANDS, drawSign } from '../../rpg/rpg-props';
 import { RpgSeSectionComponent } from './rpg-se-section/rpg-se-section.component';
@@ -92,7 +93,7 @@ export interface LayoutCell {
 @Component({
   selector: 'app-rpg-admin-page',
   standalone: true,
-  imports: [HeaderComponent, FormsModule, NgTemplateOutlet, RpgLookEditorComponent, RpgEnemyPageComponent, RpgItemPageComponent, RpgCraftPageComponent, RpgThemePageComponent, RpgSeSectionComponent, RpgObjectPageComponent, RpgObjectFormComponent],
+  imports: [HeaderComponent, FormsModule, NgTemplateOutlet, RpgLookEditorComponent, RpgEnemyPageComponent, RpgItemPageComponent, RpgCraftPageComponent, RpgThemePageComponent, RpgSeSectionComponent, RpgObjectPageComponent, RpgObjectFormComponent, RpgNpcPageComponent],
   templateUrl: './rpg-admin.component.html',
   styleUrl: './rpg-admin.component.css'
 })
@@ -205,7 +206,8 @@ export class RpgAdminPageComponent implements OnDestroy {
     return doorLabel(houseGeometry(d.shape, d.rotation).door.normal);
   });
   // 編集するたびに上げて、右側の欄・確認を描き直す
-  private readonly version = signal(0);
+  // マップを変えるたびに増える(「📜 NPC」タブの一覧も、これで作り直す。front#453)
+  readonly version = signal(0);
 
   readonly current = computed(() => this.maps().find((m) => m.id === this.currentId()) ?? null);
   readonly currentDungeon = computed(() => {
@@ -274,7 +276,7 @@ export class RpgAdminPageComponent implements OnDestroy {
   newDungeon = { name: '新しいダンジョン', theme: 'plain', width: 20, height: 20 };
 
   // ===== BGM(front#218) =====
-  readonly page = signal<'map' | 'bgm' | 'enemy' | 'item' | 'craft' | 'object' | 'theme'>('map');
+  readonly page = signal<'map' | 'bgm' | 'enemy' | 'item' | 'craft' | 'object' | 'theme' | 'npc'>('map');
   // 「BGM・効果音」の中のタブ(front#318)
   readonly soundTab = signal<'bgm' | 'se'>('bgm');
   readonly bgms = signal<RpgBgm[]>([]);
@@ -1035,6 +1037,22 @@ export class RpgAdminPageComponent implements OnDestroy {
   questSummary(q: RpgQuest): string {
     const rewards = [...(q.rewardGold ? [`${q.rewardGold}G`] : []), ...q.rewardItems.map((r) => `${ITEMS[r.itemId]?.name ?? r.itemId}×${r.count}`)];
     return [QUEST_KIND_LABELS[q.kind] ?? q.kind, ...rewards].join('・');
+  }
+
+  /**
+   * 「📜 NPC」タブの「マップで開く」(front#453)。マップタブに移ってそのNPCのいるエリアに切り替え、NPCの設定を開く。
+   * クエストの行から開いたときは、そのクエストの所を開く
+   */
+  openNpcFromList(req: NpcOpenRequest): void {
+    this.page.set('map');
+    // マップのキャンバスが見えてから、エリアに合わせて大きさを決める
+    setTimeout(() => {
+      this.selectArea(req.areaId);
+      const npc = this.editor?.map.npcs.find((n) => n.name === req.npcName);
+      if (!npc) return;
+      this.openModal({ kind: 'npc', ref: npc });
+      if (req.questIndex !== null) this.questIndex.set(req.questIndex);
+    });
   }
 
   // ===== NPC・家のモーダル(front#236) =====
