@@ -151,10 +151,6 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly tab = signal('ground');
   readonly tool = signal<PaletteItem>(PALETTE[0].items[0]);
   readonly brush = signal(1);
-  readonly showGrid = signal(true);
-  // 段差(front#225): 高さを数字で出す・2段以上の差(崖)に赤い線を引く
-  readonly showHeights = signal(false);
-  readonly showCliffs = signal(true);
   readonly selection = signal<Selection | null>(null);
   // 右の欄のタブ(front#317)。マップの上で物を選んだ・置いたら、選んでいるものが見えるよう「エリア」にする
   readonly propsTab = signal<'dungeon' | 'area'>('area');
@@ -1577,64 +1573,6 @@ export class RpgAdminPageComponent implements OnDestroy {
       ctx.lineTo(cx - (TW / 2) * s, cy);
       ctx.closePath();
     };
-
-    // マス目(「なし」のマスは点線で、どこまでがマップかわかるようにする)
-    if (this.showGrid()) {
-      ctx.lineWidth = 1;
-      for (let y = 0; y < map.height; y++) {
-        for (let x = 0; x < map.width; x++) {
-          diamond(x, y);
-          if (editor.groundAt(x, y) === 'v') {
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-          }
-          ctx.stroke();
-        }
-      }
-      ctx.setLineDash([]);
-    }
-
-    // 通れない段差(となりとの差が2段以上)のふちに赤い線
-    if (this.showCliffs() && area.hasHeights) {
-      ctx.strokeStyle = 'rgba(220,38,38,0.85)';
-      ctx.lineWidth = 2.5;
-      for (let y = 0; y < map.height; y++) {
-        for (let x = 0; x < map.width; x++) {
-          const [cx, cy] = top(x, y);
-          const L: [number, number] = [cx - TW / 2, cy];
-          const R: [number, number] = [cx + TW / 2, cy];
-          const T: [number, number] = [cx, cy - TH / 2];
-          const B: [number, number] = [cx, cy + TH / 2];
-          const edges: [number, number, [number, number], [number, number]][] = [[x, y + 1, L, B], [x + 1, y, B, R], [x, y - 1, T, R], [x - 1, y, L, T]];
-          for (const [nx, ny, a, b] of edges) {
-            if (!area.inMap(nx, ny) || area.canStep(x, y, nx, ny)) continue;
-            ctx.beginPath();
-            ctx.moveTo(...a);
-            ctx.lineTo(...b);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    if (this.showHeights()) {
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'rgba(17,24,39,0.75)';
-      for (let y = 0; y < map.height; y++) {
-        for (let x = 0; x < map.width; x++) {
-          // マイナスの段は「−1」のように出す(front#412)
-          if (editor.groundAt(x, y) !== 'v') {
-            const h = area.heightAt(x, y);
-            ctx.fillText(h < 0 ? `−${-h}` : String(h), ...top(x, y));
-          }
-        }
-      }
-    }
 
     // 隣のエリアへつながる端に、外向きの三角の矢印と行き先の名前(端の真ん中の外側)。押すとそのエリアへ移る(front#439)。
     // 同じダンジョンの隣のエリアは水色、ほかのダンジョンへのつながり(front#274)は紫
