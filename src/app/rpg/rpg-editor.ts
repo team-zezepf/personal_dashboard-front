@@ -89,6 +89,9 @@ export const PALETTE: PaletteTab[] = [
       { id: 'grave', label: '墓石', icon: '🪦', tool: { kind: 'object', type: 'grave' } },
       // 牢獄の置物(front#321)。鉄格子は壁と同じく通れず、向こうが透けて見える。続けて置くと1本の柵になる。木のおけは壊れる置物
       { id: 'bars', label: '鉄格子', icon: '▥', tool: { kind: 'object', type: 'bars' } },
+      // 柵(front#451)。通れず、壊れない。並べると、となりの同じ種類の柵とつながる
+      { id: 'fence_wood', label: '木の柵', icon: '🪵', tool: { kind: 'object', type: 'fence_wood' } },
+      { id: 'fence_iron', label: '鉄の柵', icon: '⚙️', tool: { kind: 'object', type: 'fence_iron' } },
       { id: 'shackle', label: '鎖の杭', icon: '⛓️', tool: { kind: 'object', type: 'shackle' } },
       { id: 'bucket', label: '木のおけ', icon: '🧺', tool: { kind: 'object', type: 'bucket' } },
       // 海の置物(front#421)。サンゴは壊れない飾り、海藻・大きな貝は壊れる置物

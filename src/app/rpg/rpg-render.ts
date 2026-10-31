@@ -1,4 +1,4 @@
-import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, darken, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, weaponPoseOf, wornLook } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, darken, exitAt, fenceLinks, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, weaponPoseOf, wornLook } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Companion, DOOR_OPENING_HEIGHT, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
@@ -6,7 +6,7 @@ import { drawPlayerFxBack, drawPlayerFxFront, drawPlayerFxText } from './rpg-pla
 import { RpgLook } from '../models/rpg.models';
 import { ELEMENTS } from './rpg-element';
 import { SPELLS, attackTiming, castOf, chargeShake, disguiseOf, drawAttackEffect, drawEnemyBody, jumpHeight, ringSizeOf } from './rpg-enemy';
-import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawCoral, drawGrave, drawKelp, drawPot, drawSavePoint, drawShackle, drawShell, drawSign, relTint, tintOf } from './rpg-props';
+import { SIGN_BANDS, Tint, drawArmor, drawBarrel, drawBars, drawBones, drawBookshelf, drawBucket, drawCandle, drawChest, drawCoral, drawFence, drawGrave, drawKelp, drawPot, drawSavePoint, drawShackle, drawShell, drawSign, relTint, tintOf } from './rpg-props';
 
 type Pt = [number, number];
 
@@ -618,6 +618,9 @@ export class RpgRenderer {
       case 'bars': return drawBars(this.ctx, sx, sy, barsAlong(this.game.map, o), t);
       case 'shackle': return drawShackle(this.ctx, sx, sy, t);
       case 'bucket': return drawBucket(this.ctx, sx, sy, t);
+      // 柵(front#451)。となりの同じ柵とつながる
+      case 'fence_wood': return drawFence(this.ctx, sx, sy, 'wood', fenceLinks(this.game.map, o), t);
+      case 'fence_iron': return drawFence(this.ctx, sx, sy, 'iron', fenceLinks(this.game.map, o), t);
       // セーブポイント(front#337)
       case 'save_point': return drawSavePoint(this.ctx, sx, sy, this.time, t);
       // 海の置物(front#421)

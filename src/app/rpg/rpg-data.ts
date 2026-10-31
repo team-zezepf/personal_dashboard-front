@@ -331,10 +331,12 @@ export type StaticType = 'tree' | 'rock' | 'house' | 'cliff' | 'fern' | 'crystal
   // 海の置物(front#421)
   | 'coral' | 'kelp' | 'shell'
   // 鍵付きの扉(front#425)。2マス分
-  | 'door';
+  | 'door'
+  // 柵(front#451)。並べると、となりの同じ種類の柵とつながる
+  | 'fence_wood' | 'fence_iron';
 export const STATIC_TYPES: StaticType[] = [
   'tree', 'rock', 'house', 'cliff', 'fern', 'crystal', 'pillar', 'volcano', 'grass', 'chest', 'armor', 'wall', 'barrel', 'pot', 'bones', 'bookshelf', 'candle', 'grave', 'sign', 'bars', 'shackle', 'bucket', 'save_point',
-  'coral', 'kelp', 'shell', 'door'
+  'coral', 'kelp', 'shell', 'door', 'fence_wood', 'fence_iron'
 ];
 // 扉(front#425)
 export const DOOR = 'door';
@@ -354,7 +356,8 @@ export const STATIC_NAMES: Record<StaticType, string> = {
   tree: '木', rock: '岩', house: '家', cliff: '崖', fern: 'シダ', crystal: '水晶', pillar: '柱', volcano: '火山', grass: '草むら', chest: '宝箱', armor: '甲冑', wall: '壁',
   barrel: 'たる', pot: 'つぼ', bones: '骨の山', bookshelf: '本棚', candle: '燭台', grave: '墓石', sign: '看板',
   bars: '鉄格子', shackle: '鎖の杭', bucket: '木のおけ', save_point: 'セーブポイント',
-  coral: 'サンゴ', kelp: '海藻', shell: '大きな貝', door: '扉'
+  coral: 'サンゴ', kelp: '海藻', shell: '大きな貝', door: '扉',
+  fence_wood: '木の柵', fence_iron: '鉄の柵'
 };
 
 export interface StaticObj {
@@ -425,6 +428,8 @@ export const DEFAULT_TINTS: Partial<Record<StaticType, { m: string; d: string }>
   pot: { m: '#c8693a', d: '#8f4322' }, bones: { m: '#efeadb', d: '#7c7363' }, bookshelf: { m: '#7a4b25', d: '#5e3a1c' },
   candle: { m: '#71717a', d: '#3f3f46' }, grave: { m: '#9ca3af', d: '#6b7280' }, bars: { m: '#6b6880', d: '#1f1d2b' },
   shackle: { m: '#6b6880', d: '#1f1d2b' }, bucket: { m: '#966131', d: '#3f3f46' },
+  // 柵(front#451)。明るい色 = 支柱・横板(鉄の棒)、暗い色 = 影の面・ふち
+  fence_wood: { m: '#b07a45', d: '#5e3b1e' }, fence_iron: { m: '#5b5870', d: '#1c1b26' },
   // 海の置物(front#421)。サンゴ・海藻は 明るい色 = 先、暗い色 = 根元。大きな貝は 明るい色 = 貝がら、暗い色 = すじ
   coral: { m: '#f472b6', d: '#be185d' }, kelp: { m: '#3fae6a', d: '#1f6b40' }, shell: { m: '#fbcfe8', d: '#db8fb5' },
   // セーブポイント(front#337)。明るい色 = 光る石、暗い色 = 台座
@@ -527,6 +532,26 @@ export function shelfFace(map: Pick<AreaMap, 'inMap' | 'ground' | 'statics'>, o:
 export function barsAlong(map: Pick<AreaMap, 'statics'>, o: Pick<StaticObj, 'x' | 'y'>): 'x' | 'y' {
   const fence = (x: number, y: number) => map.statics.some((s) => (s.type === 'wall' || s.type === 'bars') && s.x === x && s.y === y);
   return fence(o.x - 1, o.y) || fence(o.x + 1, o.y) ? 'x' : 'y';
+}
+
+/** 柵(front#451)の種類 */
+export const FENCE_TYPES: StaticType[] = ['fence_wood', 'fence_iron'];
+
+/** 柵が上下左右のどちらへつながるか。xm: x-1(左上)、xp: x+1(右下)、ym: y-1(右上)、yp: y+1(左下) */
+export interface FenceLinks {
+  xm: boolean;
+  xp: boolean;
+  ym: boolean;
+  yp: boolean;
+}
+
+/**
+ * 柵(front#451)のつながり。上下左右のとなりに同じ種類の柵があれば、そちらへつながる(斜めはつながらない)。
+ * 擬態している敵が化けている柵とはつながらない
+ */
+export function fenceLinks(map: Pick<AreaMap, 'statics'>, o: Pick<StaticObj, 'type' | 'x' | 'y'>): FenceLinks {
+  const same = (x: number, y: number) => map.statics.some((s) => s.type === o.type && s.x === x && s.y === y && !s.mimicked);
+  return { xm: same(o.x - 1, o.y), xp: same(o.x + 1, o.y), ym: same(o.x, o.y - 1), yp: same(o.x, o.y + 1) };
 }
 
 /** 奥から順に描くときの奥行き。大きな家は、いちばん手前のマスで並べる */
