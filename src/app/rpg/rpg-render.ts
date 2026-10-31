@@ -1,4 +1,4 @@
-import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, weaponPoseOf, wornLook } from './rpg-data';
+import { ENEMIES, G, HZ, ITEMS, SAVE_POINT, STATIC_NAMES, StaticObj, TH, TW, barsAlong, darken, exitAt, hexToRgba, isBreakableObj, objectTintOf, shelfFace, signPointing, staticDepth, weaponPoseOf, wornLook } from './rpg-data';
 import { DEFAULT_ROOF, HousePiece, houseGeometry, housePieces, roofRise, wallColors, wallOpenings } from './rpg-house';
 import { AreaSlide, Companion, DOOR_OPENING_HEIGHT, DROP_BLINK_SEC, DROP_LIFE_SEC, Drop, Enemy, Npc, Player, PlayerFx, RpgGame, SPELL_FX_SEC, THANKS_SEC, ThanksBubble, iso } from './rpg-game';
 import { LookPose, drawLook, lookFromColors } from './rpg-look';
@@ -677,6 +677,10 @@ export class RpgRenderer {
     // 色合い(front#333): 葉 = 明るい色、幹 = 暗い色
     const p = t ? { ...theme, trunk: t.d, leaves: theme.leaves.map((l) => relTint(t.m, l, theme.leaves[1])) } : theme;
     const s = p.scale;
+    // 木の種類(front#447)。ベースごとに1つ
+    if (theme.kind === 'conifer') return this.drawConifer(cx, cy, s, p.trunk, p.leaves);
+    if (theme.kind === 'palm') return this.drawPalm(cx, cy, s, p.trunk, p.leaves);
+    if (theme.kind === 'bare') return this.drawBareTree(cx, cy, s, p.trunk);
     this.shadow(cx, cy, 18 * s, 7 * s);
     ctx.fillStyle = p.trunk;
     ctx.fillRect(cx - 4 * s, cy - 22 * s, 8 * s, 22 * s);
@@ -687,6 +691,104 @@ export class RpgRenderer {
       ctx.arc(cx + ox * s, cy + oy * s, r * s, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // 針葉樹(front#447)。三角の葉を3段に重ね、右半分を少し暗くして立体に見せる
+  private drawConifer(cx: number, cy: number, s: number, trunk: string, leaves: readonly string[]): void {
+    const ctx = this.ctx;
+    this.shadow(cx, cy, 14 * s, 6 * s);
+    ctx.fillStyle = trunk;
+    ctx.fillRect(cx - 3 * s, cy - 14 * s, 6 * s, 14 * s);
+    const tiers: [number, number, number, number][] = [[17, -10, 24, 0], [13.5, -24, 22, 1], [10, -38, 22, 2]];
+    for (const [w, base, h, c] of tiers) {
+      const y0 = cy + base * s;
+      const top = cy + (base - h) * s;
+      ctx.fillStyle = leaves[c];
+      ctx.beginPath();
+      ctx.moveTo(cx - w * s, y0);
+      ctx.lineTo(cx, top);
+      ctx.lineTo(cx + w * s, y0);
+      ctx.quadraticCurveTo(cx, y0 + 4 * s, cx - w * s, y0);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.beginPath();
+      ctx.moveTo(cx, top);
+      ctx.lineTo(cx + w * s, y0);
+      ctx.quadraticCurveTo(cx + w * s * 0.5, y0 + 3 * s, cx, y0 + 2 * s);
+      ctx.fill();
+    }
+  }
+
+  // ヤシの木(front#447)。少し曲がった幹のてっぺんから、葉が放射状に垂れる。葉は風で少しゆれる
+  private drawPalm(cx: number, cy: number, s: number, trunk: string, leaves: readonly string[]): void {
+    const ctx = this.ctx;
+    this.shadow(cx, cy, 16 * s, 6 * s);
+    const tx = cx + 9 * s;
+    const ty = cy - 48 * s;
+    const ring = darken(trunk, 0.82);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8;
+      const b = (i + 1) / 8;
+      ctx.strokeStyle = i % 2 ? trunk : ring;
+      ctx.lineWidth = (7 - 3 * a) * s;
+      ctx.beginPath();
+      ctx.moveTo(cx + 9 * s * a * a, cy - 48 * s * a);
+      ctx.lineTo(cx + 9 * s * b * b, cy - 48 * s * b);
+      ctx.stroke();
+    }
+    const sway = Math.sin(this.time * 1.6 + cx * 0.05) * 1.5;
+    const fronds: [number, number][] = [[200, 0], [-20, 0], [235, 1], [-55, 1], [160, 2], [20, 2], [270, 2]];
+    for (const [deg, c] of fronds) {
+      const a = (deg * Math.PI) / 180;
+      const len = (deg === 270 ? 13 : 22) * s;
+      const ex = tx + Math.cos(a) * len;
+      const ey = ty + Math.sin(a) * len * 0.55 + 10 * s + sway * (Math.cos(a) > 0 ? 1 : -1);
+      ctx.strokeStyle = leaves[c];
+      ctx.lineWidth = 5.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(tx + Math.cos(a) * len * 0.55, ty + Math.sin(a) * len * 0.4 - 7 * s, ex, ey);
+      ctx.stroke();
+    }
+    ctx.fillStyle = darken(trunk, 0.65);
+    for (const [ox, oy] of [[-2.5, 2], [2.5, 2.5], [0, 4.5]]) {
+      ctx.beginPath();
+      ctx.arc(tx + ox * s, ty + oy * s, 2.6 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 葉なし(front#447)。幹と枝だけを幹の色で描く
+  private drawBareTree(cx: number, cy: number, s: number, trunk: string): void {
+    const ctx = this.ctx;
+    this.shadow(cx, cy, 14 * s, 6 * s);
+    ctx.fillStyle = trunk;
+    ctx.beginPath();
+    ctx.moveTo(cx - 4.5 * s, cy);
+    ctx.lineTo(cx - 2.5 * s, cy - 32 * s);
+    ctx.lineTo(cx + 2.5 * s, cy - 32 * s);
+    ctx.lineTo(cx + 4.5 * s, cy);
+    ctx.fill();
+    ctx.strokeStyle = trunk;
+    ctx.lineCap = 'round';
+    const branch = (x: number, y: number, ang: number, len: number, w: number, depth: number): void => {
+      const ex = x + Math.cos(ang) * len;
+      const ey = y + Math.sin(ang) * len;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      if (depth > 0) {
+        branch(ex, ey, ang - 0.45, len * 0.68, w * 0.62, depth - 1);
+        branch(ex, ey, ang + 0.4, len * 0.62, w * 0.62, depth - 1);
+      }
+    };
+    const up = -Math.PI / 2;
+    branch(cx, cy - 31 * s, up - 0.1, 12 * s, 3.4 * s, 2);
+    branch(cx - 1.5 * s, cy - 22 * s, up - 0.85, 11 * s, 3 * s, 2);
+    branch(cx + 1.5 * s, cy - 18 * s, up + 0.8, 10 * s, 2.8 * s, 1);
   }
 
   private drawRock(cx: number, cy: number, t: Tint | null = null): void {

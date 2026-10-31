@@ -542,6 +542,16 @@ export type ThemeFlower = 'flower' | 'glow' | 'tuft' | 'crack';
 export const THEME_FLOWERS: ThemeFlower[] = ['flower', 'glow', 'tuft', 'crack'];
 export const THEME_FLOWER_LABELS: Record<ThemeFlower, string> = { flower: '花', glow: '光る粒', tuft: '草の房', crack: 'ひび割れ' };
 
+// 木の種類(front#447)。ベースごとに1つ選ぶ。broadleaf(広葉樹)が今の木
+export type TreeKind = 'broadleaf' | 'conifer' | 'palm' | 'bare';
+export const TREE_KINDS: TreeKind[] = ['broadleaf', 'conifer', 'palm', 'bare'];
+export const TREE_KIND_LABELS: Record<TreeKind, string> = { broadleaf: '広葉樹', conifer: '針葉樹', palm: 'ヤシの木', bare: '葉なし' };
+
+/** ベースの木の種類。なし・知らない値は広葉樹 */
+export function treeKindOf(kind: string | null | undefined): TreeKind {
+  return (TREE_KINDS as string[]).includes(kind ?? '') ? (kind as TreeKind) : 'broadleaf';
+}
+
 export interface ThemeDef {
   label: string;
   // 水の地面の呼び名(マップ作成画面のパレット)
@@ -560,7 +570,7 @@ export interface ThemeDef {
   edge: [string, string];
   // 水のマス自身の段差の側面(左の面・右の面。front#415)
   liquidEdge: [string, string];
-  tree: { trunk: string; leaves: [string, string, string]; scale: number };
+  tree: { trunk: string; leaves: [string, string, string]; scale: number; kind: TreeKind };
   rock: [string, string];
   // 装飾(front#389)。1つだけ
   effect: { kind: ThemeEffectKind; color: string; alpha: number };
@@ -643,7 +653,7 @@ export function hexToRgba(hex: string, alpha: number): string {
 }
 
 /** #rrggbb の明るさを factor 倍にする */
-function darken(hex: string, factor: number): string {
+export function darken(hex: string, factor: number): string {
   const n = parseInt(hex.slice(1), 16);
   return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * factor).toString(16).padStart(2, '0')).join('');
 }
@@ -679,7 +689,7 @@ export function toThemeDef(t: RpgTheme): ThemeDef {
     flowers: pick(t.flowers, 3, '#ffffff'),
     edge: pick(t.edge, 2, '#a0754d') as [string, string],
     liquidEdge: liquidEdgeOf(t),
-    tree: { trunk: t.trunk, leaves: pick(t.leaves, 3, '#46a851') as [string, string, string], scale: t.treeScale },
+    tree: { trunk: t.trunk, leaves: pick(t.leaves, 3, '#46a851') as [string, string, string], scale: t.treeScale, kind: treeKindOf(t.treeKind) },
     rock: pick(t.rock, 2, '#9aa3ad') as [string, string],
     effect: { kind, color: t.effect?.color ?? '#ffffff', alpha: t.effect?.alpha ?? 0.5 }
   };
