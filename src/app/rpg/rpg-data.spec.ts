@@ -1,5 +1,5 @@
 import { RpgMap } from '../models/rpg.models';
-import { DEFAULT_CRAFTS, DEFAULT_ITEMS, DEFAULT_THEMES, ITEMS, areaDropMoves, buildAreaMap, heightFromChar, heightToChar, setCrafts, setItems, signLinesOf, toItemDef, toThemeDef, treeKindOf, weaponPoseOf, wornLook } from './rpg-data';
+import { DEFAULT_CRAFTS, DEFAULT_ITEMS, DEFAULT_THEMES, ITEMS, StaticObj, StaticType, areaDropMoves, buildAreaMap, fenceLinks, heightFromChar, heightToChar, setCrafts, setItems, signLinesOf, toItemDef, toThemeDef, treeKindOf, weaponPoseOf, wornLook } from './rpg-data';
 import { DEFAULT_LOOK } from './rpg-look';
 import { blankMap } from './rpg-editor';
 
@@ -15,6 +15,18 @@ describe('木の種類(front#447)', () => {
     for (const kind of ['conifer', 'palm', 'bare'] as const) expect(toThemeDef({ ...plain, treeKind: kind }).tree.kind).toBe(kind);
     expect(treeKindOf(null)).toBe('broadleaf');
     expect(treeKindOf('cactus')).toBe('broadleaf');
+  });
+});
+
+describe('柵のつながり(front#451)', () => {
+  const fence = (type: StaticType, x: number, y: number, mimicked = false): StaticObj => ({ kind: 'static', type, x, y, mimicked });
+  it('上下左右のとなりの同じ種類の柵とだけつながる(斜め・ほかの種類・擬態している敵とはつながらない)', () => {
+    const statics = [
+      fence('fence_wood', 2, 2), fence('fence_wood', 1, 2), fence('fence_wood', 2, 3),
+      fence('fence_iron', 3, 2), fence('fence_wood', 3, 3), fence('fence_wood', 2, 1, true)
+    ];
+    expect(fenceLinks({ statics }, statics[0])).toEqual({ xm: true, xp: false, ym: false, yp: true });
+    expect(fenceLinks({ statics }, statics[3])).toEqual({ xm: false, xp: false, ym: false, yp: false });
   });
 });
 

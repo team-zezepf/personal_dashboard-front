@@ -1422,3 +1422,61 @@ test(
     });
   }
 );
+
+// 村(plain)に置いた柵(front#451)。API から読む
+async function savedVillageFences(): Promise<string[]> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgMaps { id objects { type x y } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgMaps: { id: string; objects: { type: string; x: number; y: number }[] }[] } };
+  return body.data.rpgMaps
+    .find((m) => m.id === 'plain')!
+    .objects.filter((o) => o.type.startsWith('fence_'))
+    .map((o) => `${o.type} ${o.x},${o.y}`)
+    .sort();
+}
+
+test(
+  'E2E-47 RPGマップ作成で、パレットの「置物」の「木の柵」「鉄の柵」を並べて置き、保存できる(front#451)',
+  caseOf({
+    precondition: [
+      'sandbox が起動している',
+      'E2E 専用の管理者のアカウントでログインしている',
+      'E2E 用の RPG データで、村の (3, 4)〜(5, 4)・(5, 5)・(3, 11)〜(4, 11) は空いていて、柵は1つも置いていない'
+    ],
+    expected: [
+      'パレットの「置物」に「木の柵」「鉄の柵」がある',
+      '「木の柵」で (3, 4)・(4, 4)・(5, 4)・(5, 5) を、「鉄の柵」で (3, 11)・(4, 11) をクリックして「保存する」を押すと、API でも村にその6つの柵が置いてある'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const palette = page.locator('aside.palette');
+
+    await step('RPGマップ作成(/rpg/admin)を開き、パレットの「置物」を押す', '「木の柵」「鉄の柵」がある', async () => {
+      await page.goto('/rpg/admin');
+      await palette.getByRole('button', { name: '置物', exact: true }).click();
+      await expect(palette.getByRole('button', { name: /木の柵/ })).toBeVisible();
+      await expect(palette.getByRole('button', { name: /鉄の柵/ })).toBeVisible();
+    });
+
+    await step('「木の柵」で (3, 4)・(4, 4)・(5, 4)・(5, 5) を、「鉄の柵」で (3, 11)・(4, 11) をクリックし、「保存する」を押す', 'API でも村にその6つの柵が置いてある', async () => {
+      await palette.getByRole('button', { name: /木の柵/ }).click();
+      for (const [x, y] of [[3, 4], [4, 4], [5, 4], [5, 5]]) await clickTile(page, x, y);
+      await palette.getByRole('button', { name: /鉄の柵/ }).click();
+      for (const [x, y] of [[3, 11], [4, 11]]) await clickTile(page, x, y);
+      await page.getByRole('button', { name: '保存する' }).click();
+      await expect(page.getByText('保存しました。ゲームに反映されます')).toBeVisible();
+      expect(await savedVillageFences()).toEqual(['fence_iron 3,11', 'fence_iron 4,11', 'fence_wood 3,4', 'fence_wood 4,4', 'fence_wood 5,4', 'fence_wood 5,5']);
+    });
+  }
+);

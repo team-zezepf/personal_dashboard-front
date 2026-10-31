@@ -575,6 +575,122 @@ export function drawBars(c: CanvasRenderingContext2D, cx: number, cy: number, al
   rail(BARS_HEIGHT - 6, 4);
 }
 
+// ===== 柵(front#451) =====
+
+// 柵の高さ。木の柵は人の腰くらい、鉄の柵は少し高い(鉄格子 72・壁 200 よりずっと低い)
+export const FENCE_WOOD_HEIGHT = 30;
+export const FENCE_IRON_HEIGHT = 44;
+const FENCE_DEFAULT = { wood: { m: '#b07a45', d: '#5e3b1e' }, iron: { m: '#5b5870', d: '#1c1b26' } };
+
+type FenceSeg = readonly [readonly [number, number], readonly [number, number]];
+type FenceLine = (a: Pt, b: Pt, color: string, width: number) => void;
+
+/**
+ * 柵(front#451)。マスのまんなかに支柱を立て、つながる向き(links)へ半マスずつ横板(鉄の柵は棒)を伸ばす。
+ * となりのマスの柵も同じように半マス伸ばすので、境目でつながって1本の柵になる。
+ * どこにもつながらない1マスだけの柵は、x の向きの短い柵(両はしに支柱)にする。
+ * 奥(左上・右上へ伸びる分) → 支柱 → 手前(右下・左下へ伸びる分) の順に描く
+ */
+export function drawFence(
+  c: CanvasRenderingContext2D, cx: number, cy: number, kind: 'wood' | 'iron',
+  links: { xm: boolean; xp: boolean; ym: boolean; yp: boolean }, tint?: Tint | null
+): void {
+  const k = { m: tint?.m ?? FENCE_DEFAULT[kind].m, d: tint?.d ?? FENCE_DEFAULT[kind].d };
+  const lone = !links.xm && !links.xp && !links.ym && !links.yp;
+  const segs: Partial<Record<'xm' | 'ym' | 'xp' | 'yp', FenceSeg>> = lone
+    ? { xm: [[0.12, 0.5], [0.5, 0.5]], xp: [[0.5, 0.5], [0.88, 0.5]] }
+    : {
+        xm: links.xm ? [[0, 0.5], [0.5, 0.5]] : undefined,
+        ym: links.ym ? [[0.5, 0], [0.5, 0.5]] : undefined,
+        xp: links.xp ? [[0.5, 0.5], [1, 0.5]] : undefined,
+        yp: links.yp ? [[0.5, 0.5], [0.5, 1]] : undefined
+      };
+  const line: FenceLine = (a, b, color, width) => {
+    c.strokeStyle = color;
+    c.lineWidth = width;
+    c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
+  };
+  const post = kind === 'wood' ? fenceWoodPost : fenceIronPost;
+  // 床の影
+  c.lineCap = 'round';
+  for (const s of Object.values(segs)) {
+    if (s) line(boxPoint(cx, cy, s[0][0], s[0][1], -2), boxPoint(cx, cy, s[1][0], s[1][1], -2), 'rgba(0,0,0,0.18)', 5);
+  }
+  c.lineCap = 'butt';
+  for (const key of ['xm', 'ym', 'post', 'xp', 'yp'] as const) {
+    if (key === 'post') {
+      post(c, cx, cy, 0.5, 0.5, k);
+      if (lone) post(c, cx, cy, 0.12, 0.5, k);
+      continue;
+    }
+    const s = segs[key];
+    if (!s) continue;
+    if (kind === 'wood') fenceWoodRails(c, cx, cy, s, key[0] === 'x', k, line);
+    else fenceIronBars(c, cx, cy, s, k, line);
+    if (lone && key === 'xp') post(c, cx, cy, 0.88, 0.5, k);
+  }
+}
+
+// 細い四角柱。u, v を中心に半幅 r、高さ h。見える面は左手前・右手前・上
+function fencePost(c: CanvasRenderingContext2D, cx: number, cy: number, u: number, v: number, r: number, h: number, top: string, left: string, right: string): void {
+  const p = (du: number, dv: number, z: number) => boxPoint(cx, cy, u + du, v + dv, z);
+  poly(c, [p(-r, r, 0), p(r, r, 0), p(r, r, h), p(-r, r, h)], left);
+  poly(c, [p(r, -r, 0), p(r, r, 0), p(r, r, h), p(r, -r, h)], right);
+  poly(c, [p(-r, -r, h), p(r, -r, h), p(r, r, h), p(-r, r, h)], top);
+}
+
+function fenceWoodPost(c: CanvasRenderingContext2D, cx: number, cy: number, u: number, v: number, k: Tint): void {
+  fencePost(c, cx, cy, u, v, 0.05, FENCE_WOOD_HEIGHT, mix(k.m, '#ffffff', 0.25), k.m, mix(k.m, k.d, 0.45));
+  const [tx, ty] = boxPoint(cx, cy, u, v, FENCE_WOOD_HEIGHT);
+  c.fillStyle = mix(k.m, k.d, 0.3);
+  c.beginPath(); c.ellipse(tx, ty, 1.6, 0.8, 0, 0, Math.PI * 2); c.fill();
+}
+
+// 横板を2本。x の向きの板は明るい面、y の向きの板は少し暗い面が見える
+function fenceWoodRails(c: CanvasRenderingContext2D, cx: number, cy: number, s: FenceSeg, alongX: boolean, k: Tint, line: FenceLine): void {
+  const face = alongX ? mix(k.m, '#ffffff', 0.08) : mix(k.m, k.d, 0.3);
+  for (const z of [9, 20]) {
+    const a = boxPoint(cx, cy, s[0][0], s[0][1], z);
+    const b = boxPoint(cx, cy, s[1][0], s[1][1], z);
+    const h = 5;
+    poly(c, [a, b, [b[0], b[1] - h], [a[0], a[1] - h]], face);
+    line([a[0], a[1] - h], [b[0], b[1] - h], mix(k.m, '#ffffff', 0.35), 1.2);
+    line(a, b, k.d, 1);
+  }
+}
+
+function fenceIronPost(c: CanvasRenderingContext2D, cx: number, cy: number, u: number, v: number, k: Tint): void {
+  const h = FENCE_IRON_HEIGHT - 4;
+  fencePost(c, cx, cy, u, v, 0.045, h, mix(k.m, '#ffffff', 0.2), k.m, k.d);
+  // 上の飾りの玉
+  const [tx, ty] = boxPoint(cx, cy, u, v, h);
+  c.fillStyle = k.d;
+  c.beginPath(); c.arc(tx, ty - 3, 3.4, 0, Math.PI * 2); c.fill();
+  c.fillStyle = mix(k.m, '#ffffff', 0.35);
+  c.beginPath(); c.arc(tx - 1, ty - 4, 1.2, 0, Math.PI * 2); c.fill();
+}
+
+// 下と上の横棒に、先のとがった鉄の棒を半マスに4本
+function fenceIronBars(c: CanvasRenderingContext2D, cx: number, cy: number, s: FenceSeg, k: Tint, line: FenceLine): void {
+  const at = (t: number, z: number) => boxPoint(cx, cy, s[0][0] + (s[1][0] - s[0][0]) * t, s[0][1] + (s[1][1] - s[0][1]) * t, z);
+  const rail = (z: number) => {
+    const [a, b] = [at(0, z), at(1, z)];
+    line(a, b, k.d, 3);
+    line([a[0], a[1] - 0.6], [b[0], b[1] - 0.6], k.m, 1);
+  };
+  rail(5);
+  const n = Math.max(1, Math.round(Math.hypot(s[1][0] - s[0][0], s[1][1] - s[0][1]) / 0.125));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const p0 = at(t, 0);
+    const p1 = at(t, FENCE_IRON_HEIGHT - 6);
+    line(p0, p1, k.d, 2.6);
+    line([p0[0] - 0.5, p0[1]], [p1[0] - 0.5, p1[1]], k.m, 0.9);
+    poly(c, [[p1[0] - 2, p1[1]], [p1[0], p1[1] - 5.5], [p1[0] + 2, p1[1]]], k.d);
+  }
+  rail(FENCE_IRON_HEIGHT - 11);
+}
+
 // 鎖の輪を、縦・横を交互にして並べる
 function chainLinks(c: CanvasRenderingContext2D, pts: Pt[], k: (hex: string) => string = (hex) => hex): void {
   pts.forEach(([x, y], i) => {
