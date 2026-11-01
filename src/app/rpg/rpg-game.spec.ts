@@ -295,13 +295,13 @@ describe('RpgGame', () => {
       expect(game.player.inv['potion']).toBe(1);
     });
 
-    it('回復薬を使うと、回復のエフェクトを出し、回復の効果音を鳴らす知らせを出す。回復量の多い上回復薬は粒を増やす(front#335)', () => {
+    it('回復薬を使うと、回復魔法で回復する人と同じエフェクト(魔法陣なし)を出し、回復の効果音を鳴らす知らせを出す。回復量の多い上回復薬は粒を増やす(front#335, front#457)', () => {
       game.player.hp = 10;
       game.useItem('potion');
-      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['heal', false]]);
+      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['magic', false]]);
       expect(ev.sounds).toEqual(['heal']);
       // 満タンで使えなかったときは出さない
-      game.update(PLAYER_FX_SEC.heal + 0.1);
+      game.update(PLAYER_FX_SEC.magic + 0.1);
       expect(game.playerFx).toEqual([]);
       game.player.hp = game.maxHp();
       game.useItem('potion');
@@ -310,7 +310,7 @@ describe('RpgGame', () => {
       game.player.hp = 10;
       game.player.inv['hipotion'] = 1;
       game.useItem('hipotion');
-      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['heal', true]]);
+      expect(game.playerFx.map((f) => [f.kind, !!f.big])).toEqual([['magic', true]]);
     });
 
     it('レベルが上がると、レベルアップのエフェクトを出し、効果音を鳴らす知らせを出す。一度に2つ上がっても1回だけ(front#335)', () => {
@@ -2016,7 +2016,7 @@ describe('RpgGame', () => {
       expect([game.player.hp, a.hp, b.hp]).toEqual([50, 43, 0]);
     });
 
-    it('回復魔法は、使った人に魔法陣(cast)、回復する人に光の柱と〇の粒(magic)を出す。ヒールオールは大きく、1人ずつずらす。回復薬は今までどおり(front#409)', () => {
+    it('回復魔法は、使った人に魔法陣(cast)、回復する人に光の柱と〇の粒(magic)を出す。ヒールオールは大きく、1人ずつずらす。回復薬は回復する人と同じ光(front#409, front#457)', () => {
       field([], { items: [{ itemId: 'potion', count: 1 }, { itemId: 'wood_sword', count: 1 }, { itemId: 'cloth', count: 1 }] });
       game.addCompanion(mate('3'));
       game.addCompanion(mate('4'));
@@ -2041,11 +2041,11 @@ describe('RpgGame', () => {
       expect(game.playerFx.map((f) => [f.kind, !!f.big, f.t])).toEqual([['cast', true, 0], ['magic', true, 0]]);
       expect(mateFx()).toEqual([[a.userId, 'magic', true, -HEAL_ALL_STAGGER], [b.userId, 'magic', true, -2 * HEAL_ALL_STAGGER]]);
 
-      // 回復薬は今までどおりの回復の光
+      // 回復薬も、回復魔法で回復する人と同じ光(魔法陣なし。front#457)
       run(PLAYER_FX_SEC.magic + 0.2);
       a.hp = 10;
       game.useItem('potion');
-      expect(mateFx()).toEqual([[a.userId, 'heal', false, 0]]);
+      expect(mateFx()).toEqual([[a.userId, 'magic', false, 0]]);
     });
 
     it('回復薬は選んでいる仲間に使う。MPを回復する道具は、仲間を選んでいても自分に使い、MPが満タンなら使わない', () => {
