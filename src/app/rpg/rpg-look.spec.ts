@@ -1,4 +1,4 @@
-import { PLAYER_CLOTHES, WEAPON_SHAPES, drawLook, wearArmor, weaponPose } from './rpg-look';
+import { MOUTH_COLORS, PLAYER_CLOTHES, WEAPON_SHAPES, beardColorOf, drawLook, wearArmor, weaponPose } from './rpg-look';
 import { ACCENT_COLORS, BROWS, HAIR_BACKS, HAIR_TOPS, hairBackOf, hairTopOf, CLOTHES, CLOTHES_COLORS, DEFAULT_LOOK, EYES, EYE_COLORS, HAIRS, HAIR_COLORS, MOUTHS, lookFromColors, randomLook } from './rpg-look';
 
 describe('rpg-look', () => {
@@ -48,6 +48,19 @@ describe('rpg-look', () => {
     expect(EYE_COLORS).toContain(DEFAULT_LOOK.eyeColor);
     expect(CLOTHES_COLORS).toContain(DEFAULT_LOOK.clothesColor);
     expect(ACCENT_COLORS).toContain(DEFAULT_LOOK.accentColor);
+  });
+
+  it('front#459 口は ねこ口 のあとに 口ひげ・あごひげ。口の色の一覧は7列×2段で重ならず、最初は自動(null)', () => {
+    expect(MOUTHS.map(([id]) => id)).toEqual(['none', 'smile', 'open', 'flat', 'cat', 'mustache', 'beard']);
+    expect(MOUTH_COLORS.length).toBe(14);
+    expect(new Set(MOUTH_COLORS).size).toBe(14);
+    expect(DEFAULT_LOOK.mouthColor).toBeNull();
+    expect(randomLook().mouthColor).toBeNull();
+  });
+
+  it('front#459 ひげの色は、口の色を選んでいれば その色、自動なら髪の色を少し暗くした色(#rrggbb)', () => {
+    expect(beardColorOf({ ...DEFAULT_LOOK, mouth: 'beard', mouthColor: '#e5e7eb' })).toBe('#e5e7eb');
+    expect(beardColorOf({ ...DEFAULT_LOOK, mouth: 'beard', hairColor: '#ffffff' })).toBe('#d9d9d9');
   });
 });
 

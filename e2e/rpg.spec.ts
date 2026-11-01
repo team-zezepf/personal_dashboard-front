@@ -483,6 +483,7 @@ test(
       '目を「メガネ」にしても、目の色の欄は残る(メガネ越しに目が見える。front#361)',
       '「やめる」で閉じると、見た目は変わらない',
       '< > で髪型・眉・目・服を、「くわしく」を開いて髪のトップ・後ろを(front#370)、色の丸から服の色・眉の色を、カスタムで髪の色を選んで「決める」を押すと、画面が閉じ、ログに「見た目を変えた」と出る',
+      '口を「あごひげ」にすると、口の色の欄に「髪に合わせる」と出る。口の色は一覧から選べる(front#459)',
       '画面を読み込み直して「見た目を変える」を開いても、選んだ見た目のまま'
     ]
   }),
@@ -506,6 +507,8 @@ test(
       await expect(chip('眉', '眉の色')).toContainText('髪に合わせる');
       await expect(part('目')).toContainText('ふつう');
       await expect(part('服')).toContainText('シャツ');
+      await expect(part('口')).toContainText('にっこり');
+      await expect(chip('口', '口の色')).toContainText('いつもの色');
     });
 
     await step('目の「前へ」を押して「メガネ」にする', '目の色の欄は残っている', async () => {
@@ -522,8 +525,8 @@ test(
     });
 
     await step(
-      'ポニーテール・カスタムの髪の色(#123456)・トップ とんがり・後ろ 外ハネ・山なりの眉・赤い眉・メガネ・セーラー服・紫の服を選んで「決める」を押す',
-      '画面が閉じ、ログに「見た目を変えた」と出る',
+      'ポニーテール・カスタムの髪の色(#123456)・トップ とんがり・後ろ 外ハネ・山なりの眉・赤い眉・メガネ・あごひげ・白い口の色・セーラー服・紫の服を選んで「決める」を押す',
+      'あごひげにすると口の色の欄に「髪に合わせる」と出る。「決める」で画面が閉じ、ログに「見た目を変えた」と出る',
       async () => {
         await next('髪型', 2);
         await expect(part('髪型')).toContainText('ポニーテール');
@@ -542,6 +545,12 @@ test(
         await chip('眉', '眉の色').click();
         await dialog.getByRole('button', { name: '眉の色 #dc2626' }).click();
         await prev('目');
+        // 口(front#459)。にっこり → なし → 最後の あごひげ
+        await prev('口', 2);
+        await expect(part('口')).toContainText('あごひげ');
+        await expect(chip('口', '口の色')).toContainText('髪に合わせる');
+        await chip('口', '口の色').click();
+        await dialog.getByRole('button', { name: '口の色 #e5e7eb' }).click();
         // 服の最後はセーラー服
         await prev('服');
         await expect(part('服')).toContainText('セーラー服');
@@ -553,7 +562,7 @@ test(
       }
     );
 
-    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール(トップ とんがり・後ろ 外ハネ)・カスタムの髪の色・山なりの赤い眉・メガネ・紫のセーラー服のまま', async () => {
+    await step('画面を読み込み直して「見た目を変える」を押す', 'ポニーテール(トップ とんがり・後ろ 外ハネ)・カスタムの髪の色・山なりの赤い眉・メガネ・白いあごひげ・紫のセーラー服のまま', async () => {
       // 見た目は「決める」ですぐ保存する。保存が終わるのを待ってから読み込み直す
       await page.waitForLoadState('networkidle');
       await page.reload();
@@ -569,6 +578,9 @@ test(
       await expect(row('髪型').locator('.custom')).toContainText('#123456');
       await chip('眉', '眉の色').click();
       await expect(dialog.getByRole('button', { name: '眉の色 #dc2626' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(part('口')).toContainText('あごひげ');
+      await chip('口', '口の色').click();
+      await expect(dialog.getByRole('button', { name: '口の色 #e5e7eb' })).toHaveAttribute('aria-pressed', 'true');
       await chip('服', '服の色').click();
       await expect(dialog.getByRole('button', { name: '服の色 #8b5cf6' })).toHaveAttribute('aria-pressed', 'true');
     });
