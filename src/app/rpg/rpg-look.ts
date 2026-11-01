@@ -44,7 +44,10 @@ export const EYES: [string, string][] = [
   ['normal', 'ふつう'], ['smile', 'にっこり'], ['sharp', 'つり目'], ['droopy', 'たれ目'],
   ['sleepy', 'ねむそう'], ['glasses', 'メガネ']
 ];
-export const MOUTHS: [string, string][] = [['none', 'なし'], ['smile', 'にっこり'], ['open', 'ひらく'], ['flat', 'まっすぐ'], ['cat', 'ねこ口']];
+// 口ひげ・あごひげは front#459 で追加(口は描かず、ひげだけ)
+export const MOUTHS: [string, string][] = [
+  ['none', 'なし'], ['smile', 'にっこり'], ['open', 'ひらく'], ['flat', 'まっすぐ'], ['cat', 'ねこ口'], ['mustache', '口ひげ'], ['beard', 'あごひげ']
+];
 // パーカー・セーラー服は front#362 で追加
 export const CLOTHES: [string, string][] = [
   ['shirt', 'シャツ'], ['robe', 'ローブ'], ['armor', 'よろい'], ['dress', 'ワンピース'], ['vest', 'ベスト'],
@@ -70,12 +73,17 @@ export const ACCENT_COLORS = [
   '#1f2937', '#8b5a2b', '#ef4444', '#f08a4b', '#4b9e5f', '#3b82f6', '#a78bfa',
   '#f8fafc', '#fbbf24', '#f9a8d4', '#fde68a', '#a7f3d0', '#93c5fd', '#ddd6fe'
 ];
+// 口の色(front#459)。ひげに使う黒・茶・白などと、口に使う赤・ピンクなど
+export const MOUTH_COLORS = [
+  '#1f2937', '#6b3f1f', '#7c2d12', '#be123c', '#f08a4b', '#2563eb', '#7c3aed',
+  '#e5e7eb', '#8b5a2b', '#9ca3af', '#f472b6', '#fcd34d', '#60a5fa', '#c4b5fd'
+];
 
 // プレイヤーの最初の見た目(APIの RpgLook の初期値と同じ)
 export const DEFAULT_LOOK: RpgLook = {
   hair: 'short', hairColor: '#6b3f1f', skin: '#ffe0bd', eyes: 'normal', eyeColor: '#3b2f2f',
   mouth: 'smile', clothes: 'shirt', clothesColor: '#3b82f6', accentColor: '#f8fafc', brows: 'normal', browColor: null,
-  hairTop: null, hairBack: null
+  hairTop: null, hairBack: null, mouthColor: null
 };
 
 /** 差し色は服の色と同じにならないようにする(白い服なら茶色) */
@@ -130,8 +138,8 @@ export function randomLook(rand: () => number = Math.random, clothes: [string, s
   return {
     hair: pick(HAIRS)[0], hairColor: pick(HAIR_COLORS), skin: pick(SKINS), eyes: pick(EYES)[0], eyeColor: pick(EYE_COLORS),
     mouth: pick(MOUTHS)[0], clothes: pick(clothes)[0], clothesColor, accentColor,
-    // 眉の色は髪の色に合わせる
-    brows: pick(BROWS)[0], browColor: null,
+    // 眉の色は髪の色に合わせる。口の色は自動(ひげなら髪の色。front#459)
+    brows: pick(BROWS)[0], browColor: null, mouthColor: null,
     // 髪のトップ・後ろは髪型に合わせる(front#370)
     hairTop: null, hairBack: null
   };
@@ -607,12 +615,18 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
   // 口(front#368 で全体的に小さく。front#405 であごを付けたので少し下げる)
   const mx = f;
   const my = y0 - 21;
-  c.strokeStyle = '#7c2d12';
+  // ひげ(front#459)。口ひげ・あごひげのときは口を描かない
+  if (L.mouth === 'mustache' || L.mouth === 'beard') {
+    drawBeard(c, L, y0, f, mx, my);
+    return;
+  }
+  // 口の色(front#459)。選んでいなければ今までの色
+  c.strokeStyle = L.mouthColor || '#7c2d12';
   c.lineWidth = 0.8;
   if (L.mouth === 'smile') { c.beginPath(); c.arc(mx, my - 1.1, 1.7, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke(); }
   if (L.mouth === 'open') {
-    c.fillStyle = '#9f1239'; c.beginPath(); c.ellipse(mx, my, 1.4, 1.2, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#fb7185'; c.beginPath(); c.ellipse(mx, my + 0.55, 0.8, 0.45, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = L.mouthColor || '#9f1239'; c.beginPath(); c.ellipse(mx, my, 1.4, 1.2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = L.mouthColor ? lighten(L.mouthColor, 0.45) : '#fb7185'; c.beginPath(); c.ellipse(mx, my + 0.55, 0.8, 0.45, 0, 0, Math.PI * 2); c.fill();
   }
   if (L.mouth === 'flat') { c.beginPath(); c.moveTo(mx - 1.5, my); c.lineTo(mx + 1.5, my); c.stroke(); }
   // ねこ口は「ω」の2つの弧だけ(弧どうしを線でつながない)。目立ちすぎないよう、小さく・細く
@@ -620,6 +634,68 @@ function drawFace(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number
     c.lineWidth = 0.6;
     for (const k of [-1, 1]) { c.beginPath(); c.arc(mx + k * 0.85, my - 0.8, 0.85, 0, Math.PI); c.stroke(); }
   }
+}
+
+/** ひげの色(front#459)。口の色を選んでいなければ、眉と同じく髪の色を少し暗くした色 */
+export function beardColorOf(L: RpgLook): string {
+  if (L.mouthColor) return L.mouthColor;
+  // 陰・ツヤの色をここから作るので、#rrggbb で返す
+  return '#' + rgb(L.hairColor).map((v) => Math.round(v * 0.85).toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * ひげ(front#459)。口ひげ(mustache)は鼻の下に左右へはねたひげ。
+ * あごひげ(beard)は、ほほからあごをおおうひげ(顔の形で切り取り、あごの下へ少しはみ出す)と口ひげ。どちらも口は描かない。
+ * (mx, my) は口の位置。f は顔の向きのずれ(右向きで +)
+ */
+function drawBeard(c: CanvasRenderingContext2D, L: RpgLook, y0: number, f: number, mx: number, my: number): void {
+  const color = beardColorOf(L);
+  const d = f >= 0 ? 1 : -1;
+  // 口ひげは口の位置より少し下(鼻から離して、口の上にかぶせる)
+  my += 1.5;
+  if (L.mouth === 'beard') {
+    const cy = y0 - 31;
+    const chinX = d * 2;
+    const chinY = cy + 13.4;
+    const p = new Path2D();
+    // 上のふち: もみあげ → ほほ → 口ひげの下を通って → 反対のほほ → もみあげ(口は描かない)
+    p.moveTo(-15, cy + 1.5);
+    p.lineTo(-12.6, cy + 1.5);
+    p.quadraticCurveTo(-10.5 + f * 0.4, cy + 8.5, mx - 3.4, my - 1.4);
+    p.lineTo(mx + 3.4, my - 1.4);
+    p.quadraticCurveTo(10.5 + f * 0.4, cy + 8.5, 12.6, cy + 1.5);
+    p.lineTo(15, cy + 1.5);
+    p.lineTo(15, chinY + 4);
+    p.lineTo(-15, chinY + 4);
+    p.closePath();
+    // あごの下へ少しはみ出すふさ(先に描き、顔の中のひげと同じ色でつなげる)
+    c.fillStyle = shade(color, 0.9);
+    c.beginPath();
+    c.moveTo(chinX - 6, chinY - 2.4);
+    c.quadraticCurveTo(chinX - 4, chinY + 2.6, chinX, chinY + 2.9);
+    c.quadraticCurveTo(chinX + 4, chinY + 2.6, chinX + 6, chinY - 2.4);
+    c.closePath();
+    c.fill();
+    c.save();
+    c.clip(headPath(y0, d));
+    fillShaded(c, p, color, [-15, cy, 15, chinY], 0, 0.5);
+    c.restore();
+  }
+  // 口ひげ: 鼻の下から左右へ広がり、先を少しはね上げる
+  c.fillStyle = color;
+  for (const k of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(mx, my - 2.7);
+    c.quadraticCurveTo(mx + k * 2.6, my - 3.3, mx + k * 4.9, my - 2.9);
+    c.quadraticCurveTo(mx + k * 4.3, my - 0.9, mx + k * 2.3, my - 1.0);
+    c.quadraticCurveTo(mx + k * 0.9, my - 1.1, mx, my - 1.7);
+    c.closePath();
+    c.fill();
+  }
+  // ツヤ
+  c.strokeStyle = lighten(color, 0.35);
+  c.lineWidth = 0.4;
+  for (const k of [-1, 1]) { c.beginPath(); c.moveTo(mx + k * 0.8, my - 2.6); c.quadraticCurveTo(mx + k * 2.4, my - 2.9, mx + k * 3.8, my - 2.6); c.stroke(); }
 }
 
 /**

@@ -45,7 +45,7 @@
               (click)="toggleColor(col.key)"
             >
               <span class="dot" [class.auto]="!color(col.key)" [style.background]="color(col.key) ?? null"></span>
-              {{ col.label }}@if (!color(col.key)) {<span class="hint">（髪に合わせる）</span>}
+              {{ col.label }}@if (col.auto && !color(col.key)) {<span class="hint">{{ col.auto.hint(look()) }}</span>}
             </button>
           }
         </div>
@@ -71,9 +71,9 @@
             </div>
             @if (col.auto || col.custom) {
               <div class="extra">
-                @if (col.auto) {
+                @if (col.auto; as auto) {
                   <button type="button" class="auto-btn" [class.active]="!color(col.key)" [attr.aria-pressed]="!color(col.key)" (click)="set(col.key, null)">
-                    髪の色に合わせる
+                    {{ auto.button }}
                   </button>
                 }
                 @if (col.custom) {

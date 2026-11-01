@@ -80,6 +80,33 @@ describe('RpgLookEditorComponent(front#362)', () => {
     expect(changes.at(-1)?.browColor).toBeNull();
   });
 
+  it('front#459 口は ねこ口 のあとに 口ひげ・あごひげ を選べる。口の色は自動のとき、ひげなら「髪に合わせる」・ふつうの口なら「いつもの色」と出す', () => {
+    const { fixture, el, changes } = render({ ...DEFAULT_LOOK, mouth: 'cat' });
+    expect(row(el, '口').querySelector('.chip')?.textContent).toContain('いつもの色');
+    click(el, '口 次へ');
+    expect(changes.at(-1)?.mouth).toBe('mustache');
+
+    fixture.componentRef.setInput('look', { ...DEFAULT_LOOK, mouth: 'beard' });
+    fixture.detectChanges();
+    expect(row(el, '口').querySelector('.name')?.textContent).toContain('あごひげ');
+    expect(row(el, '口').querySelector('.count')?.textContent?.trim()).toBe('7 / 7');
+    expect(row(el, '口').querySelector('.chip')?.textContent).toContain('髪に合わせる');
+  });
+
+  it('front#459 口の色を一覧から選べ、「自動」で null に戻せる', () => {
+    const { fixture, el, changes } = render({ ...DEFAULT_LOOK, mouth: 'beard', mouthColor: '#e5e7eb' });
+    (row(el, '口').querySelector('.chip') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[aria-label="口の色 #e5e7eb"]')?.getAttribute('aria-pressed')).toBe('true');
+
+    click(el, '口の色 #be123c');
+    expect(changes.at(-1)?.mouthColor).toBe('#be123c');
+    const auto = row(el, '口').querySelector('.auto-btn') as HTMLElement;
+    expect(auto.textContent).toContain('自動（ひげは髪の色・口はいつもの色）');
+    auto.click();
+    expect(changes.at(-1)?.mouthColor).toBeNull();
+  });
+
   it('一覧にない色はカスタムとして出し、カスタムで選んだ色をそのまま使う', () => {
     const { fixture, el, changes } = render({ ...DEFAULT_LOOK, hairColor: '#123456' });
     (row(el, '髪型').querySelector('.chip') as HTMLElement).click();

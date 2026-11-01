@@ -14,6 +14,7 @@ import {
   HAIR_COLORS,
   HAIR_TOPS,
   MOUTHS,
+  MOUTH_COLORS,
   SKINS,
   drawLook,
   wearArmor,
@@ -34,7 +35,7 @@ export interface LookGear {
 }
 
 type PartKey = 'hair' | 'hairTop' | 'hairBack' | 'brows' | 'eyes' | 'mouth' | 'clothes';
-type ColorKey = 'hairColor' | 'browColor' | 'skin' | 'eyeColor' | 'clothesColor' | 'accentColor';
+type ColorKey = 'hairColor' | 'browColor' | 'mouthColor' | 'skin' | 'eyeColor' | 'clothesColor' | 'accentColor';
 
 // 色の欄。cols は一覧を何列で並べるか(2段にして、上下が同じ系統の色になるようにする)
 interface ColorDef {
@@ -44,9 +45,17 @@ interface ColorDef {
   cols: number;
   // 一覧にない色を自由に選べる
   custom?: boolean;
-  // 「髪の色に合わせる」を選べる(値は null)
-  auto?: boolean;
+  // 「自動」を選べる(値は null)。button は選ぶボタンの文字、hint は自動のときに色の名前の横に出す文字
+  auto?: { button: string; hint: (look: RpgLook) => string };
 }
+
+// 眉の色は、自動なら髪の色に合わせる
+const AUTO_BROW = { button: '髪の色に合わせる', hint: () => '（髪に合わせる）' };
+// 口の色(front#459)は、自動ならひげは髪の色、ふつうの口はいつもの色
+const AUTO_MOUTH = {
+  button: '自動（ひげは髪の色・口はいつもの色）',
+  hint: (look: RpgLook) => (look.mouth === 'mustache' || look.mouth === 'beard' ? '（髪に合わせる）' : '（いつもの色）')
+};
 
 // 1行分。key が null の行は色だけ(肌)
 interface Row {
@@ -91,9 +100,9 @@ export class RpgLookEditorComponent implements OnDestroy {
     { key: 'hair', label: '髪型', list: HAIRS, colors: [{ key: 'hairColor', label: '髪の色', list: HAIR_COLORS, cols: 7, custom: true }] },
     { key: 'hairTop', label: 'トップ', list: HAIR_TOPS, colors: [], sub: true, now: hairTopOf },
     { key: 'hairBack', label: '後ろ', list: HAIR_BACKS, colors: [], sub: true, now: hairBackOf },
-    { key: 'brows', label: '眉', list: BROWS, colors: [{ key: 'browColor', label: '眉の色', list: HAIR_COLORS, cols: 7, custom: true, auto: true }] },
+    { key: 'brows', label: '眉', list: BROWS, colors: [{ key: 'browColor', label: '眉の色', list: HAIR_COLORS, cols: 7, custom: true, auto: AUTO_BROW }] },
     { key: 'eyes', label: '目', list: EYES, colors: [{ key: 'eyeColor', label: '目の色', list: EYE_COLORS, cols: 6, custom: true }] },
-    { key: 'mouth', label: '口', list: MOUTHS, colors: [] },
+    { key: 'mouth', label: '口', list: MOUTHS, colors: [{ key: 'mouthColor', label: '口の色', list: MOUTH_COLORS, cols: 7, custom: true, auto: AUTO_MOUTH }] },
     {
       key: 'clothes', label: '服', list: this.player() ? PLAYER_CLOTHES : CLOTHES, colors: [
         { key: 'clothesColor', label: '服の色', list: CLOTHES_COLORS, cols: 7, custom: true },
