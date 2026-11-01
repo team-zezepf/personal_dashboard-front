@@ -19,6 +19,12 @@ describe('rpg-data の見た目(front#389)', () => {
     expect(THEMES['plain'].effect.kind).toBe('none');
   });
 
+  it('装飾5(霧)・装飾6(光の筋)は、色・濃さと一緒にそのまま描画の形に入る。知らない装飾は「なし」にする(front#455)', () => {
+    expect(toThemeDef({ ...snow(), effect: { kind: 'mist', color: '#ffffff', alpha: 0.5 } }).effect).toEqual({ kind: 'mist', color: '#ffffff', alpha: 0.5 });
+    expect(toThemeDef({ ...snow(), effect: { kind: 'rays', color: '#fff6c8', alpha: 0.3 } }).effect).toEqual({ kind: 'rays', color: '#fff6c8', alpha: 0.3 });
+    expect(toThemeDef({ ...snow(), effect: { kind: 'rain', color: '#ffffff', alpha: 0.5 } }).effect.kind).toBe('none');
+  });
+
   it('APIの見た目を描画の形にする。水のマスは、ゆらぎがあれば明るさをゆらし、なければ同じ色', () => {
     const plain = toThemeDef(DEFAULT_THEMES[0]);
     expect(plain.label).toBe('草原');

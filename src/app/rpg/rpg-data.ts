@@ -559,10 +559,17 @@ export function staticDepth(o: StaticObj): number {
   return Math.max(...objectTiles(o).map(([x, y]) => x + y));
 }
 
-/** 見た目の装飾(front#389)。none なし / stars 装飾1(星) / fireflies 装飾2(ホタル) / vignette 装飾3(周りを暗く) / bubbles 装飾4(泡。front#421) */
-export type ThemeEffectKind = 'none' | 'stars' | 'fireflies' | 'vignette' | 'bubbles';
-export const THEME_EFFECT_KINDS: ThemeEffectKind[] = ['none', 'stars', 'fireflies', 'vignette', 'bubbles'];
-export const THEME_EFFECT_LABELS: Record<ThemeEffectKind, string> = { none: 'なし', stars: '装飾1', fireflies: '装飾2', vignette: '装飾3', bubbles: '装飾4' };
+/**
+ * 見た目の装飾(front#389)。none なし / stars 装飾1(星) / fireflies 装飾2(ホタル) / vignette 装飾3(周りを暗く) / bubbles 装飾4(泡。front#421) /
+ * mist 装飾5(霧) / rays 装飾6(光の筋。front#455)
+ */
+export type ThemeEffectKind = 'none' | 'stars' | 'fireflies' | 'vignette' | 'bubbles' | 'mist' | 'rays';
+export const THEME_EFFECT_KINDS: ThemeEffectKind[] = ['none', 'stars', 'fireflies', 'vignette', 'bubbles', 'mist', 'rays'];
+export const THEME_EFFECT_LABELS: Record<ThemeEffectKind, string> = {
+  none: 'なし', stars: '装飾1', fireflies: '装飾2', vignette: '装飾3', bubbles: '装飾4', mist: '装飾5', rays: '装飾6'
+};
+/** 濃さ(alpha)を使う装飾。ベースタブで濃さのスライダーを出す */
+export const THEME_EFFECT_WITH_ALPHA: ThemeEffectKind[] = ['vignette', 'bubbles', 'mist', 'rays'];
 export type ThemeFlower = 'flower' | 'glow' | 'tuft' | 'crack';
 export const THEME_FLOWERS: ThemeFlower[] = ['flower', 'glow', 'tuft', 'crack'];
 export const THEME_FLOWER_LABELS: Record<ThemeFlower, string> = { flower: '花', glow: '光る粒', tuft: '草の房', crack: 'ひび割れ' };
