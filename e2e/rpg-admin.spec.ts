@@ -1634,3 +1634,124 @@ test(
     });
   }
 );
+
+// 管理者のアカウントで、保存してあるダンジョンのIDとエリアのID・端のつながりを API から読む(front#396)
+async function savedWorld(): Promise<{ dungeons: string[]; areas: { id: string; name: string; links: { to: string }[] }[] }> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgDungeons { id name } rpgMaps { id name links { to } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgDungeons: { id: string; name: string }[]; rpgMaps: { id: string; name: string; links: { to: string }[] }[] } };
+  return { dungeons: body.data.rpgDungeons.map((d) => d.name), areas: body.data.rpgMaps };
+}
+
+test(
+  'E2E-50 RPGマップ作成で、エリア・ダンジョンを確認のモーダルから消せ、始まりの草原・保存していない変更があるときは消せない(front#396)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'E2E 用の RPG データ(始まりの草原: はじまりの村だけ)'],
+    expected: [
+      '保存していない変更があるときは「🗑 このエリアを消す」を押せず、先に保存するよう案内が出る',
+      '始まりの草原のはじまりの村は、確認のモーダルに「始まりの草原のエリアは消せません」と出て、「消す」を押せない',
+      'エリアを消す確認のモーダルに、消えるもの・ほかのエリアからの端のつながりを「なし」にすること・元に戻せないことが出て、「消す」で消すと同じダンジョンのほかのエリアが開き、ほかのダンジョンからのつながりもなくなる',
+      'ダンジョンを消す確認のモーダルに中のエリアが出て、「消す」で消すとダンジョンのプルダウンからなくなり、API からも消えている'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await loginAsE2E(page, step, true);
+    const areaName = page.getByRole('region', { name: 'エリアの設定' }).getByLabel('エリアの名前');
+    const dungeonName = '[E2E]消すダンジョン';
+    const back = '[E2E]奥の間';
+    const deleteArea = page.getByRole('button', { name: '🗑 このエリアを消す' });
+
+    await step('RPGマップ作成(/rpg/admin)を開き、はじまりの村の「エリアの名前」を書き換える', '「🗑 このエリアを消す」を押せず、「先に保存してください」と出る', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+      await expect(areaName).toHaveValue('はじまりの村');
+      await areaName.fill('はじまりの村2');
+      await expect(deleteArea).toBeDisabled();
+      await expect(page.getByText('保存していない変更があります。先に保存してください。')).toBeVisible();
+    });
+
+    await step('名前を「はじまりの村」に戻して「保存する」で保存し、「🗑 このエリアを消す」を押す', '確認のモーダルに「始まりの草原のエリアは消せません」と出て、「消す」を押せない。「閉じる」で閉じる', async () => {
+      await areaName.fill('はじまりの村');
+      await page.getByRole('button', { name: '保存する', exact: true }).click();
+      await expect(page.getByText('● 保存していない変更があります')).toBeHidden();
+      await expect(deleteArea).toBeEnabled();
+      await deleteArea.click();
+      const dialog = page.getByRole('dialog', { name: 'エリアを消す' });
+      await expect(dialog.getByRole('alert')).toContainText('始まりの草原のエリアは消せません');
+      await expect(dialog.getByRole('button', { name: '消す', exact: true })).toBeDisabled();
+      await dialog.getByRole('button', { name: '閉じる' }).click();
+      await expect(dialog).toBeHidden();
+    });
+
+    await step(
+      '「＋ 新しいダンジョン」で「' + dungeonName + '」を作り、「入口」の右の「＋」から「' + back + '」を作る。「' + back + '」の右上の端のつながりを「始まりの草原 ／ はじまりの村」にし、はじまりの村の右下の端のつながりを「' + dungeonName + ' ／ ' + back + '」にして保存する',
+      '保存していない変更がなくなる',
+      async () => {
+        await page.getByRole('button', { name: '＋ 新しいダンジョン' }).click();
+        const dialog = page.getByRole('dialog', { name: '新しいダンジョン' });
+        await dialog.getByLabel('名前').fill(dungeonName);
+        await dialog.getByRole('button', { name: '作る' }).click();
+        await expect(dialog).toBeHidden();
+        await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+        await page.locator('.layout-grid [data-cell="1,0"]').click();
+        const areaDialog = page.getByRole('dialog', { name: '新しいエリア' });
+        await areaDialog.getByLabel('エリアの名前').fill(back);
+        await areaDialog.getByRole('button', { name: '作る' }).click();
+        await expect(areaDialog).toBeHidden();
+        await page.getByRole('tab', { name: '🗺️ エリア' }).click();
+        await expect(areaName).toHaveValue(back);
+        await page.getByLabel('右上の端のつながり').selectOption({ label: '始まりの草原 ／ はじまりの村' });
+        await clickArrow(page, '始まりの草原 ／ はじまりの村');
+        await expect(areaName).toHaveValue('はじまりの村');
+        await page.getByLabel('右下の端のつながり').selectOption({ label: `${dungeonName} ／ ${back}` });
+        await page.getByRole('button', { name: '保存する', exact: true }).click();
+        await expect(page.getByText('● 保存していない変更があります')).toBeHidden();
+      }
+    );
+
+    await step(
+      '右下の端の「' + back + '」の矢印で移り、「🗑 このエリアを消す」を押す',
+      '確認のモーダルに、消えるエリア・端のつながり 1個を「なし」にすること・元に戻せないことが出る。「消す」で消すと「入口」が開き、はじまりの村から「' + back + '」へのつながりもなくなる',
+      async () => {
+        await clickArrow(page, `${dungeonName} ／ ${back}`);
+        await expect(areaName).toHaveValue(back);
+        await deleteArea.click();
+        const dialog = page.getByRole('dialog', { name: 'エリアを消す' });
+        await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(`🗑 エリア「${back}」を消しますか？`);
+        await expect(dialog).toContainText('ほかのエリアから、ここへの端のつながり 1個を「なし」にします');
+        await expect(dialog).toContainText('消したあとは元に戻せません。');
+        await dialog.getByRole('button', { name: '消す', exact: true }).click();
+        await expect(dialog).toBeHidden();
+        await expect(page.getByRole('status')).toHaveText(`エリア「${back}」を消しました`);
+        await expect(areaName).toHaveValue('入口');
+        const world = await savedWorld();
+        expect(world.areas.map((a) => a.name)).not.toContain(back);
+        expect(world.areas.find((a) => a.id === 'plain')!.links).toEqual([]);
+      }
+    );
+
+    await step('「🏰 ダンジョン」タブの「🗑 このダンジョンを消す」を押す', '確認のモーダルに中のエリア「入口」が出る。「消す」で消すと、ダンジョンのプルダウンからなくなり、API からも消えている', async () => {
+      await page.getByRole('tab', { name: '🏰 ダンジョン' }).click();
+      await page.getByRole('button', { name: '🗑 このダンジョンを消す' }).click();
+      const dialog = page.getByRole('dialog', { name: 'ダンジョンを消す' });
+      await expect(dialog).toContainText('中のエリア 1つ：入口');
+      await dialog.getByRole('button', { name: '消す', exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(page.getByRole('status')).toHaveText(`ダンジョン「${dungeonName}」を消しました`);
+      await expect(page.getByLabel('ダンジョン', { exact: true }).locator('option', { hasText: dungeonName })).toHaveCount(0);
+      const world = await savedWorld();
+      expect(world.dungeons).not.toContain(dungeonName);
+      expect(world.areas.map((a) => a.name)).not.toContain('入口');
+    });
+  }
+);
