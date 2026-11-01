@@ -241,12 +241,13 @@ export interface FloatText {
 }
 
 /**
- * プレイヤーのまわりのエフェクト(front#335)。レベルアップは金色の光の輪・柱・星、回復(回復薬)は緑の光の輪・「＋」の粒。
+ * プレイヤーのまわりのエフェクト(front#335)。レベルアップは金色の光の輪・柱・星。
  * 回復魔法(front#409)は、使った人の足元に魔法陣(cast)、回復する人には上から光の柱が降りて緑の輪・〇の粒(magic)。
+ * 回復薬も、回復魔法の回復する人と同じ magic(魔法陣なし。front#457)。
  * 粒の位置は seed から決める(描くたびに同じ位置になる)
  */
 export interface PlayerFx {
-  kind: 'level' | 'heal' | 'magic' | 'cast';
+  kind: 'level' | 'magic' | 'cast';
   // 出てからの秒。負の間はまだ出ていない(ヒールオールで、全員に少しずつずらして届ける)
   t: number;
   seed: number;
@@ -255,7 +256,7 @@ export interface PlayerFx {
 }
 
 /** エフェクトの長さ(秒) */
-export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, heal: 1.1, magic: 1.35, cast: 0.85 };
+export const PLAYER_FX_SEC: Record<PlayerFx['kind'], number> = { level: 1.6, magic: 1.35, cast: 0.85 };
 
 /** ヒールオールで、回復の光を1人ずつずらす秒数(front#409) */
 export const HEAL_ALL_STAGGER = 0.06;
@@ -1278,9 +1279,10 @@ export class RpgGame {
       }
       this.events.log(`${by}${to}${item.name}を使った。${got.join('・')}回復した`);
     }
-    // 回復のエフェクト(front#335)はプレイヤーのまわり、仲間のときは仲間のまわり(front#383)に出す。効果音はだれのときも鳴らす
-    if (target.kind === 'player') this.addPlayerFx('heal', item.type === 'revive' || (item.heal ?? 0) >= 100);
-    else this.addMateFx(target, 'heal', item.type === 'revive');
+    // 回復のエフェクト(front#335)はプレイヤーのまわり、仲間のときは仲間のまわり(front#383)に出す。効果音はだれのときも鳴らす。
+    // 見た目は回復魔法で回復する人と同じ(光の柱・緑の輪・〇の粒。魔法陣は出さない。front#457)
+    if (target.kind === 'player') this.addPlayerFx('magic', item.type === 'revive' || (item.heal ?? 0) >= 100);
+    else this.addMateFx(target, 'magic', item.type === 'revive');
     if (healed) this.thank(user, target);
     this.events.sound?.('heal');
     this.events.statsChanged();
