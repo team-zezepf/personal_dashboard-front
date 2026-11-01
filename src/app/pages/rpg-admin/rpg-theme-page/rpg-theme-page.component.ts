@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { concat, toArray } from 'rxjs';
 import { RpgDungeon, RpgMap, RpgMapObject, RpgTheme, RpgThemeInput } from '../../../models/rpg.models';
 import { RpgService } from '../../../services/rpg.service';
-import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_FLOWERS, THEME_FLOWER_LABELS, TREE_KINDS, TREE_KIND_LABELS, liquidEdgeOf, setThemes, toThemeDef, treeKindOf } from '../../../rpg/rpg-data';
+import { THEME_EFFECT_KINDS, THEME_EFFECT_LABELS, THEME_EFFECT_WITH_ALPHA,THEME_FLOWERS, THEME_FLOWER_LABELS, TREE_KINDS, TREE_KIND_LABELS, liquidEdgeOf, setThemes, toThemeDef, treeKindOf } from '../../../rpg/rpg-data';
 import { RpgGame, RpgGameEvents, iso } from '../../../rpg/rpg-game';
 import { RpgRenderer } from '../../../rpg/rpg-render';
 
@@ -269,10 +269,16 @@ export class RpgThemePageComponent implements OnDestroy {
     this.update((t) => (t.treeScale = Math.min(THEME_LIMITS.treeScale[1], Math.max(THEME_LIMITS.treeScale[0], Math.round(Number(v) * 20) / 20))));
   }
 
-  /** 装飾(1つだけ)。種類を変えたら、その種類のよくある色にする */
+  /** 装飾(1つだけ)。種類を変えたら、その種類のよくある色にする。霧・光の筋(front#455)は濃さも合わせる */
   setEffectKind(kind: string): void {
-    const colors: Record<string, string> = { stars: '#ffffff', fireflies: '#e6ffb3', vignette: '#000000', bubbles: '#e6fbff' };
-    this.update((t) => (t.effect = { ...t.effect, kind, color: colors[kind] ?? t.effect.color }));
+    const colors: Record<string, string> = { stars: '#ffffff', fireflies: '#e6ffb3', vignette: '#000000', bubbles: '#e6fbff', mist: '#ffffff', rays: '#fff6c8' };
+    const alphas: Record<string, number> = { mist: 0.5, rays: 0.3 };
+    this.update((t) => (t.effect = { ...t.effect, kind, color: colors[kind] ?? t.effect.color, alpha: alphas[kind] ?? t.effect.alpha }));
+  }
+
+  /** 濃さのスライダーを出す装飾か(装飾3〜6) */
+  hasEffectAlpha(kind: string): boolean {
+    return (THEME_EFFECT_WITH_ALPHA as string[]).includes(kind);
   }
 
   setEffectColor(color: string): void {

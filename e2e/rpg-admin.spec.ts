@@ -674,6 +674,79 @@ test(
   }
 );
 
+// 管理者のアカウントで、保存してあるベースの装飾(front#455)を API から読む
+async function savedEffect(themeName: string): Promise<{ kind: string; color: string; alpha: number }> {
+  const login = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: E2E_ADMIN_ACCOUNT.email, password: E2E_ADMIN_ACCOUNT.password })
+  });
+  const { token } = (await login.json()) as { token: string };
+  const res = await fetch(`${API_URL}/graphql`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ rpgThemes { name effect { kind color alpha } } }' })
+  });
+  const body = (await res.json()) as { data: { rpgThemes: { name: string; effect: { kind: string; color: string; alpha: number } }[] } };
+  return body.data.rpgThemes.find((x) => x.name === themeName)!.effect;
+}
+
+test(
+  'E2E-49 RPGマップ作成の「ベース」タブで、装飾5(霧)・装飾6(光の筋)を選ぶと色と濃さが決まり、保存できる(front#455)',
+  caseOf({
+    precondition: ['sandbox が起動している', 'E2E 専用の管理者のアカウントでログインしている', 'ダンジョンのベースを何も保存していない(最初の4つ)'],
+    expected: [
+      '「装飾」の選ぶ欄に なし・装飾1〜装飾6 が並ぶ',
+      '草原を複製して名前を「[E2E]霧の谷」、装飾を「装飾5」にすると、色は白(#ffffff)、濃さの欄が出て 0.5 になる',
+      '装飾を「装飾6」にすると、色は淡い黄色(#fff6c8)、濃さは 0.3 になる',
+      '「ベースを保存する」を押すと「ベースを保存しました」と出て、API でも装飾が rays・#fff6c8・0.3 になっている',
+      '(あと片づけ)「[E2E]霧の谷」を消せる'
+    ]
+  }),
+  async ({ page }) => {
+    const step = startSteps(page);
+    await resetAdminRpgSave();
+    await loginAsE2E(page, step, true);
+    const tab = page.locator('app-rpg-theme-page');
+    const list = tab.getByRole('complementary', { name: 'ベースの一覧' });
+    const props = tab.getByRole('complementary', { name: 'ベースの項目' });
+    const effect = props.getByLabel('装飾', { exact: true });
+    const name = '[E2E]霧の谷';
+
+    await step('RPGマップ作成(/rpg/admin)の「🎨 ベース」タブで「草原」を選ぶ', '「装飾」の選ぶ欄に なし・装飾1〜装飾6 が並ぶ', async () => {
+      await page.goto('/rpg/admin');
+      await page.getByRole('tab', { name: '🎨 ベース' }).click();
+      await list.getByRole('button', { name: /^草原/ }).click();
+      await expect(effect.locator('option')).toHaveText(['なし', '装飾1', '装飾2', '装飾3', '装飾4', '装飾5', '装飾6']);
+    });
+
+    await step(`「＋ 新しいベース」を押し、名前を「${name}」、装飾を「装飾5」にする`, '色は白(#ffffff)、濃さの欄が出て 0.5', async () => {
+      await tab.getByRole('button', { name: '＋ 新しいベース' }).click();
+      await props.getByLabel('ベースの名前').fill(name);
+      await effect.selectOption({ label: '装飾5' });
+      await expect(props.getByLabel('装飾の色')).toHaveValue('#ffffff');
+      await expect(props.getByLabel('装飾の濃さ')).toHaveValue('0.5');
+    });
+
+    await step('装飾を「装飾6」にする', '色は淡い黄色(#fff6c8)、濃さは 0.3', async () => {
+      await effect.selectOption({ label: '装飾6' });
+      await expect(props.getByLabel('装飾の色')).toHaveValue('#fff6c8');
+      await expect(props.getByLabel('装飾の濃さ')).toHaveValue('0.3');
+    });
+
+    await step('「ベースを保存する」を押す', '「ベースを保存しました」と出て、API でも rays・#fff6c8・0.3', async () => {
+      await tab.getByRole('button', { name: 'ベースを保存する' }).click();
+      await expect(tab.getByRole('status')).toHaveText('ベースを保存しました');
+      expect(await savedEffect(name)).toEqual({ kind: 'rays', color: '#fff6c8', alpha: 0.3 });
+    });
+
+    await step(`(あと片づけ)「${name}」を「🗑 消す」`, '「消しました」と出る', async () => {
+      await tab.getByRole('button', { name: '🗑 消す' }).click();
+      await expect(tab.getByRole('status')).toHaveText(`「${name}」を消しました`);
+    });
+  }
+);
+
 // 管理者のアカウントで、保存してある村のエリアのベース(front#401)を API から読む。なければ null
 async function savedVillageTheme(): Promise<string | null> {
   const login = await fetch(`${API_URL}/api/auth/login`, {

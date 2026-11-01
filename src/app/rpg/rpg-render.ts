@@ -52,6 +52,13 @@ export class RpgRenderer {
   private shatters: { x: number; y: number; rx: number; ry: number; t: number }[] = [];
   // 装飾4: 泡(front#421)。位置は画面に対する割合(0〜1)、大きさ・のぼる速さ(画面の高さに対する割合/秒)はばらばら
   private readonly bubbles = Array.from({ length: 36 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 3 + 1.5, v: Math.random() * 0.05 + 0.03 }));
+  // 装飾5: 霧の帯(front#455)。高さ(画面に対する割合)・太さ・流れる速さ(帯の間隔に対する割合/秒)はばらばら
+  private readonly mists = Array.from({ length: 6 }, (_, i) => ({
+    x: Math.random(), y: 0.2 + i * 0.13 + Math.random() * 0.05, h: 0.12 + Math.random() * 0.1,
+    v: (0.012 + Math.random() * 0.015) * (i % 2 ? 1 : 0.7), ph: Math.random() * 6
+  }));
+  // 装飾6: 光の筋(front#455)。上の端の位置(くり返しの間隔に対する割合)・太さ(画面の幅に対する割合)・ゆらぐ速さ
+  private readonly rays = Array.from({ length: 5 }, () => ({ x: Math.random(), w: 0.04 + Math.random() * 0.07, ph: Math.random() * 6, sp: 0.3 + Math.random() * 0.4 }));
   private readonly stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), ph: Math.random() * 6, r: Math.random() * 1.4 + 0.4 }));
   // 家の形・向きごとの部品(front#236。毎回求めないよう、覚えておく)
   private readonly houses = new Map<string, { pieces: HousePiece[]; ridge: number; door: { at: readonly [number, number]; normal: readonly [number, number] } }>();
@@ -126,7 +133,14 @@ export class RpgRenderer {
     }
     this.drawEffects();
     ctx.restore();
+    // 装飾5・6は、マップが画面で動いた分だけ一緒に動かす(front#455)
+    const cam: [number, number] = [game.camX + this.shift[0], game.camY + this.shift[1]];
     this.shift = [0, 0];
+
+    // 装飾5: 霧(front#455。色と濃さは見た目で決める)。霧の帯が横にゆっくり流れる
+    if (pal.effect.kind === 'mist') this.drawMist(w, h, cam, pal.effect.color, pal.effect.alpha);
+    // 装飾6: 光の筋(front#455。色と濃さは見た目で決める)。上から斜めに光が差し込み、ゆっくりゆらぐ
+    if (pal.effect.kind === 'rays') this.drawRays(w, h, cam, pal.effect.color, pal.effect.alpha);
 
     // 装飾3: 周りを暗く(front#389。色と濃さは見た目で決める)
     if (pal.effect.kind === 'vignette') {
@@ -1271,6 +1285,64 @@ export class RpgRenderer {
     ctx.globalAlpha = 1;
   }
 
+  // 霧(front#455)。横長のぼかした帯が流れる。画面の幅より広い間隔でくり返し、マップのどこにいても画面に入るようにする
+  private drawMist(w: number, h: number, cam: [number, number], color: string, alpha: number): void {
+    const ctx = this.ctx;
+    const bw = w * 0.9;
+    const period = w + bw;
+    for (const m of this.mists) {
+      const cy = m.y * h + Math.sin(this.time * 0.3 + m.ph) * h * 0.02 + cam[1];
+      const bh = m.h * h;
+      const x0 = mod((m.x + this.time * m.v) * period + cam[0], period) - bw;
+      const a = alpha * (0.85 + Math.sin(this.time * 0.5 + m.ph) * 0.15);
+      for (const x of [x0, x0 + period]) {
+        if (x > w || x + bw < 0) continue;
+        const cx = x + bw / 2;
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, bw / 2);
+        g.addColorStop(0, hexToRgba(color, a));
+        g.addColorStop(0.5, hexToRgba(color, a * 0.8));
+        g.addColorStop(1, hexToRgba(color, 0));
+        // 丸いぼかしを縦につぶして、横長の帯にする
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, bh / bw);
+        ctx.translate(-cx, -cy);
+        ctx.fillStyle = g;
+        ctx.fillRect(x, cy - bw / 2, bw, bw);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 光の筋(front#455)。上から右下へ斜めに差す帯。下へ向かって薄くし、幅と濃さをゆっくりゆらす。加算で重ねて明るく見せる
+  private drawRays(w: number, h: number, cam: [number, number], color: string, alpha: number): void {
+    const ctx = this.ctx;
+    const slant = h * 0.45;
+    const period = w * 1.3;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const r of this.rays) {
+      const xm = mod(r.x * period + Math.sin(this.time * 0.15 + r.ph) * w * 0.02 + cam[0], period);
+      const bw = r.w * w * (0.85 + Math.sin(this.time * r.sp + r.ph) * 0.15);
+      const a = alpha * (0.6 + Math.sin(this.time * r.sp * 0.8 + r.ph * 2) * 0.4);
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, hexToRgba(color, a));
+      g.addColorStop(0.7, hexToRgba(color, a * 0.3));
+      g.addColorStop(1, hexToRgba(color, 0));
+      ctx.fillStyle = g;
+      for (const x of [xm - period, xm]) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + bw, 0);
+        ctx.lineTo(x + bw * 1.8 + slant, h);
+        ctx.lineTo(x + slant, h);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   private drawFireflies(color: string): void {
     const ctx = this.ctx;
     const { w, h } = this.game.map;
@@ -1495,4 +1567,9 @@ export class RpgRenderer {
     ctx.fill();
   }
 
+}
+
+/** 割り算の余り(マイナスにならない)。装飾5・6をくり返し描くときに使う(front#455) */
+function mod(a: number, n: number): number {
+  return ((a % n) + n) % n;
 }
