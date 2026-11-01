@@ -56,6 +56,8 @@ import {
   blankQuest,
   cloneMap,
   moveNpcToArea,
+  deletePlan,
+  withoutAreas,
   toMapInput
 } from '../../rpg/rpg-editor';
 
@@ -161,6 +163,12 @@ export class RpgAdminPageComponent implements OnDestroy {
   readonly hoverTile = signal<[number, number] | null>(null);
   readonly newAreaOpen = signal(false);
   readonly newDungeonOpen = signal(false);
+  // エリア・ダンジョンを消す確認のモーダル(front#396)
+  readonly deleteTarget = signal<{ kind: 'area' | 'dungeon'; id: string; name: string } | null>(null);
+  readonly deleteInfo = computed(() => {
+    const t = this.deleteTarget();
+    return t ? deletePlan(this.maps(), t.kind, t.id) : null;
+  });
   // エリアの配置のドラッグ(front#301)。つかんでいるエリアと、上に乗っているマス("x,y")
   readonly dragAreaId = signal<string | null>(null);
   readonly dropCell = signal<string | null>(null);
@@ -737,7 +745,7 @@ export class RpgAdminPageComponent implements OnDestroy {
     } else if (event.ctrlKey && event.key === 'y') {
       event.preventDefault();
       this.redo();
-    } else if ((event.key === 'Delete' || event.key === 'Backspace') && this.selection() && !this.npcModal() && !this.houseModal() && !this.objectModal()) {
+    } else if ((event.key === 'Delete' || event.key === 'Backspace') && this.selection() && !this.npcModal() && !this.houseModal() && !this.objectModal() && !this.deleteTarget()) {
       // 選んでいる物を消す(Backspace も。front#290)
       event.preventDefault();
       this.deleteSelected();
@@ -1522,6 +1530,51 @@ export class RpgAdminPageComponent implements OnDestroy {
       error: (err: Error) => {
         this.saving.set(false);
         this.toast(err.message || 'ダンジョンを作れませんでした');
+      }
+    });
+  }
+
+  // ===== エリア・ダンジョンを消す(front#396) =====
+
+  openDeleteArea(map: RpgMap): void {
+    this.deleteTarget.set({ kind: 'area', id: map.id, name: map.name });
+  }
+
+  openDeleteDungeon(dungeon: RpgDungeon): void {
+    this.deleteTarget.set({ kind: 'dungeon', id: dungeon.id, name: dungeon.name });
+  }
+
+  // 何も返さないこと(onBackdropClick と同じ。front#341)
+  onDeleteBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.deleteTarget.set(null);
+  }
+
+  areaNames(areas: readonly RpgMap[]): string {
+    return areas.map((m) => m.name).join('・');
+  }
+
+  // 消すとすぐに保存される。消したエリアへの端のつながりは、APIと同じく画面のデータからも取り除く
+  confirmDelete(): void {
+    const t = this.deleteTarget();
+    const info = this.deleteInfo();
+    if (!t || !info || info.blockers.length || this.isDirty() || this.saving()) return;
+    const ids = new Set(info.areas.map((m) => m.id));
+    this.saving.set(true);
+    const request = t.kind === 'area' ? this.rpgService.deleteArea(t.id) : this.rpgService.deleteDungeon(t.id);
+    request.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.deleteTarget.set(null);
+        const dungeonId = t.kind === 'area' ? info.areas[0]?.dungeonId : null;
+        this.maps.set(withoutAreas(this.maps(), ids));
+        if (t.kind === 'dungeon') this.dungeons.set(this.dungeons().filter((d) => d.id !== t.id));
+        // 同じダンジョンのほかのエリア(ダンジョンを消したときは、いちばん上のダンジョン)を開く
+        this.selectDungeon(dungeonId ?? this.dungeons()[0]?.id ?? '');
+        this.toast(`${t.kind === 'area' ? 'エリア' : 'ダンジョン'}「${t.name}」を消しました`);
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.toast(`消せませんでした：${err.message}`);
       }
     });
   }

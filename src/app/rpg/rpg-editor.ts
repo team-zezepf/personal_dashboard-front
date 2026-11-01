@@ -691,6 +691,58 @@ export class RpgMapEditor {
   }
 }
 
+/** エリア・ダンジョンを消す前の確認(front#396)。消すエリアの数・中身、取り除く端のつながり、消せない理由 */
+export interface DeletePlan {
+  areas: RpgMap[];
+  objects: number;
+  npcs: number;
+  enemies: number;
+  // ほかのエリアから、消すエリアへの端のつながりの数(自動で「なし」になる)
+  links: number;
+  // 消せない理由(空なら消せる)
+  blockers: string[];
+}
+
+// 始まりの草原のエリア(はじめて遊ぶ人が始まる場所なので消せない)
+const START_AREA = 'plain';
+
+/** kind が area ならエリア id を、dungeon ならダンジョン id と中のエリアすべてを消すときの確認(APIの api#187 と同じ決まり) */
+export function deletePlan(maps: readonly RpgMap[], kind: 'area' | 'dungeon', id: string): DeletePlan {
+  const areas = kind === 'area' ? maps.filter((m) => m.id === id) : maps.filter((m) => m.dungeonId === id);
+  const ids = new Set(areas.map((m) => m.id));
+  const rest = maps.filter((m) => !ids.has(m.id));
+  const blockers: string[] = [];
+  if (ids.has(START_AREA)) blockers.push(kind === 'area' ? '始まりの草原のエリアは消せません' : '始まりの草原を含むダンジョンは消せません');
+  if (kind === 'area' && areas[0] && !rest.some((m) => m.dungeonId === areas[0].dungeonId)) {
+    blockers.push('ダンジョンに残ったさいごの1エリアは消せません。ダンジョンごと消してください');
+  }
+  for (const m of rest) {
+    for (const n of m.npcs) {
+      for (const q of n.quests ?? []) {
+        if (q.kind === 'visit' && q.targetArea && ids.has(q.targetArea)) {
+          blockers.push(`「${m.name}」の「${n.name}」のクエスト「${q.title}」で会う相手「${q.target}」がいます。先にクエストを直してください`);
+        }
+      }
+    }
+  }
+  const sum = (f: (m: RpgMap) => number) => areas.reduce((n, m) => n + f(m), 0);
+  return {
+    areas,
+    objects: sum((m) => m.objects.length),
+    npcs: sum((m) => m.npcs.length),
+    enemies: sum((m) => m.enemies.length),
+    links: rest.reduce((n, m) => n + (m.links ?? []).filter((l) => ids.has(l.to)).length, 0),
+    blockers
+  };
+}
+
+/** 消したあとに残るエリア(消したエリアへの端のつながりは取り除く)(front#396) */
+export function withoutAreas(maps: readonly RpgMap[], ids: ReadonlySet<string>): RpgMap[] {
+  return maps
+    .filter((m) => !ids.has(m.id))
+    .map((m) => ((m.links ?? []).some((l) => ids.has(l.to)) ? { ...m, links: (m.links ?? []).filter((l) => !ids.has(l.to)) } : m));
+}
+
 export { clone as cloneMap };
 
 /**

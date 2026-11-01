@@ -1,5 +1,7 @@
 import { RpgMap, RpgMapNpc, RpgMapObject } from '../models/rpg.models';
-import { NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, moveNpcToArea, paletteGroups, rotateMap, selectsPlaced, toMapInput } from './rpg-editor';
+import {
+  NPC_ROLES, RpgMapEditor, SELECT_ITEM, blankMap, blankQuest, deletePlan, moveNpcToArea, paletteGroups, rotateMap, selectsPlaced, toMapInput, withoutAreas
+} from './rpg-editor';
 import { houseTiles } from './rpg-house';
 import { lookFromColors } from './rpg-look';
 import { DEFAULT_ENEMIES, setEnemies } from './rpg-enemy';
@@ -731,5 +733,57 @@ describe('moveNpcToArea(NPCを端の矢印の行き先のエリアへ移す。fr
     const result = moveNpcToArea([village, forest, lake], village, mina, forest, [1, 0]);
     expect(result).toEqual({ changed: ['plain', 'area2', 'area3'] });
     expect(goro.quests.map((q) => q.targetArea)).toEqual(['area2', 'plain']);
+  });
+});
+
+describe('エリア・ダンジョンを消す(front#396)', () => {
+  // 始まりの草原(plain)と、2つのエリアがある洞くつ(cave)。草原から奥の間へ端でつながる
+  const world = (): RpgMap[] => {
+    const plain = { ...blankMap('plain', '草原', 'plain', 0, 0, 12, 12), links: [{ dx: 1, dy: 0, to: 'back' }] };
+    const entry = blankMap('entry', '入口', 'cave', 0, 0, 12, 12);
+    const back = blankMap('back', '奥の間', 'cave', 1, 0, 20, 14);
+    back.objects = [{ type: 'tree', x: 1, y: 1, roof: null, torch: false }];
+    back.enemies = [{ type: 'slime', x: 3, y: 3 }];
+    return [plain, entry, back];
+  };
+  const visitQuest = (targetArea: string) => ({ ...blankQuest(), title: 'ことづけ', kind: 'visit' as const, target: '長老', targetArea, count: 1 });
+  const withQuestGiver = (maps: RpgMap[], areaId: string, targetArea: string) => {
+    const m = maps.find((a) => a.id === areaId)!;
+    m.npcs = [{ name: '村長', x: 2, y: 2, hair: '#000', body: '#000', role: 'quest', notice: false, lines: ['やあ'], look: lookFromColors('#000', '#000'), quests: [visitQuest(targetArea)] }];
+    return maps;
+  };
+
+  it('エリアを消すときは、そのエリアの中身と、ほかのエリアからの端のつながりの数を出す', () => {
+    const plan = deletePlan(world(), 'area', 'back');
+    expect(plan.areas.map((m) => m.id)).toEqual(['back']);
+    expect([plan.objects, plan.npcs, plan.enemies, plan.links]).toEqual([1, 0, 1, 1]);
+    expect(plan.blockers).toEqual([]);
+  });
+
+  it('ダンジョンを消すときは、中のエリアすべてを数える', () => {
+    const plan = deletePlan(world(), 'dungeon', 'cave');
+    expect(plan.areas.map((m) => m.id)).toEqual(['entry', 'back']);
+    expect(plan.links).toBe(1);
+    expect(plan.blockers).toEqual([]);
+  });
+
+  it('始まりの草原・ダンジョンのさいごの1エリアは消せない', () => {
+    expect(deletePlan(world(), 'area', 'plain').blockers).toHaveLength(2);
+    expect(deletePlan(world(), 'dungeon', 'plain').blockers).toEqual(['始まりの草原を含むダンジョンは消せません']);
+    const one = world().filter((m) => m.id !== 'entry');
+    expect(deletePlan(one, 'area', 'back').blockers).toEqual(['ダンジョンに残ったさいごの1エリアは消せません。ダンジョンごと消してください']);
+  });
+
+  it('残るNPCの会いに行くクエストの相手がいれば消せないが、クエストを出すNPCもいっしょに消えるなら消せる', () => {
+    const blocked = deletePlan(withQuestGiver(world(), 'plain', 'back'), 'area', 'back').blockers;
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0]).toContain('ことづけ');
+    expect(deletePlan(withQuestGiver(world(), 'entry', 'back'), 'dungeon', 'cave').blockers).toEqual([]);
+  });
+
+  it('消したあとに残るエリアからは、消したエリアへの端のつながりを取り除く', () => {
+    const rest = withoutAreas(world(), new Set(['back']));
+    expect(rest.map((m) => m.id)).toEqual(['plain', 'entry']);
+    expect(rest[0].links).toEqual([]);
   });
 });

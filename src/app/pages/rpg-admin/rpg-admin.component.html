@@ -418,6 +418,14 @@
               隣り合うエリアは、向かい合う端でつながります（右の列は画面の右下の端、下の行は画面の左下の端）。クリックで編集するエリアを切り替え、「＋」で隣に新しいエリアを作ります。エリアはドラッグして、ほかのエリアと入れ替えたり、空いたマスへ移したりできます。
             </p>
           </section>
+
+          <!-- ダンジョンを消す(front#396) -->
+          <section class="delete-zone">
+            <button type="button" class="btn danger" [disabled]="isDirty()" (click)="openDeleteDungeon(dungeon)">🗑 このダンジョンを消す</button>
+            @if (isDirty()) {
+              <p class="delete-why">保存していない変更があります。先に保存してください。</p>
+            }
+          </section>
         }
         @if (current(); as map) {
           @if (propsTab() === 'area') {
@@ -541,6 +549,16 @@
               }
             </ul>
           </section>
+
+          <!-- エリアを消す(front#396) -->
+          @if (propsTab() === 'area') {
+            <section class="delete-zone">
+              <button type="button" class="btn danger" [disabled]="isDirty()" (click)="openDeleteArea(map)">🗑 このエリアを消す</button>
+              @if (isDirty()) {
+                <p class="delete-why">保存していない変更があります。先に保存してください。</p>
+              }
+            </section>
+          }
         }
       </aside>
     </div>
@@ -563,6 +581,56 @@
         </div>
       </div>
     </div>
+  }
+
+  <!-- エリア・ダンジョンを消す確認(front#396) -->
+  @if (deleteTarget(); as t) {
+    @if (deleteInfo(); as info) {
+      <div class="modal" (click)="onDeleteBackdrop($event)">
+        <div class="modal-card delete-card" role="dialog" [attr.aria-label]="t.kind === 'area' ? 'エリアを消す' : 'ダンジョンを消す'">
+          <h2>🗑 {{ t.kind === 'area' ? 'エリア' : 'ダンジョン' }}「{{ t.name }}」を消しますか？</h2>
+          @if (info.blockers.length) {
+            <div class="delete-box block" role="alert">
+              <h3>このままでは消せません</h3>
+              <ul>
+                @for (b of info.blockers; track b) {
+                  <li>{{ b }}</li>
+                }
+              </ul>
+            </div>
+          } @else {
+            <div class="delete-box warn">
+              <h3>消えるもの</h3>
+              <ul>
+                @if (t.kind === 'dungeon') {
+                  <li>中のエリア {{ info.areas.length }}つ{{ info.areas.length ? '：' : '' }}{{ areaNames(info.areas) }}</li>
+                } @else {
+                  <li>エリア「{{ t.name }}」（{{ info.areas[0]?.width }}×{{ info.areas[0]?.height }}マス）</li>
+                }
+                <li>置物 {{ info.objects }}個・NPC {{ info.npcs }}人・敵の出る場所 {{ info.enemies }}か所</li>
+              </ul>
+            </div>
+            @if (info.links) {
+              <div class="delete-box fix">
+                <h3>自動で直すもの</h3>
+                <ul><li>ほかのエリアから、ここへの端のつながり {{ info.links }}個を「なし」にします</li></ul>
+              </div>
+            }
+            <div class="delete-box">
+              <h3>ゲームへの影響</h3>
+              ここにいる人・ここを復活地点にしている人は、次に遊ぶとき始まりの場所から始まります。
+            </div>
+            <p class="delete-warn">消したあとは元に戻せません。</p>
+          }
+          <div class="modal-actions">
+            <button type="button" class="btn" (click)="deleteTarget.set(null)">{{ info.blockers.length ? '閉じる' : 'やめる' }}</button>
+            <button type="button" class="btn danger-fill" [disabled]="!!info.blockers.length || saving()" (click)="confirmDelete()">
+              {{ saving() ? '消しています…' : '消す' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   @if (newDungeonOpen()) {
